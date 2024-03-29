@@ -52,7 +52,7 @@ public class K8Service implements Service {
                         .withName(podName)
                     .endMetadata()
                     .withNewSpec()
-                        .withServiceAccountName("rusty-connector")
+                        .withServiceAccount("rusty-connector")
                         .addNewContainer()
                             .withName(containerName)
                             .withImage(containerImage)
