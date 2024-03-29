@@ -15,7 +15,8 @@ import java.util.NoSuchElementException;
 public class K8Service implements Service {
     protected Token token = new Token(16, new SecureRandom(), Token.lower);
 
-    public K8Service() {}
+    public K8Service() {
+    }
 
     public List<Pod> familyPods(String familyName) {
         try {
@@ -46,10 +47,10 @@ public class K8Service implements Service {
                 deployment.getMetadata().setNamespace(namespace);
             }
             client.resourceList(result).create();*/
-
             Pod pod = new PodBuilder()
                     .withNewMetadata()
                         .withName(podName)
+                        .withNamespace(namespace)
                     .endMetadata()
                     .withNewSpec()
                         .withServiceAccount("rusty-connector")
