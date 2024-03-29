@@ -38,7 +38,7 @@ configurations {
 dependencies{
     modules project(':toolkit')
     modules project(':core')
-    //modules project(':paper')
+    modules project(':paper')
     //modules project(':fabric')
     modules project(':velocity')
 }
