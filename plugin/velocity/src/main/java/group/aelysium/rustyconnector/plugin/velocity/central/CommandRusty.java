@@ -36,6 +36,7 @@ import group.aelysium.rustyconnector.plugin.velocity.lib.auto_scaling.K8Service;
 import group.aelysium.rustyconnector.plugin.velocity.lib.lang.ProxyLang;
 import group.aelysium.rustyconnector.plugin.velocity.lib.server.MCLoader;
 import group.aelysium.rustyconnector.core.lib.cache.MessageCacheService;
+import io.fabric8.kubernetes.api.model.Pod;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
@@ -462,7 +463,25 @@ class K8 {
                                             return Command.SINGLE_SUCCESS;
                                         })
                                 )
-                        ));
+                        ))
+                .then(LiteralArgumentBuilder.<CommandSource>literal("listPods") // k8 deletePod <podName> <familyName>
+                        .then(RequiredArgumentBuilder.<CommandSource, String>argument("familyName", StringArgumentType.string())
+                                .executes(context -> {
+                                    try {
+                                        String familyName = context.getArgument("familyName", String.class);
+
+                                        K8Service k8 = new K8Service();
+                                        List<Pod> pods = k8.familyPods(familyName);
+
+                                        pods.forEach(p -> System.out.println(p.getMetadata().getName()));
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+
+                                    return Command.SINGLE_SUCCESS;
+                                })
+                        )
+                );
     }
 }
 class Database {
