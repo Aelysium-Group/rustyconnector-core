@@ -13,14 +13,6 @@ public final class PaperRustyConnector extends JavaPlugin implements Listener {
     public void onEnable() {
         Tinder api = Tinder.gather(this, this.getSLF4JLogger());
 
-
-        String hostname = System.getenv("HOSTNAME");
-        if (hostname != null) {
-            System.out.println("Hostname: " + hostname);
-        } else {
-            System.out.println("Hostname environment variable not found.");
-        }
-
         try {
             TinderAdapterForCore.init(api);
 

@@ -27,10 +27,13 @@ public class ServerInfoService implements IServerInfoService {
         this.magicConfigPointer = magicConfigPointer;
         this.displayName = displayName;
 
-        if(address.isEmpty())
-            this.address = convertPortToAddress(port);
-        else
-            this.address = AddressUtil.parseAddress(address);
+        if (System.getenv("HOSTNAME") != null) {
+            this.address = AddressUtil.parseAddress(System.getenv("HOSTNAME"));
+        } else
+            if(address.isEmpty())
+                this.address = convertPortToAddress(port);
+            else
+                this.address = AddressUtil.parseAddress(address);
     }
     public ServerInfo serverInfo() {
         return new ServerInfo(this.uuid.toString(), address);

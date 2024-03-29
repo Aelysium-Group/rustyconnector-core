@@ -69,6 +69,21 @@ public class K8Service implements Service {
         }
     }
 
+    public void deleteNamespace(String familyName) {
+        try (KubernetesClient client = new KubernetesClientBuilder().build()) {
+            Namespace namespace = new NamespaceBuilder()
+                    .withNewMetadata()
+                    .withName(getNamespaceName(familyName))
+                    .endMetadata()
+                    .build();
+
+            client.namespaces().createOrReplace(namespace);
+            System.out.println("Namespace created successfully!");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public void deleteServer(String familyName, String podName) {
         String namespace = getNamespaceName(familyName);
 
