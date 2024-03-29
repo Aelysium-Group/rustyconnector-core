@@ -4,7 +4,7 @@
 #
 # https://wiki.aelysium.group/rusty-connector/docs/updating/
 #
-version: 6
+version: 7
 
 #
 # Define the MCLoader Config to load from the proxy.
@@ -19,6 +19,9 @@ magic-config: "default"
 # Make sure you also include the port number!
 #
 # If you leave this empty, RustyConnector will grab this server's port number and attempt to resolve your server's address from that.
+#
+# If you're running a Kubernetes network and this server is a Pod within your cluster.
+# This input will be ignored. Instead, RC will resolve the CoreDNS Hostname of this Pod and use that instead.
 #
 # Example: 127.0.0.1:25565
 #
