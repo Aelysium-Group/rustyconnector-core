@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 public class K8Service implements Service {
-    protected Token token = new Token(16, new SecureRandom(), Token.lower);
+    protected Token token = new Token(16, new SecureRandom(), Token.digits);
 
     public K8Service() {
     }
@@ -37,16 +37,6 @@ public class K8Service implements Service {
         String namespace = getNamespaceName(familyName);
 
         try (KubernetesClient client = new KubernetesClientBuilder().build()) {
-            /*
-        }
-            List<HasMetadata> result = client.load(new FileInputStream("/")).get();
-            for (HasMetadata resource : result) {
-                if (!(resource instanceof Deployment deployment)) continue;
-
-                deployment.getMetadata().setName(podName);
-                deployment.getMetadata().setNamespace(namespace);
-            }
-            client.resourceList(result).create();*/
             Pod pod = new PodBuilder()
                     .withNewMetadata()
                         .withName(podName)
@@ -61,6 +51,21 @@ public class K8Service implements Service {
                     .endSpec()
                     .build();
             client.pods().inNamespace(namespace).resource(pod).create();
+        }
+    }
+
+    public void createNamespace(String familyName) {
+        try (KubernetesClient client = new KubernetesClientBuilder().build()) {
+            Namespace namespace = new NamespaceBuilder()
+                    .withNewMetadata()
+                    .withName(getNamespaceName(familyName))
+                    .endMetadata()
+                    .build();
+
+            client.namespaces().createOrReplace(namespace);
+            System.out.println("Namespace created successfully!");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

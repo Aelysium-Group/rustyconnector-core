@@ -43,7 +43,7 @@ dependencies{
     modules project(':velocity')
 }
 
-def projects = [":toolkit", ":core", /*":paper", ":fabric",*/ ":velocity"]
+def projects = [":toolkit", ":core", ":paper", /*":fabric",*/ ":velocity"]
 jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     dependsOn(projects.collect {it + ":shadowJar"} )
