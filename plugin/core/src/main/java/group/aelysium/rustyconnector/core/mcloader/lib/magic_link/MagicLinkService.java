@@ -13,6 +13,7 @@ import group.aelysium.rustyconnector.toolkit.mc_loader.events.magic_link.Disconn
 import group.aelysium.rustyconnector.toolkit.mc_loader.magic_link.IMagicLinkService;
 import group.aelysium.rustyconnector.toolkit.core.serviceable.ClockService;
 import group.aelysium.rustyconnector.toolkit.mc_loader.server_info.IServerInfoService;
+import group.aelysium.rustyconnector.toolkit.velocity.util.AddressUtil;
 import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
 import group.aelysium.rustyconnector.core.TinderAdapterForCore;
 
@@ -25,6 +26,7 @@ public class MagicLinkService implements IMagicLinkService {
     private final IMessengerConnector messenger;
     private final ClockService heartbeat = new ClockService(2);
     private final AtomicInteger delay = new AtomicInteger(5);
+    private final String podName = System.getenv("POD_NAME");
     private boolean stopPinging = false;
 
     public MagicLinkService(IMessengerConnector messenger) {
@@ -41,16 +43,18 @@ public class MagicLinkService implements IMagicLinkService {
             if(stopPinging) return;
 
             try {
-                Packet packet = api.services().packetBuilder().newBuilder()
+                Packet.MCLoaderPacketBuilder.ReadyForParameters packet = api.services().packetBuilder().newBuilder()
                         .identification(BuiltInIdentifications.MAGICLINK_HANDSHAKE_PING)
                         .sendingToProxy()
                         .parameter(MagicLink.Handshake.Ping.Parameters.ADDRESS, serverInfoService.address())
                         .parameter(MagicLink.Handshake.Ping.Parameters.DISPLAY_NAME, serverInfoService.displayName())
                         .parameter(MagicLink.Handshake.Ping.Parameters.MAGIC_CONFIG_NAME, serverInfoService.magicConfig())
-                        .parameter(MagicLink.Handshake.Ping.Parameters.PLAYER_COUNT, new PacketParameter(serverInfoService.playerCount()))
-                        .build();
+                        .parameter(MagicLink.Handshake.Ping.Parameters.PLAYER_COUNT, new PacketParameter(serverInfoService.playerCount()));
 
-                api.services().magicLink().connection().orElseThrow().publish(packet);
+                if(podName != null)
+                    packet.parameter(MagicLink.Handshake.Ping.Parameters.POD_NAME, this.podName);
+
+                api.services().magicLink().connection().orElseThrow().publish(packet.build());
             } catch (Exception e) {
                 e.printStackTrace();
             }

@@ -11,6 +11,7 @@ import group.aelysium.rustyconnector.toolkit.velocity.load_balancing.ISortable;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.PlayerConnectable;
 
 import java.security.InvalidAlgorithmParameterException;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface IMCLoader extends ISortable, PlayerConnectable, PartyConnectable {
@@ -39,6 +40,13 @@ public interface IMCLoader extends ISortable, PlayerConnectable, PartyConnectabl
      * If none exists, it will return the MCLoader's UUID in string format.
      */
     String uuidOrDisplayName();
+
+    /**
+     * Gets this {@link IMCLoader MCLoader's} pod name if it exists.
+     * If your RC network isn't a part of a Kubernetes cluster, this will always return an empty optional.
+     * @return {@link Optional<String>}
+     */
+    Optional<String> podName();
 
     /**
      * Decrease this {@link IMCLoader PlayerServer's} timeout by 1.

@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.net.InetSocketAddress;
 import java.security.InvalidAlgorithmParameterException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -38,6 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MCLoader implements IMCLoader {
     private final UUID uuid;
     private final String displayName;
+    private final String podName;
     private final InetSocketAddress address;
     private RegisteredServer registeredServer = null;
     private Family family;
@@ -47,9 +49,10 @@ public class MCLoader implements IMCLoader {
     private int hardPlayerCap;
     private AtomicInteger timeout;
 
-    public MCLoader(@NotNull UUID uuid, @NotNull InetSocketAddress address, String displayName, int softPlayerCap, int hardPlayerCap, int weight, int timeout) {
+    public MCLoader(@NotNull UUID uuid, @NotNull InetSocketAddress address, String podName, String displayName, int softPlayerCap, int hardPlayerCap, int weight, int timeout) {
         this.uuid = uuid;
         this.address = address;
+        this.podName = podName;
         this.displayName = displayName;
 
         this.weight = Math.max(weight, 0);
@@ -61,6 +64,9 @@ public class MCLoader implements IMCLoader {
         if(this.softPlayerCap > this.hardPlayerCap) this.softPlayerCap = this.hardPlayerCap;
 
         this.timeout = new AtomicInteger(timeout);
+    }
+    public MCLoader(@NotNull UUID uuid, @NotNull InetSocketAddress address, String displayName, int softPlayerCap, int hardPlayerCap, int weight, int timeout) {
+        this(uuid, address, null, displayName, softPlayerCap, hardPlayerCap, weight, timeout);
     }
 
     public boolean stale() {
@@ -79,6 +85,11 @@ public class MCLoader implements IMCLoader {
     public String uuidOrDisplayName() {
         if(displayName == null) return this.uuid.toString();
         return this.displayName;
+    }
+
+    public Optional<String> podName() {
+        if(this.podName == null) return Optional.empty();
+        return Optional.of(this.podName);
     }
 
     public int decreaseTimeout(int amount) {

@@ -98,6 +98,7 @@ public class HandshakePingListener extends PacketListener<MagicLink.Handshake.Pi
             return new MCLoader(
                     packet.sender().uuid(),
                     AddressUtil.parseAddress(packet.address()),
+                    packet.podName().orElse(null),
                     packet.displayName().orElse(null),
                     config.soft_cap(),
                     config.hard_cap(),
@@ -109,6 +110,7 @@ public class HandshakePingListener extends PacketListener<MagicLink.Handshake.Pi
             return new RankedMCLoader(
                     packet.sender().uuid(),
                     AddressUtil.parseAddress(packet.address()),
+                    packet.podName().orElse(null),
                     packet.displayName().orElse(null),
                     config.soft_cap(),
                     config.hard_cap(),

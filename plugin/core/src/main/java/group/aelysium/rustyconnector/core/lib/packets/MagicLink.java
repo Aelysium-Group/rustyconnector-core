@@ -24,6 +24,11 @@ public interface MagicLink {
             public Integer playerCount() {
                 return this.parameters().get(Parameters.PLAYER_COUNT).getAsInt();
             }
+            public Optional<String> podName() {
+                String podName = this.parameters().get(Parameters.POD_NAME).getAsString();
+                if(podName.isEmpty()) return Optional.empty();
+                return Optional.of(podName);
+            }
 
             public Ping(Packet packet) {
                 super(packet);
@@ -34,7 +39,7 @@ public interface MagicLink {
                 String DISPLAY_NAME = "n";
                 String MAGIC_CONFIG_NAME = "c";
                 String PLAYER_COUNT = "pc";
-                String POD_NAME = "k8";
+                String POD_NAME = "pn";
             }
         }
 

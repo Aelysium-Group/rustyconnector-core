@@ -8,6 +8,7 @@ import group.aelysium.rustyconnector.toolkit.core.packet.PacketParameter;
 import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.gameplay.ISession;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.velocity.server.IRankedMCLoader;
+import io.fabric8.kubernetes.api.model.Pod;
 
 import java.net.InetSocketAddress;
 import java.util.*;
@@ -15,6 +16,9 @@ import java.util.*;
 public class RankedMCLoader extends MCLoader implements IRankedMCLoader {
     protected ISession activeSession;
 
+    public RankedMCLoader(UUID uuid, InetSocketAddress address, String podName, String displayName, int softPlayerCap, int hardPlayerCap, int weight, int timeout) {
+        super(uuid, address, podName, displayName, softPlayerCap, hardPlayerCap, weight, timeout);
+    }
     public RankedMCLoader(UUID uuid, InetSocketAddress address, String displayName, int softPlayerCap, int hardPlayerCap, int weight, int timeout) {
         super(uuid, address, displayName, softPlayerCap, hardPlayerCap, weight, timeout);
     }
