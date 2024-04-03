@@ -1,7 +1,6 @@
 package group.aelysium.rustyconnector.plugin.velocity.lib.matchmaking.packet_handlers;
 
 import group.aelysium.rustyconnector.core.lib.packets.BuiltInIdentifications;
-import group.aelysium.rustyconnector.core.lib.packets.MagicLink;
 import group.aelysium.rustyconnector.core.lib.packets.RankedGame;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.ranked_family.RankedFamily;
 import group.aelysium.rustyconnector.plugin.velocity.lib.server.RankedMCLoader;
@@ -9,7 +8,7 @@ import group.aelysium.rustyconnector.toolkit.core.packet.Packet;
 import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
 import group.aelysium.rustyconnector.toolkit.core.packet.PacketListener;
 import group.aelysium.rustyconnector.toolkit.core.packet.PacketIdentification;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.gameplay.ISession;
+import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.ISession;
 import group.aelysium.rustyconnector.toolkit.velocity.server.IRankedMCLoader;
 
 import java.util.List;
@@ -34,8 +33,6 @@ public class RankedGameEndListener extends PacketListener<RankedGame.End> {
     @Override
     public void execute(RankedGame.End packet) {
         RankedMCLoader mcloader = new IRankedMCLoader.Reference(packet.sender().uuid()).get();
-
-        RankedGame.EndedSession sessionRankings = packet.session();
 
         ISession session = mcloader.currentSession().orElseGet(() -> {
             RankedFamily family = (RankedFamily) mcloader.family();

@@ -9,27 +9,34 @@ import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.Family;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.ranked_family.RankedFamily;
 import group.aelysium.rustyconnector.plugin.velocity.lib.server.RankedMCLoader;
-import group.aelysium.rustyconnector.plugin.velocity.lib.storage.StorageService;
 import group.aelysium.rustyconnector.toolkit.core.packet.Packet;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.gameplay.ISession;
-import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.velocity.connection.ConnectionResult;
+import group.aelysium.rustyconnector.toolkit.velocity.connection.PlayerConnectable;
+import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IMatchPlayer;
+import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.ISession;
+import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IPlayerRank;
 import group.aelysium.rustyconnector.toolkit.velocity.server.IRankedMCLoader;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.rmi.AlreadyBoundException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class Session implements ISession {
-    protected final UUID uuid;
-    protected final List<IPlayer> players;
-    protected final IRankedMCLoader mcLoader;
+    protected final UUID uuid = UUID.randomUUID();;
+    protected final Map<UUID, IMatchPlayer<IPlayerRank>> players;
+    protected IRankedMCLoader mcLoader;
     protected final Settings settings;
+    protected final RankRange rankRange;
+    protected boolean frozen = false;
 
-    private Session(UUID uuid, List<IPlayer> players, IRankedMCLoader mcLoader, Settings settings) {
-        this.uuid = uuid;
-        this.players = players;
-        this.mcLoader = mcLoader;
+    public Session(IMatchPlayer<IPlayerRank> starter, Settings settings) {
+        this.players = new ConcurrentHashMap<>(settings.max());
+        this.players.put(starter.player().uuid(), starter);
+        this.rankRange = new RankRange(starter.rank().rank(), settings.variance());
         this.settings = settings;
     }
 
@@ -41,26 +48,46 @@ public class Session implements ISession {
         return this.settings;
     }
 
-    public IRankedMCLoader mcLoader() {
-        return this.mcLoader;
+    public Optional<IRankedMCLoader> mcLoader() {
+        if(!this.active()) return Optional.empty();
+        return Optional.of(this.mcLoader);
+    }
+
+    public RankRange range() {
+        return this.rankRange;
+    }
+
+    public boolean active() {
+        return this.mcLoader != null;
+    }
+
+    public boolean full() {
+        return this.players.size() >= settings.max();
+    }
+
+    public int size() {
+        return this.players.size();
+    }
+
+    public boolean frozen() {
+        return this.frozen;
     }
 
     public void end(List<UUID> winners, List<UUID> losers) {
         RankedFamily family = (RankedFamily) this.mcLoader.family();
-        StorageService storage = Tinder.get().services().storage();
 
         family.matchmaker().remove(this);
         Family parent = family.parent();
 
-        for (IPlayer player : this.players()) {
+        for (IMatchPlayer<IPlayerRank> matchPlayer : this.players.values()) {
             try {
-                if(winners.contains(player.uuid())) player.rank(this.settings.game()).orElseThrow().rank().markWin(storage);
-                if(losers.contains(player.uuid())) player.rank(this.settings.game()).orElseThrow().rank().markLoss(storage);
+                if(winners.contains(matchPlayer.player().uuid())) matchPlayer.rank().markWin();
+                if(losers.contains(matchPlayer.player().uuid())) matchPlayer.rank().markLoss();
             } catch (Exception e) {
                 e.printStackTrace();
             }
             try {
-                parent.connect(player);
+                parent.connect(matchPlayer.player());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -70,7 +97,7 @@ public class Session implements ISession {
     }
 
     public void implode(String reason) {
-        this.players.forEach(player -> player.sendMessage(Component.text(reason, NamedTextColor.RED)));
+        this.players.values().forEach(matchPlayer -> matchPlayer.player().sendMessage(Component.text(reason, NamedTextColor.RED)));
 
         Packet packet = Tinder.get().services().packetBuilder().newBuilder()
                 .identification(BuiltInIdentifications.RANKED_GAME_IMPLODE)
@@ -84,12 +111,12 @@ public class Session implements ISession {
         this.end(List.of(), List.of());
     }
 
-    public List<IPlayer> players() {
+    public Map<UUID, IMatchPlayer<IPlayerRank>> players() {
         return players;
     }
 
-    public boolean leave(IPlayer player) {
-        if(!this.players.remove(player)) return false;
+    public boolean leave(IMatchPlayer<IPlayerRank> matchPlayer) {
+        if(this.players.remove(matchPlayer.player().uuid()) == null) return false;
 
         if(this.players.size() >= this.settings.min()) return true;
 
@@ -98,20 +125,68 @@ public class Session implements ISession {
         return true;
     }
 
+    public PlayerConnectable.Request join(IMatchPlayer<IPlayerRank> matchPlayer) {
+        CompletableFuture<ConnectionResult> result = new CompletableFuture<>();
+        PlayerConnectable.Request request = new PlayerConnectable.Request(matchPlayer.player(), result);
+
+        if(!this.players.containsKey(matchPlayer.player().uuid())) {
+            result.complete(ConnectionResult.failed(Component.text("You're already in this session!")));
+            return request;
+        }
+
+        if(!this.rankRange.validate(matchPlayer.rank().rank())) {
+            result.complete(ConnectionResult.failed(Component.text("You're not the right rank to connect to this session!")));
+            return request;
+        }
+
+        if(this.frozen) {
+            result.complete(ConnectionResult.failed(Component.text("This session is already active and not accepting new players!")));
+            return request;
+        }
+
+        this.players.put(matchPlayer.player().uuid(), matchPlayer);
+
+        if(this.active())
+            try {
+                ConnectionResult r = this.mcLoader.connect(matchPlayer.player()).result().get(5, TimeUnit.SECONDS);
+                if (!r.connected())
+                    throw new RuntimeException("This exception should never see the light of day! It simply causes the catch block to trigger!");
+
+                result.complete(ConnectionResult.success(Component.text("You've successfully connected to the session!"), null));
+            } catch (Exception e) {
+                this.players.remove(matchPlayer.player().uuid());
+                result.complete(ConnectionResult.failed(Component.text("Failed to connect to the session!")));
+            }
+        else result.complete(ConnectionResult.success(Component.text("Connected to session! Your session is waiting to load into a server..."), null));
+
+        // The result should already be complete by this point.
+        return request;
+    }
+
+    public boolean contains(IMatchPlayer<IPlayerRank> matchPlayer) {
+        return this.players.containsKey(matchPlayer.player().uuid());
+    }
+    public void start(IRankedMCLoader mcLoader) throws AlreadyBoundException {
+        if(mcLoader.currentSession().isPresent()) throw new AlreadyBoundException("There's already a Session running on this MCLoader!");
+        ((RankedMCLoader) mcLoader).connect(this);
+        this.mcLoader = mcLoader;
+        if(this.settings.shouldFreeze()) this.frozen = true;
+    }
+
     @Override
     public JsonObject toJSON() {
         JsonObject object = new JsonObject();
         object.add("uuid", new JsonPrimitive(this.uuid.toString()));
 
         JsonArray array = new JsonArray();
-        players.forEach(player -> {
+        players.values().forEach(matchPlayer -> {
             JsonObject playerObject = new JsonObject();
 
-            playerObject.add("uuid", new JsonPrimitive(player.uuid().toString()));
+            playerObject.add("uuid", new JsonPrimitive(matchPlayer.player().uuid().toString()));
 
             Object rank = "null";
             try {
-                rank = player.rank(this.settings.game()).orElseThrow().rank().rank();
+                rank = matchPlayer.rank().rank();
             } catch (Exception ignore) {}
 
             playerObject.add("rank", new JsonPrimitive(rank.toString()));
@@ -121,71 +196,5 @@ public class Session implements ISession {
         object.add("players", array);
 
         return object;
-    }
-
-    public static class Builder {
-        protected List<IPlayer> players = new ArrayList<>();
-        protected RankedMCLoader mcLoader;
-
-        /**
-         * Add a player to the match
-         * @param player The player to add.
-         */
-        public void addPlayer(IPlayer player) {
-            this.players.add(player);
-        }
-
-        /**
-         * Builds the gamematch.
-         * @return A {@link Session}, or `null` if there are still teams that aren't at least filled to the minimum.
-         */
-        public Session.Waiting build() {
-            return new Session.Waiting(players);
-        }
-    }
-
-    public static class Waiting implements ISession.IWaiting {
-        protected UUID uuid = UUID.randomUUID();
-        protected List<IPlayer> players;
-
-        protected Waiting(List<IPlayer> teams) {
-            this.players = teams;
-        }
-
-        public int size() {
-            return this.players.size();
-        }
-
-        public UUID uuid() {
-            return this.uuid;
-        }
-
-        public List<IPlayer> players() {
-            return this.players;
-        }
-
-        public boolean remove(IPlayer player) {
-            return this.players.remove(player);
-        }
-
-        /**
-         * Starts the session on the specified MCLoader.
-         * By the time {@link Session} is returned, it should be assumed that all players have connected.
-         * @param mcLoader The MCLoader to run the session on.
-         * @param settings The settings that govern this session.
-         * @return A running {@link Session}.
-         * @throws AlreadyBoundException If a session is already running on this MCLoader.
-         */
-        public ISession start(IRankedMCLoader mcLoader, Settings settings) throws AlreadyBoundException {
-            ISession session = new Session(uuid, players, mcLoader, settings);
-            if(mcLoader.currentSession().isPresent()) throw new AlreadyBoundException("There's already a Session running on this MCLoader!");
-            ((RankedMCLoader) mcLoader).connect(session);
-            return session;
-        }
-
-        @Override
-        public boolean contains(IPlayer player) {
-            return this.players.contains(player);
-        }
     }
 }

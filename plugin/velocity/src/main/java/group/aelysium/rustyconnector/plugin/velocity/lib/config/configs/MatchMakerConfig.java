@@ -3,11 +3,14 @@ package group.aelysium.rustyconnector.plugin.velocity.lib.config.configs;
 import group.aelysium.rustyconnector.core.lib.config.YAML;
 import group.aelysium.rustyconnector.core.lib.lang.LangService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.config.ConfigService;
+import group.aelysium.rustyconnector.plugin.velocity.lib.matchmaking.storage.RandomizedPlayerRank;
+import group.aelysium.rustyconnector.plugin.velocity.lib.matchmaking.storage.WinLossPlayerRank;
+import group.aelysium.rustyconnector.plugin.velocity.lib.matchmaking.storage.WinRatePlayerRank;
 import group.aelysium.rustyconnector.toolkit.core.config.IConfigService;
 import group.aelysium.rustyconnector.toolkit.core.config.IYAML;
 import group.aelysium.rustyconnector.toolkit.core.lang.LangFileMappings;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.matchmakers.IMatchmaker;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.storage.IScoreCard;
+import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IMatchmaker;
+import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IPlayerRank;
 import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
 
 import java.nio.file.Path;
@@ -32,12 +35,13 @@ public class MatchMakerConfig extends YAML implements group.aelysium.rustyconnec
     }
 
     protected void register() throws IllegalStateException {
-        IScoreCard.RankSchema algorithm = IScoreCard.RankSchema.valueOf(IYAML.getValue(this.data,"ranking.algorithm",String.class));
+        String algorithm = IYAML.getValue(this.data,"ranking.algorithm",String.class);
         double variance = IYAML.getValue(this.data,"ranking.variance",Double.class);
         variance = round(variance, 2);
 
-        int min = IYAML.getValue(this.data,"session.building.min",Integer.class);
-        int max = IYAML.getValue(this.data,"session.building.max",Integer.class);
+        boolean freezeActiveSessions = IYAML.getValue(this.data,"session.freeze-active-sessions",Boolean.class);
+        int min = IYAML.getValue(this.data,"session.min",Integer.class);
+        int max = IYAML.getValue(this.data,"session.max",Integer.class);
 
         LiquidTimestamp matchmakingInterval = LiquidTimestamp.from(10, TimeUnit.SECONDS);
         try {
@@ -47,8 +51,8 @@ public class MatchMakerConfig extends YAML implements group.aelysium.rustyconnec
         int session_closing_threshold = IYAML.getValue(this.data,"session.closing.threshold",Integer.class);
         if(session_closing_threshold == -1) session_closing_threshold = min;
 
-        boolean session_closing_ranks_quittersLose = IYAML.getValue(this.data,"session.closing.ranks.quitters-lose",Boolean.class);
-        boolean session_closing_ranks_stayersWin = IYAML.getValue(this.data,"session.closing.ranks.stayers-win",Boolean.class);
+        boolean session_closing_ranks_quittersLose = IYAML.getValue(this.data,"session.quitters-lose",Boolean.class);
+        boolean session_closing_ranks_stayersWin = IYAML.getValue(this.data,"session.stayers-win",Boolean.class);
 
         boolean queue_joining_showInfo = IYAML.getValue(this.data, "queue.joining.show-info", Boolean.class);
         boolean queue_joining_reconnect = IYAML.getValue(this.data, "queue.joining.reconnect", Boolean.class);
@@ -56,11 +60,22 @@ public class MatchMakerConfig extends YAML implements group.aelysium.rustyconnec
         boolean session_leaving_command = IYAML.getValue(this.data, "queue.leaving.command", Boolean.class);
         boolean session_leaving_boot = IYAML.getValue(this.data, "queue.leaving.boot", Boolean.class);
 
+        Class<? extends IPlayerRank> actualSchema = switch (algorithm) {
+            case "WIN_LOSS" -> WinLossPlayerRank.class;
+            case "WIN_RATE" -> WinRatePlayerRank.class;
+            default -> RandomizedPlayerRank.class;
+        };
+
         this.settings = new IMatchmaker.Settings(
-                new IMatchmaker.Settings.Ranking(algorithm, variance),
+                new IMatchmaker.Settings.Ranking(actualSchema, variance),
                 new IMatchmaker.Settings.Session(
-                        new IMatchmaker.Settings.Session.Building(min, max, matchmakingInterval),
-                        new IMatchmaker.Settings.Session.Closing(session_closing_threshold, session_closing_ranks_quittersLose, session_closing_ranks_stayersWin)
+                        freezeActiveSessions,
+                        min,
+                        max,
+                        matchmakingInterval,
+                        session_closing_threshold,
+                        session_closing_ranks_quittersLose,
+                        session_closing_ranks_stayersWin
                 ),
                 new IMatchmaker.Settings.Queue(
                         new IMatchmaker.Settings.Queue.Joining(queue_joining_showInfo, queue_joining_reconnect),

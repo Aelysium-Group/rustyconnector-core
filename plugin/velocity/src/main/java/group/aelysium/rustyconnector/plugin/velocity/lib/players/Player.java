@@ -1,17 +1,17 @@
 package group.aelysium.rustyconnector.plugin.velocity.lib.players;
 
-import group.aelysium.rustyconnector.plugin.velocity.lib.matchmaking.storage.GamemodeRankManager;
 import group.aelysium.rustyconnector.plugin.velocity.lib.server.MCLoader;
 import group.aelysium.rustyconnector.plugin.velocity.lib.storage.StorageService;
 import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.storage.IGamemodeRankManager;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.storage.IPlayerRankProfile;
+import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IPlayerRank;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 import net.kyori.adventure.text.Component;
+import org.eclipse.serializer.persistence.types.Persister;
 
 import java.util.*;
 
 public class Player implements IPlayer {
+    protected transient Persister storage;
     protected UUID uuid;
     protected String username;
     protected long firstLogin;
@@ -46,6 +46,10 @@ public class Player implements IPlayer {
         return resolve().isPresent();
     }
 
+    public Optional<IPlayerRank> rank(String gameId) {
+        return Tinder.get().services().storage().database().fetchRank(RankKey.from(this.uuid, gameId));
+    }
+
     public Optional<MCLoader> server() {
         try {
             com.velocitypowered.api.proxy.Player resolvedPlayer = this.resolve().orElseThrow();
@@ -55,16 +59,6 @@ public class Player implements IPlayer {
 
             return Optional.of(mcLoader);
         } catch (Exception ignore) {}
-        return Optional.empty();
-    }
-
-    public Optional<IPlayerRankProfile> rank(IGamemodeRankManager game) {
-        StorageService storage = Tinder.get().services().storage();
-        try {
-            return Optional.of(game.rankedPlayer(storage, this.uuid, true));
-        } catch (NoSuchElementException e) {
-            e.printStackTrace();
-        }
         return Optional.empty();
     }
 
@@ -93,53 +87,21 @@ public class Player implements IPlayer {
      */
     public static Player from(com.velocitypowered.api.proxy.Player velocityPlayer) {
         // If player doesn't exist, we need to make one and store it.
-        StorageService storageService = Tinder.get().services().storage();
+        StorageService storage = Tinder.get().services().storage();
 
         try {
             Player player = new Reference(velocityPlayer.getUniqueId()).get();
             if(!player.username().equals(velocityPlayer.getUsername())) {
                 player.username = velocityPlayer.getUsername();
-                storageService.database().savePlayer(storageService, player);
+                storage.database().savePlayer(player);
                 return player;
             }
         } catch (Exception ignore) {}
 
         Player player = new Player(velocityPlayer.getUniqueId(), velocityPlayer.getUsername());
 
-        storageService.database().savePlayer(storageService, player);
+        storage.database().savePlayer(player);
 
         return player;
-    }
-
-    public static class Shard implements IShard {
-        protected UUID uuid;
-        protected String username;
-
-        protected Shard(UUID uuid, String username) {
-            this.uuid = uuid;
-            this.username = username;
-        }
-
-        public UUID uuid() { return this.uuid; }
-        public String username() { return this.username; }
-
-        public Player storeAndGet() {
-            // If player doesn't exist, we need to make one and store it.
-            StorageService storageService = Tinder.get().services().storage();
-
-            try {
-                Player player = new Reference(this.uuid).get();
-                if(!player.username().equals(this.username)) {
-                    player.username = this.username;
-                    storageService.store(player);
-                    return player;
-                }
-            } catch (Exception ignore) {}
-            Player player = new Player(this.uuid, this.username);
-
-            storageService.database().savePlayer(storageService, player);
-
-            return player;
-        }
     }
 }

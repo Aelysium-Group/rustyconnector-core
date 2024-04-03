@@ -1,11 +1,11 @@
 package group.aelysium.rustyconnector.toolkit.velocity.player;
 
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.storage.IGamemodeRankManager;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.storage.IPlayerRankProfile;
+import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IPlayerRank;
 import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
 import net.kyori.adventure.text.Component;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -46,10 +46,10 @@ public interface IPlayer {
     Optional<? extends IMCLoader> server();
 
     /**
-     * Gets the ranked verison of this player.
-     * @param game The game to fetch the rank from.
+     * Fetches the player's rank for a specific game.
+     * @param gameId The game id to fetch the player's rank from.
      */
-    Optional<IPlayerRankProfile> rank(IGamemodeRankManager game);
+    Optional<? extends IPlayerRank> rank(String gameId);
 
     class Reference extends group.aelysium.rustyconnector.toolkit.velocity.util.Reference<IPlayer, UUID> {
         public Reference(UUID uuid) {
@@ -72,24 +72,36 @@ public interface IPlayer {
     }
 
     /**
-     * A collection of a player's UUID and Username, which can be resolved into a {@link IPlayer}.
+     * Used to fetch the player's rank from the storage system.
      */
-    interface IShard {
-        /**
-         * The UUID of the player shard.
-         */
-        UUID uuid();
+    class RankKey {
+        private final UUID player;
+        private final String game;
 
-        /**
-         * The Username of the player shard.
-         */
-        String username();
+        private RankKey(UUID player, String game) {
+            this.player = player;
+            this.game = game;
+        }
 
-        /**
-         * Store the player shard and get the associated {@link IPlayer} that is created.
-         * If a {@link IPlayer} already exists for this shard, just get the player.
-         * @return {@link IPlayer}
-         */
-        IPlayer storeAndGet();
+        public String gameId() {
+            return this.game;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            RankKey rankKey = (RankKey) o;
+            return Objects.equals(player, rankKey.player) && Objects.equals(game, rankKey.game);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(player, game);
+        }
+
+        public static RankKey from(UUID player, String gameId) {
+            return new RankKey(player, gameId);
+        }
     }
 }
