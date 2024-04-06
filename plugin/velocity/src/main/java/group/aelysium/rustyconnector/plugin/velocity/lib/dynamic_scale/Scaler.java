@@ -7,23 +7,51 @@ import io.fabric8.kubernetes.api.model.Pod;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class DynamicScaler {
+public class Scaler {
     private static final K8Service k8 = new K8Service();
+    protected final Map<String, CompletableFuture<IMCLoader>> pendingMCLoaders = new ConcurrentHashMap<>();
     protected final Settings settings;
     protected final IFamily family;
 
-    public DynamicScaler(Settings settings, IFamily family) {
+    public Scaler(Settings settings, IFamily family) {
         this.settings = settings;
         this.family = family;
     }
 
     /**
-     * Creates `n` number of new MCLoaders.
+     * Graduates a pod to become an MCLoader.
+     * This method doesn't actually alter any internal state.
+     * The graduate methods query Kubernetes directly.
+     * This method is just a mask which resolves the {@link CompletableFuture} that's waiting for a
+     * specific MCLoader to register.
+     * @param podName The name of the pod to graduate.
+     * @param mcLoader The MCLoader that the pod has graduated as.
+     * @return `true` if the pod was successfully graduated. `false` otherwise (includes if the podName doesn't exist as an undergraduate)
      */
-    public void createMCLoaders(int count) {
-        for (int i = 0; i < count; i++)
-            k8.createPod(this.family.id(), this.settings.helmChart());
+    public boolean graduatePod(String podName, IMCLoader mcLoader) {
+        CompletableFuture<IMCLoader> future = this.pendingMCLoaders.get(podName);
+        if(future == null) return false;
+        future.complete(mcLoader);
+        return true;
+    }
+
+    /**
+     * Creates a new MCLoader.
+     * @return A future that will resolve into the created MCLoader once it's booted and registered to the proxy.
+     *         If the MCLoader fails to boot. The returned future will fail instantly.
+     *         Otherwise, the future will wait for as long as it needs to for the MCLoader to boot.
+     */
+    public CompletableFuture<IMCLoader> createMCLoader() {
+        String podName = k8.createPod(this.family.id(), this.settings.helmChart());
+
+        CompletableFuture<IMCLoader> future = new CompletableFuture<>();
+        this.pendingMCLoaders.put(podName, future);
+
+        return future;
     }
 
     /**
@@ -101,7 +129,7 @@ public class DynamicScaler {
             ProactiveAlgorithm proactiveAlgorithm,
             Scheduled scheduled,
             Predictive predictive
-            ) {
+    ) {
         public record Reactive(
                 Generation generation,
                 Degeneration degeneration
@@ -124,14 +152,14 @@ public class DynamicScaler {
         }
 
         public record Scheduled(
-            String start,
-            Object timespans
+                String start,
+                Object timespans
         ) {}
 
         public record Predictive(
-            String keepTelemetryFor,
-            String resolution,
-            double idealRatio
+                String keepTelemetryFor,
+                String resolution,
+                double idealRatio
         ) {}
     }
 }
