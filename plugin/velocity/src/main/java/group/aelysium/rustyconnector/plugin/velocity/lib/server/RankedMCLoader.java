@@ -5,7 +5,9 @@ import group.aelysium.rustyconnector.core.lib.packets.RankedGame;
 import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
 import group.aelysium.rustyconnector.toolkit.core.packet.Packet;
 import group.aelysium.rustyconnector.toolkit.core.packet.PacketParameter;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.gameplay.ISession;
+import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IMatchPlayer;
+import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.ISession;
+import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IPlayerRank;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.velocity.server.IRankedMCLoader;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -29,8 +31,8 @@ public class RankedMCLoader extends MCLoader implements IRankedMCLoader {
     }
 
     public void connect(ISession session) {
-        for (IPlayer rankedPlayer : session.players())
-            this.connect(rankedPlayer);
+        for (IMatchPlayer<IPlayerRank> matchPlayer : session.players().values())
+            this.connect(matchPlayer.player());
 
         Packet packet = Tinder.get().services().packetBuilder().newBuilder()
                 .identification(BuiltInIdentifications.RANKED_GAME_READY)
@@ -47,7 +49,10 @@ public class RankedMCLoader extends MCLoader implements IRankedMCLoader {
     public void leave(IPlayer player) {
         if(this.activeSession == null) return;
 
-        this.activeSession.leave(player);
+        IMatchPlayer<IPlayerRank> matchPlayer = this.activeSession.players().get(player.uuid());
+        if(matchPlayer == null) return;
+
+        this.activeSession.leave(matchPlayer);
     }
 
     public void unlock() {
