@@ -1,9 +1,13 @@
 package group.aelysium.rustyconnector.core.mcloader.central;
 
 import group.aelysium.rustyconnector.core.lib.cache.MessageCacheService;
+import group.aelysium.rustyconnector.core.lib.config.common.UUIDConfig;
 import group.aelysium.rustyconnector.core.lib.crypt.AESCryptor;
-import group.aelysium.rustyconnector.core.lib.key.config.PrivateKeyConfig;
+import group.aelysium.rustyconnector.core.lib.config.common.PrivateKeyConfig;
 import group.aelysium.rustyconnector.core.lib.lang.LangService;
+import group.aelysium.rustyconnector.core.lib.packets.BuiltInIdentifications;
+import group.aelysium.rustyconnector.core.lib.packets.MCLoader;
+import group.aelysium.rustyconnector.core.lib.packets.SendPlayerPacket;
 import group.aelysium.rustyconnector.core.mcloader.central.config.ConnectorsConfig;
 import group.aelysium.rustyconnector.core.lib.messenger.implementors.redis.RedisConnection;
 import group.aelysium.rustyconnector.core.lib.messenger.implementors.redis.RedisConnector;
@@ -52,6 +56,29 @@ public class MCLoaderFlame extends ServiceableService<CoreServiceHandler> implem
     }
 
     public String versionAsString() { return this.version; }
+
+    @Override
+    public void lock() {
+        this.services().magicLink().connection().orElseThrow().publish(MCLoader.Lock.build(this));
+    }
+
+    @Override
+    public void unlock() {
+        this.services().magicLink().connection().orElseThrow().publish(MCLoader.Unlock.build(this));
+    }
+
+    @Override
+    public void send(UUID player, String familyID) {
+        Packet message = this.services().packetBuilder().newBuilder()
+                .identification(BuiltInIdentifications.SEND_PLAYER)
+                .sendingToProxy()
+                .parameter(SendPlayerPacket.Parameters.PLAYER_UUID, player.toString())
+                .parameter(SendPlayerPacket.Parameters.TARGET_FAMILY_NAME, familyID)
+                .build();
+
+        this.services().magicLink().connection().orElseThrow().publish(message);
+    }
+
     public int configVersion() { return this.configVersion; }
 
     /**
@@ -62,11 +89,12 @@ public class MCLoaderFlame extends ServiceableService<CoreServiceHandler> implem
         Initialize initialize = new Initialize(api);
 
         try {
+            UUID uuid = initialize.systemUUID();
             String version = initialize.version();
             int configVersion = initialize.configVersion();
             AESCryptor cryptor = initialize.privateKey();
             DefaultConfig defaultConfig = initialize.defaultConfig(langService);
-            ServerInfoService serverInfoService = initialize.serverInfo(defaultConfig, port);
+            ServerInfoService serverInfoService = initialize.serverInfo(uuid, defaultConfig, port);
 
             MessageCacheService messageCacheService = initialize.messageCache();
             RedisConnector messenger = initialize.connectors(cryptor, messageCacheService, logger, langService, serverInfoService.uuid());
@@ -113,6 +141,10 @@ class Initialize {
         return this.services;
     }
 
+    public UUID systemUUID() {
+        return new UUIDConfig(new File(api.dataFolder(), "metadata/system.uuid")).get(bootOutput);
+    }
+
     public String version() {
         try {
             InputStream stream = IMCLoaderTinder.resourceAsStream("plugin.yml");
@@ -152,7 +184,7 @@ class Initialize {
     }
 
     public AESCryptor privateKey() {
-        PrivateKeyConfig privateKeyConfig = new PrivateKeyConfig(new File(api.dataFolder(), "private.key"));
+        PrivateKeyConfig privateKeyConfig = new PrivateKeyConfig(new File(api.dataFolder(), "metadata/private.key"));
         try {
             return privateKeyConfig.get(bootOutput);
         } catch (Exception e) {
@@ -207,8 +239,9 @@ class Initialize {
         return service;
     }
 
-    public ServerInfoService serverInfo(DefaultConfig defaultConfig, int port) {
+    public ServerInfoService serverInfo(UUID uuid, DefaultConfig defaultConfig, int port) {
         ServerInfoService serverInfoService = new ServerInfoService(
+                uuid,
                 defaultConfig.address(),
                 defaultConfig.displayName(),
                 defaultConfig.magicConfig(),

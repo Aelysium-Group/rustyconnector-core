@@ -1,5 +1,6 @@
 package group.aelysium.rustyconnector.plugin.velocity.lib.storage.reactors;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.MysqlDataSource;
@@ -7,14 +8,13 @@ import group.aelysium.rustyconnector.plugin.velocity.lib.players.Player;
 import group.aelysium.rustyconnector.toolkit.core.UserPass;
 import group.aelysium.rustyconnector.toolkit.velocity.family.static_family.IServerResidence;
 import group.aelysium.rustyconnector.toolkit.velocity.friends.PlayerPair;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IPlayerRank;
+import group.aelysium.rustyconnector.toolkit.core.matchmaking.IPlayerRank;
+import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IRankResolver;
+import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IVelocityPlayerRank;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 
 import java.net.InetSocketAddress;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -48,8 +48,8 @@ public class MySQLReactor extends StorageReactor {
             "CREATE TABLE IF NOT EXISTS player_ranks (" +
                     "    player_uuid VARCHAR(36) NOT NULL," +
                     "    game_id VARCHAR(16) NOT NULL," +
-                    "    schema VARCHAR(16) NOT NULL," +
-                    "    rank TINYBLOB NOT NULL" +
+                    "    schema VARCHAR(32) NOT NULL," +
+                    "    rank VARCHAR(256) NOT NULL," +
                     "    FOREIGN KEY (player_uuid) REFERENCES players(uuid) ON DELETE CASCADE," +
                     "    CONSTRAINT uc_Mappings UNIQUE (player_uuid, game_id)" +
                     ");";
@@ -58,6 +58,7 @@ public class MySQLReactor extends StorageReactor {
 
     public MySQLReactor(Core.Settings settings) {
         this.core = new Core(settings);
+        this.initializeDatabase();
     }
 
     @Override
@@ -86,7 +87,7 @@ public class MySQLReactor extends StorageReactor {
             try {
                 PreparedStatement statement = this.core.prepare("UPDATE server_residences SET expiration = FROM_UNIXTIME(?) WHERE family_id = ? AND expiration IS NULL;");
                   statement.setLong(1, newExpirationEpoch);
-                statement.setString(1, familyId);
+                statement.setString(2, familyId);
                 this.core.execute(statement);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -133,17 +134,29 @@ public class MySQLReactor extends StorageReactor {
 
     @Override
     public void saveServerResidence(String familyId, UUID mcloader, UUID player, Long expirationEpoch) {
-        try {
-            PreparedStatement statement = this.core.prepare("REPLACE INTO server_residence (player_uuid, family_id, mcloader_uuid, expiration) VALUES(?, ?, ?, ?, FROM_UNIXTIME(?));");
+        if(expirationEpoch == null)
+            try {
+                PreparedStatement statement = this.core.prepare("REPLACE INTO server_residences (player_uuid, family_id, mcloader_uuid, expiration) VALUES(?, ?, ?, NULL);");
 
-            statement.setString(1, player.toString());
-            statement.setString(2, familyId);
-            statement.setString(3, mcloader.toString());
-              statement.setLong(4, expirationEpoch);
-            this.core.execute(statement);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+                statement.setString(1, player.toString());
+                statement.setString(2, familyId);
+                statement.setString(3, mcloader.toString());
+                this.core.execute(statement);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        else
+            try {
+                PreparedStatement statement = this.core.prepare("REPLACE INTO server_residences (player_uuid, family_id, mcloader_uuid, expiration) VALUES(?, ?, ?, FROM_UNIXTIME(?));");
+
+                statement.setString(1, player.toString());
+                statement.setString(2, familyId);
+                statement.setString(3, mcloader.toString());
+                  statement.setLong(4, expirationEpoch);
+                this.core.execute(statement);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
     }
 
     @Override
@@ -166,7 +179,7 @@ public class MySQLReactor extends StorageReactor {
             statement.setString(2, pair.player2().uuid().toString());
             ResultSet result = this.core.executeQuery(statement);
 
-            boolean hasRows = result.first();
+            boolean hasRows = result.next();
             if(!hasRows) return Optional.of(false);
             return Optional.of(true);
         } catch (Exception e) {
@@ -180,26 +193,24 @@ public class MySQLReactor extends StorageReactor {
         try {
             PreparedStatement statement = this.core.prepare(
                     "SELECT\n" +
-                            "    CASE\n" +
-                            "        WHEN player1_uuid = ? THEN player2_uuid\n" +
-                            "        ELSE player1_uuid\n" +
-                            "    END AS friend_uuid,\n" +
+                            "    IF(f.player1_uuid = ?, f.player2_uuid, f.player1_uuid) AS friend_uuid,\n" +
                             "    p.username AS friend_username\n" +
-                            "FROM friend_links fl\n" +
-                            "JOIN players p ON fl.player1_uuid = p.uuid OR fl.player2_uuid = p.uuid\n" +
-                            "WHERE fl.player1_uuid = ? OR fl.player2_uuid = ?;\n"
+                            "FROM friend_links f\n" +
+                            "JOIN players p ON p.uuid = IF(f.player1_uuid = ?, f.player2_uuid, f.player1_uuid)\n" +
+                            "WHERE f.player1_uuid = ? OR f.player2_uuid = ?;"
             );
             String uuidAsString = player.toString();
             statement.setString(1, uuidAsString);
             statement.setString(2, uuidAsString);
             statement.setString(3, uuidAsString);
+            statement.setString(4, uuidAsString);
             ResultSet result = this.core.executeQuery(statement);
 
             List<IPlayer> friends = new ArrayList<>();
 
             while(result.next()) {
-                UUID uuid = UUID.fromString(result.getString("uuid"));
-                String username = result.getString("username");
+                UUID uuid = UUID.fromString(result.getString("friend_uuid"));
+                String username = result.getString("friend_username");
 
                 friends.add(new Player(uuid, username));
             }
@@ -231,7 +242,7 @@ public class MySQLReactor extends StorageReactor {
             statement.setString(1, uuid.toString());
             ResultSet result = this.core.executeQuery(statement);
 
-            boolean hasRows = result.first();
+            boolean hasRows = result.next();
             if(!hasRows) return Optional.empty();
 
             String username = result.getString("username");
@@ -250,7 +261,7 @@ public class MySQLReactor extends StorageReactor {
             statement.setString(1, username);
             ResultSet result = this.core.executeQuery(statement);
 
-            boolean hasRows = result.first();
+            boolean hasRows = result.next();
             if(!hasRows) return Optional.empty();
 
             UUID uuid = UUID.fromString(result.getString("uuid"));
@@ -265,7 +276,7 @@ public class MySQLReactor extends StorageReactor {
     @Override
     public void savePlayer(UUID uuid, String username) {
         try {
-            PreparedStatement statement = this.core.prepare("REPLACE INTO players (uuid, username) VALUES(?, ?);");
+            PreparedStatement statement = this.core.prepare("INSERT IGNORE players (uuid, username) VALUES(?, ?);");
             statement.setString(1, uuid.toString());
             statement.setString(2, username);
             this.core.execute(statement);
@@ -309,13 +320,25 @@ public class MySQLReactor extends StorageReactor {
     }
 
     @Override
-    public void saveRank(UUID player, String gameId, String schema, JsonObject rank) {
+    public void saveRank(UUID player, String gameId, JsonObject rank) {
         try {
             PreparedStatement statement = this.core.prepare("REPLACE INTO player_ranks (player_uuid, game_id, schema, rank) VALUES(?, ?, ?, ?);");
             statement.setString(1, player.toString());
             statement.setString(2, gameId);
-            statement.setString(3, schema);
+            statement.setString(3, rank.get("schema").getAsString());
             statement.setString(4, rank.toString());
+        this.core.execute(statement);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void purgeInvalidSchemas(String gameId, String validSchema) {
+        try {
+            PreparedStatement statement = this.core.prepare("DELETE FROM player_ranks WHERE game_id = ? AND schema <> ?;");
+            statement.setString(1, gameId);
+            statement.setString(2, validSchema);
             this.core.execute(statement);
         } catch (Exception e) {
             e.printStackTrace();
@@ -323,19 +346,21 @@ public class MySQLReactor extends StorageReactor {
     }
 
     @Override
-    public Optional<IPlayerRank> fetchRank(UUID player, String gameId) {
+    public Optional<IVelocityPlayerRank> fetchRank(UUID player, String gameId, IRankResolver resolver) {
         try {
             PreparedStatement statement = this.core.prepare("SELECT * FROM player_ranks WHERE player_uuid = ? AND game_id = ? LIMIT 1;");
             statement.setString(1, player.toString());
             statement.setString(2, gameId);
             ResultSet result = this.core.executeQuery(statement);
 
-            boolean hasRows = result.first();
+            boolean hasRows = result.next();
             if(!hasRows) return Optional.empty();
 
-            UUID uuid = UUID.fromString(result.getString("uuid"));
+            Gson gson = new Gson();
+            JsonObject rank = gson.fromJson(result.getString("rank"), JsonObject.class);
+            System.out.println(rank);
 
-            return Optional.empty();
+            return Optional.of((IVelocityPlayerRank) resolver.resolve(rank));
         } catch (Exception e) {
             e.printStackTrace();
             return Optional.empty();
@@ -360,7 +385,6 @@ public class MySQLReactor extends StorageReactor {
             this.dataSource.setUser(settings.userPass().user());
             this.dataSource.setPassword(new String(settings.userPass().password()));
             this.dataSource.setDatabaseName(settings.database());
-
         }
 
         /**

@@ -6,7 +6,6 @@ import group.aelysium.rustyconnector.core.lib.lang.Lang;
 import group.aelysium.rustyconnector.core.lib.lang.LanguageResolver;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.ranked_family.RankedFamily;
 import group.aelysium.rustyconnector.plugin.velocity.lib.matchmaking.Matchmaker;
-import group.aelysium.rustyconnector.plugin.velocity.lib.matchmaking.storage.WinLossPlayerRank;
 import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.family.scalar_family.IRootFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.friends.IFriendRequest;
@@ -538,6 +537,8 @@ public class ProxyLang extends Lang {
     };
 
     public final static Message RANKED_FAMILY_PARTY_DENIAL = () -> resolver().get("proxy.family.ranked.in_party");
+    public final static Message RANKED_FAMILY_IN_MATCHMAKER_QUEUE_DENIAL = () -> resolver().get("proxy.family.ranked.in_matchmaker_queue");
+    public final static Message RANKED_FAMILY_IN_MATCHMAKER_GAME_DENIAL = () -> resolver().get("proxy.family.ranked.in_matchmaker_game");
     public final static ParameterizedMessage2<RankedFamily, Boolean> RC_RANKED_FAMILY_INFO = (family, locked) -> {
         Component servers = text("");
         int i = 0;
@@ -575,10 +576,8 @@ public class ProxyLang extends Lang {
             }
         }
 
-        String algorithm = "RANDOMIZE";
         Matchmaker matchmaker = family.matchmaker();
-        if(matchmaker.settings().ranking().schema().equals(WinLossPlayerRank.class)) algorithm = "WIN_LOSS";
-        if(matchmaker.settings().ranking().schema().equals(WinLossPlayerRank.class)) algorithm = "WIN_RATE";
+        String algorithm = matchmaker.newPlayerRank().schemaName();
 
         return join(
                 newlines(),

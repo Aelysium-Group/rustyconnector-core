@@ -4,6 +4,7 @@ import com.velocitypowered.api.command.CommandManager;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.velocitypowered.api.event.EventManager;
+import group.aelysium.rustyconnector.core.lib.config.common.UUIDConfig;
 import group.aelysium.rustyconnector.plugin.velocity.event_handlers.rc.*;
 import group.aelysium.rustyconnector.plugin.velocity.lib.config.ConfigService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.config.configs.*;
@@ -11,6 +12,8 @@ import group.aelysium.rustyconnector.plugin.velocity.lib.family.ranked_family.Ra
 import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.packet_handlers.HandshakeDisconnectListener;
 import group.aelysium.rustyconnector.plugin.velocity.lib.matchmaking.commands.CommandLeave;
 import group.aelysium.rustyconnector.plugin.velocity.lib.matchmaking.packet_handlers.RankedGameEndListener;
+import group.aelysium.rustyconnector.plugin.velocity.lib.matchmaking.packet_handlers.RankedGameEndTiedListener;
+import group.aelysium.rustyconnector.plugin.velocity.lib.matchmaking.packet_handlers.RankedGameImplodedListener;
 import group.aelysium.rustyconnector.toolkit.core.messenger.IMessengerConnection;
 import group.aelysium.rustyconnector.toolkit.core.messenger.IMessengerConnector;
 import group.aelysium.rustyconnector.toolkit.core.packet.Packet;
@@ -30,13 +33,13 @@ import group.aelysium.rustyconnector.core.lib.messenger.implementors.redis.Redis
 import group.aelysium.rustyconnector.core.lib.data_transit.DataTransitService;
 import group.aelysium.rustyconnector.core.lib.cache.MessageCacheService;
 import group.aelysium.rustyconnector.core.lib.crypt.AESCryptor;
-import group.aelysium.rustyconnector.core.lib.key.config.MemberKeyConfig;
+import group.aelysium.rustyconnector.core.lib.config.common.MemberKeyConfig;
 import group.aelysium.rustyconnector.core.lib.lang.LangService;
 import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service;
 import group.aelysium.rustyconnector.toolkit.velocity.util.DependencyInjector;
 import group.aelysium.rustyconnector.plugin.velocity.PluginLogger;
 import group.aelysium.rustyconnector.plugin.velocity.VelocityRustyConnector;
-import group.aelysium.rustyconnector.core.lib.key.config.PrivateKeyConfig;
+import group.aelysium.rustyconnector.core.lib.config.common.PrivateKeyConfig;
 import group.aelysium.rustyconnector.plugin.velocity.event_handlers.velocity.OnPlayerChangeServer;
 import group.aelysium.rustyconnector.plugin.velocity.event_handlers.velocity.OnPlayerChooseInitialServer;
 import group.aelysium.rustyconnector.plugin.velocity.event_handlers.velocity.OnPlayerDisconnect;
@@ -123,7 +126,7 @@ public class Flame extends VelocityFlame<CoreServiceHandler> {
         logger.send(Component.text("Initializing 0%...", NamedTextColor.DARK_GRAY));
 
         try {
-            UUID uuid = UUID.randomUUID();
+            UUID uuid = initialize.systemUUID();
             String version = initialize.version();
             ConfigService configService = initialize.configService();
             AESCryptor cryptor = initialize.privateKey();
@@ -237,6 +240,10 @@ class Initialize {
         rcEventManager.on(MCLoaderLeaveEvent.class, new OnMCLoaderLeave());
     }
 
+    public UUID systemUUID() {
+        return new UUIDConfig(new File(String.valueOf(api.dataFolder()), "metadata/system.uuid")).get(bootOutput);
+    }
+
     public void commands(DependencyInjector.DI3<Flame, PluginLogger, MessageCacheService> dependencies) {
         CommandManager commandManager = api.velocityServer().getCommandManager();
 
@@ -266,7 +273,7 @@ class Initialize {
     }
 
     public AESCryptor privateKey() {
-        PrivateKeyConfig config = new PrivateKeyConfig(new File(String.valueOf(api.dataFolder()), "private.key"));
+        PrivateKeyConfig config = new PrivateKeyConfig(new File(String.valueOf(api.dataFolder()), "metadata/private.key"));
         try {
             return config.get(bootOutput);
         } catch (Exception e) {
@@ -322,6 +329,8 @@ class Initialize {
         connection.listen(new UnlockServerListener(this.api));
 
         connection.listen(new RankedGameEndListener(this.api));
+        connection.listen(new RankedGameEndTiedListener(this.api));
+        connection.listen(new RankedGameImplodedListener(this.api));
 
         ((RedisConnection) connection).startListening(dependencies.d2(), dependencies.d3(), Packet.Node.proxy(uuid));
         bootOutput.add(Component.text("Finished booting Messenger.", NamedTextColor.GREEN));
@@ -427,8 +436,7 @@ class Initialize {
 
         DataTransitService dataTransitService = new DataTransitService(
                 dataTransitConfig.denylist_enabled(),
-                dataTransitConfig.whitelist_enabled(),
-                dataTransitConfig.maxPacketLength()
+                dataTransitConfig.whitelist_enabled()
         );
         services.put(DataTransitService.class, dataTransitService);
 

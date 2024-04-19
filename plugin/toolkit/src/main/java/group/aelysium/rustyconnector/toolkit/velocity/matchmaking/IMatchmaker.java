@@ -4,17 +4,28 @@ import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service
 import group.aelysium.rustyconnector.toolkit.velocity.connection.ConnectionResult;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.PlayerConnectable;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.velocity.storage.IDatabase;
 import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
 
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-public interface IMatchmaker<PlayerRank extends IPlayerRank> extends Service {
+public interface IMatchmaker extends Service {
+    Settings settings();
+
     /**
      * Gets the game id used by this matchmaker to handle player ranks.
      */
     String gameId();
+
+    IDatabase.PlayerRanks storage();
+
+    /**
+     * Gets the matched player for this matchmaker.
+     * If no rank exists for this player, it returns an Empty
+     */
+    Optional<IMatchPlayer> matchPlayer(IPlayer player);
 
     /**
      * Inserts a player into the matchmaker.
@@ -28,10 +39,9 @@ public interface IMatchmaker<PlayerRank extends IPlayerRank> extends Service {
 
     /**
      * Removes the player from the matchmaker.
-     * This will remove the player from the matchmaking queue or from a session if they're in one.
      * @param player The player to remove.
      */
-    boolean remove(IPlayer player);
+    void leave(IPlayer player);
 
     /**
      * Checks if a player is currently waiting in the matchmaker.
@@ -41,18 +51,11 @@ public interface IMatchmaker<PlayerRank extends IPlayerRank> extends Service {
     boolean contains(IPlayer player);
 
     /**
-     * Ends a session.
-     * This method will close the session, connect all players to the parent family, and unlock the MCLoader.
-     * @param session The session to end.
-     */
-    void remove(ISession session);
-
-    /**
      * Fetches a session based on a player's UUID.
      * @param uuid The uuid to search for.
      * @return A session if it exists. Otherwise, an empty Optional.
      */
-    Optional<ISession> fetchPlayerSession(UUID uuid);
+    Optional<ISession> fetchPlayersSession(UUID uuid);
 
     /**
      * Fetches a session based on a UUID.
@@ -92,23 +95,21 @@ public interface IMatchmaker<PlayerRank extends IPlayerRank> extends Service {
     int activeSessionCount();
 
     record Settings (
-            Ranking ranking,
-            Session session,
-            Queue queue
-    ) {
-        public record Ranking(Class<? extends IPlayerRank> schema, double variance) {}
-        public record Session(
-                boolean freezeActiveSessions,
-                int min,
-                int max,
-                LiquidTimestamp interval,
-                int closingThreshold,
-                boolean quittersLose,
-                boolean stayersWin
-        ) {}
-        public record Queue(Joining joining, Leaving leaving) {
-            public record Joining(boolean showInfo, boolean reconnect) {}
-            public record Leaving(boolean command, boolean boot) {}
-        }
-    }
+            Class<? extends IVelocityPlayerRank> schema,
+            int min,
+            int max,
+            double variance,
+            double varianceExpansionCoefficient,
+            int requiredExpansionsForAccept,
+            LiquidTimestamp sessionDispatchInterval,
+            boolean freezeActiveSessions,
+            int closingThreshold,
+            boolean quittersLose,
+            boolean stayersWin,
+            boolean leaveCommand,
+            boolean parentFamilyOnLeave,
+            boolean showInfo,
+            ELOSettings elo
+    ) {}
+    record ELOSettings(double initialRank, double eloFactor, double kFactor) {}
 }

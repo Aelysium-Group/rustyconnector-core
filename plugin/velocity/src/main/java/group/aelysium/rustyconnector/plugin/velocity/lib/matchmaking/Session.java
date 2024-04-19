@@ -6,15 +6,15 @@ import com.google.gson.JsonPrimitive;
 import group.aelysium.rustyconnector.core.lib.packets.BuiltInIdentifications;
 import group.aelysium.rustyconnector.core.lib.packets.RankedGame;
 import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.Family;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.ranked_family.RankedFamily;
 import group.aelysium.rustyconnector.plugin.velocity.lib.server.RankedMCLoader;
 import group.aelysium.rustyconnector.toolkit.core.packet.Packet;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.ConnectionResult;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.PlayerConnectable;
 import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IMatchPlayer;
+import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IMatchmaker;
 import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.ISession;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IPlayerRank;
+import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IVelocityPlayerRank;
+import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.velocity.server.IRankedMCLoader;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -26,17 +26,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 public class Session implements ISession {
+    protected final IMatchmaker matchmaker;
     protected final UUID uuid = UUID.randomUUID();;
-    protected final Map<UUID, IMatchPlayer<IPlayerRank>> players;
+    protected final Map<UUID, IMatchPlayer> players;
     protected IRankedMCLoader mcLoader;
     protected final Settings settings;
-    protected final RankRange rankRange;
+    protected boolean ended = false;
     protected boolean frozen = false;
 
-    public Session(IMatchPlayer<IPlayerRank> starter, Settings settings) {
+    public Session(IMatchmaker matchmaker, Settings settings) {
+        this.matchmaker = matchmaker;
         this.players = new ConcurrentHashMap<>(settings.max());
-        this.players.put(starter.player().uuid(), starter);
-        this.rankRange = new RankRange(starter.rank(), settings.variance());
         this.settings = settings;
     }
 
@@ -48,13 +48,17 @@ public class Session implements ISession {
         return this.settings;
     }
 
+    public boolean ended() {
+        return this.ended;
+    }
+
+    public IMatchmaker matchmaker() {
+        return this.matchmaker;
+    }
+
     public Optional<IRankedMCLoader> mcLoader() {
         if(!this.active()) return Optional.empty();
         return Optional.of(this.mcLoader);
-    }
-
-    public RankRange range() {
-        return this.rankRange;
     }
 
     public boolean active() {
@@ -73,59 +77,27 @@ public class Session implements ISession {
         return this.frozen;
     }
 
-    public void end(List<UUID> winners, List<UUID> losers) {
-        RankedFamily family = (RankedFamily) this.mcLoader.family();
-
-        family.matchmaker().remove(this);
-        Family parent = family.parent();
-
-        for (IMatchPlayer<IPlayerRank> matchPlayer : this.players.values()) {
-            try {
-                if(winners.contains(matchPlayer.player().uuid())) matchPlayer.markWin();
-                if(losers.contains(matchPlayer.player().uuid())) matchPlayer.markLoss();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            try {
-                parent.connect(matchPlayer.player());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        this.mcLoader.unlock();
-    }
-
-    public void implode(String reason) {
-        this.players.values().forEach(matchPlayer -> matchPlayer.player().sendMessage(Component.text(reason, NamedTextColor.RED)));
-
-        Packet packet = Tinder.get().services().packetBuilder().newBuilder()
-                .identification(BuiltInIdentifications.RANKED_GAME_IMPLODE)
-                .sendingToMCLoader(this.uuid())
-                .parameter(RankedGame.Imploded.Parameters.REASON, reason)
-                .parameter(RankedGame.Imploded.Parameters.SESSION_UUID, this.uuid.toString())
-                .build();
-        Tinder.get().services().magicLink().connection().orElseThrow().publish(packet);
-        this.mcLoader.unlock();
-
-        this.end(List.of(), List.of());
-    }
-
-    public Map<UUID, IMatchPlayer<IPlayerRank>> players() {
+    public Map<UUID, IMatchPlayer> players() {
         return players;
     }
 
-    public boolean leave(IMatchPlayer<IPlayerRank> matchPlayer) {
-        if(this.players.remove(matchPlayer.player().uuid()) == null) return false;
-
-        if(this.players.size() >= this.settings.min()) return true;
-
-        this.implode("To many players left your game session so it had to be terminated. Sessions that are ended early won't penalize you.");
-
-        return true;
+    public boolean contains(IMatchPlayer matchPlayer) {
+        return this.players.containsKey(matchPlayer.player().uuid());
     }
 
-    public PlayerConnectable.Request join(IMatchPlayer<IPlayerRank> matchPlayer) {
+    public void empty() {
+        this.players.clear();
+    }
+
+    public void start(IRankedMCLoader mcLoader) throws AlreadyBoundException {
+        if(mcLoader.currentSession().isPresent()) throw new AlreadyBoundException("There's already a Session running on this MCLoader!");
+        ((RankedMCLoader) mcLoader).connect(this);
+        this.mcLoader = mcLoader;
+
+        if(this.settings.shouldFreeze()) this.frozen = true;
+    }
+
+    public PlayerConnectable.Request join(IMatchPlayer matchPlayer) {
         CompletableFuture<ConnectionResult> result = new CompletableFuture<>();
         PlayerConnectable.Request request = new PlayerConnectable.Request(matchPlayer.player(), result);
 
@@ -134,13 +106,13 @@ public class Session implements ISession {
             return request;
         }
 
-        if(!this.rankRange.validate(matchPlayer.rank())) {
-            result.complete(ConnectionResult.failed(Component.text("You're not the right rank to connect to this session!")));
+        if(this.frozen) {
+            result.complete(ConnectionResult.failed(Component.text("This session is already active and not accepting new players!")));
             return request;
         }
 
-        if(this.frozen) {
-            result.complete(ConnectionResult.failed(Component.text("This session is already active and not accepting new players!")));
+        if(this.full()) {
+            result.complete(ConnectionResult.failed(Component.text("This session is already full!")));
             return request;
         }
 
@@ -163,14 +135,120 @@ public class Session implements ISession {
         return request;
     }
 
-    public boolean contains(IMatchPlayer<IPlayerRank> matchPlayer) {
-        return this.players.containsKey(matchPlayer.player().uuid());
+    public void leave(IPlayer player) {
+        this.players.remove(player.uuid());
+
+        if(settings.quittersLose()) {
+            Optional<IMatchPlayer> matchPlayer = this.matchmaker.matchPlayer(player);
+            matchPlayer.ifPresent(mp -> mp.gameRank().computor().compute(List.of(), List.of(mp), matchmaker, this));
+        }
+
+        if(this.players.size() >= this.settings.min()) return;
+
+        if(this.ended) return;
+        this.implode("To many players left your game session so it had to be terminated. Sessions that are ended early won't penalize you.");
     }
-    public void start(IRankedMCLoader mcLoader) throws AlreadyBoundException {
-        if(mcLoader.currentSession().isPresent()) throw new AlreadyBoundException("There's already a Session running on this MCLoader!");
-        ((RankedMCLoader) mcLoader).connect(this);
-        this.mcLoader = mcLoader;
-        if(this.settings.shouldFreeze()) this.frozen = true;
+
+    public void implode(String reason, boolean unlock) {
+        this.ended = true;
+
+        this.players.values().forEach(matchPlayer -> matchPlayer.player().sendMessage(Component.text(reason, NamedTextColor.RED)));
+
+        if(this.active()) {
+            Packet packet = Tinder.get().services().packetBuilder().newBuilder()
+                    .identification(BuiltInIdentifications.RANKED_GAME_IMPLODE)
+                    .sendingToMCLoader(this.mcLoader.uuid())
+                    .parameter(RankedGame.Imploded.Parameters.REASON, reason)
+                    .parameter(RankedGame.Imploded.Parameters.SESSION_UUID, this.uuid.toString())
+                    .build();
+            Tinder.get().services().magicLink().connection().orElseThrow().publish(packet);
+
+            ((RankedMCLoader) this.mcLoader).rawUnlock();
+        }
+
+        List<UUID> winners = new ArrayList<>();
+        if(settings.stayersWin()) winners = new ArrayList<>(this.players.keySet());
+
+        this.end(winners, List.of(), unlock);
+    }
+
+    public void implode(String reason) {
+        this.implode(reason, true);
+    }
+
+    public void end(List<UUID> winners, List<UUID> losers, boolean unlock) {
+        this.ended = true;
+
+        ((Matchmaker) this.matchmaker).remove(this);
+
+        IVelocityPlayerRank.IComputor computer = null;
+        List<IMatchPlayer> playerWinners = new ArrayList<>();
+        List<IMatchPlayer> playerLosers = new ArrayList<>();
+
+        for (IMatchPlayer matchPlayer : this.players.values()) {
+            if(computer == null) computer = matchPlayer.gameRank().computor();
+
+            try {
+                if(winners.contains(matchPlayer.player().uuid())) playerWinners.add(matchPlayer);
+                if(losers.contains(matchPlayer.player().uuid()))  playerLosers.add(matchPlayer);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            if(this.active())
+                try {
+                    this.mcLoader.family().parent().connect(matchPlayer.player());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+        }
+
+        if(this.active() && unlock) ((RankedMCLoader) this.mcLoader).rawUnlock();
+
+        // Run storing logic last so that if something happens the other logic ran first.
+        try {
+            if(computer == null) throw new RuntimeException("Unable to store player ranks for the session: "+this.uuid+"! No computer exists!");
+
+            computer.compute(playerWinners, playerLosers, this.matchmaker, this);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public void end(List<UUID> winners, List<UUID> losers) {
+        this.end(winners, losers, true);
+    }
+
+    public void endTied(boolean unlock) {
+        this.ended = true;
+
+        ((Matchmaker) this.matchmaker).remove(this);
+
+        IVelocityPlayerRank.IComputor computer = null;
+        for (IMatchPlayer matchPlayer : this.players.values()) {
+            if(computer == null) computer = matchPlayer.gameRank().computor();
+
+            if(this.active())
+                try {
+                    this.mcLoader.family().parent().connect(matchPlayer.player());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+        }
+
+        if(this.active() && unlock) ((RankedMCLoader) this.mcLoader).rawUnlock();
+
+        // Run storing logic last so that if something happens the other logic ran first.
+        try {
+            if(computer == null) throw new RuntimeException("Unable to store player ranks for the session: "+this.uuid+"! No computer exists!");
+
+            computer.computeTie(this.players.values().stream().toList(), this.matchmaker, this);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void endTied() {
+        this.endTied(true);
     }
 
     @Override
@@ -183,15 +261,11 @@ public class Session implements ISession {
             JsonObject playerObject = new JsonObject();
 
             playerObject.add("uuid", new JsonPrimitive(matchPlayer.player().uuid().toString()));
+            playerObject.add("username", new JsonPrimitive(matchPlayer.player().username()));
+            playerObject.add("schema", new JsonPrimitive(matchPlayer.gameRank().schemaName()));
+            playerObject.add("rank", matchPlayer.gameRank().toJSON());
 
-            Object rank = "null";
-            try {
-                rank = matchPlayer.rank();
-            } catch (Exception ignore) {}
-
-            playerObject.add("rank", new JsonPrimitive(rank.toString()));
-
-            array.add(object);
+            array.add(playerObject);
         });
         object.add("players", array);
 

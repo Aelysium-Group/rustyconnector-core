@@ -13,13 +13,13 @@ import group.aelysium.rustyconnector.toolkit.mc_loader.events.magic_link.Disconn
 import group.aelysium.rustyconnector.toolkit.mc_loader.magic_link.IMagicLinkService;
 import group.aelysium.rustyconnector.toolkit.core.serviceable.ClockService;
 import group.aelysium.rustyconnector.toolkit.mc_loader.server_info.IServerInfoService;
-import group.aelysium.rustyconnector.toolkit.velocity.util.AddressUtil;
 import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
 import group.aelysium.rustyconnector.core.TinderAdapterForCore;
 
 import java.net.ConnectException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MagicLinkService implements IMagicLinkService {
@@ -27,7 +27,7 @@ public class MagicLinkService implements IMagicLinkService {
     private final ClockService heartbeat = new ClockService(2);
     private final AtomicInteger delay = new AtomicInteger(5);
     private final String podName = System.getenv("POD_NAME");
-    private boolean stopPinging = false;
+    private final AtomicBoolean stopPinging = new AtomicBoolean(false);
 
     public MagicLinkService(IMessengerConnector messenger) {
         this.messenger = messenger;
@@ -40,7 +40,7 @@ public class MagicLinkService implements IMagicLinkService {
     private void scheduleNextPing(IMCLoaderFlame<? extends ICoreServiceHandler> api) {
         IServerInfoService serverInfoService = api.services().serverInfo();
         this.heartbeat.scheduleDelayed(() -> {
-            if(stopPinging) return;
+            if(stopPinging.get()) return;
 
             try {
                 Packet.MCLoaderPacketBuilder.ReadyForParameters packet = api.services().packetBuilder().newBuilder()
@@ -77,7 +77,10 @@ public class MagicLinkService implements IMagicLinkService {
 
     @Override
     public void kill() {
-        stopPinging = true;
+        stopPinging.set(true);
+        try {
+            this.heartbeat.kill();
+        } catch (Exception ignore) {}
 
         try {
             MCLoaderFlame api = TinderAdapterForCore.getTinder().flame();
@@ -91,7 +94,6 @@ public class MagicLinkService implements IMagicLinkService {
             api.services().events().fireEvent(new DisconnectedEvent());
         } catch (Exception ignore) {}
 
-        this.heartbeat.kill();
         this.messenger.kill();
     }
 }

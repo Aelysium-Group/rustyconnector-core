@@ -4,9 +4,10 @@ import com.google.gson.JsonObject;
 import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service;
 import group.aelysium.rustyconnector.toolkit.velocity.family.static_family.IServerResidence;
 import group.aelysium.rustyconnector.toolkit.velocity.friends.PlayerPair;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IPlayerRank;
+import group.aelysium.rustyconnector.toolkit.core.matchmaking.IPlayerRank;
+import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IRankResolver;
+import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IVelocityPlayerRank;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
-import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
 
 import java.util.List;
 import java.util.Optional;
@@ -34,8 +35,9 @@ public abstract class StorageReactor implements Service {
     public abstract void deleteGame(String gameId);
     public abstract void deleteRank(UUID player);
     public abstract void deleteRank(UUID player, String gameId);
-    public abstract void saveRank(UUID player, String gameId, String schema, JsonObject rank);
-    public abstract Optional<IPlayerRank> fetchRank(UUID player, String gameId);
+    public abstract void saveRank(UUID player, String gameId, JsonObject rank);
+    public abstract void purgeInvalidSchemas(String gameId, String validSchema);
+    public abstract Optional<IVelocityPlayerRank> fetchRank(UUID player, String gameId, IRankResolver resolver);
 
     public static abstract class Holder {
         protected final StorageReactor reactor;

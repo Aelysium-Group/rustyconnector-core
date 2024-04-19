@@ -2,6 +2,7 @@ package group.aelysium.rustyconnector.toolkit.velocity.matchmaking;
 
 import group.aelysium.rustyconnector.toolkit.core.JSONParseable;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.PlayerConnectable;
+import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.velocity.server.IRankedMCLoader;
 
 import java.rmi.AlreadyBoundException;
@@ -16,20 +17,63 @@ public interface ISession extends JSONParseable {
     Settings settings();
 
     /**
-     * Ends this session.
+     * Has the session ended
+     */
+    boolean ended();
+
+    /**
+     * Gets the matchmaker that this session belongs to.
+     */
+    IMatchmaker matchmaker();
+
+    /**
+     * Ends this session with a set of winners and losers.
+     * @param winners The uuids of the winning players.
+     * @param losers The uuids of the losing players.
      */
     void end(List<UUID> winners, List<UUID> losers);
 
     /**
+     * Ends this session with a set of winners and losers.
+     * @param winners The uuids of the winning players.
+     * @param losers The uuids of the losing players.
+     * @param unlock Whether the MCLoader should unlock right away. If `false` the MCLoader will have to manually unlock itself.
+     */
+    void end(List<UUID> winners, List<UUID> losers, boolean unlock);
+
+    /**
+     * Ends this session in a tie.
+     * All players will receive a "tie" if the ranking algorithm supports ties
+     * this might affect their rank.
+     */
+    void endTied();
+
+    /**
+     * Ends this session in a tie.
+     * All players will receive a "tie" if the ranking algorithm supports ties
+     * this might affect their rank.
+     * @param unlock Whether the MCLoader should unlock right away. If `false` the MCLoader will have to manually unlock itself.
+     */
+    void endTied(boolean unlock);
+
+    /**
      * Implodes the session.
-     * This method is similar to {@link #end(List, List)} except that it will inform players that their session had to be ended,
+     * This method is similar to {@link ISession#end(List, List)} except that it will inform players that their session had to be ended,
      * and not players will be rewarded points.
+     * @param reason The reason for the implosion. This reason will also be shown to the players.
      */
     void implode(String reason);
 
-    Optional<IRankedMCLoader> mcLoader();
+    /**
+     * Implodes the session.
+     * This method is similar to {@link ISession#end(List, List)} except that it will inform players that their session had to be ended,
+     * and not players will be rewarded points.
+     * @param reason The reason for the implosion. This reason will also be shown to the players.
+     * @param unlock Whether the MCLoader should unlock right away. If `false` the MCLoader will have to manually unlock itself.
+     */
+    void implode(String reason, boolean unlock);
 
-    RankRange range();
+    Optional<IRankedMCLoader> mcLoader();
 
     int size();
 
@@ -53,27 +97,19 @@ public interface ISession extends JSONParseable {
     /**
      * Checks if the running session contains the player.
      */
-    boolean contains(IMatchPlayer<IPlayerRank> player);
+    boolean contains(IMatchPlayer player);
 
     /**
      * Gets the players that are currently in this session.
      */
-    Map<UUID, IMatchPlayer<IPlayerRank>> players();
-
-    /**
-     * Removes the player from the session.
-     * The session will implode if the player leaving causes it to have not enough players to continue.
-     * @param player The player to leave.
-     */
-    boolean leave(IMatchPlayer<IPlayerRank> player);
-
+    Map<UUID, IMatchPlayer> players();
 
     /**
      * Adds the player to the session.
      * If the session is currently active the player will also attempt to connect to it.
      * @param player The player to join.
      */
-    PlayerConnectable.Request join(IMatchPlayer<IPlayerRank> player);
+    PlayerConnectable.Request join(IMatchPlayer player);
 
     /**
      * Starts the session on the specified MCLoader.
@@ -84,37 +120,10 @@ public interface ISession extends JSONParseable {
      */
     void start(IRankedMCLoader mcLoader) throws AlreadyBoundException;
 
-    class RankRange {
-        private final double pivot;
-        private final double min;
-        private final double max;
+    /**
+     * Empties all players out of this session.
+     */
+    void empty();
 
-        public RankRange(double pivot, double variance) {
-            this.pivot = pivot;
-
-            double con = pivot * variance;
-            double max = pivot + con;
-            double min = pivot - con;
-            this.min = min;
-            this.max = max;
-        }
-
-        public double pivot() {
-            return this.pivot;
-        }
-
-        public double min() {
-            return this.min;
-        }
-
-        public double max() {
-            return this.max;
-        }
-
-        public boolean validate(double rank) {
-            return rank > min && rank < max;
-        }
-    }
-
-    record Settings(boolean shouldFreeze, int min, int max, double variance, String gameId) {}
+    record Settings(boolean shouldFreeze, int min, int max, double variance, String gameId, boolean quittersLose, boolean stayersWin) {}
 }

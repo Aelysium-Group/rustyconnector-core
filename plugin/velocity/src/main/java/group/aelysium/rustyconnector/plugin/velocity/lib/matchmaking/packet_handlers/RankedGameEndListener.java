@@ -36,9 +36,11 @@ public class RankedGameEndListener extends PacketListener<RankedGame.End> {
 
         ISession session = mcloader.currentSession().orElseGet(() -> {
             RankedFamily family = (RankedFamily) mcloader.family();
-            return family.matchmaker().fetch(packet.session().uuid()).orElseThrow();
+            return family.matchmaker().fetch(packet.session().uuid()).orElseThrow(()->
+                    new RuntimeException("No session with the uuid: "+packet.session().uuid()+" exists on MCLoader: "+mcloader.uuid())
+            );
         });
 
-        session.end(List.of(), List.of());
+        session.end(packet.session().winners(), packet.session().losers(), packet.unlock());
     }
 }

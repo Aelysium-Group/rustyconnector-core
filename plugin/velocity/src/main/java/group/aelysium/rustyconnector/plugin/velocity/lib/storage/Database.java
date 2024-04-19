@@ -1,13 +1,16 @@
 package group.aelysium.rustyconnector.plugin.velocity.lib.storage;
 
-import group.aelysium.rustyconnector.plugin.velocity.lib.matchmaking.storage.RandomizedPlayerRank;
+import group.aelysium.rustyconnector.plugin.velocity.lib.matchmaking.rank.*;
 import group.aelysium.rustyconnector.plugin.velocity.lib.storage.reactors.StorageReactor;
 import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service;
 import group.aelysium.rustyconnector.toolkit.velocity.family.static_family.IServerResidence;
 import group.aelysium.rustyconnector.toolkit.velocity.family.static_family.IStaticFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.friends.PlayerPair;
 import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IMatchPlayer;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IPlayerRank;
+import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IMatchmaker;
+import group.aelysium.rustyconnector.toolkit.core.matchmaking.IPlayerRank;
+import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IRankResolver;
+import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IVelocityPlayerRank;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
 import group.aelysium.rustyconnector.toolkit.velocity.storage.IDatabase;
@@ -88,7 +91,10 @@ public class Database extends StorageReactor.Holder implements IDatabase, Servic
         }
 
         public void set(IStaticFamily family, IMCLoader mcLoader, IPlayer player) {
-            this.reactor.saveServerResidence(family.id(), mcLoader.uuid(), player.uuid(), family.homeServerExpiration().epochFromNow());
+            if(family.homeServerExpiration() == null)
+                this.reactor.saveServerResidence(family.id(), mcLoader.uuid(), player.uuid(), null);
+            else
+                this.reactor.saveServerResidence(family.id(), mcLoader.uuid(), player.uuid(), family.homeServerExpiration().epochFromNow());
         }
 
         public void delete(String familyId) {
@@ -109,9 +115,9 @@ public class Database extends StorageReactor.Holder implements IDatabase, Servic
 
         public void refreshExpirations(IStaticFamily family) {
             if(family.homeServerExpiration() == null)
-                this.reactor.updateExpirations(family.id(), family.homeServerExpiration().epochFromNow());
-            else
                 this.reactor.updateExpirations(family.id(), null);
+            else
+                this.reactor.updateExpirations(family.id(), family.homeServerExpiration().epochFromNow());
         }
     }
     public static class PlayerRanks extends StorageReactor.Holder implements IDatabase.PlayerRanks {
@@ -131,14 +137,26 @@ public class Database extends StorageReactor.Holder implements IDatabase, Servic
             this.reactor.deleteRank(player.uuid(), gameId);
         }
 
-        public void set(IMatchPlayer<IPlayerRank> player) {
-            if(player instanceof RandomizedPlayerRank) return; // Storing randomized player ranks is a literal waste of space.
+        public void set(IMatchPlayer player) {
+            // Storing randomized player ranks is a literal waste of space.
+            if(player.gameRank() instanceof RandomizedPlayerRank) return;
+            if(player.gameRank().schemaName().equals(RandomizedPlayerRank.New().schemaName())) return;
 
-            this.reactor.saveRank(player.player().uuid(), player.gameId(), player.rankSchemaName(), player.rankToJSON());
+            this.reactor.saveRank(player.player().uuid(), player.gameId(), player.gameRank().toJSON());
         }
 
-        public Optional<IPlayerRank> get(IPlayer player, String gameId) {
-            return this.reactor.fetchRank(player.uuid(), gameId);
+        public Optional<IVelocityPlayerRank> get(IPlayer player, String gameId, IRankResolver resolver) {
+            return this.reactor.fetchRank(player.uuid(), gameId, resolver);
+        }
+
+        public void purgeSchemas(IMatchmaker matchmaker) {
+            String schema = null;
+            if(matchmaker.settings().schema().equals(WinLossPlayerRank.class))    schema = WinLossPlayerRank.schema();
+            if(matchmaker.settings().schema().equals(WinRatePlayerRank.class))    schema = WinRatePlayerRank.schema();
+            if(matchmaker.settings().schema().equals(ELOPlayerRank.class))        schema = ELOPlayerRank.schema();
+            if(matchmaker.settings().schema().equals(OpenSkillPlayerRank.class))  schema = OpenSkillPlayerRank.schema();
+            if(schema == null) return;
+            this.reactor.purgeInvalidSchemas(matchmaker.gameId(), schema);
         }
     }
 }

@@ -5,15 +5,16 @@ import group.aelysium.rustyconnector.core.lib.packets.RankedGame;
 import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
 import group.aelysium.rustyconnector.toolkit.core.packet.Packet;
 import group.aelysium.rustyconnector.toolkit.core.packet.PacketParameter;
+import group.aelysium.rustyconnector.toolkit.velocity.connection.ConnectionResult;
 import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IMatchPlayer;
 import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.ISession;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IPlayerRank;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.velocity.server.IRankedMCLoader;
 import io.fabric8.kubernetes.api.model.Pod;
 
 import java.net.InetSocketAddress;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class RankedMCLoader extends MCLoader implements IRankedMCLoader {
     protected ISession activeSession;
@@ -31,8 +32,17 @@ public class RankedMCLoader extends MCLoader implements IRankedMCLoader {
     }
 
     public void connect(ISession session) {
-        for (IMatchPlayer<IPlayerRank> matchPlayer : session.players().values())
-            this.connect(matchPlayer.player());
+        this.lock();
+
+        for (IMatchPlayer matchPlayer : session.players().values())
+            try {
+                ConnectionResult result = this.connect(matchPlayer.player()).result().get(5, TimeUnit.SECONDS);
+
+                // System.out.println("");
+                Tinder.get().logger().send(result.message());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
         Packet packet = Tinder.get().services().packetBuilder().newBuilder()
                 .identification(BuiltInIdentifications.RANKED_GAME_READY)
@@ -42,20 +52,24 @@ public class RankedMCLoader extends MCLoader implements IRankedMCLoader {
         Tinder.get().services().magicLink().connection().orElseThrow().publish(packet);
 
         this.activeSession = session;
-        this.lock();
     }
 
     @Override
     public void leave(IPlayer player) {
         if(this.activeSession == null) return;
 
-        IMatchPlayer<IPlayerRank> matchPlayer = this.activeSession.players().get(player.uuid());
-        if(matchPlayer == null) return;
-
-        this.activeSession.leave(matchPlayer);
+        this.activeSession.matchmaker().leave(player);
     }
 
     public void unlock() {
+        if(this.activeSession != null) {
+            this.activeSession.implode("This session was forcefully closed by the network. Sessions that are ended early won't penalize you.");
+            this.activeSession = null;
+        }
+        super.unlock();
+    }
+
+    public void rawUnlock() {
         this.activeSession = null;
         super.unlock();
     }

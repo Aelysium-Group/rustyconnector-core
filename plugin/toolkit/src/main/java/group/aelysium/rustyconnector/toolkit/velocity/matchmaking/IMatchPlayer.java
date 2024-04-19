@@ -1,16 +1,11 @@
 package group.aelysium.rustyconnector.toolkit.velocity.matchmaking;
 
-import com.google.gson.JsonObject;
+import group.aelysium.rustyconnector.toolkit.core.matchmaking.IPlayerRank;
 import group.aelysium.rustyconnector.toolkit.velocity.load_balancing.ISortable;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 
-public interface IMatchPlayer<PlayerRank extends IPlayerRank> extends ISortable {
-    void markWin();
-    void markLoss();
-    JsonObject rankToJSON();
-    String rankSchemaName();
-
+public interface IMatchPlayer extends ISortable {
     IPlayer player();
-    double rank();
+    IVelocityPlayerRank gameRank();
     String gameId();
 }
