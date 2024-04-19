@@ -29,7 +29,7 @@ public class K8Service implements AutoCloseable {
         }
     }
 
-    public void createPod(String familyName, String containerImage) {
+    public String createPod(String familyName, String containerImage) {
         String podName = newPodName(familyName);
         String namespace = getNamespaceName(familyName);
 
@@ -48,6 +48,8 @@ public class K8Service implements AutoCloseable {
                 .endSpec()
                 .build();
         client.pods().inNamespace(namespace).resource(pod).create();
+
+        return podName;
     }
 
     public Pod fetchPod(String familyName, String podName) {

@@ -209,7 +209,27 @@ dynamic-scale:
     enabled: false
 
     #
+    # The helm chart to use while creating new MCLoaders.
+    # The Rule of Families dictates that all MCLoaders in a family should be derived
+    # from the same initial template.
+    # As such, you're only ever allowed to assign a single helm chart per-family.
+    #
+    helm-chart: "itzg/minecraft"
+
+    #
+    # The absolute max number of pods that this auto-scaler is allowed to generate.
+    # The auto-scaler is never allowed to generate more pods than this number.
+    #
+    max-pods: 10
+
+    #
+    # The Dynamic Scaling algorithm to use.
+    #
+    algorithm: ELASTIC
+
+    #
     # The name of the Dynamic Scale configuration file in your "dynamic_scale" folder.
     # You can include the ".yml" at the end of the name below if you'd like. It doesn't matter either way.
+    # The actual file name will also include the `algorithm` name.
     #
     name: "default"

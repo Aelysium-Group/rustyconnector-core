@@ -120,6 +120,8 @@ whitelist:
 dynamic-scale:
     enabled: false
 
+    algorithm: ELASTIC
+
     #
     # The name of the Dynamic Scale configuration file in your "dynamic_scale" folder.
     # You can include the ".yml" at the end of the name below if you'd like. It doesn't matter either way.

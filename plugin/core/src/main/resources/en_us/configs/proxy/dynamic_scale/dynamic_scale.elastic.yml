@@ -1,6 +1,6 @@
 #############################################################
 #|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||#
-#                     Elastic Autoscaler                    #
+#                      Dynamic Scale                        #
 #                                                           #
 #               ----------------------------                #
 #                                                           #
@@ -11,9 +11,6 @@
 #                                                           #
 # | If you assign the same autoscaler to multiple families  #
 # | They will all follow the rules of that one autoscaler.  #
-#                                                           #
-# | An elastic autoscaler will dynamically adjust server    #
-# | volumes based on player influxes.                       #
 #                                                           #
 #               ----------------------------                #
 #                                                           #
