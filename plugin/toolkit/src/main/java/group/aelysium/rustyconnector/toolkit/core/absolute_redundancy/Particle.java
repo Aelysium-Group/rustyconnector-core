@@ -9,8 +9,7 @@ import java.util.concurrent.*;
 import java.util.function.Consumer;
 
 /**
- * Particles are the backbone of the Absolute Redundency Architecture.
- * A single particle is equivalent to a Particle.
+ * Particles are the backbone of the Absolute Redundancy Architecture.
  * By leveraging {@link Flux}, Particles are able to exist in a state of super-positioning.
  */
 public abstract class Particle implements AutoCloseable {
@@ -23,7 +22,7 @@ public abstract class Particle implements AutoCloseable {
     public abstract static class Tinder<P extends Particle> {
         protected Tinder() {}
 
-        public Flux<P> flux() {
+        public final Flux<P> flux() {
             return new Flux<>(this);
         }
 
@@ -78,6 +77,31 @@ public abstract class Particle implements AutoCloseable {
         }
 
         /**
+         * Executes either the Consumer or the Runnable based on if the Particle is available or not.
+         * This method is not thread-locking and will always execute either the Consumer or the Runnable instantly.
+         * <br/>
+         * This method respects Exceptions that may be thrown within the Consumer or Runnable.
+         * Any exceptions that might be thrown will be passed along to the caller to handle.
+         * @param success The consumer to execute if the Particle is available.
+         * @param failed The Runnable if the Particle isn't available.
+         */
+        public void executeNow(Consumer<P> success, Runnable failed) {
+            if(this.exists()) {
+                Optional<P> p = Optional.empty();
+                try {
+                    p = Optional.ofNullable(this.resolvable.getNow(null));
+                } catch (Exception ignore) {}
+
+                if(p.isPresent()) {
+                    success.accept(p.orElseThrow());
+                    return;
+                }
+            }
+
+            failed.run();
+        }
+
+        /**
          * Access the underlying Particle.
          * Particles exist in a state of super-position, there's no way to know if a microservice is currently active until you observe it.
          * This method is equivalent to calling {@link #access() .access()}{@link CompletableFuture#get() .get()}.
@@ -114,9 +138,9 @@ public abstract class Particle implements AutoCloseable {
         }
 
         /**
-         * Checks if the microservice exists.
-         * If this returns true, you should be able to instantly access the microservice via {@link #access()}
-         * @return `true` if the microservice exists. `false` otherwise.
+         * Checks if the Particle exists.
+         * If this returns true, you should be able to instantly access the Particle.
+         * @return `true` if the Particle exists. `false` otherwise.
          */
         public boolean exists() {
             if(this.resolvable == null) return false;

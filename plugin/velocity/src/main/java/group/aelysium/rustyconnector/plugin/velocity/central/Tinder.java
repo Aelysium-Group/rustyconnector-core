@@ -4,9 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
-import com.velocitypowered.api.proxy.ProxyServer;
 import group.aelysium.rustyconnector.core.lib.cache.MessageCacheService;
-import group.aelysium.rustyconnector.core.lib.config.common.MemberKeyConfig;
 import group.aelysium.rustyconnector.core.lib.config.common.PrivateKeyConfig;
 import group.aelysium.rustyconnector.core.lib.config.common.UUIDConfig;
 import group.aelysium.rustyconnector.core.lib.crypt.AESCryptor;
@@ -57,7 +55,6 @@ import group.aelysium.rustyconnector.toolkit.core.packet.VelocityPacketBuilder;
 import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service;
 import group.aelysium.rustyconnector.toolkit.velocity.central.Kernel;
 import group.aelysium.rustyconnector.core.lib.lang.LangService;
-import group.aelysium.rustyconnector.core.lib.lang.config.RootLanguageConfig;
 import group.aelysium.rustyconnector.plugin.velocity.PluginLogger;
 import group.aelysium.rustyconnector.plugin.velocity.VelocityRustyConnector;
 import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.RegisterEvent;
@@ -91,15 +88,19 @@ public class Tinder extends Kernel.Tinder {
     private final VelocityRustyConnector plugin;
     private final Path dataFolder;
     private final LangService lang;
+    private final DefaultConfig config;
+    private final FamiliesConfig families;
+    private final StorageConfig storage;
 
-    public Tinder(@NotNull VelocityRustyConnector plugin, @DataDirectory Path dataFolder) {
+    public Tinder(@NotNull VelocityRustyConnector plugin, @DataDirectory Path dataFolder, LangService lang, DefaultConfig config, FamiliesConfig families, StorageConfig storage) {
         super();
 
         this.plugin = plugin;
         this.dataFolder = dataFolder;
-
-        RootLanguageConfig config = RootLanguageConfig.construct(dataFolder);
-        this.lang = LangService.resolveLanguageCode(config.getLanguage(), dataFolder);
+        this.lang = lang;
+        this.config = config;
+        this.families = families;
+        this.storage = storage;
     }
 
     private Version version() {
@@ -122,7 +123,26 @@ public class Tinder extends Kernel.Tinder {
     }
 
     public Kernel.@NotNull Particle ignite() throws RuntimeException {
-        return new Flame(new Particle.Flux.Capacitor(), this.uuid(), this.version(), new ArrayList<>());
+        Flame flame = new Flame(new Particle.Flux.Capacitor(), this.uuid(), this.version(), new ArrayList<>());
+
+        // RustyConnector Event Manager
+        {
+            Map<Class<? extends Event>, Listener<? extends Event>> listeners = new HashMap<>();
+            listeners.put(FamilyLeaveEvent.class, new OnFamilyLeave());
+            listeners.put(FamilySwitchEvent.class, new OnFamilySwitch());
+            listeners.put(RegisterEvent.class, new OnMCLoaderRegister());
+            listeners.put(UnregisterEvent.class, new OnMCLoaderUnregister());
+            listeners.put(MCLoaderSwitchEvent.class, new OnMCLoaderSwitch());
+            listeners.put(MCLoaderLeaveEvent.class, new OnMCLoaderLeave());
+            flame.capacitor().store("events", new EventManager.Tinder(listeners));
+        }
+        flame.capacitor().store("players", new PlayerService.Tinder());
+        flame.capacitor().store("families", new FamilyService.Tinder(families));
+        flame.capacitor().store("storage", new PlayerService.Tinder(storage));
+        flame.capacitor().store("magic_link", new PlayerService.Tinder(storage));
+
+        flame.capacitor().store("mcloaders", new PlayerService.Tinder());
+        capacitor.store("whitelists", new PlayerService.Tinder());
     }
 
     /**
@@ -277,9 +297,9 @@ class Initialize {
     public DependencyInjector.DI2<IMessengerConnector, StorageService> connectors(DependencyInjector.DI4<AESCryptor, MessageCacheService, PluginLogger, LangService> dependencies, UUID uuid) throws IOException, SQLException {
         bootOutput.add(Component.text("Building Connectors...", NamedTextColor.DARK_GRAY));
 
-        ConnectorsConfig config = ConnectorsConfig.construct(api.dataFolder(), dependencies.d4(), true, true);
+        StorageConfig config = StorageConfig.construct(api.dataFolder(), dependencies.d4(), true, true);
 
-        RedisConnector.RedisConnectorSpec spec = new RedisConnector.RedisConnectorSpec(
+        RedisConnector.Settings spec = new RedisConnector.Settings(
                 config.getRedis_address(),
                 config.getRedis_user(),
                 config.getRedis_protocol(),

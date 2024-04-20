@@ -201,7 +201,7 @@ class Initialize {
 
         ConnectorsConfig config = ConnectorsConfig.construct(Path.of(api.dataFolder()), lang);
 
-        RedisConnector.RedisConnectorSpec spec = new RedisConnector.RedisConnectorSpec(
+        RedisConnector.Settings spec = new RedisConnector.Settings(
                 config.getRedis_address(),
                 config.getRedis_user(),
                 config.getRedis_protocol(),

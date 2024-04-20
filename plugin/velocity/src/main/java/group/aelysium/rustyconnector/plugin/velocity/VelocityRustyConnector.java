@@ -7,6 +7,8 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import group.aelysium.rustyconnector.core.lib.events.EventManager;
+import group.aelysium.rustyconnector.core.lib.lang.LangService;
+import group.aelysium.rustyconnector.core.lib.lang.config.RootLanguageConfig;
 import group.aelysium.rustyconnector.plugin.velocity.event_handlers.rc.*;
 import group.aelysium.rustyconnector.plugin.velocity.lib.config.ConfigService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.config.configs.FamiliesConfig;
@@ -43,6 +45,9 @@ public class VelocityRustyConnector {
 
     @Inject
     public VelocityRustyConnector(ProxyServer server, Logger logger, @DataDirectory Path dataFolder, Metrics.Factory metricsFactory) {
+
+        RootLanguageConfig config = RootLanguageConfig.construct(dataFolder);
+        this.lang = LangService.resolveLanguageCode(config.getLanguage(), dataFolder);
         this.kernel = new Tinder(this, dataFolder).flux();
         this.logger = new PluginLogger(logger);
         this.server = server;
@@ -56,31 +61,6 @@ public class VelocityRustyConnector {
 
         if(!this.server.getConfiguration().isOnlineMode())
             logger.log("Offline mode detected");
-
-        this.kernel.optimistic(flame -> {
-            // RustyConnector Event Manager
-            {
-                Map<Class<? extends Event>, Listener<? extends Event>> listeners = new HashMap<>();
-                listeners.put(FamilyLeaveEvent.class, new OnFamilyLeave());
-                listeners.put(FamilySwitchEvent.class, new OnFamilySwitch());
-                listeners.put(RegisterEvent.class, new OnMCLoaderRegister());
-                listeners.put(UnregisterEvent.class, new OnMCLoaderUnregister());
-                listeners.put(MCLoaderSwitchEvent.class, new OnMCLoaderSwitch());
-                listeners.put(MCLoaderLeaveEvent.class, new OnMCLoaderLeave());
-                flame.capacitor().store("events", new EventManager.Tinder(listeners));
-            }
-            flame.capacitor().store("players", new PlayerService.Tinder());
-
-            {
-                FamiliesConfig config = FamiliesConfig.construct(dataFolder, lang, deps.d4());
-                flame.capacitor().store("families", new FamilyService.Tinder(config));
-            }
-
-            flame.capacitor().store("mcloaders", new PlayerService.Tinder());
-            capacitor.store("storage", new PlayerService.Tinder());
-            capacitor.store("whitelists", new PlayerService.Tinder());
-            capacitor.store("magic_link", new PlayerService.Tinder());
-        });
 
         try {
             metricsFactory.make(this, 17972);

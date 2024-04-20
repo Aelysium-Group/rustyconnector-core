@@ -10,8 +10,8 @@ import java.sql.SQLException;
 
 public class StorageService implements IStorageService {
     protected final Database database;
-    protected final StorageConfiguration config;
-    protected StorageService(StorageConfiguration config) throws SQLException {
+    protected final Configuration config;
+    protected StorageService(Configuration config) throws SQLException {
         this.config = config;
         this.database = new Database(this.config.reactor());
     }
@@ -25,7 +25,7 @@ public class StorageService implements IStorageService {
         this.database.kill();
     }
 
-    public static StorageService create(StorageConfiguration configuration) throws SQLException {
+    public static StorageService create(Configuration configuration) throws SQLException {
         return new StorageService(configuration);
     }
 
@@ -34,10 +34,10 @@ public class StorageService implements IStorageService {
         MYSQL
     }
 
-    public static abstract class StorageConfiguration {
+    public static abstract class Configuration {
         protected final StorageType type;
 
-        protected StorageConfiguration(StorageType type) {
+        protected Configuration(StorageType type) {
             this.type = type;
         }
 
@@ -46,7 +46,7 @@ public class StorageService implements IStorageService {
         }
         public abstract StorageReactor reactor();
 
-        public static class MySQL extends StorageConfiguration {
+        public static class MySQL extends Configuration {
             private final MySQLReactor.Core.Settings settings;
 
             public MySQL(InetSocketAddress address, UserPass userPass, String database) {
