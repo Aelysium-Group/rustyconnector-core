@@ -1,20 +1,17 @@
 package group.aelysium.rustyconnector.plugin.velocity.lib.players;
 
-import group.aelysium.rustyconnector.core.lib.cache.CacheableMessage;
-import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
+import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
+import group.aelysium.rustyconnector.toolkit.velocity.central.Kernel;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayerService;
-import group.aelysium.rustyconnector.plugin.velocity.lib.storage.StorageService;
-import group.aelysium.rustyconnector.plugin.velocity.lib.storage.Database;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class PlayerService implements IPlayerService {
+public class PlayerService extends IPlayerService {
     private final Map<UUID, Boolean> recentPlayers;
-    private final StorageService storage;
 
-    public PlayerService(StorageService storage) {
-        this.storage = storage;
+    protected PlayerService(Kernel.Particle kernel) {
         this.recentPlayers = new LinkedHashMap<>(100){
             @Override
             protected boolean removeEldestEntry(Map.Entry eldest) {
@@ -38,7 +35,14 @@ public class PlayerService implements IPlayerService {
     }
 
     @Override
-    public void kill() {
+    public void close() throws Exception {
         // this.storage.kill();  -  Storage is cleaned up in a different process.
+    }
+
+    public static class Tinder extends Particle.Tinder<PlayerService> {
+        @Override
+        public @NotNull PlayerService ignite() throws Exception {
+            return new PlayerService();
+        }
     }
 }

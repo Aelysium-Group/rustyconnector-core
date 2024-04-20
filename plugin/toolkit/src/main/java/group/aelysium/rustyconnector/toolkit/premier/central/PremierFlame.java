@@ -2,7 +2,7 @@ package group.aelysium.rustyconnector.toolkit.premier.central;
 
 import group.aelysium.rustyconnector.toolkit.core.serviceable.ServiceableService;
 import group.aelysium.rustyconnector.toolkit.velocity.central.ICoreServiceHandler;
-import group.aelysium.rustyconnector.toolkit.velocity.central.VelocityTinder;
+import group.aelysium.rustyconnector.toolkit.velocity.central.Kernel;
 import group.aelysium.rustyconnector.toolkit.velocity.util.Version;
 import net.kyori.adventure.text.Component;
 
@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * The core RustyConnector kernel.
  * All aspects of the plugin should be accessible from here.
- * If not, check {@link VelocityTinder}.
+ * If not, check {@link Kernel}.
  */
 public abstract class PremierFlame<TCoreServiceHandler extends ICoreServiceHandler> extends ServiceableService<TCoreServiceHandler> {
     public PremierFlame(TCoreServiceHandler services) {

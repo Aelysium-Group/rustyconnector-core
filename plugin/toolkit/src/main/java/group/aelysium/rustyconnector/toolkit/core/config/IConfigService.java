@@ -1,24 +1,23 @@
 package group.aelysium.rustyconnector.toolkit.core.config;
 
-import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 import java.util.Optional;
 
-public interface IConfigService extends Service {
+public abstract class IConfigService {
     /**
      * Gets the version that this config service is using.
      */
-    int version();
+    public abstract int version();
 
-    void put(IYAML config);
+    public abstract void put(IYAML config);
 
-    <TConfig extends IYAML> Optional<TConfig> get(ConfigKey key);
+    public abstract <TConfig extends IYAML> Optional<TConfig> get(ConfigKey key);
 
-    void remove(ConfigKey key);
+    public abstract void remove(ConfigKey key);
 
-    record ConfigKey(@NotNull Class<? extends IYAML> type, String name) {
+    public record ConfigKey(@NotNull Class<? extends IYAML> type, String name) {
 
         @Override
         public boolean equals(Object o) {

@@ -1,59 +1,43 @@
 package group.aelysium.rustyconnector.toolkit;
 
+import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.mc_loader.central.IMCLoaderTinder;
-import group.aelysium.rustyconnector.toolkit.premier.central.PremierTinder;
-import group.aelysium.rustyconnector.toolkit.velocity.central.VelocityTinder;
+import group.aelysium.rustyconnector.toolkit.velocity.central.Kernel;
 
 import java.util.Optional;
 
 public class RustyConnector {
     public static class Toolkit {
-        private static IMCLoaderTinder mcLoaderTinder = null;
-        private static VelocityTinder velocityTinder = null;
-        private static PremierTinder premierTinder = null;
+        private static IMCLoaderTinder mcLoaderKernel = null;
+        private static Particle.Flux<Kernel.Particle> velocityKernel = null;
 
         /**
          * Fetches the MCLoader API for RustyConnector.
          * @return {@link IMCLoaderTinder}
          */
         public static Optional<IMCLoaderTinder> mcLoader() throws IllegalAccessError {
-            if(mcLoaderTinder == null) return Optional.empty();
-            return Optional.of(mcLoaderTinder);
+            if(mcLoaderKernel == null) return Optional.empty();
+            return Optional.of(mcLoaderKernel);
         }
 
         /**
          * Fetches the Proxy API for RustyConnector.
-         * @return {@link VelocityTinder}
+         * @return {@link Kernel}
          */
-        public static Optional<VelocityTinder> proxy() throws IllegalAccessError {
-            if(velocityTinder == null) return Optional.empty();
-            return Optional.of(velocityTinder);
+        public static Optional<Particle.Flux<Kernel.Particle>> proxy() throws IllegalAccessError {
+            return Optional.ofNullable(velocityKernel);
         }
 
-        /**
-         * Fetches the Premier API for RustyConnector.
-         * @return {@link PremierTinder}
-         */
-        public static Optional<PremierTinder> premier() throws IllegalAccessError {
-            if(premierTinder == null) return Optional.empty();
-
-            return Optional.of(premierTinder);
+        public static void register(IMCLoaderTinder kernel) {
+            mcLoaderKernel = kernel;
         }
-
-        public static void register(IMCLoaderTinder tinder) {
-            mcLoaderTinder = tinder;
-        }
-        public static void register(VelocityTinder tinder) {
-            velocityTinder = tinder;
-        }
-        public static void register(PremierTinder tinder) {
-            premierTinder = tinder;
+        public static void register(Particle.Flux<Kernel.Particle> kernel) {
+            velocityKernel = kernel;
         }
 
         public static void unregister() {
-            mcLoaderTinder = null;
-            velocityTinder = null;
-            premierTinder = null;
+            mcLoaderKernel = null;
+            velocityKernel = null;
         }
     }
 }

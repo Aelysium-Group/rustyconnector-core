@@ -2,7 +2,6 @@ package group.aelysium.rustyconnector.plugin.velocity.lib.config;
 
 import group.aelysium.rustyconnector.core.lib.config.YAML;
 import group.aelysium.rustyconnector.plugin.velocity.lib.config.configs.*;
-import group.aelysium.rustyconnector.toolkit.core.config.IConfigService;
 import group.aelysium.rustyconnector.toolkit.core.config.IYAML;
 import group.aelysium.rustyconnector.toolkit.velocity.config.IProxyConfigService;
 
@@ -10,9 +9,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-public class ConfigService implements IProxyConfigService {
+public class ConfigService extends IProxyConfigService {
     protected int version;
-    protected Map<IConfigService.ConfigKey, YAML> configs = new HashMap<>();
+    protected Map<ConfigKey, YAML> configs = new HashMap<>();
 
     public ConfigService(int version) {
         this.version = version;
@@ -106,8 +105,7 @@ public class ConfigService implements IProxyConfigService {
         return get(new ConfigKey(RankedFamilyConfig.class, id));
     }
 
-    @Override
-    public void kill() {
+    public void close() {
         this.configs.clear();
     }
 }

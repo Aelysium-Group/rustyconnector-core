@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.toolkit.velocity.whitelist;
 
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
-import group.aelysium.rustyconnector.toolkit.velocity.central.VelocityTinder;
+import group.aelysium.rustyconnector.toolkit.velocity.central.Kernel;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 
 import java.util.List;
@@ -57,7 +57,7 @@ public interface IWhitelist {
         }
 
         public <TWhitelist extends IWhitelist> TWhitelist get() {
-            VelocityTinder tinder = RustyConnector.Toolkit.proxy().orElseThrow();
+            Kernel tinder = RustyConnector.Toolkit.proxy().orElseThrow();
             return (TWhitelist) tinder.services().whitelist().find(this.referencer).orElseThrow();
         }
     }

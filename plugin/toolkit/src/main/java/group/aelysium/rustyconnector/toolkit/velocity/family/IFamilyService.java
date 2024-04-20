@@ -1,15 +1,16 @@
 package group.aelysium.rustyconnector.toolkit.velocity.family;
 
+import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.velocity.family.scalar_family.IRootFamily;
 import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface IFamilyService extends Service {
-    boolean shouldCatchDisconnectingPlayers();
+public abstract class IFamilyService extends Particle {
+    public abstract boolean shouldCatchDisconnectingPlayers();
 
-    void setRootFamily(IRootFamily family);
+    public abstract void setRootFamily(IRootFamily family);
 
     /**
      * Get the root family of this FamilyService.
@@ -17,13 +18,13 @@ public interface IFamilyService extends Service {
      * this will return `null`.
      * @return A {@link IRootFamily} or `null`
      */
-    IRootFamily rootFamily();
+    public abstract IRootFamily rootFamily();
 
     /**
      * Get the number of families in this {@link IFamilyService}.
      * @return {@link Integer}
      */
-    int size();
+    public abstract int size();
 
     /**
      * Finds a family based on an id.
@@ -31,23 +32,23 @@ public interface IFamilyService extends Service {
      * @param id The id to search for.
      * @return {@link Optional<IFamily>}
      */
-    Optional<IFamily> find(String id);
+    public abstract Optional<IFamily> find(String id);
 
     /**
      * Add a family to this manager.
      * @param family The family to add to this manager.
      */
-    void add(IFamily family);
+    public abstract void add(IFamily family);
 
     /**
      * Remove a family from this manager.
      * @param family The family to remove from this manager.
      */
-    void remove(IFamily family);
+    public abstract void remove(IFamily family);
 
     /**
      * Gets a list of all families in this service.
      * @return {@link List<IFamily>}
      */
-    List<IFamily> dump();
+    public abstract List<IFamily> dump();
 }

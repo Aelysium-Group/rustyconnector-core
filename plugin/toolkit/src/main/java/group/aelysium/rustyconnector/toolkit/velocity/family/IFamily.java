@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.toolkit.velocity.family;
 
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
-import group.aelysium.rustyconnector.toolkit.velocity.central.VelocityTinder;
+import group.aelysium.rustyconnector.toolkit.velocity.central.Kernel;
 import group.aelysium.rustyconnector.toolkit.velocity.load_balancing.ILoadBalancer;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.PlayerConnectable;
@@ -147,14 +147,14 @@ public interface IFamily extends PlayerConnectable {
         }
 
         public <TFamily extends IFamily> TFamily get() {
-            VelocityTinder tinder = RustyConnector.Toolkit.proxy().orElseThrow();
+            Kernel tinder = RustyConnector.Toolkit.proxy().orElseThrow();
 
             if(rootFamily) return (TFamily) tinder.services().family().rootFamily();
             return (TFamily) tinder.services().family().find(this.referencer).orElseThrow();
         }
 
         public <TFamily extends IFamily> TFamily get(boolean fetchRoot) {
-            VelocityTinder tinder = RustyConnector.Toolkit.proxy().orElseThrow();
+            Kernel tinder = RustyConnector.Toolkit.proxy().orElseThrow();
 
             if(rootFamily) return (TFamily) tinder.services().family().rootFamily();
             if(fetchRoot)

@@ -1,15 +1,15 @@
 package group.aelysium.rustyconnector.toolkit.core.events;
 
-import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service;
+import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
 
-public interface EventManager extends Service {
+public abstract class EventManager extends Particle {
     /**
      * Registers a new listener to this manager.
      */
-    void on(Class<? extends Event> event, Listener<?> listener);
+    public abstract void on(Class<? extends Event> event, Listener<?> listener);
 
     /**
      * Unregisters a listener from this manager.
      */
-    void off(Class<? extends Event> event, Listener<?> listener);
+    public abstract void off(Class<? extends Event> event, Listener<?> listener);
 }
