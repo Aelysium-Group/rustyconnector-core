@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Optional;
 
 public abstract class IFamilyService extends Particle {
-    public abstract boolean shouldCatchDisconnectingPlayers();
-
     public abstract void setRootFamily(IRootFamily family);
 
     /**

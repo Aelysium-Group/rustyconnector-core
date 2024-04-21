@@ -4,19 +4,19 @@ import group.aelysium.rustyconnector.core.lib.crypt.AESCryptor;
 import group.aelysium.rustyconnector.core.lib.messenger.MessengerConnection;
 import group.aelysium.rustyconnector.core.lib.messenger.MessengerConnector;
 import group.aelysium.rustyconnector.core.lib.messenger.implementors.redis.RedisConnector;
-import group.aelysium.rustyconnector.toolkit.core.UserPass;
 import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.core.messenger.IMessengerConnection;
 import group.aelysium.rustyconnector.toolkit.core.messenger.IMessengerConnector;
 import group.aelysium.rustyconnector.toolkit.core.serviceable.ClockService;
 import group.aelysium.rustyconnector.toolkit.velocity.magic_link.IMagicLink;
+import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.ConnectException;
-import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class MagicLinkService extends IMagicLink {
     protected final ClockService clock;
@@ -29,8 +29,8 @@ public class MagicLinkService extends IMagicLink {
         this.settingsMap = magicLinkMCLoaderSettingsMap;
     }
 
-    protected void startHeartbeat() {
-        this.clock.scheduleRecurring(() -> {
+    private void heartbeat() {
+        this.clock.scheduleDelayed(() -> {
             try {
                 // Unregister any stale servers
                 // The removing feature of server#unregister is valid because serverService.servers() creates a new list which isn't bound to the underlying list.
@@ -44,7 +44,13 @@ public class MagicLinkService extends IMagicLink {
                     }
                 });
             } catch (Exception ignore) {}
-        }, 3, 5); // Period of `3` lets us not loop over the servers as many times with a small hit to how quickly stale servers will be unregistered.
+
+            this.heartbeat();
+        }, LiquidTimestamp.from(3, TimeUnit.SECONDS));
+    }
+
+    protected void startHeartbeat() {
+        this.heartbeat();
     }
 
     public Optional<MagicLinkMCLoaderSettings> magicConfig(String name) {
@@ -58,7 +64,7 @@ public class MagicLinkService extends IMagicLink {
      * @return An {@link Optional} possibly containing a {@link MessengerConnection}.
      */
     public Optional<IMessengerConnection> connection() {
-        return this.redisConnector.connection();
+        return this.connector.connection();
     }
 
     /**
@@ -67,16 +73,13 @@ public class MagicLinkService extends IMagicLink {
      * @throws ConnectException If there was an issue connecting to the remote resource.
      */
     public IMessengerConnection connect() throws ConnectException {
-        return this.redisConnector.connect();
+        return this.connector.connect();
     }
 
     @Override
     public void close() throws Exception {
-        this.redisConnector.kill();
-    }
-
-    public enum MessengerType {
-        REDIS
+        this.clock.kill();
+        this.connector.kill();
     }
 
     public static class Tinder extends Particle.Tinder<MagicLinkService> {
@@ -94,56 +97,26 @@ public class MagicLinkService extends IMagicLink {
             this.cryptor = cryptor;
         }
 
-        private void validate() throws IllegalArgumentException {
-            if(this.cryptor == null) throw new IllegalArgumentException("You must provide an AESCryptor!");
-            boolean hasAValidService = false;
-            if(this.redis != null) hasAValidService = true;
+        public void redis(RedisConnector.Settings settings) {
+            this.redis = settings;
+        }
 
-            if(!hasAValidService) throw new IllegalArgumentException("You must define a valid provider for Magic Link/!");
+        private IMessengerConnector connector() throws IllegalArgumentException {
+            if(this.cryptor == null) throw new IllegalArgumentException("You must provide an AESCryptor!");
+
+            if(this.redis != null) return new RedisConnector(this.cryptor, this.redis);
+
+            throw new IllegalArgumentException("You must define a valid provider for Magic Link!");
         }
 
         @Override
         public @NotNull MagicLinkService ignite() throws Exception {
-            this.validate();
+            IMessengerConnector connector = this.connector();
 
-            MagicLinkService service = new MagicLinkService();
+            MagicLinkService service = new MagicLinkService(connector, this.magicConfigs);
             service.startHeartbeat();
             return service;
         }
 
-    }
-
-    public static abstract class Configuration {
-        protected final AESCryptor cryptor;
-        protected final MessengerType type;
-
-        protected Configuration(AESCryptor cryptor, MessengerType type) {
-            this.cryptor = cryptor;
-            this.type = type;
-        }
-
-        public MessengerType type() {
-            return this.type;
-        }
-        public abstract MessengerConnector connector();
-
-        public static class Redis extends Configuration {
-            private final InetSocketAddress address;
-            private final UserPass userPass;
-            private final String channel;
-            private final String protocol;
-
-            public Redis(AESCryptor cryptor, InetSocketAddress address, UserPass userPass, String protocol, String channel) {
-                super(cryptor, MessengerType.REDIS);
-                this.address = address;
-                this.userPass = userPass;
-                this.channel = channel;
-                this.protocol = protocol;
-            }
-
-            public RedisConnector connector() {
-                return new RedisConnector(cryptor, this.address, this.userPass, protocol, this.channel);
-            }
-        }
     }
 }

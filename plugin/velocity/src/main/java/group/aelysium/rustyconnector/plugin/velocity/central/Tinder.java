@@ -91,8 +91,9 @@ public class Tinder extends Kernel.Tinder {
     private final DefaultConfig config;
     private final FamiliesConfig families;
     private final StorageConfig storage;
+    private final MagicLinkConfig magicLink;
 
-    public Tinder(@NotNull VelocityRustyConnector plugin, @DataDirectory Path dataFolder, LangService lang, DefaultConfig config, FamiliesConfig families, StorageConfig storage) {
+    public Tinder(@NotNull VelocityRustyConnector plugin, @DataDirectory Path dataFolder, LangService lang, DefaultConfig config, FamiliesConfig families, StorageConfig storage, MagicLinkConfig magicLink) {
         super();
 
         this.plugin = plugin;
@@ -122,8 +123,19 @@ public class Tinder extends Kernel.Tinder {
         return new UUIDConfig(new File(String.valueOf(dataFolder), "metadata/system.uuid")).get();
     }
 
+    public AESCryptor privateKey() {
+        PrivateKeyConfig config = new PrivateKeyConfig(new File(String.valueOf(dataFolder), "metadata/private.key"));
+        try {
+            return config.get();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public Kernel.@NotNull Particle ignite() throws RuntimeException {
         Flame flame = new Flame(new Particle.Flux.Capacitor(), this.uuid(), this.version(), new ArrayList<>());
+
+        AESCryptor cryptor = this.privateKey();
 
         // RustyConnector Event Manager
         {
@@ -136,13 +148,16 @@ public class Tinder extends Kernel.Tinder {
             listeners.put(MCLoaderLeaveEvent.class, new OnMCLoaderLeave());
             flame.capacitor().store("events", new EventManager.Tinder(listeners));
         }
+        capacitor.store("whitelists", new WhitelistService.Tinder());
         flame.capacitor().store("players", new PlayerService.Tinder());
-        flame.capacitor().store("families", new FamilyService.Tinder(families));
+        flame.capacitor().store("families", new FamilyService.Tinder());
+        flame.capacitor().store("mcloaders", new ServerService.Tinder());
         flame.capacitor().store("storage", new PlayerService.Tinder(storage));
-        flame.capacitor().store("magic_link", new PlayerService.Tinder(storage));
-
-        flame.capacitor().store("mcloaders", new PlayerService.Tinder());
-        capacitor.store("whitelists", new PlayerService.Tinder());
+        {
+            MagicLinkService.Tinder t = new MagicLinkService.Tinder();
+            t.cryptor(cryptor);
+            flame.capacitor().store("magic_link", t);
+        }
     }
 
     /**

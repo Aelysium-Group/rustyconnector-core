@@ -17,18 +17,11 @@ import java.util.Optional;
 public class FamilyService extends IFamilyService {
     private final Map<String, IFamily> families = new HashMap<>();
     private WeakReference<IRootFamily> rootFamily;
-    private final boolean catchDisconnectingPlayers;
 
-    protected FamilyService(boolean catchDisconnectingPlayers) {
-        this.catchDisconnectingPlayers = catchDisconnectingPlayers;
-    }
-
-    public boolean shouldCatchDisconnectingPlayers() {
-        return this.catchDisconnectingPlayers;
-    }
+    protected FamilyService() {}
 
     public void setRootFamily(IRootFamily family) {
-        this.families.put(family.id(), (Family) family);
+        this.families.put(family.id(), family);
         this.rootFamily = new WeakReference<>(family);
     }
 
@@ -74,14 +67,11 @@ public class FamilyService extends IFamilyService {
     }
 
     public static class Tinder extends Particle.Tinder<FamilyService> {
-        private final FamiliesConfig config;
-        public Tinder(FamiliesConfig config) {
-            this.config = config;
-        }
+        public Tinder() {}
 
         @Override
         public @NotNull FamilyService ignite() throws Exception {
-            return new FamilyService(this.config.shouldRootFamilyCatchDisconnectingPlayers());
+            return new FamilyService();
         }
     }
 }

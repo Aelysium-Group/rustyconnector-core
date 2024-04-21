@@ -1,15 +1,17 @@
 package group.aelysium.rustyconnector.plugin.velocity.lib.server;
 
+import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
 import group.aelysium.rustyconnector.toolkit.velocity.server.IServerService;
 import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.Family;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ServerService implements IServerService {
+public class ServerService extends IServerService {
     protected final Map<UUID, IMCLoader> servers = new ConcurrentHashMap<>();
     private final int serverTimeout;
     private final int serverInterval;
@@ -77,25 +79,26 @@ public class ServerService implements IServerService {
         }
     }*/
 
-    public void kill() {
+    public void close() throws Exception {
         this.servers.clear();
     }
 
-    public static class Builder {
+    public static class Tinder extends Particle.Tinder<ServerService> {
         protected int timeout = 15;
         protected int interval = 10;
 
-        public ServerService.Builder setServerTimeout(int timeout) {
+        public Tinder() {}
+
+        public void serverTimeout(int timeout) {
             this.timeout = timeout;
-            return this;
         }
 
-        public ServerService.Builder setServerInterval(int interval) {
+        public void serverInterval(int interval) {
             this.interval = interval;
-            return this;
         }
 
-        public ServerService build() {
+        @Override
+        public @NotNull ServerService ignite() throws Exception {
             return new ServerService(timeout, interval);
         }
     }

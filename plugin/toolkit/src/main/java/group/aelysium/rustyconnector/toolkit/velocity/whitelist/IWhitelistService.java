@@ -1,11 +1,13 @@
 package group.aelysium.rustyconnector.toolkit.velocity.whitelist;
 
+import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface IWhitelistService extends Service {
+public abstract class IWhitelistService extends Particle {
+    void proxyWhitelist();
     IWhitelist proxyWhitelist();
 
     /**

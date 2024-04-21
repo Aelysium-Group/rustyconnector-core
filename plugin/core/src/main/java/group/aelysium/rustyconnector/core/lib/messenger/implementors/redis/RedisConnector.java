@@ -16,10 +16,10 @@ public class RedisConnector extends MessengerConnector {
     protected final String dataChannel;
     protected final ProtocolVersion protocolVersion;
 
-    public RedisConnector(@NotNull AESCryptor cryptor, @NotNull InetSocketAddress address, @NotNull UserPass userPass, @NotNull String protocolVersion, @NotNull String dataChannel) {
-        super(cryptor, address, userPass);
-        this.protocolVersion = ProtocolVersion.valueOf(protocolVersion);
-        this.dataChannel = dataChannel;
+    public RedisConnector(@NotNull AESCryptor cryptor, @NotNull Settings settings) {
+        super(cryptor, settings.address(), settings.userPass());
+        this.protocolVersion = ProtocolVersion.valueOf(settings.protocolVersion());
+        this.dataChannel = settings.dataChannel();
     }
 
     @Override

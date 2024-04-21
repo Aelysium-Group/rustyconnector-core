@@ -1,17 +1,18 @@
 package group.aelysium.rustyconnector.toolkit.velocity.server;
 
 import com.velocitypowered.api.proxy.server.ServerInfo;
+import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface IServerService extends Service {
-    int serverTimeout();
-    int serverInterval();
+public abstract class IServerService extends Particle {
+    public abstract int serverTimeout();
+    public abstract int serverInterval();
 
-    List<IMCLoader> servers();
+    public abstract List<IMCLoader> servers();
 
     /**
      * Finds an MCLoader based on server info.
@@ -19,12 +20,12 @@ public interface IServerService extends Service {
      * @param serverInfo The info to search for.
      * @return {@link Optional<IMCLoader>}
      */
-    Optional<IMCLoader> fetch(UUID serverInfo);
+    public abstract Optional<IMCLoader> fetch(UUID serverInfo);
 
     /**
      * Checks if a server is contained in this server service.
      * @param serverInfo The {@link ServerInfo} to search with.
      * @return {@link Boolean}
      */
-    boolean contains(UUID serverInfo);
+    public abstract boolean contains(UUID serverInfo);
 }

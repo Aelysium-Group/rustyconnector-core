@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class WhitelistService implements IWhitelistService {
+public class WhitelistService extends IWhitelistService {
     private final Map<String, IWhitelist> registeredWhitelists = new HashMap<>();
     private Whitelist.Reference proxyWhitelist;
 
