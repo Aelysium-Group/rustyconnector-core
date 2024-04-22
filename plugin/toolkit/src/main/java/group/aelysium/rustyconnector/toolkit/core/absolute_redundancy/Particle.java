@@ -42,12 +42,74 @@ public abstract class Particle implements AutoCloseable {
      * @param <P> The underlying Particle that exists within this flux.
      */
     public static class Flux<P extends Particle> implements AutoCloseable {
-        private final ExecutorService executor = Executors.newCachedThreadPool();
+        private static final ExecutorService executor = Executors.newCachedThreadPool();
         private @Nullable CompletableFuture<P> resolvable = null;
-        private final Particle.Tinder<P> tinder;
+        private @NotNull Tinder<P> tinder;
 
-        protected Flux(Particle.Tinder<P> tinder) {
+        protected Flux(@NotNull Tinder<P> tinder) {
             this.tinder = tinder;
+        }
+
+        /**
+         * Ignites a new Particle via the Tinder associated with this Flux and returns it.
+         * @return A Future that will either resolve into the Particle or resolve exceptionally.
+         */
+        private CompletableFuture<P> ignite(@NotNull Tinder<P> tinder) {
+            CompletableFuture<P> future = new CompletableFuture<>();
+
+            executor.submit(() -> {
+                try {
+                    P microservice = tinder.ignite();
+                    future.complete(microservice);
+                } catch (Exception e) {
+                    future.completeExceptionally(e);
+                }
+            });
+
+            return future;
+        }
+
+        /**
+         * Re-ignites the Particle governed by this Flux.
+         * This method will ignite a new instance of this particle using the already existing Tinder in this Flux.
+         * @param rollback If the passed Tinder fails to ignite. Should we attempt to ignite the old Tinder that already existed on this Flux?
+         *                 If this setting is enabled, the current thread will lock until the Tinder either succeeds in ignition or until it fails Exceptionally.
+         * @throws Exception If there's an issue shutting down the current Particle (If one exists)
+         */
+        public CompletableFuture<P> reignite(boolean rollback) throws Exception {
+            return this.reignite(this.tinder, rollback);
+        }
+
+        /**
+         * Re-ignites the Particle governed by this Flux.
+         * This method will ignite a new instance of this particle using a new Tinder.
+         * <br />
+         * If this method properly ignites a new Particle with the new Tinder, this Flux will store the new Tinder and use it going forward.
+         * @param tinder The tinder to ignite a new Particle with.
+         * @param rollback If the passed Tinder fails to ignite. Should we attempt to ignite the old Tinder that already existed on this Flux?
+         *                 If this setting is enabled, the current thread will lock until the Tinder either succeeds in ignition or until it fails Exceptionally.
+         * @throws Exception If there's an issue shutting down the current Particle (If one exists)
+         */
+        public CompletableFuture<P> reignite(@NotNull Tinder<P> tinder, boolean rollback) throws Exception {
+            if(this.resolvable != null) {
+                P particle = this.resolvable.getNow(null);
+                if(particle == null) this.resolvable.cancel(true);
+                else particle.close();
+            }
+
+            this.resolvable = this.ignite(tinder);
+
+            if(rollback)
+                try {
+                    this.resolvable.get();
+
+                    // If succeeds, this is the new Tinder
+                    this.tinder = tinder;
+                } catch (Exception ignore) {
+                    this.resolvable = this.ignite(this.tinder);
+                }
+
+            return this.resolvable;
         }
 
         /**
@@ -121,18 +183,7 @@ public abstract class Particle implements AutoCloseable {
             if(this.resolvable != null)
                 return this.resolvable;
 
-            CompletableFuture<P> future = new CompletableFuture<>();
-
-            executor.submit(() -> {
-                try {
-                    P microservice = tinder.ignite();
-                    future.complete(microservice);
-                } catch (Exception e) {
-                    future.completeExceptionally(e);
-                }
-            });
-
-            this.resolvable = future;
+            this.resolvable = this.ignite(this.tinder);
 
             return this.resolvable;
         }

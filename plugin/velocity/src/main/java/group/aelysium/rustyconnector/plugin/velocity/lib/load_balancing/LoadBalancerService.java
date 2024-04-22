@@ -2,26 +2,30 @@ package group.aelysium.rustyconnector.plugin.velocity.lib.load_balancing;
 
 import group.aelysium.rustyconnector.core.lib.events.EventManager;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.FamilyService;
+import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.core.log_gate.GateKey;
 import group.aelysium.rustyconnector.toolkit.core.serviceable.ClockService;
 import group.aelysium.rustyconnector.plugin.velocity.PluginLogger;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.Family;
 import group.aelysium.rustyconnector.plugin.velocity.lib.lang.ProxyLang;
 import group.aelysium.rustyconnector.toolkit.velocity.events.family.RebalanceEvent;
 import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.util.DependencyInjector;
 import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
+import org.jetbrains.annotations.NotNull;
 
-public class LoadBalancingService extends ClockService {
+import java.util.concurrent.TimeUnit;
+
+public class LoadBalancerService extends Particle {
+    protected final ClockService clock;
     protected final LiquidTimestamp heartbeat;
-    public LoadBalancingService(int threads, LiquidTimestamp heartbeat) {
-        super(threads);
+    public LoadBalancerService(int threads, LiquidTimestamp heartbeat) {
+        this.clock = new ClockService(threads);
         this.heartbeat = heartbeat;
     }
 
     public void init(DependencyInjector.DI3<FamilyService, PluginLogger, EventManager> deps) {
         for (IFamily family : deps.d1().dump()) {
-            this.scheduleRecurring(() -> {
+            this.clock.scheduleRecurring(() -> {
                 try {
                     PluginLogger logger = deps.d2();
 
@@ -33,6 +37,25 @@ public class LoadBalancingService extends ClockService {
                     e.printStackTrace();
                 }
             }, this.heartbeat);
+        }
+    }
+
+    @Override
+    public void close() throws Exception {
+        this.clock.kill();
+    }
+
+    public static class Tinder extends Particle.Tinder<Particle> {
+        private final int threads;
+        private final LiquidTimestamp delay;
+        public Tinder(int threads, LiquidTimestamp delay) {
+            this.threads = threads;
+            this.delay = delay;
+        }
+
+        @Override
+        public @NotNull Particle ignite() throws Exception {
+            return new LoadBalancerService(this.threads, this.delay);
         }
     }
 }

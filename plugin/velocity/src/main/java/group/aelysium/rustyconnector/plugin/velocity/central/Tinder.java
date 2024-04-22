@@ -28,7 +28,7 @@ import group.aelysium.rustyconnector.plugin.velocity.lib.family.scalar_family.Sc
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.static_family.StaticFamily;
 import group.aelysium.rustyconnector.plugin.velocity.lib.friends.FriendsService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.lang.ProxyLang;
-import group.aelysium.rustyconnector.plugin.velocity.lib.load_balancing.LoadBalancingService;
+import group.aelysium.rustyconnector.plugin.velocity.lib.load_balancing.LoadBalancerService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.MagicLinkService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.packet_handlers.HandshakeDisconnectListener;
 import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.packet_handlers.HandshakePingListener;
@@ -148,11 +148,13 @@ public class Tinder extends Kernel.Tinder {
             listeners.put(MCLoaderLeaveEvent.class, new OnMCLoaderLeave());
             flame.capacitor().store("events", new EventManager.Tinder(listeners));
         }
-        capacitor.store("whitelists", new WhitelistService.Tinder());
+        flame.capacitor().store("whitelists", new WhitelistService.Tinder());
+        flame.capacitor().store("matchmakers", new MatchmakerService.Tinder());
+        flame.capacitor().store("load_balancers", new LoadBalancerService.Tinder());
         flame.capacitor().store("players", new PlayerService.Tinder());
         flame.capacitor().store("families", new FamilyService.Tinder());
         flame.capacitor().store("mcloaders", new ServerService.Tinder());
-        flame.capacitor().store("storage", new PlayerService.Tinder(storage));
+        flame.capacitor().store("storage", new StorageService.Tinder(storage));
         {
             MagicLinkService.Tinder t = new MagicLinkService.Tinder();
             t.cryptor(cryptor);
@@ -403,8 +405,8 @@ class Initialize {
 
         {
             bootOutput.add(Component.text(" | Registering load balancing service to the API...", NamedTextColor.DARK_GRAY));
-            LoadBalancingService clock = new LoadBalancingService(familyService.size(), LiquidTimestamp.from(20, TimeUnit.SECONDS));
-            services.put(LoadBalancingService.class, clock);
+            LoadBalancerService clock = new LoadBalancerService(familyService.size(), LiquidTimestamp.from(20, TimeUnit.SECONDS));
+            services.put(LoadBalancerService.class, clock);
             clock.init(inject(familyService, this.api.logger(), deps.d5()));
             bootOutput.add(Component.text(" | Finished registering load balancing service to the API.", NamedTextColor.GREEN));
         }
