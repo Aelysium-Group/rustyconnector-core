@@ -37,9 +37,6 @@ public class RankedMCLoader extends MCLoader implements IRankedMCLoader {
         for (IMatchPlayer matchPlayer : session.players().values())
             try {
                 ConnectionResult result = this.connect(matchPlayer.player()).result().get(5, TimeUnit.SECONDS);
-
-                // System.out.println("");
-                Tinder.get().logger().send(result.message());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -62,15 +59,15 @@ public class RankedMCLoader extends MCLoader implements IRankedMCLoader {
     }
 
     public void unlock() {
-        if(this.activeSession != null) {
-            this.activeSession.implode("This session was forcefully closed by the network. Sessions that are ended early won't penalize you.");
-            this.activeSession = null;
+        if(this.activeSession == null) {
+            super.unlock();
+            return;
         }
-        super.unlock();
+        this.activeSession.implode("This session was forcefully closed by the network. Sessions that are ended early won't penalize you.");
+        this.activeSession = null;
     }
 
-    public void rawUnlock() {
+    public void dropSession() {
         this.activeSession = null;
-        super.unlock();
     }
 }

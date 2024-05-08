@@ -97,7 +97,21 @@ public class Matchmaker implements IMatchmaker {
         try {
             IMatchPlayer matchPlayer = this.resolveMatchPlayer(player);
 
-            if(this.sessionPlayers.containsKey(matchPlayer.player().uuid())) throw new RuntimeException("Player is already queued!");
+            if(this.queuedPlayers.contains(matchPlayer)) return;
+            if(settings.reconnect()) {
+                for (ISession s : this.activeSessions.values()) {
+                    if(!s.previousPlayers().contains(player.uuid())) continue;
+                    this.connectSession(s, matchPlayer);
+                    result.complete(ConnectionResult.success(Component.text("Successfully queued into the matchmaker!"), s.mcLoader().orElse(null)));
+                    return;
+                }
+                for (ISession s : this.queuedSessions.values()) {
+                    if(!s.previousPlayers().contains(player.uuid())) continue;
+                    this.connectSession(s, matchPlayer);
+                    result.complete(ConnectionResult.success(Component.text("Successfully queued into the matchmaker!"), null));
+                    return;
+                }
+            } else if(this.sessionPlayers.containsKey(matchPlayer.player().uuid()))  throw new RuntimeException("Player is already queued!");
 
             int insertIndex = this.queuedPlayers.size();
             this.queuedPlayers.add(insertIndex, matchPlayer);
@@ -110,15 +124,17 @@ public class Matchmaker implements IMatchmaker {
     }
 
     public void leave(IPlayer player) {
-        IMatchPlayer matchPlayer = this.resolveMatchPlayer(player);
-        if(this.queuedPlayers.remove(matchPlayer)) return;
-        if(!this.sessionPlayers.containsKey(player.uuid())) return;
-
         try {
             hideBossBars(player.resolve().orElseThrow());
         } catch (Exception ignore) {}
 
-        ((Session) this.sessionPlayers.get(player.uuid())).leave(player);
+        IMatchPlayer matchPlayer = this.resolveMatchPlayer(player);
+
+        if(this.queuedPlayers.remove(matchPlayer)) return;
+
+        Session session = ((Session) this.sessionPlayers.get(player.uuid()));
+        if(session == null) return;
+        session.leave(player);
 
         this.sessionPlayers.remove(player.uuid());
     }
@@ -162,16 +178,19 @@ public class Matchmaker implements IMatchmaker {
 
     public void start(ILoadBalancer<IMCLoader> loadBalancer) {
         this.supervisor.scheduleRecurring(() -> {
+            if(this.queuedPlayers.size() < minPlayersPerGame) this.failedBuilds.set(0);
+
             int i = 0;
             double varianceLookahead = (this.settings.variance() + (this.settings.varianceExpansionCoefficient() * this.failedBuilds.get())) * 2;
-            List<IMatchPlayer> removePlayers = new ArrayList<>();
+            List<IMatchPlayer> selectedPlayers = new ArrayList<>();
+            Map<UUID, ISession> sessionMappings = new HashMap<>();
             List<ISession> builtSessions = new ArrayList<>();
             while(i < this.queuedPlayers.size()) {
                 IMatchPlayer current = null;
                 IMatchPlayer thrown = null;
                 try {
                     current = this.queuedPlayers.get(i);
-                    thrown = this.queuedPlayers.get(i + this.minPlayersPerGame);
+                    thrown = this.queuedPlayers.get(i + (this.minPlayersPerGame - 1));
                 } catch (IndexOutOfBoundsException | NoOutputException ignore) {}
 
                 if(current == null || thrown == null) {
@@ -196,30 +215,38 @@ public class Matchmaker implements IMatchmaker {
                     if(nextInsert.gameRank().rank() > varianceMax) break;
                     session.join(nextInsert);
                 }
-                ISession.Settings settings1 = session.settings();
 
-                if(session.size() < settings1.min()) {
+                if(session.size() < this.settings.min()) {
                     session.empty();
                     i = i + this.minPlayersPerGame;
                     continue;
                 }
 
-                if(session.size() < settings1.max() - 1 && this.failedBuilds.get() < this.settings.requiredExpansionsForAccept()) {
+                if(session.size() < this.settings.max() && this.failedBuilds.get() < this.settings.requiredExpansionsForAccept()) {
                     session.empty();
                     i = i + this.minPlayersPerGame;
                     continue;
                 }
 
                 builtSessions.add(session);
-                removePlayers.addAll(session.players().values());
+                session.players().values().forEach(p -> {
+                    selectedPlayers.add(p);
+                    sessionMappings.put(p.player().uuid(), session);
+                });
                 i = i + session.size();
             }
 
-            if(builtSessions.isEmpty() && this.queuedPlayers.size() > this.minPlayersPerGame) this.failedBuilds.incrementAndGet();
+            if(builtSessions.isEmpty() && this.queuedPlayers.size() >= this.minPlayersPerGame) this.failedBuilds.incrementAndGet();
             if(!builtSessions.isEmpty()) this.failedBuilds.set(0);
 
-            this.queuedPlayers.removeAll(removePlayers);
+            this.sessionPlayers.putAll(sessionMappings);
+            this.queuedPlayers.removeAll(selectedPlayers);
             builtSessions.forEach(s -> this.queuedSessions.put(s.uuid(), s));
+
+            // Some intentional cleanup
+            sessionMappings.clear();
+            selectedPlayers.clear();
+            builtSessions.clear();
         }, this.settings.sessionDispatchInterval());
 
         this.supervisor.scheduleRecurring(() -> {
@@ -331,7 +358,7 @@ public class Matchmaker implements IMatchmaker {
      * Attempts to connect the player to the session.
      */
     protected ConnectionResult connectSession(ISession session, IMatchPlayer matchPlayer) throws ExecutionException, InterruptedException, TimeoutException {
-        if(!session.matchmaker().equals(this)) throw new RuntimeException("Attempted to connect to a session governed by anotehr matchmaker!");
+        if(!session.matchmaker().equals(this)) throw new RuntimeException("Attempted to connect to a session governed by another matchmaker!");
         ConnectionResult result = session.join(matchPlayer).result().get(5, TimeUnit.SECONDS);
 
         if(result.connected())

@@ -17,8 +17,8 @@ import group.aelysium.rustyconnector.toolkit.core.packet.Packet;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.ConnectionResult;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.PartyConnectable;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.PlayerConnectable;
-import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.RegisterEvent;
-import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.UnregisterEvent;
+import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.MCLoaderRegisterEvent;
+import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.MCLoaderUnregisterEvent;
 import group.aelysium.rustyconnector.toolkit.velocity.parties.IParty;
 import group.aelysium.rustyconnector.toolkit.velocity.parties.ServerOverflowHandler;
 import group.aelysium.rustyconnector.toolkit.velocity.parties.SwitchPower;
@@ -148,8 +148,7 @@ public class MCLoader implements IMCLoader {
             throw new Exception(error.getMessage());
         }
 
-        System.out.println("About to fire Register Event!");
-        EventDispatch.UnSafe.fireAndForget(new RegisterEvent(family, this));
+        EventDispatch.UnSafe.fireAndForget(new MCLoaderRegisterEvent(family, this));
     }
 
     public void unregister(boolean removeFromFamily) throws Exception {
@@ -177,8 +176,7 @@ public class MCLoader implements IMCLoader {
             if (removeFromFamily)
                 family.removeServer(server);
 
-            System.out.println("About to fire UnRegister Event!");
-            EventDispatch.UnSafe.fireAndForget(new UnregisterEvent(family, server));
+            EventDispatch.UnSafe.fireAndForget(new MCLoaderUnregisterEvent(family, server));
         } catch (Exception e) {
             if(logger.loggerGate().check(GateKey.UNREGISTRATION_ATTEMPT))
                 ProxyLang.ERROR.send(logger, uuidOrDisplayName(), family.id());

@@ -6,10 +6,7 @@ import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.velocity.server.IRankedMCLoader;
 
 import java.rmi.AlreadyBoundException;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 public interface ISession extends JSONParseable {
     UUID uuid();
@@ -105,11 +102,24 @@ public interface ISession extends JSONParseable {
     Map<UUID, IMatchPlayer> players();
 
     /**
+     * Gets the list of players that were, at somepoint, in this session - but have since left.
+     * UUIDs will not appear in this Set until after the player has left.
+     */
+    Set<UUID> previousPlayers();
+
+    /**
      * Adds the player to the session.
      * If the session is currently active the player will also attempt to connect to it.
      * @param player The player to join.
      */
     PlayerConnectable.Request join(IMatchPlayer player);
+
+    /**
+     * Handles a player leaving the session.
+     * This method is called when this session is in a {@link IRankedMCLoader} and the player leaves that MCLoader.
+     * If this method causes the player count in this Session to drop below the required amount, the session should implode.
+     */
+    void leave(IPlayer player);
 
     /**
      * Starts the session on the specified MCLoader.
