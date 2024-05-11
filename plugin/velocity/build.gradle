@@ -3,9 +3,6 @@ compileJava {
 }
 
 dependencies {
-    // Include in jar
-    implementation "club.minnced:discord-webhooks:${project.discord_version}"
-
     implementation 'org.bstats:bstats-velocity:3.0.2'
     implementation "org.xerial:sqlite-jdbc:${project.sqlite_version}"
     implementation "mysql:mysql-connector-java:${project.mysql_version}"
