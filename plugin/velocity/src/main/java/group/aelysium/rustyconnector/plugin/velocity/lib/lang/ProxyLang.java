@@ -1,12 +1,12 @@
 package group.aelysium.rustyconnector.plugin.velocity.lib.lang;
 
-import group.aelysium.rustyconnector.core.lib.cache.CacheableMessage;
-import group.aelysium.rustyconnector.core.lib.lang.ASCIIAlphabet;
-import group.aelysium.rustyconnector.core.lib.lang.Lang;
-import group.aelysium.rustyconnector.core.lib.lang.LanguageResolver;
+import group.aelysium.rustyconnector.core.common.cache.CacheableMessage;
+import group.aelysium.rustyconnector.core.common.lang.ASCIIAlphabet;
+import group.aelysium.rustyconnector.core.common.lang.Lang;
+import group.aelysium.rustyconnector.core.common.lang.LanguageResolver;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.ranked_family.RankedFamily;
-import group.aelysium.rustyconnector.plugin.velocity.lib.matchmaking.Matchmaker;
-import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
+import group.aelysium.rustyconnector.plugin.velocity.lib.family.matchmaking.Matchmaker;
+import group.aelysium.rustyconnector.toolkit.velocity.family.Family;
 import group.aelysium.rustyconnector.toolkit.velocity.family.scalar_family.IRootFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.friends.IFriendRequest;
 import group.aelysium.rustyconnector.toolkit.velocity.parties.IParty;
@@ -19,7 +19,7 @@ import group.aelysium.rustyconnector.plugin.velocity.lib.family.scalar_family.Ro
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.scalar_family.ScalarFamily;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.static_family.StaticFamily;
 import group.aelysium.rustyconnector.plugin.velocity.lib.friends.FriendsService;
-import group.aelysium.rustyconnector.plugin.velocity.lib.server.MCLoader;
+import group.aelysium.rustyconnector.plugin.velocity.lib.family.mcloader.MCLoader;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -325,7 +325,7 @@ public class ProxyLang extends Lang {
     public final static Message RC_FAMILY = () -> {
         Tinder api = Tinder.get();
         Component families = text("");
-        for (IFamily family : api.services().family().dump()) {
+        for (Family family : api.services().family().dump()) {
             if(family instanceof RootFamily)
                 families = families.append(text("["+family.id()+"*] ").color(BLUE));
             if(family instanceof ScalarFamily)
@@ -1024,7 +1024,7 @@ public class ProxyLang extends Lang {
             uuidOrDisplayName + " " + resolver().get("proxy.console_icons.unregistered") +" "+familyName
     );
 
-    public final static ParameterizedMessage1<IFamily> FAMILY_BALANCING = family -> text(
+    public final static ParameterizedMessage1<Family> FAMILY_BALANCING = family -> text(
             family.id() + " " + resolver().get("proxy.console_icons.family_balancing")
     );
 }

@@ -1,16 +1,16 @@
 package group.aelysium.rustyconnector.core.mcloader.central;
 
-import group.aelysium.rustyconnector.core.lib.cache.MessageCacheService;
-import group.aelysium.rustyconnector.core.lib.config.common.UUIDConfig;
-import group.aelysium.rustyconnector.core.lib.crypt.AESCryptor;
-import group.aelysium.rustyconnector.core.lib.config.common.PrivateKeyConfig;
-import group.aelysium.rustyconnector.core.lib.lang.LangService;
-import group.aelysium.rustyconnector.core.lib.packets.BuiltInIdentifications;
-import group.aelysium.rustyconnector.core.lib.packets.MCLoader;
-import group.aelysium.rustyconnector.core.lib.packets.SendPlayerPacket;
+import group.aelysium.rustyconnector.core.common.cache.MessageCacheService;
+import group.aelysium.rustyconnector.core.common.config.common.UUIDConfig;
+import group.aelysium.rustyconnector.core.common.crypt.AESCryptor;
+import group.aelysium.rustyconnector.core.common.config.common.PrivateKeyConfig;
+import group.aelysium.rustyconnector.core.common.lang.LangService;
+import group.aelysium.rustyconnector.core.common.packets.BuiltInIdentifications;
+import group.aelysium.rustyconnector.core.common.packets.MCLoader;
+import group.aelysium.rustyconnector.core.common.packets.SendPlayerPacket;
 import group.aelysium.rustyconnector.core.mcloader.central.config.ConnectorsConfig;
-import group.aelysium.rustyconnector.core.lib.messenger.implementors.redis.RedisConnection;
-import group.aelysium.rustyconnector.core.lib.messenger.implementors.redis.RedisConnector;
+import group.aelysium.rustyconnector.core.common.messenger.implementors.redis.RedisConnection;
+import group.aelysium.rustyconnector.core.common.messenger.implementors.redis.RedisConnector;
 import group.aelysium.rustyconnector.core.mcloader.central.config.DefaultConfig;
 import group.aelysium.rustyconnector.core.mcloader.event_handlers.OnConnection;
 import group.aelysium.rustyconnector.core.mcloader.event_handlers.OnDisconnection;
@@ -261,8 +261,8 @@ class Initialize {
     }
 
     public void eventManager() {
-        group.aelysium.rustyconnector.core.lib.events.EventManager factory = new group.aelysium.rustyconnector.core.lib.events.EventManager();
-        services.put(group.aelysium.rustyconnector.core.lib.events.EventManager.class, factory);
+        group.aelysium.rustyconnector.core.common.events.EventManager factory = new group.aelysium.rustyconnector.core.common.events.EventManager();
+        services.put(group.aelysium.rustyconnector.core.common.events.EventManager.class, factory);
 
         factory.on(ConnectedEvent.class, new OnConnection());
         factory.on(DisconnectedEvent.class, new OnDisconnection());

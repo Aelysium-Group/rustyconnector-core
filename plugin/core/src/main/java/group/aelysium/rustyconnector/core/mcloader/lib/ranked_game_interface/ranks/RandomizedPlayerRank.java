@@ -3,12 +3,6 @@ package group.aelysium.rustyconnector.core.mcloader.lib.ranked_game_interface.ra
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import group.aelysium.rustyconnector.toolkit.core.matchmaking.IPlayerRank;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IMatchPlayer;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IMatchmaker;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.ISession;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IVelocityPlayerRank;
-
-import java.util.List;
 
 public class RandomizedPlayerRank implements IPlayerRank {
     public static String schema() {

@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.packet_handlers;
 
-import group.aelysium.rustyconnector.core.lib.packets.BuiltInIdentifications;
-import group.aelysium.rustyconnector.core.lib.packets.MagicLink;
+import group.aelysium.rustyconnector.core.common.packets.BuiltInIdentifications;
+import group.aelysium.rustyconnector.core.common.packets.MagicLink;
 import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
 import group.aelysium.rustyconnector.toolkit.core.packet.Packet;
 import group.aelysium.rustyconnector.toolkit.core.packet.PacketIdentification;

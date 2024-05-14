@@ -1,12 +1,12 @@
 package group.aelysium.rustyconnector.core.mcloader.lib.magic_link;
 
-import group.aelysium.rustyconnector.core.lib.packets.BuiltInIdentifications;
+import group.aelysium.rustyconnector.core.common.packets.BuiltInIdentifications;
 import group.aelysium.rustyconnector.core.mcloader.central.MCLoaderFlame;
 import group.aelysium.rustyconnector.toolkit.core.messenger.IMessengerConnection;
 import group.aelysium.rustyconnector.toolkit.core.messenger.IMessengerConnector;
 import group.aelysium.rustyconnector.toolkit.core.packet.Packet;
 import group.aelysium.rustyconnector.toolkit.core.packet.PacketParameter;
-import group.aelysium.rustyconnector.core.lib.packets.MagicLink;
+import group.aelysium.rustyconnector.core.common.packets.MagicLink;
 import group.aelysium.rustyconnector.toolkit.mc_loader.central.ICoreServiceHandler;
 import group.aelysium.rustyconnector.toolkit.mc_loader.central.IMCLoaderFlame;
 import group.aelysium.rustyconnector.toolkit.mc_loader.events.magic_link.DisconnectedEvent;

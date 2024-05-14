@@ -1,16 +1,15 @@
 package group.aelysium.rustyconnector.plugin.velocity.lib.storage;
 
-import group.aelysium.rustyconnector.plugin.velocity.lib.matchmaking.rank.*;
+import group.aelysium.rustyconnector.plugin.velocity.lib.family.matchmaking.rank.*;
 import group.aelysium.rustyconnector.plugin.velocity.lib.storage.reactors.StorageReactor;
 import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service;
 import group.aelysium.rustyconnector.toolkit.velocity.family.static_family.IServerResidence;
 import group.aelysium.rustyconnector.toolkit.velocity.family.static_family.IStaticFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.friends.PlayerPair;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IMatchPlayer;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IMatchmaker;
-import group.aelysium.rustyconnector.toolkit.core.matchmaking.IPlayerRank;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IRankResolver;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IVelocityPlayerRank;
+import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IMatchPlayer;
+import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IMatchmaker;
+import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IRankResolver;
+import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IVelocityPlayerRank;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
 import group.aelysium.rustyconnector.toolkit.velocity.storage.IDatabase;

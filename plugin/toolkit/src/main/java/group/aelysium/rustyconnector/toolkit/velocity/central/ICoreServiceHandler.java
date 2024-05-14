@@ -13,7 +13,7 @@ import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayerService;
 import group.aelysium.rustyconnector.toolkit.velocity.server.IServerService;
 import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.IServiceHandler;
 import group.aelysium.rustyconnector.toolkit.velocity.storage.IStorageService;
-import group.aelysium.rustyconnector.toolkit.velocity.whitelist.IWhitelistService;
+import group.aelysium.rustyconnector.toolkit.velocity.family.whitelist.IWhitelistService;
 
 import java.util.Optional;
 

@@ -1,12 +1,12 @@
 package group.aelysium.rustyconnector.toolkit.velocity.config;
 
-import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
+import group.aelysium.rustyconnector.toolkit.velocity.family.Family;
 
 import java.util.Optional;
 
 public interface ScalarFamilyConfig {
     String displayName();
-    IFamily.Reference getParent_family();
+    Family.Reference getParent_family();
     String loadBalancer_name();
     boolean isWhitelist_enabled();
     String getWhitelist_name();

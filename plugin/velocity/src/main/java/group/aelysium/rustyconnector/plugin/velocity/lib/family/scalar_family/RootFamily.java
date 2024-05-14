@@ -1,86 +1,86 @@
 package group.aelysium.rustyconnector.plugin.velocity.lib.family.scalar_family;
 
-import group.aelysium.rustyconnector.plugin.velocity.lib.config.ConfigService;
-import group.aelysium.rustyconnector.plugin.velocity.lib.config.configs.LoadBalancerConfig;
-import group.aelysium.rustyconnector.plugin.velocity.lib.whitelist.WhitelistService;
-import group.aelysium.rustyconnector.core.lib.lang.LangService;
-import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
+import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
+import group.aelysium.rustyconnector.toolkit.velocity.family.load_balancing.ILoadBalancer;
 import group.aelysium.rustyconnector.toolkit.velocity.family.scalar_family.IRootFamily;
-import group.aelysium.rustyconnector.toolkit.velocity.load_balancing.AlgorithmType;
+import group.aelysium.rustyconnector.toolkit.velocity.family.scalar_family.IScalarFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
-import group.aelysium.rustyconnector.toolkit.velocity.util.DependencyInjector;
-import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
-import group.aelysium.rustyconnector.plugin.velocity.lib.config.configs.ScalarFamilyConfig;
-import group.aelysium.rustyconnector.plugin.velocity.lib.load_balancing.LeastConnection;
-import group.aelysium.rustyconnector.plugin.velocity.lib.load_balancing.LoadBalancer;
-import group.aelysium.rustyconnector.plugin.velocity.lib.load_balancing.MostConnection;
-import group.aelysium.rustyconnector.plugin.velocity.lib.load_balancing.RoundRobin;
-import group.aelysium.rustyconnector.plugin.velocity.lib.whitelist.Whitelist;
-import group.aelysium.rustyconnector.toolkit.velocity.whitelist.IWhitelist;
-import net.kyori.adventure.text.Component;
+import group.aelysium.rustyconnector.plugin.velocity.lib.family.load_balancing.LeastConnection;
+import group.aelysium.rustyconnector.plugin.velocity.lib.family.load_balancing.LoadBalancer;
+import group.aelysium.rustyconnector.plugin.velocity.lib.family.load_balancing.MostConnection;
+import group.aelysium.rustyconnector.plugin.velocity.lib.family.load_balancing.RoundRobin;
+import group.aelysium.rustyconnector.plugin.velocity.lib.family.whitelist.Whitelist;
+import group.aelysium.rustyconnector.toolkit.velocity.family.whitelist.IWhitelist;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.List;
-
-import static group.aelysium.rustyconnector.toolkit.velocity.family.Metadata.ROOT_FAMILY_META;
-import static group.aelysium.rustyconnector.toolkit.velocity.util.DependencyInjector.inject;
-
 public class RootFamily extends ScalarFamily implements IRootFamily {
+    private final boolean catchDisconnectingPlayers;
 
-    public RootFamily(ScalarFamily.Settings settings) {
-        super(settings, ROOT_FAMILY_META);
+    public RootFamily(
+            @NotNull String id,
+            @NotNull IScalarFamily.Connector connector,
+            boolean catchDisconnectingPlayers,
+            String displayName,
+            String parent
+    ) throws Exception {
+        super(id, connector, displayName, parent);
+        this.catchDisconnectingPlayers = catchDisconnectingPlayers;
     }
 
-    public static RootFamily init(DependencyInjector.DI4<List<Component>, LangService, WhitelistService, ConfigService> deps, String familyName) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException, IOException {
-        Tinder api = Tinder.get();
-        List<Component> bootOutput = deps.d1();
-        LangService lang = deps.d2();
-        WhitelistService whitelistService = deps.d3();
+    @Override
+    public boolean catchDisconnectingPlayers() {
+        return this.catchDisconnectingPlayers;
+    }
 
-        ScalarFamilyConfig config = ScalarFamilyConfig.construct(api.dataFolder(), familyName, lang, deps.d4());
+    public record Settings(
+            @NotNull String id,
+            @NotNull ILoadBalancer.Settings loadBalancer,
+            boolean catchDisconnectingPlayers,
+            String displayName,
+            String parent,
+            IWhitelist.Settings whitelist
+    ) {}
 
-        AlgorithmType loadBalancerAlgorithm;
-        LoadBalancer.Settings loadBalancerSettings;
-        {
-            LoadBalancerConfig loadBalancerConfig = LoadBalancerConfig.construct(api.dataFolder(), config.loadBalancer_name(), lang);
+    public static class Tinder extends Particle.Tinder<RootFamily> {
+        private final Settings settings;
 
-            loadBalancerAlgorithm = loadBalancerConfig.getAlgorithm();
+        public Tinder(@NotNull Settings settings) {
+            this.settings = settings;
+        }
 
-            loadBalancerSettings = new LoadBalancer.Settings(
-                    loadBalancerConfig.isWeighted(),
-                    loadBalancerConfig.isPersistence_enabled(),
-                    loadBalancerConfig.getPersistence_attempts()
+        @Override
+        public @NotNull RootFamily ignite() throws Exception {
+            Flux<IWhitelist> whitelist = null;
+            if (settings.whitelist() != null)
+                whitelist = (new Whitelist.Tinder(settings.whitelist())).flux();
+
+            Flux<ILoadBalancer> loadBalancer = (switch (settings.loadBalancer().algorithm()) {
+                case "ROUND_ROBIN" -> new RoundRobin.Tinder(settings.loadBalancer());
+                case "LEAST_CONNECTION" -> new LeastConnection.Tinder(settings.loadBalancer());
+                case "MOST_CONNECTION" -> new MostConnection.Tinder(settings.loadBalancer());
+                default -> throw new RuntimeException("The id used for "+settings.id()+"'s load balancer is invalid!");
+            }).flux();
+
+            return new RootFamily(
+                    this.settings.id(),
+                    new IScalarFamily.Connector(loadBalancer, whitelist),
+                    this.settings.catchDisconnectingPlayers(),
+                    this.settings.displayName,
+                    this.settings.parent
             );
         }
-
-        Whitelist.Reference whitelist = null;
-        if (config.isWhitelist_enabled())
-            whitelist = Whitelist.init(inject(bootOutput, lang, whitelistService, deps.d4()), config.getWhitelist_name());
-
-        LoadBalancer loadBalancer;
-        switch (loadBalancerAlgorithm) {
-            case ROUND_ROBIN -> loadBalancer = new RoundRobin(loadBalancerSettings);
-            case LEAST_CONNECTION -> loadBalancer = new LeastConnection(loadBalancerSettings);
-            case MOST_CONNECTION -> loadBalancer = new MostConnection(loadBalancerSettings);
-            default -> throw new RuntimeException("The id used for "+familyName+"'s load balancer is invalid!");
-        }
-
-        ScalarFamily.Settings settings = new ScalarFamily.Settings(familyName, config.displayName(), loadBalancer, null, whitelist, new Connector(loadBalancer, whitelist));
-        return new RootFamily(settings);
     }
 
-    public static class Connector extends IFamily.Connector.Core {
-        protected final IFamily.Connector.Core connector;
+    public static class Connector extends Family.Connector.Core {
+        protected final Family.Connector.Core connector;
 
         protected Connector(@NotNull LoadBalancer loadBalancer, IWhitelist.Reference whitelist) {
             super(loadBalancer, whitelist);
 
             if(loadBalancer.persistent() && loadBalancer.attempts() > 1)
-                this.connector = new ScalarFamily.Connector.Persistent(loadBalancer, whitelist);
+                this.connector = new ScalarConnector.Persistent(loadBalancer, whitelist);
             else
-                this.connector = new ScalarFamily.Connector.Singleton(loadBalancer, whitelist);
+                this.connector = new ScalarConnector.Singleton(loadBalancer, whitelist);
         }
 
         @Override

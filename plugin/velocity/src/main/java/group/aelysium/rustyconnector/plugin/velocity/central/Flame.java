@@ -4,7 +4,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import group.aelysium.rustyconnector.toolkit.mc_loader.central.IMCLoaderTinder;
 import group.aelysium.rustyconnector.toolkit.velocity.central.Kernel;
 import group.aelysium.rustyconnector.toolkit.velocity.util.Version;
-import group.aelysium.rustyconnector.core.lib.lang.LangService;
+import group.aelysium.rustyconnector.core.common.lang.LangService;
 import group.aelysium.rustyconnector.plugin.velocity.PluginLogger;
 import net.kyori.adventure.text.Component;
 

@@ -1,23 +1,23 @@
 package group.aelysium.rustyconnector.plugin.velocity.central;
 
-import group.aelysium.rustyconnector.core.lib.events.EventManager;
+import group.aelysium.rustyconnector.core.common.events.EventManager;
 import group.aelysium.rustyconnector.plugin.velocity.lib.config.ConfigService;
 import group.aelysium.rustyconnector.toolkit.core.packet.VelocityPacketBuilder;
 import group.aelysium.rustyconnector.toolkit.velocity.central.ICoreServiceHandler;
 import group.aelysium.rustyconnector.toolkit.core.serviceable.ServiceHandler;
-import group.aelysium.rustyconnector.core.lib.cache.MessageCacheService;
-import group.aelysium.rustyconnector.core.lib.data_transit.DataTransitService;
+import group.aelysium.rustyconnector.core.common.cache.MessageCacheService;
+import group.aelysium.rustyconnector.core.common.data_transit.DataTransitService;
 import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service;
 import group.aelysium.rustyconnector.plugin.velocity.lib.dynamic_teleport.DynamicTeleportService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.FamilyService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.friends.FriendsService;
-import group.aelysium.rustyconnector.plugin.velocity.lib.load_balancing.LoadBalancerService;
+import group.aelysium.rustyconnector.plugin.velocity.lib.family.load_balancing.LoadBalancerService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.MagicLinkService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.parties.PartyService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.players.PlayerService;
-import group.aelysium.rustyconnector.plugin.velocity.lib.server.ServerService;
+import group.aelysium.rustyconnector.plugin.velocity.lib.family.mcloader.ServerService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.storage.StorageService;
-import group.aelysium.rustyconnector.plugin.velocity.lib.whitelist.WhitelistService;
+import group.aelysium.rustyconnector.plugin.velocity.lib.family.whitelist.WhitelistService;
 
 import java.util.Map;
 import java.util.Optional;

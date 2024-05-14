@@ -1,11 +1,11 @@
 package group.aelysium.rustyconnector.plugin.velocity.lib.config.configs;
 
-import group.aelysium.rustyconnector.core.lib.config.YAML;
-import group.aelysium.rustyconnector.core.lib.lang.LangService;
+import group.aelysium.rustyconnector.core.common.config.YAML;
+import group.aelysium.rustyconnector.core.common.lang.LangService;
 import group.aelysium.rustyconnector.toolkit.core.config.IConfigService;
 import group.aelysium.rustyconnector.toolkit.core.config.IYAML;
 import group.aelysium.rustyconnector.toolkit.core.lang.LangFileMappings;
-import group.aelysium.rustyconnector.toolkit.velocity.load_balancing.AlgorithmType;
+import group.aelysium.rustyconnector.toolkit.velocity.family.load_balancing.AlgorithmType;
 
 import java.nio.file.Path;
 

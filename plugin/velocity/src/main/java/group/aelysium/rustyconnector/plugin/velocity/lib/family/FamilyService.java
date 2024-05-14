@@ -2,8 +2,7 @@ package group.aelysium.rustyconnector.plugin.velocity.lib.family;
 
 import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service;
-import group.aelysium.rustyconnector.toolkit.velocity.config.FamiliesConfig;
-import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
+import group.aelysium.rustyconnector.toolkit.velocity.family.Family;
 import group.aelysium.rustyconnector.toolkit.velocity.family.IFamilyService;
 import group.aelysium.rustyconnector.toolkit.velocity.family.scalar_family.IRootFamily;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public class FamilyService extends IFamilyService {
-    private final Map<String, IFamily> families = new HashMap<>();
+    private final Map<String, Family> families = new HashMap<>();
     private WeakReference<IRootFamily> rootFamily;
 
     protected FamilyService() {}
@@ -29,21 +28,21 @@ public class FamilyService extends IFamilyService {
         return this.rootFamily.get();
     }
 
-    public Optional<IFamily> find(String id) {
-        IFamily family = this.families.get(id);
+    public Optional<Family> find(String id) {
+        Family family = this.families.get(id);
         if(family == null) return Optional.empty();
         return Optional.of(family);
     }
 
-    public void add(IFamily family) {
-        this.families.put(family.id(), (Family) family);
+    public void add(Family family) {
+        this.families.put(family.id(), (group.aelysium.rustyconnector.plugin.velocity.lib.family.Family) family);
     }
 
-    public void remove(IFamily family) {
+    public void remove(Family family) {
         this.families.remove(family.id());
     }
 
-    public List<IFamily> dump() {
+    public List<Family> dump() {
         return this.families.values().stream().toList();
     }
 
@@ -57,13 +56,17 @@ public class FamilyService extends IFamilyService {
 
     public void close() throws Exception {
         // Teardown logic for any families that need it
-        for (IFamily family : this.families.values()) {
+        for (Family family : this.families.values()) {
             if(family instanceof Service)
                 ((Service) family).kill();
         }
 
         this.families.clear();
         this.rootFamily.clear();
+    }
+
+    public void New(Object settings) {
+
     }
 
     public static class Tinder extends Particle.Tinder<FamilyService> {

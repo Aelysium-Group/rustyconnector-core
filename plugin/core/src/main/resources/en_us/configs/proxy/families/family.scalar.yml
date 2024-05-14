@@ -97,33 +97,3 @@ whitelist:
     # You can include the ".yml" at the end of the name below if you'd like. It doesn't matter either way.
     #
     name: "whitelist-template"
-
-
-
-############################################################
-#||||||||||||||||||||||||||||||||||||||||||||||||||||||||||#
-#                      Dynamic Scale                       #
-#                                                          #
-#               ---------------------------                #
-#                                                          #
-# | Dynamic Scale allows your family to adjust the number  #
-# | of MCLoaders it has based on player influxes.          #
-#                                                          #
-#   WARNING:                                               #
-#   Autoscaling requires that your RustyConnector network  #
-#   is running from within a Kubernetes cluster.           #
-#                                                          #
-#               ---------------------------                #
-#                                                          #
-#||||||||||||||||||||||||||||||||||||||||||||||||||||||||||#
-############################################################
-dynamic-scale:
-    enabled: false
-
-    algorithm: ELASTIC
-
-    #
-    # The name of the Dynamic Scale configuration file in your "dynamic_scale" folder.
-    # You can include the ".yml" at the end of the name below if you'd like. It doesn't matter either way.
-    #
-    name: "default"

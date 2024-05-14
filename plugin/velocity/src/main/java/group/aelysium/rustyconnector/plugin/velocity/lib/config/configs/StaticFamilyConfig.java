@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.plugin.velocity.lib.config.configs;
 
-import group.aelysium.rustyconnector.core.lib.lang.LangService;
+import group.aelysium.rustyconnector.core.common.lang.LangService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.config.ConfigService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.Family;
 import group.aelysium.rustyconnector.toolkit.core.config.IConfigService;
@@ -10,10 +10,8 @@ import group.aelysium.rustyconnector.toolkit.velocity.config.IProxyConfigService
 import group.aelysium.rustyconnector.toolkit.velocity.config.LoadBalancerConfig;
 import group.aelysium.rustyconnector.toolkit.velocity.config.WhitelistConfig;
 import group.aelysium.rustyconnector.toolkit.velocity.family.UnavailableProtocol;
-import group.aelysium.rustyconnector.core.lib.config.YAML;
+import group.aelysium.rustyconnector.core.common.config.YAML;
 import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 
 import java.nio.file.Path;
 import java.text.ParseException;

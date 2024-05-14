@@ -7,18 +7,18 @@ import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import group.aelysium.rustyconnector.plugin.velocity.event_handlers.EventDispatch;
 import group.aelysium.rustyconnector.plugin.velocity.lib.dynamic_teleport.injectors.InjectorService;
 import group.aelysium.rustyconnector.toolkit.core.logger.PluginLogger;
-import group.aelysium.rustyconnector.core.lib.exception.NoOutputException;
+import group.aelysium.rustyconnector.core.common.exception.NoOutputException;
 import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
 import group.aelysium.rustyconnector.plugin.velocity.lib.friends.FriendsService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.lang.ProxyLang;
 import group.aelysium.rustyconnector.plugin.velocity.lib.players.Player;
 import group.aelysium.rustyconnector.toolkit.velocity.events.player.FamilyPostJoinEvent;
-import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
+import group.aelysium.rustyconnector.toolkit.velocity.family.Family;
 import group.aelysium.rustyconnector.toolkit.velocity.family.scalar_family.IRootFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.friends.IFriendRequest;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
-import group.aelysium.rustyconnector.toolkit.velocity.whitelist.IWhitelist;
+import group.aelysium.rustyconnector.toolkit.velocity.family.whitelist.IWhitelist;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -109,7 +109,7 @@ public class OnPlayerChooseInitialServer {
             try {
                 InjectorService injectors = api.services().dynamicTeleport().orElseThrow().services().injector().orElseThrow();
 
-                IFamily family = api.services().family().rootFamily();
+                Family family = api.services().family().rootFamily();
                 if(family == null) throw new RuntimeException("Unable to fetch a server to connect to.");
 
                 String host = event.getPlayer().getVirtualHost().map(InetSocketAddress::getHostString).orElse("").toLowerCase(Locale.ROOT);

@@ -1,11 +1,6 @@
 package group.aelysium.rustyconnector.toolkit.core.matchmaking;
 
 import group.aelysium.rustyconnector.toolkit.core.JSONParseable;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IMatchPlayer;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IMatchmaker;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.ISession;
-
-import java.util.List;
 
 public interface IPlayerRank extends JSONParseable {
     /**

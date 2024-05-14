@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.toolkit.velocity.config;
 
-import group.aelysium.rustyconnector.toolkit.velocity.load_balancing.AlgorithmType;
+import group.aelysium.rustyconnector.toolkit.velocity.family.load_balancing.AlgorithmType;
 
 public interface LoadBalancerConfig {
     boolean isWeighted();

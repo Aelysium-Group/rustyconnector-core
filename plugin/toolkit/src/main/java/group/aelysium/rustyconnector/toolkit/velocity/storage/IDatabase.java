@@ -2,11 +2,10 @@ package group.aelysium.rustyconnector.toolkit.velocity.storage;
 
 import group.aelysium.rustyconnector.toolkit.velocity.family.static_family.IServerResidence;
 import group.aelysium.rustyconnector.toolkit.velocity.family.static_family.IStaticFamily;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IMatchPlayer;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IMatchmaker;
-import group.aelysium.rustyconnector.toolkit.core.matchmaking.IPlayerRank;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IRankResolver;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IVelocityPlayerRank;
+import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IMatchPlayer;
+import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IMatchmaker;
+import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IRankResolver;
+import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IVelocityPlayerRank;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
 

@@ -1,12 +1,11 @@
 package group.aelysium.rustyconnector.core.mcloader.lib.lang;
 
-import group.aelysium.rustyconnector.core.lib.cache.CacheableMessage;
-import group.aelysium.rustyconnector.core.lib.lang.ASCIIAlphabet;
-import group.aelysium.rustyconnector.core.lib.lang.Lang;
-import group.aelysium.rustyconnector.core.lib.lang.LanguageResolver;
+import group.aelysium.rustyconnector.core.common.cache.CacheableMessage;
+import group.aelysium.rustyconnector.core.common.lang.ASCIIAlphabet;
+import group.aelysium.rustyconnector.core.common.lang.Lang;
+import group.aelysium.rustyconnector.core.common.lang.LanguageResolver;
 import group.aelysium.rustyconnector.core.TinderAdapterForCore;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.util.Date;

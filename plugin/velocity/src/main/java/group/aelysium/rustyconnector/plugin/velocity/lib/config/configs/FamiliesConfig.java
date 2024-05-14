@@ -1,8 +1,8 @@
 package group.aelysium.rustyconnector.plugin.velocity.lib.config.configs;
 
-import group.aelysium.rustyconnector.core.lib.config.YAML;
-import group.aelysium.rustyconnector.core.lib.exception.NoOutputException;
-import group.aelysium.rustyconnector.core.lib.lang.LangService;
+import group.aelysium.rustyconnector.core.common.config.YAML;
+import group.aelysium.rustyconnector.core.common.exception.NoOutputException;
+import group.aelysium.rustyconnector.core.common.lang.LangService;
 import group.aelysium.rustyconnector.plugin.velocity.PluginLogger;
 import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
 import group.aelysium.rustyconnector.plugin.velocity.lib.config.ConfigService;

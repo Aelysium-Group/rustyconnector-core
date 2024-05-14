@@ -1,8 +1,8 @@
 package group.aelysium.rustyconnector.core.mcloader.lib.ranked_game_interface.handlers;
 
 import group.aelysium.rustyconnector.core.TinderAdapterForCore;
-import group.aelysium.rustyconnector.core.lib.packets.BuiltInIdentifications;
-import group.aelysium.rustyconnector.core.lib.packets.RankedGame;
+import group.aelysium.rustyconnector.core.common.packets.BuiltInIdentifications;
+import group.aelysium.rustyconnector.core.common.packets.RankedGame;
 import group.aelysium.rustyconnector.toolkit.core.packet.Packet;
 import group.aelysium.rustyconnector.toolkit.core.packet.PacketListener;
 import group.aelysium.rustyconnector.toolkit.core.packet.PacketIdentification;

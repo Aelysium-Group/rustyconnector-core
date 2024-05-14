@@ -1,5 +1,6 @@
 package group.aelysium.rustyconnector.toolkit.core.absolute_redundancy;
 
+import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -12,14 +13,12 @@ import java.util.function.Consumer;
  * Particles are the backbone of the Absolute Redundancy Architecture.
  * By leveraging {@link Flux}, Particles are able to exist in a state of super-positioning.
  */
-public abstract class Particle implements AutoCloseable {
-    protected Particle() {}
-
+public interface Particle extends AutoCloseable {
     /**
      * Tinder exists as an ignition point for new Particles.
      * @param <P> The Particles that will be launched via this Tinder.
      */
-    public abstract static class Tinder<P extends Particle> {
+    abstract class Tinder<P extends Particle> {
         protected Tinder() {}
 
         public final Flux<P> flux() {
@@ -41,7 +40,7 @@ public abstract class Particle implements AutoCloseable {
      * {@link Particle.Flux} exists to manage this state.
      * @param <P> The underlying Particle that exists within this flux.
      */
-    public static class Flux<P extends Particle> implements AutoCloseable {
+    class Flux<P extends Particle> implements AutoCloseable {
         private static final ExecutorService executor = Executors.newCachedThreadPool();
         private @Nullable CompletableFuture<P> resolvable = null;
         private @NotNull Tinder<P> tinder;
@@ -59,8 +58,8 @@ public abstract class Particle implements AutoCloseable {
 
             executor.submit(() -> {
                 try {
-                    P microservice = tinder.ignite();
-                    future.complete(microservice);
+                    P p = tinder.ignite();
+                    future.complete(p);
                 } catch (Exception e) {
                     future.completeExceptionally(e);
                 }
@@ -113,33 +112,61 @@ public abstract class Particle implements AutoCloseable {
         }
 
         /**
-         * Executes the consumer as soon as the Particle is ignited.
-         * If the Particle is unable to ignite, this consumer is thrown away.
-         * If the Particle is already ignited, this consumer will run instantly on the current thread.
-         * <br/>
-         * If the Particle has not yet ignited, this method will store the consumer on a parallel thread and wait for the Particle to attemp ignition.
-         * This method is non-blocking.
+         * Runs the Consumer using the Particle.
+         * If the Particle doesn't exist, this method will store the consumer on a parallel thread and wait for the Particle to attempt ignition.
+         * <br />
+         * If the Particle is unable to ignite in under 1 minute, the consumer will be thrown away.
+         * <br />
+         * To set longer timeouts you can use {@link #executeParallel(Consumer, LiquidTimestamp)}.
          * @param consumer The consumer to execute with the ignited Particle.
          */
-        public void optimistic(Consumer<P> consumer) {
+        public void executeParallel(Consumer<P> consumer) {
+            this.executeParallel(consumer, LiquidTimestamp.from(1, TimeUnit.MINUTES));
+        }
+
+        /**
+         * Runs the Consumer using the Particle.
+         * If the Particle doesn't exist, this method will store the consumer on a parallel thread and wait for the Particle to attempt ignition.
+         * <br />
+         * If the Particle is unable to ignite in under 1 minute, the consumer will be thrown away.
+         * <br />
+         * To set longer timeouts you can use {@link #executeParallel(Consumer, LiquidTimestamp)}.
+         * @param consumer The consumer to execute with the ignited Particle.
+         * @param timeout The amount of time to give the Particle for ignition before giving up.
+         */
+        public void executeParallel(Consumer<P> consumer, LiquidTimestamp timeout) {
+            if(this.resolvable == null) return;
             if(this.resolvable.isCancelled()) return;
             if(this.resolvable.isCompletedExceptionally()) return;
             if(this.exists()) {
                 try {
-                    consumer.accept(this.resolvable.get());
+                    consumer.accept(this.access().get(timeout.value(), timeout.unit()));
                 } catch (Exception ignore) {}
                 return;
             }
 
             executor.submit(()->{
                 try {
-                    consumer.accept(this.resolvable.get());
+                    consumer.accept(this.access().get(timeout.value(), timeout.unit()));
                 } catch (Exception ignore) {}
             });
         }
 
         /**
-         * Executes either the Consumer or the Runnable based on if the Particle is available or not.
+         * Runs the Consumer using the Particle.
+         * This method is not thread-locking and will always execute the Consumer instantly.
+         * <br/>
+         * This method respects Exceptions that may be thrown within the Consumer.
+         * <br />
+         * If the Particle is not available, the Consumer is thrown away.
+         * @param success The consumer to execute if the Particle is available.
+         */
+        public void executeNow(Consumer<P> success) {
+            this.executeNow(success, ()->{});
+        }
+
+        /**
+         * Runs either Consumer or Runnable based on if the Particle is available.
          * This method is not thread-locking and will always execute either the Consumer or the Runnable instantly.
          * <br/>
          * This method respects Exceptions that may be thrown within the Consumer or Runnable.
@@ -148,10 +175,44 @@ public abstract class Particle implements AutoCloseable {
          * @param failed The Runnable if the Particle isn't available.
          */
         public void executeNow(Consumer<P> success, Runnable failed) {
+            this.executeLocking(success, failed, LiquidTimestamp.from(0, TimeUnit.SECONDS));
+        }
+
+        /**
+         * Runs the Consumer using the Particle.
+         * This method is thread locking for no longer than the duration of the timeout.
+         * <br/>
+         * If the Particle currently exists, it will resolve instantly. If the Particle doesn't exist, timeout will determine how
+         * long this method will wait before running either the success Consumer or the failed Runnable.
+         * <br/>
+         * This method respects Exceptions that may be thrown within the Consumer.
+         * Any exceptions that might be thrown will be passed along to the caller to handle.
+         * @param success The consumer to execute if the Particle is available.
+         * @param timeout The amount of time to give the Particle to resolve before throwing away the Consumer.
+         */
+        public void executeLocking(Consumer<P> success, LiquidTimestamp timeout) {
+            this.executeLocking(success, ()->{}, timeout);
+        }
+
+        /**
+         * Executes either the Consumer or the Runnable based on if the Particle is available or not after the delay.
+         * This method is thread locking for no longer than the duration of the timeout.
+         * <br />
+         * If the Particle currently exists, it will resolve instantly. If the Particle doesn't exist, timeout will determine how
+         * long this method will wait before running either the success Consumer or the failed Runnable.
+         * <br/>
+         * This method respects Exceptions that may be thrown within the Consumer or Runnable.
+         * Any exceptions that might be thrown will be passed along to the caller to handle.
+         * @param success The consumer to execute if the Particle is available.
+         * @param failed The Runnable if the Particle isn't available.
+         * @param timeout The amount of time to give the Particle to resolve before running the Runnable.
+         */
+        public void executeLocking(Consumer<P> success, Runnable failed, LiquidTimestamp timeout) {
             if(this.exists()) {
                 Optional<P> p = Optional.empty();
                 try {
-                    p = Optional.ofNullable(this.resolvable.getNow(null));
+                    if(timeout.value() == 0) p = Optional.ofNullable(this.access().getNow(null));
+                    else p = Optional.ofNullable(this.access().get(timeout.value(), timeout.unit()));
                 } catch (Exception ignore) {}
 
                 if(p.isPresent()) {
@@ -175,9 +236,11 @@ public abstract class Particle implements AutoCloseable {
         }
 
         /**
-         * Access the underlying Particle's CompletableFuture.
-         * Particles exist in a state of super-position, there's no way to know if a microservice is currently active until you observe it.
-         * @return A future that will resolve to the finished Particle if it's able to boot. If the microservice wasn't able to boot, the future will complete exceptionally.
+         * Access the Particle through it's CompletableFuture.
+         * Particles exist in a state of super-position, there's no way to know if a Particle is currently active until you observe it.
+         * <br />
+         * If this Particle does not exist, this method will attempt to ignite a new instance of this Particle.
+         * @return A future that will resolve to the finished Particle if it's able to boot. If the Particle wasn't able to boot, the future will complete exceptionally.
          */
         public CompletableFuture<P> access() {
             if(this.resolvable != null)

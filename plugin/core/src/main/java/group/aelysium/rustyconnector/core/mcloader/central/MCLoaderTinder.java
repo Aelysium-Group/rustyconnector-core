@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.core.mcloader.central;
 
-import group.aelysium.rustyconnector.core.lib.lang.LangService;
+import group.aelysium.rustyconnector.core.common.lang.LangService;
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
 import group.aelysium.rustyconnector.toolkit.core.logger.PluginLogger;
 import group.aelysium.rustyconnector.toolkit.mc_loader.central.ICoreServiceHandler;

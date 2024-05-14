@@ -1,19 +1,19 @@
 package group.aelysium.rustyconnector.toolkit.velocity.events.family;
 
 import group.aelysium.rustyconnector.toolkit.core.events.Event;
-import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
+import group.aelysium.rustyconnector.toolkit.velocity.family.Family;
 
 /**
  * Represents a family rebalancing its MCLoaders via it's load balancer.
  */
 public class FamilyRebalanceEvent implements Event {
-    protected final IFamily family;
+    protected final Family family;
 
-    public FamilyRebalanceEvent(IFamily family) {
+    public FamilyRebalanceEvent(Family family) {
         this.family = family;
     }
 
-    public IFamily family() {
+    public Family family() {
         return this.family;
     }
 }

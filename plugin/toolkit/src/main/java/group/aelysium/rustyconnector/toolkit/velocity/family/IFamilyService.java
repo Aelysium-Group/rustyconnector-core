@@ -2,7 +2,6 @@ package group.aelysium.rustyconnector.toolkit.velocity.family;
 
 import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.velocity.family.scalar_family.IRootFamily;
-import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,27 +25,27 @@ public abstract class IFamilyService extends Particle {
 
     /**
      * Finds a family based on an id.
-     * An alternate route of getting a family, other than "tinder.services().family().find()", can be to use {@link IFamily.Reference new Family.Reference(id)}{@link IFamily.Reference#get() .get()}.
+     * An alternate route of getting a family, other than "tinder.services().family().find()", can be to use {@link Family.Reference new Family.Reference(id)}{@link Family.Reference#get() .get()}.
      * @param id The id to search for.
-     * @return {@link Optional<IFamily>}
+     * @return {@link Optional< Family >}
      */
-    public abstract Optional<IFamily> find(String id);
+    public abstract Optional<Family> find(String id);
 
     /**
      * Add a family to this manager.
      * @param family The family to add to this manager.
      */
-    public abstract void add(IFamily family);
+    public abstract void add(Family family);
 
     /**
      * Remove a family from this manager.
      * @param family The family to remove from this manager.
      */
-    public abstract void remove(IFamily family);
+    public abstract void remove(Family family);
 
     /**
      * Gets a list of all families in this service.
-     * @return {@link List<IFamily>}
+     * @return {@link List< Family >}
      */
-    public abstract List<IFamily> dump();
+    public abstract List<Family> dump();
 }

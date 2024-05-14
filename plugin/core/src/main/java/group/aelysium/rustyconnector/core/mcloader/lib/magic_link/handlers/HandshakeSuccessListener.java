@@ -1,8 +1,7 @@
 package group.aelysium.rustyconnector.core.mcloader.lib.magic_link.handlers;
 
-import group.aelysium.rustyconnector.core.lib.events.EventManager;
-import group.aelysium.rustyconnector.core.lib.packets.BuiltInIdentifications;
-import group.aelysium.rustyconnector.core.lib.packets.MagicLink;
+import group.aelysium.rustyconnector.core.common.packets.BuiltInIdentifications;
+import group.aelysium.rustyconnector.core.common.packets.MagicLink;
 import group.aelysium.rustyconnector.core.mcloader.central.MCLoaderTinder;
 import group.aelysium.rustyconnector.core.mcloader.lib.lang.MCLoaderLang;
 import group.aelysium.rustyconnector.core.mcloader.lib.ranked_game_interface.RankedGameInterfaceService;
@@ -13,7 +12,6 @@ import group.aelysium.rustyconnector.toolkit.core.packet.PacketListener;
 import group.aelysium.rustyconnector.core.mcloader.lib.magic_link.MagicLinkService;
 import group.aelysium.rustyconnector.toolkit.core.server.ServerAssignment;
 import group.aelysium.rustyconnector.toolkit.mc_loader.events.magic_link.ConnectedEvent;
-import group.aelysium.rustyconnector.toolkit.mc_loader.events.magic_link.DisconnectedEvent;
 import net.kyori.adventure.text.Component;
 
 public class HandshakeSuccessListener extends PacketListener<MagicLink.Handshake.Success> {

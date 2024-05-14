@@ -11,22 +11,22 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
-import group.aelysium.rustyconnector.core.lib.cache.CacheableMessage;
+import group.aelysium.rustyconnector.core.common.cache.CacheableMessage;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.Family;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.ranked_family.RankedFamily;
 import group.aelysium.rustyconnector.plugin.velocity.lib.players.Player;
 import group.aelysium.rustyconnector.plugin.velocity.lib.storage.StorageService;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.ConnectionResult;
-import group.aelysium.rustyconnector.toolkit.velocity.connection.PlayerConnectable;
+import group.aelysium.rustyconnector.toolkit.velocity.connection.IPlayerConnectable;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.velocity.util.DependencyInjector;
 import group.aelysium.rustyconnector.plugin.velocity.PluginLogger;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.scalar_family.ScalarFamily;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.static_family.StaticFamily;
-import group.aelysium.rustyconnector.plugin.velocity.lib.dynamic_scale.K8Service;
+import group.aelysium.rustyconnector.plugin.velocity.lib.family.dynamic_scale.K8Service;
 import group.aelysium.rustyconnector.plugin.velocity.lib.lang.ProxyLang;
-import group.aelysium.rustyconnector.plugin.velocity.lib.server.MCLoader;
-import group.aelysium.rustyconnector.core.lib.cache.MessageCacheService;
+import group.aelysium.rustyconnector.plugin.velocity.lib.family.mcloader.MCLoader;
+import group.aelysium.rustyconnector.core.common.cache.MessageCacheService;
 import io.fabric8.kubernetes.api.model.Pod;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -194,14 +194,17 @@ class FamilyC {
                         String familyName = context.getArgument("familyName", String.class);
                         Family family = new Family.Reference(familyName).get();
 
-                        family.loadBalancer().resetIndex();
 
-                        if(family instanceof ScalarFamily)
-                            ProxyLang.RC_SCALAR_FAMILY_INFO.send(logger, (ScalarFamily) family, false);
-                        if(family instanceof StaticFamily)
-                            ProxyLang.RC_STATIC_FAMILY_INFO.send(logger, (StaticFamily) family, false);
-                        if(family instanceof RankedFamily)
-                            ProxyLang.RC_RANKED_FAMILY_INFO.send(logger, (RankedFamily) family, false);
+                        family.loadBalancer().executeNow(lb->{
+                            lb.resetIndex();
+
+                            if(family instanceof ScalarFamily)
+                                ProxyLang.RC_SCALAR_FAMILY_INFO.send(logger, (ScalarFamily) family, false);
+                            if(family instanceof StaticFamily)
+                                ProxyLang.RC_STATIC_FAMILY_INFO.send(logger, (StaticFamily) family, false);
+                            if(family instanceof RankedFamily)
+                                ProxyLang.RC_RANKED_FAMILY_INFO.send(logger, (RankedFamily) family, false);
+                        }, () -> {throw new NullPointerException("This family is currently not available. Try again later!");});
                     } catch (NoSuchElementException e) {
                         logger.send(Component.text("A family with that id doesn't exist!", NamedTextColor.RED));
                     } catch (Exception e) {
@@ -218,14 +221,17 @@ class FamilyC {
                         String familyName = context.getArgument("familyName", String.class);
                         Family family = new Family.Reference(familyName).get();
 
-                        family.balance();
+                        family.loadBalancer().executeNow(lb->{
+                            lb.completeSort();
 
-                        if(family instanceof ScalarFamily)
-                            ProxyLang.RC_SCALAR_FAMILY_INFO.send(logger, (ScalarFamily) family, false);
-                        if(family instanceof StaticFamily)
-                            ProxyLang.RC_STATIC_FAMILY_INFO.send(logger, (StaticFamily) family, false);
-                        if(family instanceof RankedFamily)
-                            ProxyLang.RC_RANKED_FAMILY_INFO.send(logger, (RankedFamily) family, false);
+                            if(family instanceof ScalarFamily)
+                                ProxyLang.RC_SCALAR_FAMILY_INFO.send(logger, (ScalarFamily) family, false);
+                            if(family instanceof StaticFamily)
+                                ProxyLang.RC_STATIC_FAMILY_INFO.send(logger, (StaticFamily) family, false);
+                            if(family instanceof RankedFamily)
+                                ProxyLang.RC_RANKED_FAMILY_INFO.send(logger, (RankedFamily) family, false);
+                        }, () -> {throw new NullPointerException("This family is currently not available. Try again later!");});
+
                     } catch (NoSuchElementException e) {
                         logger.send(Component.text("A family with that id doesn't exist!", NamedTextColor.RED));
                     } catch (Exception e) {
@@ -324,7 +330,7 @@ class Send {
                                     return Command.SINGLE_SUCCESS;
                                 }
 
-                                PlayerConnectable.Request request = family.connect(player);
+                                IPlayerConnectable.Request request = family.connect(player);
                                 ConnectionResult result = request.result().get(30, TimeUnit.SECONDS);
 
                                 if(result.connected()) return Command.SINGLE_SUCCESS;

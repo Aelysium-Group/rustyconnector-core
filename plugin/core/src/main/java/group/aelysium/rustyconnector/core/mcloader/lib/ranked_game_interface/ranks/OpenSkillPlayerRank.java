@@ -3,12 +3,6 @@ package group.aelysium.rustyconnector.core.mcloader.lib.ranked_game_interface.ra
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import group.aelysium.rustyconnector.toolkit.core.matchmaking.IPlayerRank;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IMatchPlayer;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IMatchmaker;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.ISession;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IVelocityPlayerRank;
-
-import java.util.List;
 
 public class OpenSkillPlayerRank implements IPlayerRank {
     // Set higher for more conservative confidence levels. 3 is approx 99.7% certain.

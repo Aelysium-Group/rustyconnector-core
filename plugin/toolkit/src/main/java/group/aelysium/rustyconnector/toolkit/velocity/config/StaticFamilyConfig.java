@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.toolkit.velocity.config;
 
-import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
+import group.aelysium.rustyconnector.toolkit.velocity.family.Family;
 import group.aelysium.rustyconnector.toolkit.velocity.family.UnavailableProtocol;
 import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
 
@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface StaticFamilyConfig {
     String displayName();
-    IFamily.Reference getParent_family();
+    Family.Reference getParent_family();
     String getFirstConnection_loadBalancer();
     boolean isWhitelist_enabled();
     String getWhitelist_name();

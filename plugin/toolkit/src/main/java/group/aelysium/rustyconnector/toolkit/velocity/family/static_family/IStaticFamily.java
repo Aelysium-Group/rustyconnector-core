@@ -1,10 +1,25 @@
 package group.aelysium.rustyconnector.toolkit.velocity.family.static_family;
 
+import group.aelysium.rustyconnector.toolkit.velocity.connection.ConnectionResult;
+import group.aelysium.rustyconnector.toolkit.velocity.family.IFamilyConnector;
 import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.family.UnavailableProtocol;
+import group.aelysium.rustyconnector.toolkit.velocity.family.load_balancing.ILoadBalancer;
+import group.aelysium.rustyconnector.toolkit.velocity.family.whitelist.IWhitelist;
+import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
 import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
+import net.kyori.adventure.text.Component;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public interface IStaticFamily extends IFamily {
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
+import static group.aelysium.rustyconnector.toolkit.velocity.family.UnavailableProtocol.*;
+
+public interface IStaticFamily extends IFamily<IStaticFamily.Connector> {
     /**
      * Gets the {@link UnavailableProtocol} for this family. {@link UnavailableProtocol} governs what happens when a player's resident server is unavailable.
      * @return {@link UnavailableProtocol}
@@ -19,4 +34,109 @@ public interface IStaticFamily extends IFamily {
      * @return {@link LiquidTimestamp}
      */
     LiquidTimestamp homeServerExpiration();
+
+    class Connector implements IFamilyConnector<IMCLoader> {
+        protected final Flux<IWhitelist> whitelist;
+        protected final Flux<ILoadBalancer> loadBalancer;
+
+        public Connector(@NotNull Flux<ILoadBalancer> loadBalancer, @Nullable Flux<IWhitelist> whitelist) {
+            this.loadBalancer = loadBalancer;
+            this.whitelist = whitelist;
+        }
+
+        @Override
+        public void add(IMCLoader mcloader) {
+            this.loadBalancer.executeNow(l -> l.add(mcloader));
+        }
+
+        @Override
+        public void remove(IMCLoader mcloader) {
+            this.loadBalancer.executeNow(l -> l.remove(mcloader));
+        }
+
+        @Override
+        public Optional<Flux<IWhitelist>> whitelist() {
+            return Optional.ofNullable(this.whitelist);
+        }
+
+        public Flux<ILoadBalancer> loadBalancer() {
+            return this.loadBalancer;
+        }
+
+        @Override
+        public Request connect(IPlayer player) {
+            CompletableFuture<ConnectionResult> result = new CompletableFuture<>();
+            Request request = new Request(player, result);
+            try {
+                try {
+                    Optional<IServerResidence.MCLoaderEntry> residenceOptional = this.storage.database().residences().get(family, player);
+
+                    // Set new residence if none exists
+                    if (residenceOptional.isEmpty()) {
+                        request = this.connector.connect(player);
+
+                        if(!request.result().get().connected()) return request;
+
+                        IMCLoader server = request.result().get().server().orElseThrow();
+
+                        this.storage.database().residences().set(family, server, player);
+
+                        return request;
+                    }
+
+                    IServerResidence.MCLoaderEntry residence = residenceOptional.orElseThrow();
+
+                    ConnectionResult result1 = residence.server().connect(player).result().get(10, TimeUnit.SECONDS);
+                    if(!result1.connected()) throw new NoOutputException();
+
+                    return residence.server().connect(player);
+                } catch (NoOutputException ignore) {}
+
+                switch (family.unavailableProtocol()) {
+                    case ASSIGN_NEW_HOME -> {
+                        request = DEFAULT_CONNECTOR.connect(player);
+
+                        if(!request.result().get().connected()) return request;
+
+                        IMCLoader server = request.result().get().server().orElseThrow();
+
+                        this.storage.database().residences().set(family, server, player);
+
+                        return request;
+                    }
+                    case CONNECT_WITH_ERROR -> {
+                        Request tempRequest = DEFAULT_CONNECTOR.handleSingletonConnect(loadBalancer, player);
+
+                        if(!tempRequest.result().get().connected()) return tempRequest;
+
+                        result.complete(new ConnectionResult(ConnectionResult.Status.SUCCESS, ProxyLang.MISSING_HOME_SERVER, tempRequest.result().get().server()));
+
+                        return request;
+                    }
+                    case CANCEL_CONNECTION_ATTEMPT -> {
+                        result.complete(ConnectionResult.failed(ProxyLang.BLOCKED_STATIC_FAMILY_JOIN_ATTEMPT));
+                        return request;
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            result.complete(ConnectionResult.failed(Component.text("There was an issue connecting you to the server!")));
+            return request;
+        }
+
+        @Override
+        public void leave(IPlayer player) {
+
+        }
+
+        @Override
+        public void close() throws Exception {
+            this.loadBalancer.close();
+            try {
+                assert this.whitelist != null;
+                this.whitelist.close();
+            } catch (Exception ignore) {}
+        }
+    }
 }

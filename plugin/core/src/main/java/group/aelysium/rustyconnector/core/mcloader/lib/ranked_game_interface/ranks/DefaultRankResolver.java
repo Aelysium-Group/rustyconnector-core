@@ -2,7 +2,7 @@ package group.aelysium.rustyconnector.core.mcloader.lib.ranked_game_interface.ra
 
 import com.google.gson.JsonObject;
 import group.aelysium.rustyconnector.toolkit.core.matchmaking.IPlayerRank;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IRankResolver;
+import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IRankResolver;
 
 public class DefaultRankResolver implements IRankResolver {
     protected static final DefaultRankResolver singleton = new DefaultRankResolver();

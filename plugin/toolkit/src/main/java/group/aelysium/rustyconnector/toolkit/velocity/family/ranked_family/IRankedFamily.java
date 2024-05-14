@@ -1,22 +1,107 @@
 package group.aelysium.rustyconnector.toolkit.velocity.family.ranked_family;
 
-import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service;
+import group.aelysium.rustyconnector.toolkit.velocity.connection.ConnectionResult;
+import group.aelysium.rustyconnector.toolkit.velocity.family.IFamilyConnector;
 import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
-import group.aelysium.rustyconnector.toolkit.velocity.matchmaking.IMatchmaker;
+import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IMatchmaker;
+import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.ISession;
+import group.aelysium.rustyconnector.toolkit.velocity.family.whitelist.IWhitelist;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.velocity.server.IRankedMCLoader;
+import net.kyori.adventure.text.Component;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public interface IRankedFamily extends IFamily, Service {
-    /**
-     * Queues a player into this family's matchmaking.
-     * The player will be connected once a match has been made.
-     * The player's queue to this matchmaker will not timeout.
-     * You must manually call {@link #leave(IPlayer)} to remove a player from this queue.
-     * <p>
-     * The returned {@link Request} will never resolve.
-     * @param player The player to connect.
-     * @return null. Always.
-     */
-    Request connect(IPlayer player);
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-    IMatchmaker matchmaker();
+public interface IRankedFamily extends IFamily<IRankedFamily.Connector> {
+    class Connector implements IFamilyConnector<IRankedMCLoader> {
+        protected final Flux<IWhitelist> whitelist;
+        protected final Flux<IMatchmaker> matchmaker;
+
+        public Connector(@NotNull Flux<IMatchmaker> matchmaker, @Nullable Flux<IWhitelist> whitelist) {
+            this.matchmaker = matchmaker;
+            this.whitelist = whitelist;
+        }
+
+        @Override
+        public void add(IRankedMCLoader mcloader) {
+            this.matchmaker.executeNow(m -> m.add(mcloader));
+        }
+
+        @Override
+        public void remove(IRankedMCLoader mcloader) {
+            this.matchmaker.executeNow(m -> m.remove(mcloader));
+        }
+
+        @Override
+        public Optional<Flux<IWhitelist>> whitelist() {
+            return Optional.ofNullable(this.whitelist);
+        }
+
+        public Flux<IMatchmaker> matchmaker() {
+            return this.matchmaker;
+        }
+
+        @Override
+        public Request connect(IPlayer player) {
+            CompletableFuture<ConnectionResult> result = new CompletableFuture<>();
+            Request request = new Request(player, result);
+
+            this.matchmaker.executeNow(matchmaker -> {
+                if(Party.locate(player).isPresent()) {
+                    result.complete(ConnectionResult.failed(ProxyLang.RANKED_FAMILY_PARTY_DENIAL.build()));
+                    return request;
+                }
+
+                // Validate that the player isn't in another matchmaker
+                Optional<IRankedFamily> family = Tinder.get().services().family().dump().stream().filter(f -> {
+                    if(!(f instanceof IRankedFamily)) return false;
+                    return ((IRankedFamily) f).connector().matchmaker.contains(player);
+                }).findAny();
+
+                if(family.isPresent()) {
+                    IRankedFamily rankedFamily = family.get();
+                    AtomicBoolean wasQueued = new AtomicBoolean(false);
+                    rankedFamily.connector().matchmaker.executeNow(m -> wasQueued.set(m.isQueued(player)));
+
+                    if(wasQueued.get()) {
+                        result.complete(ConnectionResult.failed(ProxyLang.RANKED_FAMILY_IN_MATCHMAKER_QUEUE_DENIAL.build()));
+                        return request;
+                    }
+
+                    Optional<ISession> session = matchmaker.fetchPlayersSession(player.uuid());
+                    if(session.isPresent()) {
+                        if(session.get().active()) {
+                            result.complete(ConnectionResult.failed(ProxyLang.RANKED_FAMILY_IN_MATCHMAKER_GAME_DENIAL.build()));
+
+                            return request;
+                        }
+                    }
+                }
+
+                matchmaker.connect(player);
+            }, () -> {
+                result.complete(ConnectionResult.failed(Component.text("There are no available servers to connect to!")));
+            });
+
+            return request;
+        }
+
+        @Override
+        public void leave(IPlayer player) {
+            this.matchmaker.executeNow(l -> l.leave(player));
+        }
+
+        @Override
+        public void close() throws Exception {
+            this.matchmaker.close();
+            try {
+                assert this.whitelist != null;
+                this.whitelist.close();
+            } catch (Exception ignore) {}
+        }
+    }
 }

@@ -4,14 +4,14 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
-import group.aelysium.rustyconnector.core.lib.cache.MessageCacheService;
-import group.aelysium.rustyconnector.core.lib.config.common.PrivateKeyConfig;
-import group.aelysium.rustyconnector.core.lib.config.common.UUIDConfig;
-import group.aelysium.rustyconnector.core.lib.crypt.AESCryptor;
-import group.aelysium.rustyconnector.core.lib.data_transit.DataTransitService;
-import group.aelysium.rustyconnector.core.lib.events.EventManager;
-import group.aelysium.rustyconnector.core.lib.messenger.implementors.redis.RedisConnection;
-import group.aelysium.rustyconnector.core.lib.messenger.implementors.redis.RedisConnector;
+import group.aelysium.rustyconnector.core.common.cache.MessageCacheService;
+import group.aelysium.rustyconnector.core.common.config.common.PrivateKeyConfig;
+import group.aelysium.rustyconnector.core.common.config.common.UUIDConfig;
+import group.aelysium.rustyconnector.core.common.crypt.AESCryptor;
+import group.aelysium.rustyconnector.core.common.data_transit.DataTransitService;
+import group.aelysium.rustyconnector.core.common.events.EventManager;
+import group.aelysium.rustyconnector.core.common.messenger.implementors.redis.RedisConnection;
+import group.aelysium.rustyconnector.core.common.messenger.implementors.redis.RedisConnector;
 import group.aelysium.rustyconnector.plugin.velocity.event_handlers.rc.*;
 import group.aelysium.rustyconnector.plugin.velocity.event_handlers.velocity.OnPlayerChangeServer;
 import group.aelysium.rustyconnector.plugin.velocity.event_handlers.velocity.OnPlayerChooseInitialServer;
@@ -28,23 +28,23 @@ import group.aelysium.rustyconnector.plugin.velocity.lib.family.scalar_family.Sc
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.static_family.StaticFamily;
 import group.aelysium.rustyconnector.plugin.velocity.lib.friends.FriendsService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.lang.ProxyLang;
-import group.aelysium.rustyconnector.plugin.velocity.lib.load_balancing.LoadBalancerService;
+import group.aelysium.rustyconnector.plugin.velocity.lib.family.load_balancing.LoadBalancerService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.MagicLinkService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.packet_handlers.HandshakeDisconnectListener;
 import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.packet_handlers.HandshakePingListener;
-import group.aelysium.rustyconnector.plugin.velocity.lib.matchmaking.commands.CommandLeave;
-import group.aelysium.rustyconnector.plugin.velocity.lib.matchmaking.packet_handlers.RankedGameEndListener;
-import group.aelysium.rustyconnector.plugin.velocity.lib.matchmaking.packet_handlers.RankedGameEndTiedListener;
-import group.aelysium.rustyconnector.plugin.velocity.lib.matchmaking.packet_handlers.RankedGameImplodedListener;
+import group.aelysium.rustyconnector.plugin.velocity.lib.family.matchmaking.commands.CommandLeave;
+import group.aelysium.rustyconnector.plugin.velocity.lib.family.matchmaking.packet_handlers.RankedGameEndListener;
+import group.aelysium.rustyconnector.plugin.velocity.lib.family.matchmaking.packet_handlers.RankedGameEndTiedListener;
+import group.aelysium.rustyconnector.plugin.velocity.lib.family.matchmaking.packet_handlers.RankedGameImplodedListener;
 import group.aelysium.rustyconnector.plugin.velocity.lib.parties.PartyService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.players.PlayerService;
-import group.aelysium.rustyconnector.plugin.velocity.lib.server.ServerService;
-import group.aelysium.rustyconnector.plugin.velocity.lib.server.packet_handlers.LockServerListener;
-import group.aelysium.rustyconnector.plugin.velocity.lib.server.packet_handlers.SendPlayerListener;
-import group.aelysium.rustyconnector.plugin.velocity.lib.server.packet_handlers.UnlockServerListener;
+import group.aelysium.rustyconnector.plugin.velocity.lib.family.mcloader.ServerService;
+import group.aelysium.rustyconnector.plugin.velocity.lib.family.mcloader.packet_handlers.LockServerListener;
+import group.aelysium.rustyconnector.plugin.velocity.lib.family.mcloader.packet_handlers.SendPlayerListener;
+import group.aelysium.rustyconnector.plugin.velocity.lib.family.mcloader.packet_handlers.UnlockServerListener;
 import group.aelysium.rustyconnector.plugin.velocity.lib.storage.StorageService;
-import group.aelysium.rustyconnector.plugin.velocity.lib.whitelist.Whitelist;
-import group.aelysium.rustyconnector.plugin.velocity.lib.whitelist.WhitelistService;
+import group.aelysium.rustyconnector.plugin.velocity.lib.family.whitelist.Whitelist;
+import group.aelysium.rustyconnector.plugin.velocity.lib.family.whitelist.WhitelistService;
 import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.core.events.Event;
 import group.aelysium.rustyconnector.toolkit.core.events.Listener;
@@ -54,9 +54,11 @@ import group.aelysium.rustyconnector.toolkit.core.packet.Packet;
 import group.aelysium.rustyconnector.toolkit.core.packet.VelocityPacketBuilder;
 import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service;
 import group.aelysium.rustyconnector.toolkit.velocity.central.Kernel;
-import group.aelysium.rustyconnector.core.lib.lang.LangService;
+import group.aelysium.rustyconnector.core.common.lang.LangService;
 import group.aelysium.rustyconnector.plugin.velocity.PluginLogger;
 import group.aelysium.rustyconnector.plugin.velocity.VelocityRustyConnector;
+import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.MCLoaderRegisterEvent;
+import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.MCLoaderUnregisterEvent;
 import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.RegisterEvent;
 import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.UnregisterEvent;
 import group.aelysium.rustyconnector.toolkit.velocity.events.player.FamilyLeaveEvent;
@@ -68,6 +70,7 @@ import group.aelysium.rustyconnector.toolkit.velocity.parties.PartyServiceSettin
 import group.aelysium.rustyconnector.toolkit.velocity.util.DependencyInjector;
 import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
 import group.aelysium.rustyconnector.toolkit.velocity.util.Version;
+import group.aelysium.rustyconnector.toolkit.velocity.family.whitelist.IWhitelist;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.jetbrains.annotations.NotNull;
@@ -132,6 +135,10 @@ public class Tinder extends Kernel.Tinder {
         }
     }
 
+    public Optional<IWhitelist> proxyWhitelist() {
+        return Optional.empty();
+    }
+
     public Kernel.@NotNull Particle ignite() throws RuntimeException {
         Flame flame = new Flame(new Particle.Flux.Capacitor(), this.uuid(), this.version(), new ArrayList<>());
 
@@ -142,18 +149,15 @@ public class Tinder extends Kernel.Tinder {
             Map<Class<? extends Event>, Listener<? extends Event>> listeners = new HashMap<>();
             listeners.put(FamilyLeaveEvent.class, new OnFamilyLeave());
             listeners.put(FamilySwitchEvent.class, new OnFamilySwitch());
-            listeners.put(RegisterEvent.class, new OnMCLoaderRegister());
-            listeners.put(UnregisterEvent.class, new OnMCLoaderUnregister());
+            listeners.put(MCLoaderRegisterEvent.class, new OnMCLoaderRegister());
+            listeners.put(MCLoaderUnregisterEvent.class, new OnMCLoaderUnregister());
             listeners.put(MCLoaderSwitchEvent.class, new OnMCLoaderSwitch());
             listeners.put(MCLoaderLeaveEvent.class, new OnMCLoaderLeave());
             flame.capacitor().store("events", new EventManager.Tinder(listeners));
         }
-        flame.capacitor().store("whitelists", new WhitelistService.Tinder());
-        flame.capacitor().store("matchmakers", new MatchmakerService.Tinder());
-        flame.capacitor().store("load_balancers", new LoadBalancerService.Tinder());
         flame.capacitor().store("players", new PlayerService.Tinder());
         flame.capacitor().store("families", new FamilyService.Tinder());
-        flame.capacitor().store("mcloaders", new ServerService.Tinder());
+        flame.capacitor().store("whitelist", this.proxyWhitelist());
         flame.capacitor().store("storage", new StorageService.Tinder(storage));
         {
             MagicLinkService.Tinder t = new MagicLinkService.Tinder();
@@ -177,7 +181,7 @@ public class Tinder extends Kernel.Tinder {
             ConfigService configService = initialize.configService();
             AESCryptor cryptor = initialize.privateKey();
 
-            group.aelysium.rustyconnector.core.lib.events.EventManager eventManager = new group.aelysium.rustyconnector.core.lib.events.EventManager();
+            group.aelysium.rustyconnector.core.common.events.EventManager eventManager = new group.aelysium.rustyconnector.core.common.events.EventManager();
 
             logger.send(Component.text("Initializing 10%...", NamedTextColor.DARK_GRAY));
             DefaultConfig defaultConfig = initialize.defaultConfig(inject(langService, configService));
@@ -268,7 +272,7 @@ class Initialize {
         return service;
     }
 
-    public void events(VelocityRustyConnector plugin, group.aelysium.rustyconnector.core.lib.events.EventManager rcEventManager) {
+    public void events(VelocityRustyConnector plugin, group.aelysium.rustyconnector.core.common.events.EventManager rcEventManager) {
         EventManager eventManager = api.velocityServer().getEventManager();
 
         eventManager.register(plugin, new OnPlayerChooseInitialServer());
@@ -276,7 +280,7 @@ class Initialize {
         eventManager.register(plugin, new OnPlayerKicked());
         eventManager.register(plugin, new OnPlayerDisconnect());
 
-        services.put(group.aelysium.rustyconnector.core.lib.events.EventManager.class, rcEventManager);
+        services.put(group.aelysium.rustyconnector.core.common.events.EventManager.class, rcEventManager);
     }
 
     public void commands(DependencyInjector.DI3<Flame, PluginLogger, MessageCacheService> dependencies) {
@@ -352,7 +356,7 @@ class Initialize {
         return DependencyInjector.inject(messenger, storage);
     }
 
-    public FamilyService families(DependencyInjector.DI5<DefaultConfig, LangService, StorageService, ConfigService, group.aelysium.rustyconnector.core.lib.events.EventManager> deps) throws Exception {
+    public FamilyService families(DependencyInjector.DI5<DefaultConfig, LangService, StorageService, ConfigService, group.aelysium.rustyconnector.core.common.events.EventManager> deps) throws Exception {
         bootOutput.add(Component.text("Building families service...", NamedTextColor.DARK_GRAY));
 
         FamiliesConfig familiesConfig = FamiliesConfig.construct(api.dataFolder(), deps.d2(), deps.d4());

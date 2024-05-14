@@ -5,16 +5,16 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.PartyConnectable;
-import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
-import group.aelysium.rustyconnector.toolkit.velocity.load_balancing.ILoadBalancer;
-import group.aelysium.rustyconnector.toolkit.velocity.load_balancing.ISortable;
-import group.aelysium.rustyconnector.toolkit.velocity.connection.PlayerConnectable;
+import group.aelysium.rustyconnector.toolkit.velocity.family.Family;
+import group.aelysium.rustyconnector.toolkit.velocity.family.load_balancing.ILoadBalancer;
+import group.aelysium.rustyconnector.toolkit.velocity.family.load_balancing.ISortable;
+import group.aelysium.rustyconnector.toolkit.velocity.connection.IPlayerConnectable;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface IMCLoader extends ISortable, PlayerConnectable, PartyConnectable {
+public interface IMCLoader extends ISortable, IPlayerConnectable, PartyConnectable {
     /**
      * Checks if the {@link IMCLoader} is stale.
      * @return {@link Boolean}
@@ -154,11 +154,11 @@ public interface IMCLoader extends ISortable, PlayerConnectable, PartyConnectabl
 
     /**
      * Get the family this server is associated with.
-     * @return {@link IFamily}
+     * @return {@link Family}
      * @throws IllegalStateException If the server hasn't been registered yet.
      * @throws NullPointerException If the family associated with this server doesn't exist.
      */
-    IFamily family() throws IllegalStateException, NullPointerException;
+    Family family() throws IllegalStateException, NullPointerException;
 
     /**
      * Locks the specific server in its respective family so that the load balancer won't return it for players to connect to.
