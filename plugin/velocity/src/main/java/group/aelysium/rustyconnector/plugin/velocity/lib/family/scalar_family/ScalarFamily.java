@@ -33,10 +33,10 @@ public class ScalarFamily extends Family<IScalarFamily.Connector> implements ISc
         return output.get();
     }
 
-    public static class Tinder extends Particle.Tinder<ScalarFamily> {
-        private final Settings settings;
+    public static class Tinder extends Particle.Tinder<IScalarFamily> {
+        private final IScalarFamily.Settings settings;
 
-        public Tinder(@NotNull Settings settings) {
+        public Tinder(@NotNull IScalarFamily.Settings settings) {
             this.settings = settings;
         }
 
@@ -56,17 +56,9 @@ public class ScalarFamily extends Family<IScalarFamily.Connector> implements ISc
             return new ScalarFamily(
                     this.settings.id(),
                     new IScalarFamily.Connector(loadBalancer, whitelist),
-                    this.settings.displayName,
-                    this.settings.parent
+                    this.settings.displayName(),
+                    this.settings.parent()
             );
         }
     }
-
-    public record Settings(
-            @NotNull String id,
-            @NotNull ILoadBalancer.Settings loadBalancer,
-            String displayName,
-            String parent,
-            IWhitelist.Settings whitelist
-    ) {}
 }

@@ -6,6 +6,8 @@ import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.family.load_balancing.ILoadBalancer;
 import group.aelysium.rustyconnector.toolkit.velocity.family.whitelist.IWhitelist;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
+import group.aelysium.rustyconnector.toolkit.velocity.server.IRankedMCLoader;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,13 +16,39 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 public interface IScalarFamily extends IFamily<IScalarFamily.Connector> {
-    class Connector implements IFamilyConnector {
+
+    record Settings(
+            @NotNull String id,
+            @NotNull ILoadBalancer.Settings loadBalancer,
+            String displayName,
+            String parent,
+            IWhitelist.Settings whitelist
+    ) {}
+
+    class Connector implements IFamilyConnector<IMCLoader> {
         protected final Flux<IWhitelist> whitelist;
         protected final Flux<ILoadBalancer> loadBalancer;
 
         public Connector(@NotNull Flux<ILoadBalancer> loadBalancer, @Nullable Flux<IWhitelist> whitelist) {
             this.loadBalancer = loadBalancer;
             this.whitelist = whitelist;
+        }
+
+        @Override
+        public void register(IMCLoader mcloader) {
+            this.loadBalancer.executeNow(m -> m.add(mcloader));
+        }
+        @Override
+        public void unregister(IMCLoader mcloader) {
+            this.loadBalancer.executeNow(m -> m.remove(mcloader));
+        }
+        @Override
+        public void lock(IMCLoader mcloader) {
+            this.loadBalancer.executeNow(m -> m.lock(mcloader));
+        }
+        @Override
+        public void unlock(IMCLoader mcloader) {
+            this.loadBalancer.executeNow(m -> m.unlock(mcloader));
         }
 
         @Override

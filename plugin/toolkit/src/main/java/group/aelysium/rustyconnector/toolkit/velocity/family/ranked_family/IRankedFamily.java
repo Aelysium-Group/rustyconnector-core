@@ -17,6 +17,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public interface IRankedFamily extends IFamily<IRankedFamily.Connector> {
+    record Settings(
+            @NotNull String id,
+            @NotNull String gameId,
+            @NotNull IMatchmaker.Settings matchmaker,
+            String displayName,
+            String parent,
+            IWhitelist.Settings whitelist
+    ) {}
+
     class Connector implements IFamilyConnector<IRankedMCLoader> {
         protected final Flux<IWhitelist> whitelist;
         protected final Flux<IMatchmaker> matchmaker;
@@ -27,13 +36,20 @@ public interface IRankedFamily extends IFamily<IRankedFamily.Connector> {
         }
 
         @Override
-        public void add(IRankedMCLoader mcloader) {
+        public void register(IRankedMCLoader mcloader) {
             this.matchmaker.executeNow(m -> m.add(mcloader));
         }
-
         @Override
-        public void remove(IRankedMCLoader mcloader) {
+        public void unregister(IRankedMCLoader mcloader) {
             this.matchmaker.executeNow(m -> m.remove(mcloader));
+        }
+        @Override
+        public void lock(IRankedMCLoader mcloader) {
+            this.matchmaker.executeNow(m -> m.lock(mcloader));
+        }
+        @Override
+        public void unlock(IRankedMCLoader mcloader) {
+            this.matchmaker.executeNow(m -> m.unlock(mcloader));
         }
 
         @Override

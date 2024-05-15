@@ -15,7 +15,7 @@ public class RustyConnector {
          * Fetches the MCLoader API for RustyConnector.
          * @return {@link IMCLoaderTinder}
          */
-        public static Optional<IMCLoaderTinder> mcLoader() throws IllegalAccessError {
+        public static Optional<IMCLoaderTinder> MCLoader() throws IllegalAccessError {
             if(mcLoaderKernel == null) return Optional.empty();
             return Optional.of(mcLoaderKernel);
         }
@@ -24,7 +24,7 @@ public class RustyConnector {
          * Fetches the Proxy API for RustyConnector.
          * @return {@link Kernel}
          */
-        public static Optional<Particle.Flux<Kernel.Particle>> proxy() throws IllegalAccessError {
+        public static Optional<Particle.Flux<Kernel.Particle>> Proxy() throws IllegalAccessError {
             return Optional.ofNullable(velocityKernel);
         }
 

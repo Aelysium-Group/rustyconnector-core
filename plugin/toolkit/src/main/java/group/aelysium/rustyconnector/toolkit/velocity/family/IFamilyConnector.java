@@ -8,9 +8,10 @@ import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
 import java.util.Optional;
 
 public interface IFamilyConnector<MCLoader extends IMCLoader> extends IPlayerConnectable, AutoCloseable {
-    void add(MCLoader mcloader);
-
-    void remove(MCLoader mcloader);
+    void register(MCLoader mcloader);
+    void unregister(MCLoader mcloader);
+    void lock(MCLoader mcloader);
+    void unlock(MCLoader mcloader);
 
     /**
      * Gets the whitelist flux used for this connector.

@@ -35,6 +35,16 @@ public interface IStaticFamily extends IFamily<IStaticFamily.Connector> {
      */
     LiquidTimestamp homeServerExpiration();
 
+    record Settings(
+            @NotNull String id,
+            @NotNull ILoadBalancer.Settings loadBalancer,
+            @NotNull UnavailableProtocol unavailableProtocol,
+            @NotNull LiquidTimestamp homeServerExpiration,
+            String displayName,
+            String parent,
+            IWhitelist.Settings whitelist
+    ) {}
+
     class Connector implements IFamilyConnector<IMCLoader> {
         protected final Flux<IWhitelist> whitelist;
         protected final Flux<ILoadBalancer> loadBalancer;
@@ -45,13 +55,23 @@ public interface IStaticFamily extends IFamily<IStaticFamily.Connector> {
         }
 
         @Override
-        public void add(IMCLoader mcloader) {
+        public void register(IMCLoader mcloader) {
             this.loadBalancer.executeNow(l -> l.add(mcloader));
         }
 
         @Override
-        public void remove(IMCLoader mcloader) {
+        public void unregister(IMCLoader mcloader) {
             this.loadBalancer.executeNow(l -> l.remove(mcloader));
+        }
+
+        @Override
+        public void lock(IMCLoader mcloader) {
+            this.loadBalancer.executeNow(l -> l.lock(mcloader));
+        }
+
+        @Override
+        public void unlock(IMCLoader mcloader) {
+            this.loadBalancer.executeNow(l -> l.unlock(mcloader));
         }
 
         @Override

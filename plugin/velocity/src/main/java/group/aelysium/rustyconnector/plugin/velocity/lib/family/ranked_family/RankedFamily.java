@@ -6,6 +6,7 @@ import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.velocity.family.ranked_family.IRankedFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IMatchmaker;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.whitelist.Whitelist;
+import group.aelysium.rustyconnector.toolkit.velocity.family.scalar_family.IRootFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.family.whitelist.IWhitelist;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,10 +33,10 @@ public class RankedFamily extends Family<IRankedFamily.Connector> implements IRa
         return count.get();
     }
 
-    public static class Tinder extends Particle.Tinder<RankedFamily> {
-        private final RankedFamily.Settings settings;
+    public static class Tinder extends Particle.Tinder<IRankedFamily> {
+        private final IRankedFamily.Settings settings;
 
-        public Tinder(@NotNull RankedFamily.Settings settings) {
+        public Tinder(@NotNull IRankedFamily.Settings settings) {
             this.settings = settings;
         }
 
@@ -55,13 +56,4 @@ public class RankedFamily extends Family<IRankedFamily.Connector> implements IRa
             );
         }
     }
-
-    public record Settings(
-            @NotNull String id,
-            @NotNull String gameId,
-            @NotNull IMatchmaker.Settings matchmaker,
-            String displayName,
-            String parent,
-            IWhitelist.Settings whitelist
-    ) {}
 }

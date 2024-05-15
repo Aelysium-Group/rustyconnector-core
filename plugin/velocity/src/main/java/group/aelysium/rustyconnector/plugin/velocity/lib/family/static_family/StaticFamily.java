@@ -52,10 +52,10 @@ public class StaticFamily extends Family<IStaticFamily.Connector> implements ISt
         return count.get();
     }
 
-    public static class Tinder extends Particle.Tinder<StaticFamily> {
-        private final StaticFamily.Settings settings;
+    public static class Tinder extends Particle.Tinder<IStaticFamily> {
+        private final IStaticFamily.Settings settings;
 
-        public Tinder(@NotNull StaticFamily.Settings settings) {
+        public Tinder(@NotNull IStaticFamily.Settings settings) {
             this.settings = settings;
         }
 
@@ -77,8 +77,8 @@ public class StaticFamily extends Family<IStaticFamily.Connector> implements ISt
                     this.settings.unavailableProtocol(),
                     this.settings.homeServerExpiration(),
                     new IStaticFamily.Connector(loadBalancer, whitelist),
-                    this.settings.displayName,
-                    this.settings.parent
+                    this.settings.displayName(),
+                    this.settings.parent()
             );
 
             try {
@@ -91,14 +91,4 @@ public class StaticFamily extends Family<IStaticFamily.Connector> implements ISt
             return family;
         }
     }
-
-    public record Settings(
-            @NotNull String id,
-            @NotNull ILoadBalancer.Settings loadBalancer,
-            @NotNull UnavailableProtocol unavailableProtocol,
-            @NotNull LiquidTimestamp homeServerExpiration,
-            String displayName,
-            String parent,
-            IWhitelist.Settings whitelist
-    ) {}
 }

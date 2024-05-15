@@ -4,8 +4,9 @@ import com.sun.jdi.request.DuplicateRequestException;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
-import group.aelysium.rustyconnector.toolkit.velocity.connection.PartyConnectable;
-import group.aelysium.rustyconnector.toolkit.velocity.family.Family;
+import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
+import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
+import group.aelysium.rustyconnector.toolkit.velocity.family.IFamilyConnector;
 import group.aelysium.rustyconnector.toolkit.velocity.family.load_balancing.ILoadBalancer;
 import group.aelysium.rustyconnector.toolkit.velocity.family.load_balancing.ISortable;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.IPlayerConnectable;
@@ -14,7 +15,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface IMCLoader extends ISortable, IPlayerConnectable, PartyConnectable {
+public interface IMCLoader extends ISortable, IPlayerConnectable {
     /**
      * Checks if the {@link IMCLoader} is stale.
      * @return {@link Boolean}
@@ -154,11 +155,9 @@ public interface IMCLoader extends ISortable, IPlayerConnectable, PartyConnectab
 
     /**
      * Get the family this server is associated with.
-     * @return {@link Family}
-     * @throws IllegalStateException If the server hasn't been registered yet.
-     * @throws NullPointerException If the family associated with this server doesn't exist.
+     * @return {@link Particle.Flux<IFamily>}
      */
-    Family family() throws IllegalStateException, NullPointerException;
+    Particle.Flux<IFamily<? extends IFamilyConnector<IMCLoader>>> family();
 
     /**
      * Locks the specific server in its respective family so that the load balancer won't return it for players to connect to.

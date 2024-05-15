@@ -12,6 +12,7 @@ import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -23,7 +24,7 @@ public abstract class LoadBalancer implements ILoadBalancer {
     protected int index = 0;
     protected Vector<IMCLoader> unlockedServers = new Vector<>();
     protected Vector<IMCLoader> lockedServers = new Vector<>();
-
+    protected Map<UUID, IMCLoader> mcloaders = new ConcurrentHashMap<>();
     protected Runnable sorter = () -> {
         try {
             deps.d3().fireEvent(new FamilyRebalanceEvent(family));
@@ -91,17 +92,20 @@ public abstract class LoadBalancer implements ILoadBalancer {
     public abstract void singleSort();
 
     public void add(IMCLoader item) {
-        if(this.unlockedServers.contains(item)) return;
+        if(this.mcloaders.containsKey(item.uuid())) return;
         this.unlockedServers.add(item);
+        this.mcloaders.put(item.uuid(), item);
     }
 
     public void remove(IMCLoader item) {
-        if(this.unlockedServers.remove(item)) return;
-        this.lockedServers.remove(item);
+        if(!this.mcloaders.containsKey(item.uuid())) return;
+        if(!this.unlockedServers.remove(item))
+            this.lockedServers.remove(item);
+        this.mcloaders.remove(item.uuid());
     }
 
     public int size() {
-        return this.unlockedServers.size() + this.lockedServers.size();
+        return this.mcloaders.size();
     }
 
     public int size(boolean locked) {
@@ -110,12 +114,7 @@ public abstract class LoadBalancer implements ILoadBalancer {
     }
 
     public List<IMCLoader> servers() {
-        List<IMCLoader> servers = new ArrayList<>();
-
-        servers.addAll(openServers());
-        servers.addAll(lockedServers());
-
-        return servers;
+        return mcloaders.values().stream().toList();
     }
     public List<IMCLoader> openServers() {
         return this.unlockedServers.stream().toList();
@@ -142,7 +141,7 @@ public abstract class LoadBalancer implements ILoadBalancer {
     }
 
     public boolean contains(IMCLoader item) {
-        return this.unlockedServers.contains(item);
+        return this.mcloaders.containsKey(item.uuid());
     }
 
     public void lock(IMCLoader server) {

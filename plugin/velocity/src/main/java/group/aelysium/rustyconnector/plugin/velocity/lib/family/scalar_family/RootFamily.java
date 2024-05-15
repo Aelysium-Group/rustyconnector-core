@@ -32,19 +32,10 @@ public class RootFamily extends ScalarFamily implements IRootFamily {
         return this.catchDisconnectingPlayers;
     }
 
-    public record Settings(
-            @NotNull String id,
-            @NotNull ILoadBalancer.Settings loadBalancer,
-            boolean catchDisconnectingPlayers,
-            String displayName,
-            String parent,
-            IWhitelist.Settings whitelist
-    ) {}
+    public static class Tinder extends Particle.Tinder<IRootFamily> {
+        private final IRootFamily.Settings settings;
 
-    public static class Tinder extends Particle.Tinder<RootFamily> {
-        private final Settings settings;
-
-        public Tinder(@NotNull Settings settings) {
+        public Tinder(@NotNull IRootFamily.Settings settings) {
             this.settings = settings;
         }
 
@@ -65,8 +56,8 @@ public class RootFamily extends ScalarFamily implements IRootFamily {
                     this.settings.id(),
                     new IScalarFamily.Connector(loadBalancer, whitelist),
                     this.settings.catchDisconnectingPlayers(),
-                    this.settings.displayName,
-                    this.settings.parent
+                    this.settings.displayName(),
+                    this.settings.parent()
             );
         }
     }
