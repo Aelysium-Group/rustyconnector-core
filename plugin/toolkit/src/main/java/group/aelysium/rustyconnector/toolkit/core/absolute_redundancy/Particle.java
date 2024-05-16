@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
@@ -109,6 +110,17 @@ public interface Particle extends AutoCloseable {
                 }
 
             return this.resolvable;
+        }
+
+        /**
+         * Returns the underlying Particle is it exists, or throws an exception if it doesn't.
+         * @return The underlying Particle.
+         * @throws NoSuchElementException If no Particle exists.
+         */
+        public P orElseThrow() throws NoSuchElementException {
+            P p = this.access().getNow(null);
+            if(p == null) throw new NoSuchElementException();
+            return p;
         }
 
         /**

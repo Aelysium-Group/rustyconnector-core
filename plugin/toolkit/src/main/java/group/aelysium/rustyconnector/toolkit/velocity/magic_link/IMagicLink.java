@@ -2,12 +2,11 @@ package group.aelysium.rustyconnector.toolkit.velocity.magic_link;
 
 import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.core.messenger.IMessengerConnection;
-import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service;
 
 import java.net.ConnectException;
 import java.util.Optional;
 
-public abstract class IMagicLink extends Particle {
+public abstract class IMagicLink implements Particle {
     /**
      * Gets the connection to the remote resource.
      * @return {@link IMessengerConnection}

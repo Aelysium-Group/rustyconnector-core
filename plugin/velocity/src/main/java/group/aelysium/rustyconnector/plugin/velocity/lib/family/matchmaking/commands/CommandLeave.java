@@ -10,6 +10,7 @@ import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.FamilyService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.ranked_family.RankedFamily;
 import group.aelysium.rustyconnector.plugin.velocity.lib.players.Player;
+import group.aelysium.rustyconnector.toolkit.RustyConnector;
 import net.kyori.adventure.text.Component;
 
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ public class CommandLeave {
                         Player player = new Player(eventPlayer);
 
                         List<RankedFamily> families = new ArrayList<>();
+
                         service.dump().forEach(family -> {
                             if(family instanceof RankedFamily) families.add((RankedFamily) family);
                         });

@@ -4,36 +4,39 @@ import group.aelysium.rustyconnector.core.common.crypt.AESCryptor;
 import group.aelysium.rustyconnector.core.common.messenger.MessengerConnection;
 import group.aelysium.rustyconnector.core.common.messenger.MessengerConnector;
 import group.aelysium.rustyconnector.core.common.messenger.implementors.redis.RedisConnector;
+import group.aelysium.rustyconnector.toolkit.RustyConnector;
 import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.core.messenger.IMessengerConnection;
 import group.aelysium.rustyconnector.toolkit.core.messenger.IMessengerConnector;
-import group.aelysium.rustyconnector.toolkit.core.serviceable.ClockService;
 import group.aelysium.rustyconnector.toolkit.velocity.magic_link.IMagicLink;
-import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.ConnectException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class MagicLinkService extends IMagicLink {
-    protected final ClockService clock;
+    protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     protected IMessengerConnector connector;
     protected Map<String, MagicLinkMCLoaderSettings> settingsMap;
 
     protected MagicLinkService(IMessengerConnector connector, Map<String, MagicLinkMCLoaderSettings> magicLinkMCLoaderSettingsMap) {
-        this.clock = new ClockService(2);
         this.connector = connector;
         this.settingsMap = magicLinkMCLoaderSettingsMap;
     }
 
     private void heartbeat() {
-        this.clock.scheduleDelayed(() -> {
+        this.executor.schedule(() -> {
             try {
                 // Unregister any stale servers
                 // The removing feature of server#unregister is valid because serverService.servers() creates a new list which isn't bound to the underlying list.
+                RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Families().orElseThrow().dump().forEach(
+                        ff -> ff.executeNow(f-> {})
+                );
                 serverService.servers().forEach(server -> {
                     server.decreaseTimeout(3);
 
@@ -46,7 +49,7 @@ public class MagicLinkService extends IMagicLink {
             } catch (Exception ignore) {}
 
             this.heartbeat();
-        }, LiquidTimestamp.from(3, TimeUnit.SECONDS));
+        }, 3, TimeUnit.SECONDS);
     }
 
     protected void startHeartbeat() {
