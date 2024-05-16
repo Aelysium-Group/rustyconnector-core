@@ -10,19 +10,24 @@ import java.sql.SQLException;
 
 public class Storage implements IStorage {
     protected final RemoteStorage remoteStorage;
+    protected final LocalStorage localStorage;
     protected final Configuration config;
     protected Storage(Configuration config) throws SQLException {
         this.config = config;
         this.remoteStorage = new RemoteStorage(this.config.reactor());
+        this.localStorage = new LocalStorage();
     }
 
     public RemoteStorage database() {
         return this.remoteStorage;
     }
+    public LocalStorage localStorage() {
+        return this.localStorage;
+    }
 
     @Override
-    public void kill() {
-        this.remoteStorage.kill();
+    public void close() throws Exception {
+        this.remoteStorage.close();
     }
 
     public static Storage create(Configuration configuration) throws SQLException {
