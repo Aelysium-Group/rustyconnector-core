@@ -6,7 +6,6 @@ import com.velocitypowered.api.proxy.server.ServerInfo;
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
 import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
-import group.aelysium.rustyconnector.toolkit.velocity.family.IFamilyConnector;
 import group.aelysium.rustyconnector.toolkit.velocity.family.load_balancing.ILoadBalancer;
 import group.aelysium.rustyconnector.toolkit.velocity.family.load_balancing.ISortable;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.IPlayerConnectable;
@@ -157,7 +156,7 @@ public interface IMCLoader extends ISortable, IPlayerConnectable {
      * Get the family this server is associated with.
      * @return {@link Particle.Flux<IFamily>}
      */
-    Particle.Flux<IFamily<? extends IFamilyConnector<IMCLoader>>> family();
+    Particle.Flux<IFamily> family();
 
     /**
      * Locks the specific server in its respective family so that the load balancer won't return it for players to connect to.

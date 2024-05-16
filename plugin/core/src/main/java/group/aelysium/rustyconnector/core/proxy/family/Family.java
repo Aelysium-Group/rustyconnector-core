@@ -1,5 +1,6 @@
 package group.aelysium.rustyconnector.core.proxy.family;
 
+import group.aelysium.rustyconnector.toolkit.RustyConnector;
 import group.aelysium.rustyconnector.toolkit.velocity.family.IFamilyConnector;
 import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.family.load_balancing.ILoadBalancer;
@@ -10,15 +11,15 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 import java.util.Optional;
 
-public abstract class Family<Connector extends IFamilyConnector> implements IFamily<Connector> {
+public abstract class Family implements IFamily {
     protected final String id;
-    protected final Connector connector;
+    protected final IFamilyConnector connector;
     protected final String displayName;
     protected final String parent;
 
     protected Family(
             @NotNull String id,
-            @NotNull Connector connector,
+            @NotNull IFamilyConnector connector,
             String displayName,
             String parent
     ) {
@@ -38,7 +39,7 @@ public abstract class Family<Connector extends IFamilyConnector> implements IFam
         return this.connector.whitelist();
     }
 
-    public Connector connector() {
+    public IFamilyConnector connector() {
         return this.connector;
     }
 
@@ -47,9 +48,12 @@ public abstract class Family<Connector extends IFamilyConnector> implements IFam
      * The parent of this family should always be either another family, or the root family.
      * If this family is the root family, this method will always return `null`.
      */
-    public Optional<Flux<IFamily<?>>> parent() {
-        // Needs to fetch the parent from the Family Service
-        return this.settings.parent();
+    public Optional<Flux<IFamily>> parent() {
+        if(this.parent == null) return Optional.empty();
+        try {
+            return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Families().orElseThrow().find(this.parent);
+        } catch (Exception ignore) {}
+        return Optional.empty();
     }
 
     @Override

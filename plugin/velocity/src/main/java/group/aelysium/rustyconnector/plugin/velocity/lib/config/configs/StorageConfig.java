@@ -2,7 +2,7 @@ package group.aelysium.rustyconnector.plugin.velocity.lib.config.configs;
 
 import group.aelysium.rustyconnector.core.common.config.YAML;
 import group.aelysium.rustyconnector.core.common.lang.LangService;
-import group.aelysium.rustyconnector.plugin.velocity.lib.storage.StorageService;
+import group.aelysium.rustyconnector.plugin.velocity.lib.storage.Storage;
 import group.aelysium.rustyconnector.toolkit.core.UserPass;
 import group.aelysium.rustyconnector.toolkit.core.config.IConfigService;
 import group.aelysium.rustyconnector.toolkit.core.config.IYAML;
@@ -12,8 +12,8 @@ import java.net.InetSocketAddress;
 import java.nio.file.Path;
 
 public class StorageConfig extends YAML {
-    private StorageService.Configuration configuration;
-    public StorageService.Configuration storageConfiguration() {
+    private Storage.Configuration configuration;
+    public Storage.Configuration storageConfiguration() {
         return this.configuration;
     }
 
@@ -25,7 +25,7 @@ public class StorageConfig extends YAML {
 
     @SuppressWarnings("unchecked")
     protected void register() throws IllegalStateException {
-        StorageService.StorageType storageType = StorageService.StorageType.valueOf(IYAML.getValue(this.data, "provider", String.class));
+        Storage.StorageType storageType = Storage.StorageType.valueOf(IYAML.getValue(this.data, "provider", String.class));
         switch (storageType) {
             case MYSQL -> {
                 String host = IYAML.getValue(this.data, "available-providers.MYSQL.host", String.class);
@@ -41,7 +41,7 @@ public class StorageConfig extends YAML {
                 UserPass userPass = new UserPass(user, password);
                 String database = IYAML.getValue(this.data, "available-providers.MYSQL.database", String.class);
 
-                this.configuration = new StorageService.Configuration.MySQL(address, userPass, database);
+                this.configuration = new Storage.Configuration.MySQL(address, userPass, database);
             }
             default -> throw new NullPointerException("No proper Storage System was defined!");
         }

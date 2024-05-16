@@ -19,26 +19,26 @@ import group.aelysium.rustyconnector.plugin.velocity.event_handlers.velocity.OnP
 import group.aelysium.rustyconnector.plugin.velocity.event_handlers.velocity.OnPlayerKicked;
 import group.aelysium.rustyconnector.plugin.velocity.lib.config.ConfigService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.config.configs.*;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.FamilyService;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.ranked_family.RankedFamily;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.scalar_family.RootFamily;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.scalar_family.ScalarFamily;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.static_family.StaticFamily;
+import group.aelysium.rustyconnector.core.proxy.family.Families;
+import group.aelysium.rustyconnector.core.proxy.family.ranked_family.RankedFamily;
+import group.aelysium.rustyconnector.core.proxy.family.scalar_family.RootFamily;
+import group.aelysium.rustyconnector.core.proxy.family.scalar_family.ScalarFamily;
+import group.aelysium.rustyconnector.core.proxy.family.static_family.StaticFamily;
 import group.aelysium.rustyconnector.plugin.velocity.lib.lang.ProxyLang;
 import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.MagicLinkService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.packet_handlers.HandshakeDisconnectListener;
 import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.packet_handlers.HandshakePingListener;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.matchmaking.commands.CommandLeave;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.matchmaking.packet_handlers.RankedGameEndListener;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.matchmaking.packet_handlers.RankedGameEndTiedListener;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.matchmaking.packet_handlers.RankedGameImplodedListener;
+import group.aelysium.rustyconnector.core.proxy.family.matchmaking.commands.CommandLeave;
+import group.aelysium.rustyconnector.core.proxy.family.matchmaking.packet_handlers.RankedGameEndListener;
+import group.aelysium.rustyconnector.core.proxy.family.matchmaking.packet_handlers.RankedGameEndTiedListener;
+import group.aelysium.rustyconnector.core.proxy.family.matchmaking.packet_handlers.RankedGameImplodedListener;
 import group.aelysium.rustyconnector.plugin.velocity.lib.players.PlayerService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.mcloader.ServerService;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.mcloader.packet_handlers.LockServerListener;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.mcloader.packet_handlers.SendPlayerListener;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.mcloader.packet_handlers.UnlockServerListener;
-import group.aelysium.rustyconnector.plugin.velocity.lib.storage.StorageService;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.whitelist.Whitelist;
+import group.aelysium.rustyconnector.core.proxy.family.mcloader.packet_handlers.LockServerListener;
+import group.aelysium.rustyconnector.core.proxy.family.mcloader.packet_handlers.SendPlayerListener;
+import group.aelysium.rustyconnector.core.proxy.family.mcloader.packet_handlers.UnlockServerListener;
+import group.aelysium.rustyconnector.plugin.velocity.lib.storage.Storage;
+import group.aelysium.rustyconnector.core.proxy.family.whitelist.Whitelist;
 import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.core.events.Event;
 import group.aelysium.rustyconnector.toolkit.core.events.Listener;
@@ -145,9 +145,9 @@ public class Tinder extends Kernel.Tinder {
             flame.capacitor().store("events", new EventManager.Tinder(listeners));
         }
         flame.capacitor().store("players", new PlayerService.Tinder());
-        flame.capacitor().store("families", new FamilyService.Tinder());
+        flame.capacitor().store("families", new Families.Tinder());
         flame.capacitor().store("whitelist", this.proxyWhitelist());
-        flame.capacitor().store("storage", new StorageService.Tinder(storage));
+        flame.capacitor().store("storage", new Storage.Tinder(storage));
         {
             MagicLinkService.Tinder t = new MagicLinkService.Tinder();
             t.cryptor(cryptor);
@@ -179,10 +179,10 @@ public class Tinder extends Kernel.Tinder {
             MessageCacheService messageCacheService = initialize.dataTransit(inject(langService, configService));
 
             logger.send(Component.text("Initializing 20%...", NamedTextColor.DARK_GRAY));
-            DependencyInjector.DI2<IMessengerConnector, StorageService> connectors = initialize.connectors(inject(cryptor, messageCacheService, Particle.Tinder.get().logger(), langService), uuid);
+            DependencyInjector.DI2<IMessengerConnector, Storage> connectors = initialize.connectors(inject(cryptor, messageCacheService, Particle.Tinder.get().logger(), langService), uuid);
 
             logger.send(Component.text("Initializing 30%...", NamedTextColor.DARK_GRAY));
-            FamilyService familyService = initialize.families(inject(defaultConfig, langService, connectors.d2(), configService, eventManager));
+            Families familyService = initialize.families(inject(defaultConfig, langService, connectors.d2(), configService, eventManager));
             logger.send(Component.text("Initializing 40%...", NamedTextColor.DARK_GRAY));
             ServerService serverService = initialize.servers(defaultConfig);
             logger.send(Component.text("Initializing 50%...", NamedTextColor.DARK_GRAY));
@@ -304,7 +304,7 @@ class Initialize {
         PluginLogger.init(loggerConfig);
     }
 
-    public DependencyInjector.DI2<IMessengerConnector, StorageService> connectors(DependencyInjector.DI4<AESCryptor, MessageCacheService, PluginLogger, LangService> dependencies, UUID uuid) throws IOException, SQLException {
+    public DependencyInjector.DI2<IMessengerConnector, Storage> connectors(DependencyInjector.DI4<AESCryptor, MessageCacheService, PluginLogger, LangService> dependencies, UUID uuid) throws IOException, SQLException {
         bootOutput.add(Component.text("Building Connectors...", NamedTextColor.DARK_GRAY));
 
         StorageConfig config = StorageConfig.construct(api.dataFolder(), dependencies.d4(), true, true);
@@ -337,22 +337,22 @@ class Initialize {
         bootOutput.add(Component.text("Finished booting Messenger.", NamedTextColor.GREEN));
 
         bootOutput.add(Component.text("Booting MicroStream MariaDB driver...", NamedTextColor.DARK_GRAY));
-        StorageService storage = StorageService.create(config.storageConfiguration());
-        services.put(StorageService.class, storage);
+        Storage storage = Storage.create(config.storageConfiguration());
+        services.put(Storage.class, storage);
         bootOutput.add(Component.text("Finished booting MariaDB driver.", NamedTextColor.GREEN));
 
         bootOutput.add(Component.text("Finished building Connectors.", NamedTextColor.GREEN));
         return DependencyInjector.inject(messenger, storage);
     }
 
-    public FamilyService families(DependencyInjector.DI5<DefaultConfig, LangService, StorageService, ConfigService, group.aelysium.rustyconnector.core.common.events.EventManager> deps) throws Exception {
+    public Families families(DependencyInjector.DI5<DefaultConfig, LangService, Storage, ConfigService, group.aelysium.rustyconnector.core.common.events.EventManager> deps) throws Exception {
         bootOutput.add(Component.text("Building families service...", NamedTextColor.DARK_GRAY));
 
         FamiliesConfig familiesConfig = FamiliesConfig.construct(api.dataFolder(), deps.d2(), deps.d4());
 
         bootOutput.add(Component.text(" | Registering family service to the API...", NamedTextColor.DARK_GRAY));
-        FamilyService familyService = new FamilyService(familiesConfig.shouldRootFamilyCatchDisconnectingPlayers());
-        services.put(FamilyService.class, familyService);
+        Families familyService = new Families(familiesConfig.shouldRootFamilyCatchDisconnectingPlayers());
+        services.put(Families.class, familyService);
         bootOutput.add(Component.text(" | Finished registering family service to API.", NamedTextColor.GREEN));
 
         WhitelistService whitelistService = new WhitelistService();
@@ -464,7 +464,7 @@ class Initialize {
         return messageCacheService;
     }
 
-    public void magicLink(DependencyInjector.DI6<DefaultConfig, ServerService, IMessengerConnector, LangService, ConfigService, FamilyService> deps) {
+    public void magicLink(DependencyInjector.DI6<DefaultConfig, ServerService, IMessengerConnector, LangService, ConfigService, Families> deps) {
         bootOutput.add(Component.text("Building magic link service...", NamedTextColor.DARK_GRAY));
 
         Map<String, MagicLinkService.MagicLinkMCLoaderSettings> configs = new HashMap<>();
@@ -561,7 +561,7 @@ class Initialize {
         }
     }
 
-    public void friendsService(DependencyInjector.DI3<StorageService, LangService, ConfigService> deps) {
+    public void friendsService(DependencyInjector.DI3<Storage, LangService, ConfigService> deps) {
         try {
             bootOutput.add(Component.text("Building friends service...", NamedTextColor.DARK_GRAY));
 
@@ -592,7 +592,7 @@ class Initialize {
         }
     }
 
-    public void playerService(DependencyInjector.DI2<StorageService, LangService> dependencies) throws Exception {
+    public void playerService(DependencyInjector.DI2<Storage, LangService> dependencies) throws Exception {
         bootOutput.add(Component.text(" | Building player logging service...", NamedTextColor.DARK_GRAY));
 
         services.put(PlayerService.class, new PlayerService(dependencies.d1()));
@@ -600,7 +600,7 @@ class Initialize {
         bootOutput.add(Component.text(" | Finished building player logging service.", NamedTextColor.GREEN));
     }
 
-    public void dynamicTeleportService(DependencyInjector.DI4<FamilyService, ServerService, LangService, ConfigService> deps) {
+    public void dynamicTeleportService(DependencyInjector.DI4<Families, ServerService, LangService, ConfigService> deps) {
         bootOutput.add(Component.text("Building dynamic teleport service...", NamedTextColor.DARK_GRAY));
         try {
             DynamicTeleportConfig config = DynamicTeleportConfig.construct(api.dataFolder(), deps.d3(), deps.d4());

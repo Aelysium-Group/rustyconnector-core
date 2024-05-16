@@ -6,7 +6,7 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
 import group.aelysium.rustyconnector.plugin.velocity.event_handlers.EventDispatch;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.ranked_family.RankedFamily;
+import group.aelysium.rustyconnector.core.proxy.family.ranked_family.RankedFamily;
 import group.aelysium.rustyconnector.plugin.velocity.lib.friends.FriendsService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.lang.ProxyLang;
 import group.aelysium.rustyconnector.plugin.velocity.lib.parties.PartyService;

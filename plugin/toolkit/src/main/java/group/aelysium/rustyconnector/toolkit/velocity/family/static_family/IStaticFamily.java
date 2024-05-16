@@ -13,13 +13,17 @@ import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static group.aelysium.rustyconnector.toolkit.velocity.family.UnavailableProtocol.*;
 
-public interface IStaticFamily extends IFamily<IStaticFamily.Connector> {
+public interface IStaticFamily extends IFamily {
     /**
      * Gets the {@link UnavailableProtocol} for this family. {@link UnavailableProtocol} governs what happens when a player's resident server is unavailable.
      * @return {@link UnavailableProtocol}
@@ -45,7 +49,7 @@ public interface IStaticFamily extends IFamily<IStaticFamily.Connector> {
             IWhitelist.Settings whitelist
     ) {}
 
-    class Connector implements IFamilyConnector<IMCLoader> {
+    class Connector implements IFamilyConnector {
         protected final Flux<IWhitelist> whitelist;
         protected final Flux<ILoadBalancer> loadBalancer;
 
@@ -72,6 +76,24 @@ public interface IStaticFamily extends IFamily<IStaticFamily.Connector> {
         @Override
         public void unlock(IMCLoader mcloader) {
             this.loadBalancer.executeNow(l -> l.unlock(mcloader));
+        }
+        @Override
+        public long players() {
+            AtomicLong count = new AtomicLong(0);
+
+            this.loadBalancer().executeNow(l ->
+                    l.servers().forEach(s -> count.addAndGet(s.playerCount()))
+            );
+
+            return count.get();
+        }
+        @Override
+        public List<IMCLoader> mcloaders() {
+            AtomicReference<List<IMCLoader>> mcloaders = new AtomicReference<>(new ArrayList<>());
+
+            this.loadBalancer.executeNow(l -> mcloaders.set(l.servers()));
+
+            return mcloaders.get();
         }
 
         @Override

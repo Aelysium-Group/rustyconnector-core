@@ -7,7 +7,6 @@ import com.mysql.cj.jdbc.MysqlDataSource;
 import group.aelysium.rustyconnector.plugin.velocity.lib.players.Player;
 import group.aelysium.rustyconnector.toolkit.core.UserPass;
 import group.aelysium.rustyconnector.toolkit.velocity.family.static_family.IServerResidence;
-import group.aelysium.rustyconnector.toolkit.velocity.friends.PlayerPair;
 import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IRankResolver;
 import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IVelocityPlayerRank;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
@@ -19,7 +18,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public class MySQLReactor extends StorageReactor {
+public class MySQLReactor implements StorageReactor {
     protected static String PLAYERS_TABLE =
             "CREATE TABLE IF NOT EXISTS players (" +
                     "    uuid VARCHAR(36) NOT NULL," +
@@ -365,11 +364,11 @@ public class MySQLReactor extends StorageReactor {
         }
     }
 
-    public void kill() {
-        this.core.kill();
+    public void close() throws Exception {
+        this.core.close();
     }
 
-    public static class Core {
+    public static class Core implements AutoCloseable {
         private final MysqlDataSource dataSource;
         private final Settings settings;
         private Connection connection;
@@ -400,7 +399,7 @@ public class MySQLReactor extends StorageReactor {
         /**
          * Closes the connection to the MySQL server.
          */
-        public void kill() {
+        public void close() throws Exception {
             if(this.connection == null) return;
             try {
                 this.connection.commit();

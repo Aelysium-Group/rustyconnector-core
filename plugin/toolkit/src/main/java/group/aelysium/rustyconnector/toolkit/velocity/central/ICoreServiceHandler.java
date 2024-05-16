@@ -5,14 +5,14 @@ import group.aelysium.rustyconnector.toolkit.core.events.EventManager;
 import group.aelysium.rustyconnector.toolkit.core.packet.VelocityPacketBuilder;
 import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.IServiceableService;
 import group.aelysium.rustyconnector.toolkit.velocity.dynamic_teleport.IDynamicTeleportServiceHandler;
-import group.aelysium.rustyconnector.toolkit.velocity.family.IFamilyService;
+import group.aelysium.rustyconnector.toolkit.velocity.family.IFamilies;
 import group.aelysium.rustyconnector.toolkit.velocity.friends.IFriendsService;
 import group.aelysium.rustyconnector.toolkit.velocity.magic_link.IMagicLink;
 import group.aelysium.rustyconnector.toolkit.velocity.parties.IPartyService;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayerService;
 import group.aelysium.rustyconnector.toolkit.velocity.server.IServerService;
 import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.IServiceHandler;
-import group.aelysium.rustyconnector.toolkit.velocity.storage.IStorageService;
+import group.aelysium.rustyconnector.toolkit.velocity.storage.IStorage;
 import group.aelysium.rustyconnector.toolkit.velocity.family.whitelist.IWhitelistService;
 
 import java.util.Optional;
@@ -26,10 +26,10 @@ public interface ICoreServiceHandler extends IServiceHandler {
     EventManager events();
 
     /**
-     * Gets the {@link IFamilyService family service} which allows access to server families and other family related logic.
-     * @return {@link IFamilyService}
+     * Gets the {@link IFamilies family service} which allows access to server families and other family related logic.
+     * @return {@link IFamilies}
      */
-    IFamilyService family();
+    IFamilies family();
 
     /**
      * Gets the {@link IServerService server service} which allows access to server registration, unregistration, connection, and other server related logic.
@@ -44,10 +44,10 @@ public interface ICoreServiceHandler extends IServiceHandler {
     IConfigService config();
 
     /**
-     * Gets RustyConnector's {@link IStorageService remote storage connector service} which allows direct access to database storage.
-     * @return {@link IStorageService}
+     * Gets RustyConnector's {@link IStorage remote storage connector service} which allows direct access to database storage.
+     * @return {@link IStorage}
      */
-    IStorageService storage();
+    IStorage storage();
 
     /**
      * Gets the {@link IPlayerService player service} which allows access to player resolving logic for usage when dealing with offline player data.

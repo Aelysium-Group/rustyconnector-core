@@ -1,9 +1,8 @@
 package group.aelysium.rustyconnector.core.mcloader.lib.magic_link.handlers;
 
 import group.aelysium.rustyconnector.core.common.packets.BuiltInIdentifications;
-import group.aelysium.rustyconnector.core.common.packets.MagicLink;
 import group.aelysium.rustyconnector.core.mcloader.central.MCLoaderTinder;
-import group.aelysium.rustyconnector.core.mcloader.lib.magic_link.MagicLinkService;
+import group.aelysium.rustyconnector.core.mcloader.lib.magic_link.MagicLink;
 import group.aelysium.rustyconnector.core.mcloader.lib.server_info.ServerInfoService;
 import group.aelysium.rustyconnector.toolkit.core.logger.PluginLogger;
 import group.aelysium.rustyconnector.toolkit.core.packet.Packet;
@@ -15,7 +14,7 @@ import group.aelysium.rustyconnector.toolkit.mc_loader.events.magic_link.Timeout
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
-public class HandshakeStalePingListener extends PacketListener<MagicLink.StalePing> {
+public class HandshakeStalePingListener extends PacketListener<group.aelysium.rustyconnector.core.common.packets.MagicLink.StalePing> {
     protected IMCLoaderTinder api;
 
     public HandshakeStalePingListener(IMCLoaderTinder api) {
@@ -28,14 +27,14 @@ public class HandshakeStalePingListener extends PacketListener<MagicLink.StalePi
     }
 
     @Override
-    public MagicLink.StalePing wrap(Packet packet) {
-        return new MagicLink.StalePing(packet);
+    public group.aelysium.rustyconnector.core.common.packets.MagicLink.StalePing wrap(Packet packet) {
+        return new group.aelysium.rustyconnector.core.common.packets.MagicLink.StalePing(packet);
     }
 
     @Override
-    public void execute(MagicLink.StalePing packet) {
+    public void execute(group.aelysium.rustyconnector.core.common.packets.MagicLink.StalePing packet) {
         PluginLogger logger = api.logger();
-        MagicLinkService service = ((MCLoaderTinder) api).services().magicLink();
+        MagicLink service = ((MCLoaderTinder) api).services().magicLink();
         ServerInfoService serverInfoService = ((MCLoaderTinder) api).services().serverInfo();
         ((MCLoaderTinder) api).services().events().fireEvent(new TimeoutEvent());
 
@@ -43,10 +42,10 @@ public class HandshakeStalePingListener extends PacketListener<MagicLink.StalePi
         service.setDelay(5);
         Packet response = packet.reply()
                 .identification(BuiltInIdentifications.MAGICLINK_HANDSHAKE_PING)
-                .parameter(MagicLink.Handshake.Ping.Parameters.ADDRESS, serverInfoService.address())
-                .parameter(MagicLink.Handshake.Ping.Parameters.DISPLAY_NAME, serverInfoService.displayName())
-                .parameter(MagicLink.Handshake.Ping.Parameters.MAGIC_CONFIG_NAME, serverInfoService.magicConfig())
-                .parameter(MagicLink.Handshake.Ping.Parameters.PLAYER_COUNT, new PacketParameter(serverInfoService.playerCount()))
+                .parameter(group.aelysium.rustyconnector.core.common.packets.MagicLink.Handshake.Ping.Parameters.ADDRESS, serverInfoService.address())
+                .parameter(group.aelysium.rustyconnector.core.common.packets.MagicLink.Handshake.Ping.Parameters.DISPLAY_NAME, serverInfoService.displayName())
+                .parameter(group.aelysium.rustyconnector.core.common.packets.MagicLink.Handshake.Ping.Parameters.MAGIC_CONFIG_NAME, serverInfoService.magicConfig())
+                .parameter(group.aelysium.rustyconnector.core.common.packets.MagicLink.Handshake.Ping.Parameters.PLAYER_COUNT, new PacketParameter(serverInfoService.playerCount()))
                 .build();
         service.connection().orElseThrow().publish(response);
     }

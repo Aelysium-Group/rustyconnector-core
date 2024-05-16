@@ -1,11 +1,9 @@
 package group.aelysium.rustyconnector.toolkit.core.messenger;
 
-import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service;
-
 import java.net.ConnectException;
 import java.util.Optional;
 
-public interface IMessengerConnector extends Service {
+public interface IMessengerConnector extends AutoCloseable {
     /**
      * Gets the connection to the remote resource.
      * @return {@link IMessengerConnection}

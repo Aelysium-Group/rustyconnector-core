@@ -4,8 +4,7 @@ import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.IPlayerConnectable;
 import group.aelysium.rustyconnector.toolkit.velocity.family.load_balancing.ILoadBalancer;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
-import group.aelysium.rustyconnector.toolkit.velocity.server.IRankedMCLoader;
-import group.aelysium.rustyconnector.toolkit.velocity.storage.IDatabase;
+import group.aelysium.rustyconnector.toolkit.velocity.storage.IRemoteStorage;
 import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
 
 import java.util.Optional;
@@ -19,7 +18,7 @@ public interface IMatchmaker extends IPlayerConnectable, Particle, ILoadBalancer
      */
     String gameId();
 
-    IDatabase.PlayerRanks storage();
+    IRemoteStorage.PlayerRanks storage();
 
     /**
      * Gets the matched player for this matchmaker.

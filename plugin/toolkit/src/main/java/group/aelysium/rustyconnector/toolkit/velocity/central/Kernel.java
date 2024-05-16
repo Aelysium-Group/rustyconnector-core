@@ -3,7 +3,9 @@ package group.aelysium.rustyconnector.toolkit.velocity.central;
 import group.aelysium.rustyconnector.toolkit.core.lang.ILangService;
 import group.aelysium.rustyconnector.toolkit.core.lang.ILanguageResolver;
 import group.aelysium.rustyconnector.toolkit.core.logger.PluginLogger;
-import group.aelysium.rustyconnector.toolkit.velocity.family.IFamilyService;
+import group.aelysium.rustyconnector.toolkit.mc_loader.magic_link.IMagicLink;
+import group.aelysium.rustyconnector.toolkit.velocity.family.IFamilies;
+import group.aelysium.rustyconnector.toolkit.velocity.storage.IStorage;
 import group.aelysium.rustyconnector.toolkit.velocity.util.Version;
 import net.kyori.adventure.text.Component;
 
@@ -31,9 +33,9 @@ public interface Kernel {
          */
         public abstract Version version();
 
-        public abstract Flux<IFamilyService> Families();
-        public abstract Flux<?> MagicLink();
-        public abstract Flux<?> Storage();
+        public abstract Flux<IFamilies> Families();
+        public abstract Flux<IMagicLink> MagicLink();
+        public abstract Flux<IStorage> Storage();
         public abstract Flux<?> Players();
 
         /**

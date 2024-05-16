@@ -5,13 +5,16 @@ import group.aelysium.rustyconnector.toolkit.velocity.connection.IPlayerConnecta
 import group.aelysium.rustyconnector.toolkit.velocity.family.whitelist.IWhitelist;
 import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
 
+import java.util.List;
 import java.util.Optional;
 
-public interface IFamilyConnector<MCLoader extends IMCLoader> extends IPlayerConnectable, AutoCloseable {
-    void register(MCLoader mcloader);
-    void unregister(MCLoader mcloader);
-    void lock(MCLoader mcloader);
-    void unlock(MCLoader mcloader);
+public interface IFamilyConnector extends IPlayerConnectable, AutoCloseable {
+    void register(IMCLoader mcloader);
+    void unregister(IMCLoader mcloader);
+    void lock(IMCLoader mcloader);
+    void unlock(IMCLoader mcloader);
+    List<IMCLoader> mcloaders();
+    long players();
 
     /**
      * Gets the whitelist flux used for this connector.

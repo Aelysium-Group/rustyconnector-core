@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.plugin.velocity.lib.players;
 
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.matchmaking.rank.DefaultRankResolver;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.mcloader.MCLoader;
+import group.aelysium.rustyconnector.core.proxy.family.matchmaking.rank.DefaultRankResolver;
+import group.aelysium.rustyconnector.core.proxy.family.mcloader.MCLoader;
 import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
 import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IVelocityPlayerRank;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;

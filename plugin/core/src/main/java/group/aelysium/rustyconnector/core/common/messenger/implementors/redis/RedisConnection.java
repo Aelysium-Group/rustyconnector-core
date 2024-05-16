@@ -71,7 +71,7 @@ public class RedisConnection extends MessengerConnection implements IMessengerCo
     }
 
     @Override
-    public void kill() {
+    public void close() throws Exception {
         this.isAlive = false;
         this.failService.kill();
 

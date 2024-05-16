@@ -34,14 +34,17 @@ public class MagicLinkService extends IMagicLink {
             try {
                 // Unregister any stale servers
                 // The removing feature of server#unregister is valid because serverService.servers() creates a new list which isn't bound to the underlying list.
-                RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Families().orElseThrow().dump().forEach(
-                        ff -> ff.executeNow(f-> {})
-                );
-                serverService.servers().forEach(server -> {
-                    server.decreaseTimeout(3);
-
+                RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Families().orElseThrow().dump().forEach(ff -> {
                     try {
-                        if (server.stale()) server.unregister(true);
+                        ff.orElseThrow().connector().mcloaders().forEach(s -> {
+                            s.decreaseTimeout(3);
+
+                            try {
+                                if (s.stale()) s.unregister(true);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -81,8 +84,8 @@ public class MagicLinkService extends IMagicLink {
 
     @Override
     public void close() throws Exception {
-        this.clock.kill();
-        this.connector.kill();
+        this.connector.connection().orElseThrow().close();
+        this.executor.shutdownNow();
     }
 
     public static class Tinder extends Particle.Tinder<MagicLinkService> {

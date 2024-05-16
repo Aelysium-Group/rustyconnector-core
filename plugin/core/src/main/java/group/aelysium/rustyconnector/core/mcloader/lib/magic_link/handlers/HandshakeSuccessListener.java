@@ -1,7 +1,6 @@
 package group.aelysium.rustyconnector.core.mcloader.lib.magic_link.handlers;
 
 import group.aelysium.rustyconnector.core.common.packets.BuiltInIdentifications;
-import group.aelysium.rustyconnector.core.common.packets.MagicLink;
 import group.aelysium.rustyconnector.core.mcloader.central.MCLoaderTinder;
 import group.aelysium.rustyconnector.core.mcloader.lib.lang.MCLoaderLang;
 import group.aelysium.rustyconnector.core.mcloader.lib.ranked_game_interface.RankedGameInterfaceService;
@@ -9,12 +8,12 @@ import group.aelysium.rustyconnector.toolkit.core.logger.PluginLogger;
 import group.aelysium.rustyconnector.toolkit.core.packet.Packet;
 import group.aelysium.rustyconnector.toolkit.core.packet.PacketIdentification;
 import group.aelysium.rustyconnector.toolkit.core.packet.PacketListener;
-import group.aelysium.rustyconnector.core.mcloader.lib.magic_link.MagicLinkService;
+import group.aelysium.rustyconnector.core.mcloader.lib.magic_link.MagicLink;
 import group.aelysium.rustyconnector.toolkit.core.server.ServerAssignment;
 import group.aelysium.rustyconnector.toolkit.mc_loader.events.magic_link.ConnectedEvent;
 import net.kyori.adventure.text.Component;
 
-public class HandshakeSuccessListener extends PacketListener<MagicLink.Handshake.Success> {
+public class HandshakeSuccessListener extends PacketListener<group.aelysium.rustyconnector.core.common.packets.MagicLink.Handshake.Success> {
     protected MCLoaderTinder api;
 
     public HandshakeSuccessListener(MCLoaderTinder api) {
@@ -27,14 +26,14 @@ public class HandshakeSuccessListener extends PacketListener<MagicLink.Handshake
     }
 
     @Override
-    public MagicLink.Handshake.Success wrap(Packet packet) {
-        return new MagicLink.Handshake.Success(packet);
+    public group.aelysium.rustyconnector.core.common.packets.MagicLink.Handshake.Success wrap(Packet packet) {
+        return new group.aelysium.rustyconnector.core.common.packets.MagicLink.Handshake.Success(packet);
     }
 
     @Override
-    public void execute(MagicLink.Handshake.Success packet) {
+    public void execute(group.aelysium.rustyconnector.core.common.packets.MagicLink.Handshake.Success packet) {
         PluginLogger logger = api.logger();
-        MagicLinkService service = api.services().magicLink();
+        MagicLink service = api.services().magicLink();
         api.services().events().fireEvent(new ConnectedEvent(packet.assignment()));
 
         logger.send(Component.text(packet.message(), packet.color()));

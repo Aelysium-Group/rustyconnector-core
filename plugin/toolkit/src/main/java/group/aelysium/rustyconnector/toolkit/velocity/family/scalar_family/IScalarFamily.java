@@ -7,15 +7,18 @@ import group.aelysium.rustyconnector.toolkit.velocity.family.load_balancing.ILoa
 import group.aelysium.rustyconnector.toolkit.velocity.family.whitelist.IWhitelist;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
-import group.aelysium.rustyconnector.toolkit.velocity.server.IRankedMCLoader;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
-public interface IScalarFamily extends IFamily<IScalarFamily.Connector> {
+public interface IScalarFamily extends IFamily {
 
     record Settings(
             @NotNull String id,
@@ -25,7 +28,7 @@ public interface IScalarFamily extends IFamily<IScalarFamily.Connector> {
             IWhitelist.Settings whitelist
     ) {}
 
-    class Connector implements IFamilyConnector<IMCLoader> {
+    class Connector implements IFamilyConnector {
         protected final Flux<IWhitelist> whitelist;
         protected final Flux<ILoadBalancer> loadBalancer;
 
@@ -49,6 +52,23 @@ public interface IScalarFamily extends IFamily<IScalarFamily.Connector> {
         @Override
         public void unlock(IMCLoader mcloader) {
             this.loadBalancer.executeNow(m -> m.unlock(mcloader));
+        }
+        @Override
+        public long players() {
+            AtomicLong output = new AtomicLong(0);
+            this.loadBalancer().executeNow(l ->
+                    l.servers().forEach(s -> output.addAndGet(s.playerCount()))
+            );
+
+            return output.get();
+        }
+        @Override
+        public List<IMCLoader> mcloaders() {
+            AtomicReference<List<IMCLoader>> mcloaders = new AtomicReference<>(new ArrayList<>());
+
+            this.loadBalancer.executeNow(l -> mcloaders.set(l.servers()));
+
+            return mcloaders.get();
         }
 
         @Override

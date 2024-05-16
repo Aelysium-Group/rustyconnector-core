@@ -7,16 +7,21 @@ import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IMatchm
 import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.ISession;
 import group.aelysium.rustyconnector.toolkit.velocity.family.whitelist.IWhitelist;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
 import group.aelysium.rustyconnector.toolkit.velocity.server.IRankedMCLoader;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
-public interface IRankedFamily extends IFamily<IRankedFamily.Connector> {
+public interface IRankedFamily extends IFamily {
     record Settings(
             @NotNull String id,
             @NotNull String gameId,
@@ -26,7 +31,7 @@ public interface IRankedFamily extends IFamily<IRankedFamily.Connector> {
             IWhitelist.Settings whitelist
     ) {}
 
-    class Connector implements IFamilyConnector<IRankedMCLoader> {
+    class Connector implements IFamilyConnector {
         protected final Flux<IWhitelist> whitelist;
         protected final Flux<IMatchmaker> matchmaker;
 
@@ -36,20 +41,38 @@ public interface IRankedFamily extends IFamily<IRankedFamily.Connector> {
         }
 
         @Override
-        public void register(IRankedMCLoader mcloader) {
+        public void register(IMCLoader mcloader) {
             this.matchmaker.executeNow(m -> m.add(mcloader));
         }
         @Override
-        public void unregister(IRankedMCLoader mcloader) {
+        public void unregister(IMCLoader mcloader) {
             this.matchmaker.executeNow(m -> m.remove(mcloader));
         }
         @Override
-        public void lock(IRankedMCLoader mcloader) {
+        public void lock(IMCLoader mcloader) {
             this.matchmaker.executeNow(m -> m.lock(mcloader));
         }
         @Override
-        public void unlock(IRankedMCLoader mcloader) {
+        public void unlock(IMCLoader mcloader) {
             this.matchmaker.executeNow(m -> m.unlock(mcloader));
+        }
+        @Override
+        public long players() {
+            AtomicLong count = new AtomicLong(0);
+
+            this.matchmaker().executeNow(m -> {
+                m.servers().forEach(s -> count.addAndGet(s.playerCount()));
+            });
+
+            return count.get();
+        }
+        @Override
+        public List<IMCLoader> mcloaders() {
+            AtomicReference<List<IMCLoader>> mcloaders = new AtomicReference<>(new ArrayList<>());
+
+            this.matchmaker.executeNow(l -> mcloaders.set(l.servers()));
+
+            return mcloaders.get();
         }
 
         @Override

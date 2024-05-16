@@ -17,7 +17,7 @@ import group.aelysium.rustyconnector.core.mcloader.event_handlers.OnDisconnectio
 import group.aelysium.rustyconnector.core.mcloader.event_handlers.OnTimeout;
 import group.aelysium.rustyconnector.core.mcloader.lib.dynamic_teleport.DynamicTeleportService;
 import group.aelysium.rustyconnector.core.mcloader.lib.dynamic_teleport.handlers.CoordinateRequestListener;
-import group.aelysium.rustyconnector.core.mcloader.lib.magic_link.MagicLinkService;
+import group.aelysium.rustyconnector.core.mcloader.lib.magic_link.MagicLink;
 import group.aelysium.rustyconnector.core.mcloader.lib.magic_link.handlers.HandshakeFailureListener;
 import group.aelysium.rustyconnector.core.mcloader.lib.magic_link.handlers.HandshakeStalePingListener;
 import group.aelysium.rustyconnector.core.mcloader.lib.magic_link.handlers.HandshakeSuccessListener;
@@ -100,7 +100,7 @@ public class MCLoaderFlame extends ServiceableService<CoreServiceHandler> implem
             RedisConnector messenger = initialize.connectors(cryptor, messageCacheService, logger, langService, serverInfoService.uuid());
 
             initialize.dynamicTeleport();
-            MagicLinkService magicLinkService = initialize.magicLink(messenger);
+            MagicLink magicLinkService = initialize.magicLink(messenger);
             initialize.eventManager();
 
             MCLoaderFlame flame = new MCLoaderFlame(version, configVersion, new CoreServiceHandler(initialize.getServices()));
@@ -228,11 +228,11 @@ class Initialize {
         return messenger;
     }
 
-    public MagicLinkService magicLink(IMessengerConnector messenger) {
+    public MagicLink magicLink(IMessengerConnector messenger) {
         logger.send(Component.text("Building magic link service...", NamedTextColor.DARK_GRAY));
 
-        MagicLinkService service = new MagicLinkService(messenger);
-        services.put(MagicLinkService.class, service);
+        MagicLink service = new MagicLink(messenger);
+        services.put(MagicLink.class, service);
 
         logger.send(Component.text("Finished booting magic link service.", NamedTextColor.GREEN));
 

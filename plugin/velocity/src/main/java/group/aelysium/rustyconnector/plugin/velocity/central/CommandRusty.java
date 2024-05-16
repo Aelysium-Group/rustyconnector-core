@@ -12,20 +12,20 @@ import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import group.aelysium.rustyconnector.core.common.cache.CacheableMessage;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.Family;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.ranked_family.RankedFamily;
+import group.aelysium.rustyconnector.core.proxy.family.Family;
+import group.aelysium.rustyconnector.core.proxy.family.ranked_family.RankedFamily;
 import group.aelysium.rustyconnector.plugin.velocity.lib.players.Player;
-import group.aelysium.rustyconnector.plugin.velocity.lib.storage.StorageService;
+import group.aelysium.rustyconnector.plugin.velocity.lib.storage.Storage;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.ConnectionResult;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.IPlayerConnectable;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.velocity.util.DependencyInjector;
 import group.aelysium.rustyconnector.plugin.velocity.PluginLogger;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.scalar_family.ScalarFamily;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.static_family.StaticFamily;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.dynamic_scale.K8Service;
+import group.aelysium.rustyconnector.core.proxy.family.scalar_family.ScalarFamily;
+import group.aelysium.rustyconnector.core.proxy.family.static_family.StaticFamily;
+import group.aelysium.rustyconnector.core.proxy.family.dynamic_scale.K8Service;
 import group.aelysium.rustyconnector.plugin.velocity.lib.lang.ProxyLang;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.mcloader.MCLoader;
+import group.aelysium.rustyconnector.core.proxy.family.mcloader.MCLoader;
 import group.aelysium.rustyconnector.core.common.cache.MessageCacheService;
 import io.fabric8.kubernetes.api.model.Pod;
 import net.kyori.adventure.text.Component;
@@ -496,7 +496,7 @@ class Database {
                                 .executes(context -> {
                                     String gameId = context.getArgument("gameId", String.class);
 
-                                    StorageService storage = flame.services().storage();
+                                    Storage storage = flame.services().storage();
                                     storage.database().ranks().deleteGame(gameId);
                                     logger.log("Successfully purged all rank records from "+gameId);
                                     return Command.SINGLE_SUCCESS;
@@ -506,7 +506,7 @@ class Database {
                                 .executes(context -> {
                                     String gameId = context.getArgument("gameId", String.class);
 
-                                    StorageService storage = flame.services().storage();
+                                    Storage storage = flame.services().storage();
                                     storage.database().ranks().deleteGame(gameId);
                                     logger.log("Successfully purged all rank records from "+gameId);
                                     return Command.SINGLE_SUCCESS;

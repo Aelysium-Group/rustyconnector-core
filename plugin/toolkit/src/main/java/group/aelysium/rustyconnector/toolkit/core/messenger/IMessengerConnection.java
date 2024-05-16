@@ -2,9 +2,8 @@ package group.aelysium.rustyconnector.toolkit.core.messenger;
 
 import group.aelysium.rustyconnector.toolkit.core.packet.Packet;
 import group.aelysium.rustyconnector.toolkit.core.packet.PacketListener;
-import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service;
 
-public interface IMessengerConnection extends Service {
+public interface IMessengerConnection extends AutoCloseable {
     /**
      * Publish a new packet to the {@link IMessengerConnection}.
      * @param packet The packet to publish.

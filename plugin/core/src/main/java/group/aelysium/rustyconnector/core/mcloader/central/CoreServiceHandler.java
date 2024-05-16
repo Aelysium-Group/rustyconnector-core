@@ -8,7 +8,7 @@ import group.aelysium.rustyconnector.toolkit.mc_loader.central.ICoreServiceHandl
 import group.aelysium.rustyconnector.core.common.cache.MessageCacheService;
 import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service;
 import group.aelysium.rustyconnector.core.mcloader.lib.dynamic_teleport.DynamicTeleportService;
-import group.aelysium.rustyconnector.core.mcloader.lib.magic_link.MagicLinkService;
+import group.aelysium.rustyconnector.core.mcloader.lib.magic_link.MagicLink;
 import group.aelysium.rustyconnector.core.mcloader.lib.server_info.ServerInfoService;
 
 import java.util.Map;
@@ -22,8 +22,8 @@ public class CoreServiceHandler extends ServiceHandler implements ICoreServiceHa
         super();
     }
 
-    public MagicLinkService magicLink() {
-        return this.find(MagicLinkService.class).orElseThrow();
+    public MagicLink magicLink() {
+        return this.find(MagicLink.class).orElseThrow();
     }
     public EventManager events() {
         return this.find(EventManager.class).orElseThrow();

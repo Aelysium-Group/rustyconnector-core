@@ -9,14 +9,14 @@ import group.aelysium.rustyconnector.core.common.cache.MessageCacheService;
 import group.aelysium.rustyconnector.core.common.data_transit.DataTransitService;
 import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service;
 import group.aelysium.rustyconnector.plugin.velocity.lib.dynamic_teleport.DynamicTeleportService;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.FamilyService;
+import group.aelysium.rustyconnector.core.proxy.family.Families;
 import group.aelysium.rustyconnector.plugin.velocity.lib.friends.FriendsService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.load_balancing.LoadBalancerService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.MagicLinkService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.parties.PartyService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.players.PlayerService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.mcloader.ServerService;
-import group.aelysium.rustyconnector.plugin.velocity.lib.storage.StorageService;
+import group.aelysium.rustyconnector.plugin.velocity.lib.storage.Storage;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.whitelist.WhitelistService;
 
 import java.util.Map;
@@ -30,8 +30,8 @@ public class CoreServiceHandler extends ServiceHandler implements ICoreServiceHa
     public EventManager events() {
         return this.find(EventManager.class).orElseThrow();
     }
-    public FamilyService family() {
-        return this.find(FamilyService.class).orElseThrow();
+    public Families family() {
+        return this.find(Families.class).orElseThrow();
     }
     public ServerService server() {
         return this.find(ServerService.class).orElseThrow();
@@ -39,8 +39,8 @@ public class CoreServiceHandler extends ServiceHandler implements ICoreServiceHa
     public MagicLinkService magicLink() {
         return this.find(MagicLinkService.class).orElseThrow();
     }
-    public StorageService storage() {
-        return this.find(StorageService.class).orElseThrow();
+    public Storage storage() {
+        return this.find(Storage.class).orElseThrow();
     }
     public PlayerService player() {
         return this.find(PlayerService.class).orElseThrow();

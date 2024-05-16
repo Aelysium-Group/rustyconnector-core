@@ -1,17 +1,17 @@
 package group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.packet_handlers;
 
 import group.aelysium.rustyconnector.core.common.packets.BuiltInIdentifications;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.Family;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.ranked_family.RankedFamily;
+import group.aelysium.rustyconnector.core.proxy.family.Family;
+import group.aelysium.rustyconnector.core.proxy.family.ranked_family.RankedFamily;
 import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.MagicLinkService;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.mcloader.RankedMCLoader;
+import group.aelysium.rustyconnector.core.proxy.family.mcloader.RankedMCLoader;
 import group.aelysium.rustyconnector.toolkit.core.messenger.IMessengerConnection;
 import group.aelysium.rustyconnector.toolkit.core.packet.Packet;
 import group.aelysium.rustyconnector.toolkit.core.packet.PacketListener;
 import group.aelysium.rustyconnector.toolkit.core.packet.PacketIdentification;
 import group.aelysium.rustyconnector.core.common.packets.MagicLink;
 import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
-import group.aelysium.rustyconnector.plugin.velocity.lib.family.mcloader.MCLoader;
+import group.aelysium.rustyconnector.core.proxy.family.mcloader.MCLoader;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.mcloader.ServerService;
 import group.aelysium.rustyconnector.toolkit.core.packet.PacketParameter;
 import group.aelysium.rustyconnector.toolkit.core.server.ServerAssignment;

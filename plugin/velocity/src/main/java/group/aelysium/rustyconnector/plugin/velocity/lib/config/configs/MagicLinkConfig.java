@@ -3,7 +3,7 @@ package group.aelysium.rustyconnector.plugin.velocity.lib.config.configs;
 import group.aelysium.rustyconnector.core.common.config.YAML;
 import group.aelysium.rustyconnector.core.common.lang.LangService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.MagicLinkService;
-import group.aelysium.rustyconnector.plugin.velocity.lib.storage.StorageService;
+import group.aelysium.rustyconnector.plugin.velocity.lib.storage.Storage;
 import group.aelysium.rustyconnector.toolkit.core.UserPass;
 import group.aelysium.rustyconnector.toolkit.core.config.IConfigService;
 import group.aelysium.rustyconnector.toolkit.core.config.IYAML;
@@ -26,7 +26,7 @@ public class MagicLinkConfig extends YAML {
 
     @SuppressWarnings("unchecked")
     protected void register() throws IllegalStateException {
-        StorageService.StorageType storageType = StorageService.StorageType.valueOf(IYAML.getValue(this.data, "storage.provider", String.class));
+        Storage.StorageType storageType = Storage.StorageType.valueOf(IYAML.getValue(this.data, "storage.provider", String.class));
         switch (storageType) {
             case MYSQL -> {
                 String host = IYAML.getValue(this.data, "redis.host", String.class);
@@ -50,7 +50,7 @@ public class MagicLinkConfig extends YAML {
                 if (this.redis_dataChannel.equals(""))
                     throw new IllegalStateException("Please configure your connector settings. `dataChannel` cannot be empty for Redis connectors.");
 
-                this.configuration = new StorageService.Configuration.MySQL(address, userPass, database);
+                this.configuration = new Storage.Configuration.MySQL(address, userPass, database);
             }
             default -> throw new NullPointerException("No proper Storage System was defined!");
         }

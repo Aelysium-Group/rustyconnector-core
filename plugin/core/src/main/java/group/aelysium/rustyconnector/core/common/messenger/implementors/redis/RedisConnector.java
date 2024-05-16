@@ -47,7 +47,7 @@ public class RedisConnector extends MessengerConnector {
 
 
     @Override
-    public void kill() {
-        if(this.connection != null) this.connection.kill();
+    public void close() throws Exception {
+        if(this.connection != null) this.connection.close();
     }
 }
