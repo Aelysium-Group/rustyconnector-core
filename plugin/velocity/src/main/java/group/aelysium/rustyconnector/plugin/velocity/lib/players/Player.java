@@ -3,6 +3,8 @@ package group.aelysium.rustyconnector.plugin.velocity.lib.players;
 import group.aelysium.rustyconnector.core.proxy.family.matchmaking.rank.DefaultRankResolver;
 import group.aelysium.rustyconnector.core.proxy.family.mcloader.MCLoader;
 import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
+import group.aelysium.rustyconnector.toolkit.RC;
+import group.aelysium.rustyconnector.toolkit.RustyConnector;
 import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IVelocityPlayerRank;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
@@ -49,7 +51,7 @@ public class Player implements IPlayer {
     }
 
     public Optional<IVelocityPlayerRank> rank(String gameId) {
-        return Tinder.get().services().storage().database().ranks().get(this, gameId, DefaultRankResolver.New());
+        return RC.P.RemoteStorage().ranks().get(this, gameId, DefaultRankResolver.New());
     }
 
     public Optional<IMCLoader> server() {
@@ -83,6 +85,6 @@ public class Player implements IPlayer {
      * Running this method is rarely necessary for you.
      */
     public void store() {
-        Tinder.get().services().player().store(this);
+        RC.P.RemoteStorage().players().set(this);
     }
 }

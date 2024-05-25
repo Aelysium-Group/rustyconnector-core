@@ -1,5 +1,6 @@
 package group.aelysium.rustyconnector.toolkit.velocity.storage;
 
+import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.velocity.family.static_family.IServerResidence;
 import group.aelysium.rustyconnector.toolkit.velocity.family.static_family.IStaticFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IMatchPlayer;
@@ -17,7 +18,7 @@ import java.util.UUID;
  * Remote storage is the external memory solution used to long-term storage of RustyConnector data.
  * Remote storage will persist between software restarts.
  */
-public interface IRemoteStorage {
+public interface IRemoteStorage extends Particle {
     Players players();
     FriendLinks friends();
     PlayerRanks ranks();

@@ -1,4 +1,4 @@
-package group.aelysium.rustyconnector.plugin.velocity.lib.storage.reactors;
+package group.aelysium.rustyconnector.plugin.velocity.lib.remote_storage.reactors;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;

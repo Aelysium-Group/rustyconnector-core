@@ -1,10 +1,13 @@
 package group.aelysium.rustyconnector.toolkit.velocity.central;
 
+import group.aelysium.rustyconnector.toolkit.core.events.IEventManager;
 import group.aelysium.rustyconnector.toolkit.core.lang.ILangService;
 import group.aelysium.rustyconnector.toolkit.core.lang.ILanguageResolver;
 import group.aelysium.rustyconnector.toolkit.core.logger.PluginLogger;
 import group.aelysium.rustyconnector.toolkit.velocity.family.IFamilies;
 import group.aelysium.rustyconnector.toolkit.velocity.magic_link.IMagicLink;
+import group.aelysium.rustyconnector.toolkit.velocity.storage.ILocalStorage;
+import group.aelysium.rustyconnector.toolkit.velocity.storage.IRemoteStorage;
 import group.aelysium.rustyconnector.toolkit.velocity.storage.IStorage;
 import group.aelysium.rustyconnector.toolkit.velocity.util.Version;
 import net.kyori.adventure.text.Component;
@@ -35,8 +38,9 @@ public interface Kernel {
 
         public abstract Flux<IFamilies> Families();
         public abstract Flux<IMagicLink> MagicLink();
-        public abstract Flux<IStorage> Storage();
-        public abstract Flux<?> Players();
+        public abstract Flux<IRemoteStorage> RemoteStorage();
+        public abstract ILocalStorage LocalStorage();
+        public abstract IEventManager EventManager();
 
         /**
          * Allows access to the {@link PluginLogger} used by RustyConnector.

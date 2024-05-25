@@ -4,7 +4,8 @@ import group.aelysium.rustyconnector.toolkit.velocity.family.IFamilies;
 import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.magic_link.IMagicLink;
 import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
-import group.aelysium.rustyconnector.toolkit.velocity.storage.IStorage;
+import group.aelysium.rustyconnector.toolkit.velocity.storage.ILocalStorage;
+import group.aelysium.rustyconnector.toolkit.velocity.storage.IRemoteStorage;
 
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -28,15 +29,19 @@ public interface RC {
         }
 
         static IMCLoader MCLoader(UUID uuid) throws NoSuchElementException {
-            return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Storage().orElseThrow().localStorage().mcloaders().fetch(uuid).orElseThrow();
+            return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().LocalStorage().mcloaders().fetch(uuid).orElseThrow();
         }
 
         static IMagicLink MagicLink() throws NoSuchElementException {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().MagicLink().orElseThrow();
         }
 
-        static IStorage Storage() throws NoSuchElementException {
-            return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Storage().orElseThrow();
+        static IRemoteStorage RemoteStorage() throws NoSuchElementException {
+            return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().RemoteStorage().orElseThrow();
+        }
+
+        static ILocalStorage LocalStorage() throws NoSuchElementException {
+            return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().LocalStorage();
         }
     }
 

@@ -1,11 +1,8 @@
 package group.aelysium.rustyconnector.core.common.events;
 
-import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.core.events.Event;
+import group.aelysium.rustyconnector.toolkit.core.events.IEventManager;
 import group.aelysium.rustyconnector.toolkit.core.events.Listener;
-import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.RegisterEvent;
-import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.UnregisterEvent;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.Vector;
@@ -13,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 
-public class EventManager extends group.aelysium.rustyconnector.toolkit.core.events.EventManager {
+public class EventManager implements IEventManager {
 
     // A map of event types to their listeners
     private final Map<Class<? extends Event>, Vector<Listener<Event>>> listeners = new ConcurrentHashMap<>();
@@ -22,7 +19,7 @@ public class EventManager extends group.aelysium.rustyconnector.toolkit.core.eve
     private final ExecutorService executor = ForkJoinPool.commonPool();
 
     // Constructor
-    protected EventManager() {}
+    public EventManager() {}
 
     // Register a listener for a given event type
     public void on(Class<? extends Event> event, Listener<?> listener) {
@@ -53,22 +50,5 @@ public class EventManager extends group.aelysium.rustyconnector.toolkit.core.eve
     public void close() throws Exception {
         this.listeners.clear();
         this.executor.shutdown();
-    }
-
-    public static class Tinder extends Particle.Tinder<EventManager> {
-        protected final Map<Class<? extends Event>, Listener<? extends Event>> listeners;
-
-        public Tinder(Map<Class<? extends Event>, Listener<? extends Event>> listeners) {
-            this.listeners = listeners;
-        }
-
-        @Override
-        public @NotNull EventManager ignite() throws Exception {
-            EventManager eventManager = new EventManager();
-
-            listeners.forEach(eventManager::on);
-
-            return eventManager;
-        }
     }
 }

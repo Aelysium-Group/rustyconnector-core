@@ -25,7 +25,8 @@ import group.aelysium.rustyconnector.core.proxy.family.scalar_family.RootFamily;
 import group.aelysium.rustyconnector.core.proxy.family.scalar_family.ScalarFamily;
 import group.aelysium.rustyconnector.core.proxy.family.static_family.StaticFamily;
 import group.aelysium.rustyconnector.plugin.velocity.lib.lang.ProxyLang;
-import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.MagicLinkService;
+import group.aelysium.rustyconnector.plugin.velocity.lib.local_storage.LocalStorage;
+import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.MagicLink;
 import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.packet_handlers.HandshakeDisconnectListener;
 import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.packet_handlers.HandshakePingListener;
 import group.aelysium.rustyconnector.core.proxy.family.matchmaking.commands.CommandLeave;
@@ -37,7 +38,8 @@ import group.aelysium.rustyconnector.plugin.velocity.lib.family.mcloader.ServerS
 import group.aelysium.rustyconnector.core.proxy.family.mcloader.packet_handlers.LockServerListener;
 import group.aelysium.rustyconnector.core.proxy.family.mcloader.packet_handlers.SendPlayerListener;
 import group.aelysium.rustyconnector.core.proxy.family.mcloader.packet_handlers.UnlockServerListener;
-import group.aelysium.rustyconnector.plugin.velocity.lib.storage.Storage;
+import group.aelysium.rustyconnector.plugin.velocity.lib.remote_storage.RemoteStorage;
+import group.aelysium.rustyconnector.plugin.velocity.lib.remote_storage.Storage;
 import group.aelysium.rustyconnector.core.proxy.family.whitelist.Whitelist;
 import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.core.events.Event;
@@ -53,9 +55,7 @@ import group.aelysium.rustyconnector.plugin.velocity.VelocityRustyConnector;
 import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.MCLoaderRegisterEvent;
 import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.MCLoaderUnregisterEvent;
 import group.aelysium.rustyconnector.toolkit.velocity.events.player.FamilyLeaveEvent;
-import group.aelysium.rustyconnector.toolkit.velocity.events.player.FamilySwitchEvent;
 import group.aelysium.rustyconnector.toolkit.velocity.events.player.MCLoaderLeaveEvent;
-import group.aelysium.rustyconnector.toolkit.velocity.events.player.MCLoaderSwitchEvent;
 import group.aelysium.rustyconnector.toolkit.velocity.util.DependencyInjector;
 import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
 import group.aelysium.rustyconnector.toolkit.velocity.util.Version;
@@ -94,6 +94,7 @@ public class Tinder extends Kernel.Tinder {
         this.config = config;
         this.families = families;
         this.storage = storage;
+        this.magicLink = magicLink;
     }
 
     private Version version() {
@@ -129,30 +130,25 @@ public class Tinder extends Kernel.Tinder {
     }
 
     public Kernel.@NotNull Particle ignite() throws RuntimeException {
-        Flame flame = new Flame(new Particle.Flux.Capacitor(), this.uuid(), this.version(), new ArrayList<>());
 
         AESCryptor cryptor = this.privateKey();
 
-        // RustyConnector Event Manager
-        {
-            Map<Class<? extends Event>, Listener<? extends Event>> listeners = new HashMap<>();
-            listeners.put(FamilyLeaveEvent.class, new OnFamilyLeave());
-            listeners.put(FamilySwitchEvent.class, new OnFamilySwitch());
-            listeners.put(MCLoaderRegisterEvent.class, new OnMCLoaderRegister());
-            listeners.put(MCLoaderUnregisterEvent.class, new OnMCLoaderUnregister());
-            listeners.put(MCLoaderSwitchEvent.class, new OnMCLoaderSwitch());
-            listeners.put(MCLoaderLeaveEvent.class, new OnMCLoaderLeave());
-            flame.capacitor().store("events", new EventManager.Tinder(listeners));
-        }
-        flame.capacitor().store("players", new PlayerService.Tinder());
-        flame.capacitor().store("families", new Families.Tinder());
-        flame.capacitor().store("whitelist", this.proxyWhitelist());
-        flame.capacitor().store("storage", new Storage.Tinder(storage));
-        {
-            MagicLinkService.Tinder t = new MagicLinkService.Tinder();
-            t.cryptor(cryptor);
-            flame.capacitor().store("magic_link", t);
-        }
+        EventManager eventManager = new EventManager();
+        eventManager.on(FamilyLeaveEvent.class, new OnFamilyLeave());
+        eventManager.on(MCLoaderRegisterEvent.class, new OnMCLoaderRegister());
+        eventManager.on(MCLoaderUnregisterEvent.class, new OnMCLoaderUnregister());
+        eventManager.on(MCLoaderLeaveEvent.class, new OnMCLoaderLeave());
+
+        return new Flame(
+                this.uuid(),
+                this.version(),
+                new ArrayList<>(),
+                new Families.Tinder().flux(),
+                new MagicLink.Tinder().flux(),
+                new RemoteStorage.Tinder().flux(),
+                new LocalStorage(),
+                eventManager
+        );
     }
 
     /**
@@ -467,7 +463,7 @@ class Initialize {
     public void magicLink(DependencyInjector.DI6<DefaultConfig, ServerService, IMessengerConnector, LangService, ConfigService, Families> deps) {
         bootOutput.add(Component.text("Building magic link service...", NamedTextColor.DARK_GRAY));
 
-        Map<String, MagicLinkService.MagicLinkMCLoaderSettings> configs = new HashMap<>();
+        Map<String, MagicLink.MagicLinkMCLoaderSettings> configs = new HashMap<>();
         {
             bootOutput.add(Component.text("Validating Magic Configs...", NamedTextColor.DARK_GRAY));
 
@@ -486,7 +482,7 @@ class Initialize {
             for (File file : files) {
                 String name = file.getName().replaceAll("\\.yml","").replaceAll("\\.yaml", "");
 
-                MagicLinkService.MagicLinkMCLoaderSettings settings = MagicMCLoaderConfig.construct(api.dataFolder(), name, deps.d4(), deps.d5());
+                MagicLink.MagicLinkMCLoaderSettings settings = MagicMCLoaderConfig.construct(api.dataFolder(), name, deps.d4(), deps.d5());
 
                 if(deps.d6().find(settings.family()).isEmpty())
                     throw new NullPointerException("The magic config `" + file.getName() + "` is pointing to a family: `" + settings.family() + "`, which doesn't exist!");
@@ -497,14 +493,14 @@ class Initialize {
             bootOutput.add(Component.text("Magic Configs have been validated!", NamedTextColor.GREEN));
         }
 
-        MagicLinkService magicLinkService = new MagicLinkService(deps.d1().magicLink_serverPingInterval(), deps.d3(), configs);
-        services.put(MagicLinkService.class, magicLinkService);
+        MagicLink magicLink = new MagicLink(deps.d1().magicLink_serverPingInterval(), deps.d3(), configs);
+        services.put(MagicLink.class, magicLink);
 
         bootOutput.add(Component.text("Finished building magic link service.", NamedTextColor.GREEN));
 
 
         bootOutput.add(Component.text("Booting magic link service...", NamedTextColor.DARK_GRAY));
-        magicLinkService.startHeartbeat(deps.d2());
+        magicLink.startHeartbeat(deps.d2());
         bootOutput.add(Component.text("Finished booting magic link service.", NamedTextColor.GREEN));
     }
 

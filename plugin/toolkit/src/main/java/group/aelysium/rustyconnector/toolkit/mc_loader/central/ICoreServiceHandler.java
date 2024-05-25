@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.toolkit.mc_loader.central;
 
-import group.aelysium.rustyconnector.toolkit.core.events.EventManager;
+import group.aelysium.rustyconnector.toolkit.core.events.IEventManager;
 import group.aelysium.rustyconnector.toolkit.core.packet.MCLoaderPacketBuilder;
 import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.IServiceHandler;
 import group.aelysium.rustyconnector.toolkit.mc_loader.dynamic_teleport.ICoordinateRequest;
@@ -13,10 +13,10 @@ import java.util.Optional;
 
 public interface ICoreServiceHandler extends IServiceHandler {
     /**
-     * Gets the {@link EventManager event manager} which allows access to event based logic.
-     * @return {@link EventManager}
+     * Gets the {@link IEventManager event manager} which allows access to event based logic.
+     * @return {@link IEventManager}
      */
-    EventManager events();
+    IEventManager events();
     IMagicLink magicLink();
     IServerInfoService serverInfo();
     Optional<? extends IRankedGameInterfaceService> rankedGameInterface();

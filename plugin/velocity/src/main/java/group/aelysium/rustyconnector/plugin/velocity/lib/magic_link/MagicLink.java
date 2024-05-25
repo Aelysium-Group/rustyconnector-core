@@ -19,12 +19,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class MagicLinkService extends IMagicLink {
+public class MagicLink extends IMagicLink {
     protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     protected IMessengerConnector connector;
     protected Map<String, MagicLinkMCLoaderSettings> settingsMap;
 
-    protected MagicLinkService(IMessengerConnector connector, Map<String, MagicLinkMCLoaderSettings> magicLinkMCLoaderSettingsMap) {
+    protected MagicLink(IMessengerConnector connector, Map<String, MagicLinkMCLoaderSettings> magicLinkMCLoaderSettingsMap) {
         this.connector = connector;
         this.settingsMap = magicLinkMCLoaderSettingsMap;
     }
@@ -88,7 +88,7 @@ public class MagicLinkService extends IMagicLink {
         this.executor.shutdownNow();
     }
 
-    public static class Tinder extends Particle.Tinder<MagicLinkService> {
+    public static class Tinder extends Particle.Tinder<MagicLink> {
         private Map<String, MagicLinkMCLoaderSettings> magicConfigs = new ConcurrentHashMap<>();
         private AESCryptor cryptor;
         private RedisConnector.Settings redis;
@@ -116,10 +116,10 @@ public class MagicLinkService extends IMagicLink {
         }
 
         @Override
-        public @NotNull MagicLinkService ignite() throws Exception {
+        public @NotNull MagicLink ignite() throws Exception {
             IMessengerConnector connector = this.connector();
 
-            MagicLinkService service = new MagicLinkService(connector, this.magicConfigs);
+            MagicLink service = new MagicLink(connector, this.magicConfigs);
             service.startHeartbeat();
             return service;
         }

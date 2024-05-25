@@ -3,7 +3,7 @@ package group.aelysium.rustyconnector.plugin.velocity.lib.config.configs;
 import group.aelysium.rustyconnector.core.common.config.YAML;
 import group.aelysium.rustyconnector.core.common.lang.LangService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.config.ConfigService;
-import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.MagicLinkService;
+import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.MagicLink;
 import group.aelysium.rustyconnector.toolkit.core.config.IConfigService;
 import group.aelysium.rustyconnector.toolkit.core.config.IYAML;
 import group.aelysium.rustyconnector.toolkit.core.lang.LangFileMappings;
@@ -53,11 +53,11 @@ public class MagicMCLoaderConfig extends YAML implements group.aelysium.rustycon
         if(this.server_playerCap_soft >= this.server_playerCap_hard) this.server_playerCap_soft = this.server_playerCap_hard;
     }
 
-    public static MagicLinkService.MagicLinkMCLoaderSettings construct(Path dataFolder, String magicConfigName, LangService lang, ConfigService configService) {
+    public static MagicLink.MagicLinkMCLoaderSettings construct(Path dataFolder, String magicConfigName, LangService lang, ConfigService configService) {
         MagicMCLoaderConfig config = new MagicMCLoaderConfig(dataFolder, "magic_configs/"+magicConfigName+".yml", magicConfigName, lang);
         config.register();
         configService.put(config);
-        return new MagicLinkService.MagicLinkMCLoaderSettings(
+        return new MagicLink.MagicLinkMCLoaderSettings(
                 config.server_family,
                 config.server_weight,
                 config.server_playerCap_soft,

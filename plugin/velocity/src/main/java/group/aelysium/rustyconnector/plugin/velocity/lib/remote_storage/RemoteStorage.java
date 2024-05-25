@@ -1,7 +1,10 @@
-package group.aelysium.rustyconnector.plugin.velocity.lib.storage;
+package group.aelysium.rustyconnector.plugin.velocity.lib.remote_storage;
 
 import group.aelysium.rustyconnector.core.proxy.family.matchmaking.rank.*;
-import group.aelysium.rustyconnector.plugin.velocity.lib.storage.reactors.StorageReactor;
+import group.aelysium.rustyconnector.plugin.velocity.lib.remote_storage.reactors.MySQLReactor;
+import group.aelysium.rustyconnector.plugin.velocity.lib.remote_storage.reactors.StorageReactor;
+import group.aelysium.rustyconnector.toolkit.core.UserPass;
+import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.velocity.family.static_family.IServerResidence;
 import group.aelysium.rustyconnector.toolkit.velocity.family.static_family.IStaticFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IMatchPlayer;
@@ -11,7 +14,9 @@ import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IVeloci
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
 import group.aelysium.rustyconnector.toolkit.velocity.storage.IRemoteStorage;
+import org.jetbrains.annotations.NotNull;
 
+import java.net.InetSocketAddress;
 import java.util.*;
 
 public class RemoteStorage extends StorageReactor.Holder implements IRemoteStorage, AutoCloseable {
@@ -20,7 +25,7 @@ public class RemoteStorage extends StorageReactor.Holder implements IRemoteStora
     private final ServerResidences residences;
     private final PlayerRanks ranks;
 
-    public RemoteStorage(StorageReactor reactor) {
+    private RemoteStorage(StorageReactor reactor) {
         super(reactor);
         this.players = new Players(reactor);
         this.friends = new FriendLinks(reactor);
@@ -60,6 +65,9 @@ public class RemoteStorage extends StorageReactor.Holder implements IRemoteStora
         public Optional<IPlayer> get(String username) {
             return this.reactor.fetchPlayer(username);
         }
+
+        @Override
+        public void close() throws Exception {}
     }
     public static class FriendLinks extends StorageReactor.Holder implements IRemoteStorage.FriendLinks {
         public FriendLinks(StorageReactor reactor) {
@@ -81,6 +89,9 @@ public class RemoteStorage extends StorageReactor.Holder implements IRemoteStora
         public Optional<Boolean> contains(IPlayer player1, IPlayer player2) {
             return this.reactor.areFriends(PlayerPair.from(player1, player2));
         }
+
+        @Override
+        public void close() throws Exception {}
     }
     public static class ServerResidences extends StorageReactor.Holder implements IRemoteStorage.ServerResidences {
         public ServerResidences(StorageReactor reactor) {
@@ -116,6 +127,9 @@ public class RemoteStorage extends StorageReactor.Holder implements IRemoteStora
             else
                 this.reactor.updateExpirations(family.id(), family.homeServerExpiration().epochFromNow());
         }
+
+        @Override
+        public void close() throws Exception {}
     }
     public static class PlayerRanks extends StorageReactor.Holder implements IRemoteStorage.PlayerRanks {
         public PlayerRanks(StorageReactor reactor) {
@@ -154,6 +168,63 @@ public class RemoteStorage extends StorageReactor.Holder implements IRemoteStora
             if(matchmaker.settings().schema().equals(OpenSkillPlayerRank.class))  schema = OpenSkillPlayerRank.schema();
             if(schema == null) return;
             this.reactor.purgeInvalidSchemas(matchmaker.gameId(), schema);
+        }
+
+        @Override
+        public void close() throws Exception {}
+    }
+
+    public static class Tinder extends Particle.Tinder<RemoteStorage> {
+        private final Configuration configuration;
+
+        public Tinder(@NotNull Configuration configuration) {
+            this.configuration = configuration;
+        }
+
+        @Override
+        public @NotNull RemoteStorage ignite() throws Exception {
+            return new RemoteStorage(this.configuration.reactor());
+        }
+    }
+
+    public enum StorageType {
+        SQLITE,
+        MYSQL
+    }
+
+    public static abstract class Configuration {
+        protected final StorageType type;
+
+        protected Configuration(StorageType type) {
+            this.type = type;
+        }
+
+        public StorageType type() {
+            return this.type;
+        }
+        public abstract StorageReactor reactor();
+
+        public static class MySQL extends Configuration {
+            private final MySQLReactor.Core.Settings settings;
+
+            public MySQL(InetSocketAddress address, UserPass userPass, String database) {
+                super(StorageType.MYSQL);
+                this.settings = new MySQLReactor.Core.Settings(address, userPass, database);
+            }
+
+            public StorageReactor reactor() {
+                return new MySQLReactor(settings);
+            }
+
+            public InetSocketAddress address() {
+                return this.settings.address();
+            }
+            public UserPass userPass() {
+                return this.settings.userPass();
+            }
+            public String database() {
+                return this.settings.database();
+            }
         }
     }
 }

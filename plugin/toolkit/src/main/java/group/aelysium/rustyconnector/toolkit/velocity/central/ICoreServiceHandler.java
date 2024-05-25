@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.toolkit.velocity.central;
 
 import group.aelysium.rustyconnector.toolkit.core.config.IConfigService;
-import group.aelysium.rustyconnector.toolkit.core.events.EventManager;
+import group.aelysium.rustyconnector.toolkit.core.events.IEventManager;
 import group.aelysium.rustyconnector.toolkit.core.packet.VelocityPacketBuilder;
 import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.IServiceableService;
 import group.aelysium.rustyconnector.toolkit.velocity.dynamic_teleport.IDynamicTeleportServiceHandler;
@@ -20,10 +20,10 @@ import java.util.Optional;
 public interface ICoreServiceHandler extends IServiceHandler {
 
     /**
-     * Gets the {@link EventManager event manager} which allows access to event based logic.
-     * @return {@link EventManager}
+     * Gets the {@link IEventManager event manager} which allows access to event based logic.
+     * @return {@link IEventManager}
      */
-    EventManager events();
+    IEventManager events();
 
     /**
      * Gets the {@link IFamilies family service} which allows access to server families and other family related logic.

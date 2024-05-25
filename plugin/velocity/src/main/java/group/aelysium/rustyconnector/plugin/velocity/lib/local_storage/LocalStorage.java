@@ -1,31 +1,43 @@
-package group.aelysium.rustyconnector.plugin.velocity.lib.storage;
+package group.aelysium.rustyconnector.plugin.velocity.lib.local_storage;
 
 
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
 import group.aelysium.rustyconnector.toolkit.velocity.storage.ILocalStorage;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class LocalStorage implements ILocalStorage {
-    private final ILocalStorage.MCLoaders mcLoaders = new MCLoaders();
+    private final ILocalStorage.MCLoaders mcloaders = new MCLoaders();
     private final ILocalStorage.Players players = new Players();
 
     @Override
     public ILocalStorage.MCLoaders mcloaders() {
-        return null;
+        return this.mcloaders;
     }
 
     @Override
     public ILocalStorage.Players players() {
-        return null;
+        return this.players;
+    }
+
+    @Override
+    public void close() throws Exception {
+        this.mcloaders.close();
+        this.players.close();
     }
 
     public static class Players implements ILocalStorage.Players {
-        private final Map<UUID, IPlayer> players = new ConcurrentHashMap<>();
+        private final Map<UUID, IPlayer> players = new LinkedHashMap<>(100){
+            @Override
+            protected boolean removeEldestEntry(Map.Entry eldest) {
+                return this.size() > 100;
+            }
+        };
 
         @Override
         public void store(UUID uuid, IPlayer player) {
@@ -40,6 +52,11 @@ public class LocalStorage implements ILocalStorage {
         @Override
         public void remove(UUID uuid) {
             this.players.remove(uuid);
+        }
+
+        @Override
+        public void close() throws Exception {
+            this.players.clear();
         }
     }
 
@@ -59,6 +76,11 @@ public class LocalStorage implements ILocalStorage {
         @Override
         public void remove(UUID uuid) {
             this.mcloaders.remove(uuid);
+        }
+
+        @Override
+        public void close() throws Exception {
+            this.mcloaders.clear();
         }
     }
 }

@@ -1,4 +1,4 @@
-package group.aelysium.rustyconnector.plugin.velocity.lib.storage.reactors;
+package group.aelysium.rustyconnector.plugin.velocity.lib.remote_storage.reactors;
 
 import com.google.gson.JsonObject;
 import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
@@ -36,9 +36,9 @@ public interface StorageReactor extends Particle {
     void saveRank(UUID player, String gameId, JsonObject rank);
     void purgeInvalidSchemas(String gameId, String validSchema);
     Optional<IVelocityPlayerRank> fetchRank(UUID player, String gameId, IRankResolver resolver);
-    abstract class Holder {
+    abstract class Holder implements Particle {
         protected final StorageReactor reactor;
-        public Holder(StorageReactor reactor) {
+        protected Holder(StorageReactor reactor) {
             this.reactor = reactor;
         }
     }

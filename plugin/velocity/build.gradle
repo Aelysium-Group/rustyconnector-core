@@ -9,7 +9,7 @@ dependencies {
     implementation "org.mongodb:mongodb-driver-reactivestreams:${project.mongodb_version}"
 
     // Dev Only
-    shadow project(path: ':core', configuration: 'shadow')
+    shadow project(configuration: 'shadow', path: ':proxy')
 }
 
 // If ever strange behaviour check the docs for reference: https://imperceptiblethoughts.com/shadow/

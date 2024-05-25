@@ -2,7 +2,7 @@ package group.aelysium.rustyconnector.plugin.velocity.lib.config.configs;
 
 import group.aelysium.rustyconnector.core.common.config.YAML;
 import group.aelysium.rustyconnector.core.common.lang.LangService;
-import group.aelysium.rustyconnector.plugin.velocity.lib.storage.Storage;
+import group.aelysium.rustyconnector.plugin.velocity.lib.remote_storage.Storage;
 import group.aelysium.rustyconnector.toolkit.core.UserPass;
 import group.aelysium.rustyconnector.toolkit.core.config.IConfigService;
 import group.aelysium.rustyconnector.toolkit.core.config.IYAML;

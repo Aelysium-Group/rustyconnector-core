@@ -15,7 +15,7 @@ import group.aelysium.rustyconnector.core.common.cache.CacheableMessage;
 import group.aelysium.rustyconnector.core.proxy.family.Family;
 import group.aelysium.rustyconnector.core.proxy.family.ranked_family.RankedFamily;
 import group.aelysium.rustyconnector.plugin.velocity.lib.players.Player;
-import group.aelysium.rustyconnector.plugin.velocity.lib.storage.Storage;
+import group.aelysium.rustyconnector.plugin.velocity.lib.remote_storage.Storage;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.ConnectionResult;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.IPlayerConnectable;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;

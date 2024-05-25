@@ -12,11 +12,11 @@ import group.aelysium.rustyconnector.plugin.velocity.lib.dynamic_teleport.Dynami
 import group.aelysium.rustyconnector.core.proxy.family.Families;
 import group.aelysium.rustyconnector.plugin.velocity.lib.friends.FriendsService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.load_balancing.LoadBalancerService;
-import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.MagicLinkService;
+import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.MagicLink;
 import group.aelysium.rustyconnector.plugin.velocity.lib.parties.PartyService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.players.PlayerService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.mcloader.ServerService;
-import group.aelysium.rustyconnector.plugin.velocity.lib.storage.Storage;
+import group.aelysium.rustyconnector.plugin.velocity.lib.remote_storage.Storage;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.whitelist.WhitelistService;
 
 import java.util.Map;
@@ -36,8 +36,8 @@ public class CoreServiceHandler extends ServiceHandler implements ICoreServiceHa
     public ServerService server() {
         return this.find(ServerService.class).orElseThrow();
     }
-    public MagicLinkService magicLink() {
-        return this.find(MagicLinkService.class).orElseThrow();
+    public MagicLink magicLink() {
+        return this.find(MagicLink.class).orElseThrow();
     }
     public Storage storage() {
         return this.find(Storage.class).orElseThrow();

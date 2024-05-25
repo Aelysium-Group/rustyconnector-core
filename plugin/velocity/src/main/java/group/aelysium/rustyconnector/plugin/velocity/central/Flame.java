@@ -1,12 +1,19 @@
 package group.aelysium.rustyconnector.plugin.velocity.central;
 
 import com.velocitypowered.api.proxy.ProxyServer;
+import group.aelysium.rustyconnector.toolkit.core.events.IEventManager;
 import group.aelysium.rustyconnector.toolkit.mc_loader.central.IMCLoaderTinder;
 import group.aelysium.rustyconnector.toolkit.velocity.central.Kernel;
+import group.aelysium.rustyconnector.toolkit.velocity.family.IFamilies;
+import group.aelysium.rustyconnector.toolkit.velocity.magic_link.IMagicLink;
+import group.aelysium.rustyconnector.toolkit.velocity.storage.ILocalStorage;
+import group.aelysium.rustyconnector.toolkit.velocity.storage.IRemoteStorage;
+import group.aelysium.rustyconnector.toolkit.velocity.storage.IStorage;
 import group.aelysium.rustyconnector.toolkit.velocity.util.Version;
 import group.aelysium.rustyconnector.core.common.lang.LangService;
 import group.aelysium.rustyconnector.plugin.velocity.PluginLogger;
 import net.kyori.adventure.text.Component;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -20,18 +27,60 @@ import java.util.*;
 public class Flame extends Kernel.Particle {
     private final UUID uuid;
     private final Version version;
-    private final Flux.Capacitor capacitor;
+    private final Flux<IFamilies> families;
+    private final Flux<IMagicLink> magicLink;
+    private final Flux<IRemoteStorage> remoteStorage;
+    private final ILocalStorage localStorage;
+    private final IEventManager eventManager;
     private final List<Component> bootOutput;
 
-    protected Flame(Flux.Capacitor capacitor, UUID uuid, Version version, List<Component> bootOutput) {
-        this.capacitor = capacitor;
+    protected Flame(
+            @NotNull UUID uuid,
+            @NotNull Version version,
+            @NotNull List<Component> bootOutput,
+            @NotNull Flux<IFamilies> families,
+            @NotNull Flux<IMagicLink> magicLink,
+            @NotNull Flux<IRemoteStorage> remoteStorage,
+            @NotNull ILocalStorage localStorage,
+            @NotNull IEventManager eventManager
+    ) {
         this.uuid = uuid;
         this.version = version;
         this.bootOutput = bootOutput;
+        this.families = families;
+        this.magicLink = magicLink;
+        this.remoteStorage = remoteStorage;
+        this.localStorage = localStorage;
+        this.eventManager = eventManager;
     }
 
     public Version version() {
         return this.version;
+    }
+
+    @Override
+    public Flux<IFamilies> Families() {
+        return null;
+    }
+
+    @Override
+    public Flux<IMagicLink> MagicLink() {
+        return null;
+    }
+
+    @Override
+    public Flux<IRemoteStorage> RemoteStorage() {
+        return this.remoteStorage;
+    }
+
+    @Override
+    public ILocalStorage LocalStorage() {
+        return this.localStorage;
+    }
+
+    @Override
+    public IEventManager EventManager() {
+        return this.eventManager;
     }
 
     public UUID uuid() {
@@ -40,12 +89,12 @@ public class Flame extends Kernel.Particle {
 
     public List<Component> bootLog() { return this.bootOutput; }
 
-    public Flux.Capacitor capacitor() {
-        return this.capacitor;
-    }
-
     public void close() throws Exception {
-        this.capacitor.close();
+        this.families.close();
+        this.magicLink.close();
+        this.remoteStorage.close();
+        this.localStorage.close();
+        this.eventManager.close();
         this.bootOutput.clear();
     }
 
