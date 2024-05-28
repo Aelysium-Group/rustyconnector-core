@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.toolkit.mc_loader.events.ranked_game;
 
-import group.aelysium.rustyconnector.toolkit.core.events.Event;
+import group.aelysium.rustyconnector.toolkit.common.events.Event;
 
 import java.util.UUID;
 

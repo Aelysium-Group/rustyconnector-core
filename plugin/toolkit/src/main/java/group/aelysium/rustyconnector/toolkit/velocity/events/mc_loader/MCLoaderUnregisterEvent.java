@@ -1,8 +1,8 @@
 package group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader;
 
-import group.aelysium.rustyconnector.toolkit.core.events.Event;
+import group.aelysium.rustyconnector.toolkit.common.events.Event;
 import group.aelysium.rustyconnector.toolkit.velocity.family.Family;
-import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
+import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
 
 /**
  * Represents an MCLoader unregistering from the Proxy.

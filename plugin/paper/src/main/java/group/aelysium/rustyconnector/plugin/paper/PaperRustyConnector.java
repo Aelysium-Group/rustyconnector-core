@@ -1,8 +1,8 @@
 package group.aelysium.rustyconnector.plugin.paper;
 
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
-import group.aelysium.rustyconnector.core.TinderAdapterForCore;
-import group.aelysium.rustyconnector.core.mcloader.lib.lang.MCLoaderLang;
+import group.aelysium.TinderAdapterForCore;
+import group.aelysium.lib.lang.MCLoaderLang;
 import group.aelysium.rustyconnector.plugin.paper.central.Tinder;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;

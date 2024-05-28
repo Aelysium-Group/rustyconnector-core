@@ -4,52 +4,50 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
-import group.aelysium.rustyconnector.core.common.cache.MessageCacheService;
-import group.aelysium.rustyconnector.core.common.config.common.PrivateKeyConfig;
-import group.aelysium.rustyconnector.core.common.config.common.UUIDConfig;
-import group.aelysium.rustyconnector.core.common.crypt.AESCryptor;
-import group.aelysium.rustyconnector.core.common.data_transit.DataTransitService;
-import group.aelysium.rustyconnector.core.common.events.EventManager;
-import group.aelysium.rustyconnector.core.common.messenger.implementors.redis.RedisConnection;
-import group.aelysium.rustyconnector.core.common.messenger.implementors.redis.RedisConnector;
+import group.aelysium.rustyconnector.common.cache.MessageCacheService;
+import group.aelysium.rustyconnector.common.config.common.PrivateKeyConfig;
+import group.aelysium.rustyconnector.common.config.common.UUIDConfig;
+import group.aelysium.rustyconnector.common.crypt.AESCryptor;
+import group.aelysium.rustyconnector.common.data_transit.DataTransitService;
+import group.aelysium.rustyconnector.common.events.EventManager;
+import group.aelysium.rustyconnector.common.messenger.implementors.redis.RedisConnection;
+import group.aelysium.rustyconnector.common.messenger.implementors.redis.RedisConnector;
 import group.aelysium.rustyconnector.plugin.velocity.event_handlers.rc.*;
-import group.aelysium.rustyconnector.plugin.velocity.event_handlers.velocity.OnPlayerChangeServer;
-import group.aelysium.rustyconnector.plugin.velocity.event_handlers.velocity.OnPlayerChooseInitialServer;
-import group.aelysium.rustyconnector.plugin.velocity.event_handlers.velocity.OnPlayerDisconnect;
-import group.aelysium.rustyconnector.plugin.velocity.event_handlers.velocity.OnPlayerKicked;
+import group.aelysium.rustyconnector.plugin.velocity.event_handlers.OnPlayerChangeServer;
+import group.aelysium.rustyconnector.plugin.velocity.event_handlers.OnPlayerChooseInitialServer;
+import group.aelysium.rustyconnector.plugin.velocity.event_handlers.OnPlayerDisconnect;
+import group.aelysium.rustyconnector.plugin.velocity.event_handlers.OnPlayerKicked;
 import group.aelysium.rustyconnector.plugin.velocity.lib.config.ConfigService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.config.configs.*;
-import group.aelysium.rustyconnector.core.proxy.family.Families;
-import group.aelysium.rustyconnector.core.proxy.family.ranked_family.RankedFamily;
-import group.aelysium.rustyconnector.core.proxy.family.scalar_family.RootFamily;
-import group.aelysium.rustyconnector.core.proxy.family.scalar_family.ScalarFamily;
-import group.aelysium.rustyconnector.core.proxy.family.static_family.StaticFamily;
+import group.aelysium.rustyconnector.proxy.family.Families;
+import group.aelysium.rustyconnector.proxy.family.ranked_family.RankedFamily;
+import group.aelysium.rustyconnector.proxy.family.scalar_family.RootFamily;
+import group.aelysium.rustyconnector.proxy.family.scalar_family.ScalarFamily;
+import group.aelysium.rustyconnector.proxy.family.static_family.StaticFamily;
 import group.aelysium.rustyconnector.plugin.velocity.lib.lang.ProxyLang;
 import group.aelysium.rustyconnector.plugin.velocity.lib.local_storage.LocalStorage;
 import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.MagicLink;
 import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.packet_handlers.HandshakeDisconnectListener;
 import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.packet_handlers.HandshakePingListener;
-import group.aelysium.rustyconnector.core.proxy.family.matchmaking.commands.CommandLeave;
-import group.aelysium.rustyconnector.core.proxy.family.matchmaking.packet_handlers.RankedGameEndListener;
-import group.aelysium.rustyconnector.core.proxy.family.matchmaking.packet_handlers.RankedGameEndTiedListener;
-import group.aelysium.rustyconnector.core.proxy.family.matchmaking.packet_handlers.RankedGameImplodedListener;
+import group.aelysium.rustyconnector.proxy.family.matchmaking.commands.CommandLeave;
+import group.aelysium.rustyconnector.proxy.family.matchmaking.packet_handlers.RankedGameEndListener;
+import group.aelysium.rustyconnector.proxy.family.matchmaking.packet_handlers.RankedGameEndTiedListener;
+import group.aelysium.rustyconnector.proxy.family.matchmaking.packet_handlers.RankedGameImplodedListener;
 import group.aelysium.rustyconnector.plugin.velocity.lib.players.PlayerService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.family.mcloader.ServerService;
-import group.aelysium.rustyconnector.core.proxy.family.mcloader.packet_handlers.LockServerListener;
-import group.aelysium.rustyconnector.core.proxy.family.mcloader.packet_handlers.SendPlayerListener;
-import group.aelysium.rustyconnector.core.proxy.family.mcloader.packet_handlers.UnlockServerListener;
+import group.aelysium.rustyconnector.proxy.family.mcloader.packet_handlers.LockServerListener;
+import group.aelysium.rustyconnector.proxy.family.mcloader.packet_handlers.SendPlayerListener;
+import group.aelysium.rustyconnector.proxy.family.mcloader.packet_handlers.UnlockServerListener;
 import group.aelysium.rustyconnector.plugin.velocity.lib.remote_storage.RemoteStorage;
 import group.aelysium.rustyconnector.plugin.velocity.lib.remote_storage.Storage;
-import group.aelysium.rustyconnector.core.proxy.family.whitelist.Whitelist;
-import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.toolkit.core.events.Event;
-import group.aelysium.rustyconnector.toolkit.core.events.Listener;
-import group.aelysium.rustyconnector.toolkit.core.messenger.IMessengerConnection;
-import group.aelysium.rustyconnector.toolkit.core.messenger.IMessengerConnector;
-import group.aelysium.rustyconnector.toolkit.core.packet.Packet;
-import group.aelysium.rustyconnector.toolkit.core.packet.VelocityPacketBuilder;
+import group.aelysium.rustyconnector.proxy.family.whitelist.Whitelist;
+import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
+import group.aelysium.rustyconnector.toolkit.common.messenger.IMessengerConnection;
+import group.aelysium.rustyconnector.toolkit.common.messenger.IMessengerConnector;
+import group.aelysium.rustyconnector.toolkit.common.packet.Packet;
+import group.aelysium.rustyconnector.toolkit.common.packet.VelocityPacketBuilder;
 import group.aelysium.rustyconnector.toolkit.velocity.central.Kernel;
-import group.aelysium.rustyconnector.core.common.lang.LangService;
+import group.aelysium.rustyconnector.common.lang.LangService;
 import group.aelysium.rustyconnector.plugin.velocity.PluginLogger;
 import group.aelysium.rustyconnector.plugin.velocity.VelocityRustyConnector;
 import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.MCLoaderRegisterEvent;
@@ -166,7 +164,7 @@ public class Tinder extends Kernel.Tinder {
             ConfigService configService = initialize.configService();
             AESCryptor cryptor = initialize.privateKey();
 
-            group.aelysium.rustyconnector.core.common.events.EventManager eventManager = new group.aelysium.rustyconnector.core.common.events.EventManager();
+            EventManager eventManager = new EventManager();
 
             logger.send(Component.text("Initializing 10%...", NamedTextColor.DARK_GRAY));
             DefaultConfig defaultConfig = initialize.defaultConfig(inject(langService, configService));
@@ -257,7 +255,7 @@ class Initialize {
         return service;
     }
 
-    public void events(VelocityRustyConnector plugin, group.aelysium.rustyconnector.core.common.events.EventManager rcEventManager) {
+    public void events(VelocityRustyConnector plugin, EventManager rcEventManager) {
         EventManager eventManager = api.velocityServer().getEventManager();
 
         eventManager.register(plugin, new OnPlayerChooseInitialServer());
@@ -265,7 +263,7 @@ class Initialize {
         eventManager.register(plugin, new OnPlayerKicked());
         eventManager.register(plugin, new OnPlayerDisconnect());
 
-        services.put(group.aelysium.rustyconnector.core.common.events.EventManager.class, rcEventManager);
+        services.put(EventManager.class, rcEventManager);
     }
 
     public void commands(DependencyInjector.DI3<Flame, PluginLogger, MessageCacheService> dependencies) {
@@ -318,16 +316,16 @@ class Initialize {
         messenger.connect();
         IMessengerConnection connection = messenger.connection().orElseThrow();
 
-        connection.listen(new HandshakePingListener(this.api));
-        connection.listen(new HandshakeDisconnectListener(this.api));
+        connection.on(new HandshakePingListener(this.api));
+        connection.on(new HandshakeDisconnectListener(this.api));
 
-        connection.listen(new SendPlayerListener(this.api));
-        connection.listen(new LockServerListener(this.api));
-        connection.listen(new UnlockServerListener(this.api));
+        connection.on(new SendPlayerListener(this.api));
+        connection.on(new LockServerListener(this.api));
+        connection.on(new UnlockServerListener(this.api));
 
-        connection.listen(new RankedGameEndListener(this.api));
-        connection.listen(new RankedGameEndTiedListener(this.api));
-        connection.listen(new RankedGameImplodedListener(this.api));
+        connection.on(new RankedGameEndListener(this.api));
+        connection.on(new RankedGameEndTiedListener(this.api));
+        connection.on(new RankedGameImplodedListener(this.api));
 
         ((RedisConnection) connection).startListening(dependencies.d2(), dependencies.d3(), Packet.Node.proxy(uuid));
         bootOutput.add(Component.text("Finished booting Messenger.", NamedTextColor.GREEN));
@@ -341,7 +339,7 @@ class Initialize {
         return DependencyInjector.inject(messenger, storage);
     }
 
-    public Families families(DependencyInjector.DI5<DefaultConfig, LangService, Storage, ConfigService, group.aelysium.rustyconnector.core.common.events.EventManager> deps) throws Exception {
+    public Families families(DependencyInjector.DI5<DefaultConfig, LangService, Storage, ConfigService, EventManager> deps) throws Exception {
         bootOutput.add(Component.text("Building families service...", NamedTextColor.DARK_GRAY));
 
         FamiliesConfig familiesConfig = FamiliesConfig.construct(api.dataFolder(), deps.d2(), deps.d4());

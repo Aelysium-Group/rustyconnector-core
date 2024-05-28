@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.toolkit.mc_loader.ranked_game_interface;
 
-import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service;
+import group.aelysium.rustyconnector.toolkit.common.serviceable.interfaces.Service;
 
 import java.util.List;
 import java.util.Map;

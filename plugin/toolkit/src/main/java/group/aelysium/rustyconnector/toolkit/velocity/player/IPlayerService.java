@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.toolkit.velocity.player;
 
-import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service;
+import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
+import group.aelysium.rustyconnector.toolkit.common.serviceable.interfaces.Service;
 
 import java.util.Optional;
 import java.util.UUID;

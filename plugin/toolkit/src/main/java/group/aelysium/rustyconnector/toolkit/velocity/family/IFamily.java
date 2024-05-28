@@ -1,11 +1,9 @@
 package group.aelysium.rustyconnector.toolkit.velocity.family;
 
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
-import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
+import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.velocity.central.Kernel;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.IPlayerConnectable;
-import group.aelysium.rustyconnector.toolkit.velocity.family.whitelist.IWhitelist;
-import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
 
 import java.util.Optional;
 
@@ -28,40 +26,4 @@ public interface IFamily extends IPlayerConnectable, Particle {
      * @return {@link IFamilyConnector}
      */
     IFamilyConnector connector();
-
-    class Reference extends group.aelysium.rustyconnector.toolkit.velocity.util.Reference<IFamily, String> {
-        private boolean rootFamily = false;
-
-        public Reference(String name) {
-            super(name);
-        }
-        protected Reference() {
-            super(null);
-            this.rootFamily = true;
-        }
-
-        public <TFamily extends IFamily> TFamily get() {
-            Kernel tinder = RustyConnector.Toolkit.proxy().orElseThrow();
-
-            if(rootFamily) return (TFamily) tinder.services().family().rootFamily();
-            return (TFamily) tinder.services().family().find(this.referencer).orElseThrow();
-        }
-
-        public <TFamily extends IFamily> TFamily get(boolean fetchRoot) {
-            Kernel tinder = RustyConnector.Toolkit.proxy().orElseThrow();
-
-            if(rootFamily) return (TFamily) tinder.services().family().rootFamily();
-            if(fetchRoot)
-                try {
-                    return (TFamily) tinder.services().family().find(this.referencer).orElseThrow();
-                } catch (Exception ignore) {
-                    return (TFamily) tinder.services().family().rootFamily();
-                }
-            else return (TFamily) tinder.services().family().find(this.referencer).orElseThrow();
-        }
-
-        public static Reference rootFamily() {
-            return new Reference();
-        }
-    }
 }

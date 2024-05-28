@@ -1,7 +1,6 @@
 package group.aelysium.rustyconnector.toolkit.mc_loader.ranked_game_interface;
 
-import com.google.gson.JsonObject;
-import group.aelysium.rustyconnector.toolkit.core.matchmaking.IPlayerRank;
+import group.aelysium.rustyconnector.toolkit.common.matchmaking.IPlayerRank;
 
 import java.util.UUID;
 

@@ -1,13 +1,12 @@
 package group.aelysium.rustyconnector.plugin.velocity;
 
-import group.aelysium.rustyconnector.toolkit.core.log_gate.GateKey;
-import group.aelysium.rustyconnector.toolkit.core.log_gate.LoggerGate;
+import group.aelysium.rustyconnector.toolkit.common.log_gate.GateKey;
+import group.aelysium.rustyconnector.toolkit.common.log_gate.LoggerGate;
 import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
-import group.aelysium.rustyconnector.plugin.velocity.lib.config.configs.LoggerConfig;
 import net.kyori.adventure.text.Component;
 import org.slf4j.Logger;
 
-public class PluginLogger implements group.aelysium.rustyconnector.toolkit.core.logger.PluginLogger {
+public class PluginLogger implements group.aelysium.rustyconnector.toolkit.common.logger.PluginLogger {
     private final LoggerGate gate = new LoggerGate();
     private final Logger logger;
 

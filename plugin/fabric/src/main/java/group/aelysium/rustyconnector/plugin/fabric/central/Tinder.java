@@ -2,12 +2,12 @@ package group.aelysium.rustyconnector.plugin.fabric.central;
 
 import cloud.commandframework.fabric.FabricServerCommandManager;
 import com.mojang.authlib.GameProfile;
-import group.aelysium.rustyconnector.core.mcloader.central.MCLoaderTinder;
+import group.aelysium.central.MCLoaderTinder;
 import group.aelysium.rustyconnector.plugin.fabric.commands.CommandRusty;
 import group.aelysium.rustyconnector.plugin.fabric.events.OnPlayerJoin;
 import group.aelysium.rustyconnector.plugin.fabric.events.OnPlayerLeave;
 import group.aelysium.rustyconnector.plugin.fabric.events.OnPlayerPreLogin;
-import group.aelysium.rustyconnector.toolkit.core.logger.PluginLogger;
+import group.aelysium.rustyconnector.toolkit.common.logger.PluginLogger;
 import group.aelysium.rustyconnector.core.common.lang.LangService;
 import group.aelysium.rustyconnector.core.common.lang.config.RootLanguageConfig;
 import group.aelysium.rustyconnector.plugin.fabric.FabricRustyConnector;

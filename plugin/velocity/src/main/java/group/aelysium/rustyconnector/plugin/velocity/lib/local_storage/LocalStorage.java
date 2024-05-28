@@ -2,7 +2,7 @@ package group.aelysium.rustyconnector.plugin.velocity.lib.local_storage;
 
 
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
-import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
+import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
 import group.aelysium.rustyconnector.toolkit.velocity.storage.ILocalStorage;
 
 import java.util.LinkedHashMap;

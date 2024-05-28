@@ -5,7 +5,7 @@ import com.google.gson.JsonObject;
 import com.mysql.cj.jdbc.MysqlConnectionPoolDataSource;
 import com.mysql.cj.jdbc.MysqlDataSource;
 import group.aelysium.rustyconnector.plugin.velocity.lib.players.Player;
-import group.aelysium.rustyconnector.toolkit.core.UserPass;
+import group.aelysium.rustyconnector.toolkit.common.UserPass;
 import group.aelysium.rustyconnector.toolkit.velocity.family.static_family.IServerResidence;
 import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IRankResolver;
 import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IVelocityPlayerRank;

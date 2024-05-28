@@ -1,10 +1,10 @@
 package group.aelysium.rustyconnector.plugin.velocity.lib.remote_storage;
 
-import group.aelysium.rustyconnector.core.proxy.family.matchmaking.rank.*;
 import group.aelysium.rustyconnector.plugin.velocity.lib.remote_storage.reactors.MySQLReactor;
 import group.aelysium.rustyconnector.plugin.velocity.lib.remote_storage.reactors.StorageReactor;
-import group.aelysium.rustyconnector.toolkit.core.UserPass;
-import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
+import group.aelysium.rustyconnector.proxy.family.matchmaking.rank.*;
+import group.aelysium.rustyconnector.toolkit.common.UserPass;
+import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.velocity.family.static_family.IServerResidence;
 import group.aelysium.rustyconnector.toolkit.velocity.family.static_family.IStaticFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IMatchPlayer;
@@ -12,7 +12,7 @@ import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IMatchm
 import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IRankResolver;
 import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IVelocityPlayerRank;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
-import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
+import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
 import group.aelysium.rustyconnector.toolkit.velocity.storage.IRemoteStorage;
 import org.jetbrains.annotations.NotNull;
 

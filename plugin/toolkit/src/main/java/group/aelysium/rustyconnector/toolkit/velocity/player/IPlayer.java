@@ -2,7 +2,7 @@ package group.aelysium.rustyconnector.toolkit.velocity.player;
 
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
 import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IVelocityPlayerRank;
-import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
+import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
 import net.kyori.adventure.text.Component;
 
 import java.util.Objects;

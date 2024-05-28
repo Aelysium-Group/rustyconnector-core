@@ -1,10 +1,7 @@
 package group.aelysium.rustyconnector.toolkit.velocity.family;
 
-import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.toolkit.velocity.family.ranked_family.IRankedFamily;
+import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.velocity.family.scalar_family.IRootFamily;
-import group.aelysium.rustyconnector.toolkit.velocity.family.scalar_family.IScalarFamily;
-import group.aelysium.rustyconnector.toolkit.velocity.family.static_family.IStaticFamily;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -50,11 +47,4 @@ public abstract class IFamilies implements Particle {
      * Gets a list of all families in this service.
      */
     public abstract List<Particle.Flux<IFamily>> dump();
-
-    public record Settings(
-            IRootFamily.Settings rootFamily,
-            List<IScalarFamily.Settings> scalarFamilies,
-            List<IStaticFamily.Settings> staticFamilies,
-            List<IRankedFamily.Settings> rankedFamilies
-    ) {}
 }

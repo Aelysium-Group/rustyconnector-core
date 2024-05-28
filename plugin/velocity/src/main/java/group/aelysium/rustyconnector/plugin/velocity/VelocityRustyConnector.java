@@ -6,15 +6,13 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
-import group.aelysium.rustyconnector.core.common.lang.LangService;
-import group.aelysium.rustyconnector.core.common.lang.config.RootLanguageConfig;
+import group.aelysium.rustyconnector.common.lang.LangService;
+import group.aelysium.rustyconnector.common.lang.config.RootLanguageConfig;
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
 import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
 import group.aelysium.rustyconnector.plugin.velocity.lib.lang.ProxyLang;
-import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
+import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.velocity.central.Kernel;
-import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.RegisterEvent;
-import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.UnregisterEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -31,7 +29,6 @@ public class VelocityRustyConnector {
 
     @Inject
     public VelocityRustyConnector(ProxyServer server, Logger logger, @DataDirectory Path dataFolder, Metrics.Factory metricsFactory) {
-
         RootLanguageConfig config = RootLanguageConfig.construct(dataFolder);
         this.lang = LangService.resolveLanguageCode(config.getLanguage(), dataFolder);
         this.kernel = new Tinder(this, dataFolder).flux();

@@ -2,13 +2,13 @@ package group.aelysium.rustyconnector.plugin.paper.central;
 
 import cloud.commandframework.execution.AsynchronousCommandExecutionCoordinator;
 import cloud.commandframework.paper.PaperCommandManager;
-import group.aelysium.rustyconnector.core.mcloader.central.MCLoaderTinder;
+import group.aelysium.central.MCLoaderTinder;
 import group.aelysium.rustyconnector.plugin.paper.commands.CommandRusty;
 import group.aelysium.rustyconnector.plugin.paper.events.OnPlayerJoin;
 import group.aelysium.rustyconnector.plugin.paper.events.OnPlayerLeave;
 import group.aelysium.rustyconnector.plugin.paper.events.OnPlayerPreLogin;
-import group.aelysium.rustyconnector.core.common.lang.LangService;
-import group.aelysium.rustyconnector.core.common.lang.config.RootLanguageConfig;
+import group.aelysium.rustyconnector.common.lang.LangService;
+import group.aelysium.rustyconnector.common.lang.config.RootLanguageConfig;
 import group.aelysium.rustyconnector.plugin.paper.PaperRustyConnector;
 import group.aelysium.rustyconnector.plugin.paper.PluginLogger;
 import net.kyori.adventure.text.Component;

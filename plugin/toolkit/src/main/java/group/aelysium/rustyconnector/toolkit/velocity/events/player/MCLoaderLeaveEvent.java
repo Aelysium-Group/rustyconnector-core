@@ -1,8 +1,9 @@
 package group.aelysium.rustyconnector.toolkit.velocity.events.player;
 
-import group.aelysium.rustyconnector.toolkit.core.events.Event;
+import group.aelysium.rustyconnector.toolkit.common.events.Event;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
-import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
+import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a player leaving an MCLoader.
@@ -15,7 +16,11 @@ public class MCLoaderLeaveEvent implements Event {
     protected final IPlayer player;
     protected final boolean disconnected;
 
-    public MCLoaderLeaveEvent(IMCLoader mcLoader, IPlayer player, boolean disconnected) {
+    public MCLoaderLeaveEvent(
+            @NotNull IMCLoader mcLoader,
+            @NotNull IPlayer player,
+            boolean disconnected
+    ) {
         this.mcLoader = mcLoader;
         this.player = player;
         this.disconnected = disconnected;

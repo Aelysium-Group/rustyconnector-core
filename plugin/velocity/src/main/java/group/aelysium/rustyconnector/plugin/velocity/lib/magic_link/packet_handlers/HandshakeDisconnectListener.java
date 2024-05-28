@@ -1,12 +1,12 @@
 package group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.packet_handlers;
 
-import group.aelysium.rustyconnector.core.common.packets.BuiltInIdentifications;
-import group.aelysium.rustyconnector.core.common.packets.MagicLink;
+import group.aelysium.rustyconnector.common.packets.BuiltInIdentifications;
+import group.aelysium.rustyconnector.common.packets.MagicLink;
 import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
-import group.aelysium.rustyconnector.toolkit.core.packet.Packet;
-import group.aelysium.rustyconnector.toolkit.core.packet.PacketIdentification;
-import group.aelysium.rustyconnector.toolkit.core.packet.PacketListener;
-import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
+import group.aelysium.rustyconnector.toolkit.common.packet.Packet;
+import group.aelysium.rustyconnector.toolkit.common.packet.PacketIdentification;
+import group.aelysium.rustyconnector.toolkit.common.packet.PacketListener;
+import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
 
 import java.util.Optional;
 

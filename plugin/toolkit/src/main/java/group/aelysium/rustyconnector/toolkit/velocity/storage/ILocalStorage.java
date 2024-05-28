@@ -1,8 +1,8 @@
 package group.aelysium.rustyconnector.toolkit.velocity.storage;
 
-import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
+import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
-import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
+import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
 
 import java.util.Optional;
 import java.util.UUID;

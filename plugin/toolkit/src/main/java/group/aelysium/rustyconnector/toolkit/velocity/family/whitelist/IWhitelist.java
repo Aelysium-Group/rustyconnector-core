@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.toolkit.velocity.family.whitelist;
 
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
-import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
+import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.velocity.central.Kernel;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 

@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.toolkit.velocity.events.player;
 
-import group.aelysium.rustyconnector.toolkit.core.events.Event;
+import group.aelysium.rustyconnector.toolkit.common.events.Event;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 
 /**

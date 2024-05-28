@@ -85,16 +85,16 @@ whitelist:
 #
     name: "whitelist-template"
 
-magic-link:
 #
-# Amount of time, in seconds, that a server can go without pinging the proxy.
-# If a server doesn't ping the proxy in this time, it will be declared stale
-# and be unregistered from the proxy.
+# This is an advanced section of the RustyConnector configuration.
+# Tuning lets you adjust low-level configuration options in RustyConnector so you can fine-tune
+# RC to run how you want it to.
 #
-    server-timeout: 15
-
-#
-# Amount of time, in seconds, that a server should wait to ping the proxy.
-# This setting cannot be higher than "server-timeout".
-#
-    server-ping-interval: 10
+tuning: >
+    {
+        test: "key",
+        test2: "key2",
+        another-object: {
+            
+        }
+    }

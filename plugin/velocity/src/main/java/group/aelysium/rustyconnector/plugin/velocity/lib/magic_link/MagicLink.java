@@ -1,13 +1,13 @@
 package group.aelysium.rustyconnector.plugin.velocity.lib.magic_link;
 
-import group.aelysium.rustyconnector.core.common.crypt.AESCryptor;
-import group.aelysium.rustyconnector.core.common.messenger.MessengerConnection;
-import group.aelysium.rustyconnector.core.common.messenger.MessengerConnector;
-import group.aelysium.rustyconnector.core.common.messenger.implementors.redis.RedisConnector;
+import group.aelysium.rustyconnector.common.crypt.AESCryptor;
+import group.aelysium.rustyconnector.common.messenger.MessengerConnection;
+import group.aelysium.rustyconnector.common.messenger.MessengerConnector;
+import group.aelysium.rustyconnector.common.messenger.implementors.redis.RedisConnector;
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
-import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.toolkit.core.messenger.IMessengerConnection;
-import group.aelysium.rustyconnector.toolkit.core.messenger.IMessengerConnector;
+import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
+import group.aelysium.rustyconnector.toolkit.common.messenger.IMessengerConnection;
+import group.aelysium.rustyconnector.toolkit.common.messenger.IMessengerConnector;
 import group.aelysium.rustyconnector.toolkit.velocity.magic_link.IMagicLink;
 import org.jetbrains.annotations.NotNull;
 

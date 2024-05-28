@@ -1,8 +1,8 @@
 package group.aelysium.rustyconnector.toolkit.mc_loader.central;
 
-import group.aelysium.rustyconnector.toolkit.core.events.IEventManager;
-import group.aelysium.rustyconnector.toolkit.core.packet.MCLoaderPacketBuilder;
-import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.IServiceHandler;
+import group.aelysium.rustyconnector.toolkit.common.events.IEventManager;
+import group.aelysium.rustyconnector.toolkit.common.packet.MCLoaderPacketBuilder;
+import group.aelysium.rustyconnector.toolkit.common.serviceable.interfaces.IServiceHandler;
 import group.aelysium.rustyconnector.toolkit.mc_loader.dynamic_teleport.ICoordinateRequest;
 import group.aelysium.rustyconnector.toolkit.mc_loader.dynamic_teleport.IDynamicTeleportService;
 import group.aelysium.rustyconnector.toolkit.mc_loader.magic_link.IMagicLink;

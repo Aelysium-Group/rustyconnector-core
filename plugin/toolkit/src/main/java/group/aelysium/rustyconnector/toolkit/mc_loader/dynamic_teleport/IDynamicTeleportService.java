@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.toolkit.mc_loader.dynamic_teleport;
 
-import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service;
+import group.aelysium.rustyconnector.toolkit.common.serviceable.interfaces.Service;
 
 import java.util.UUID;
 

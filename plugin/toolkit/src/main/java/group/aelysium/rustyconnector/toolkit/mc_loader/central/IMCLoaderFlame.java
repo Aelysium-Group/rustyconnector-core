@@ -1,7 +1,6 @@
 package group.aelysium.rustyconnector.toolkit.mc_loader.central;
 
-import group.aelysium.rustyconnector.toolkit.core.messenger.IMessengerConnector;
-import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.IServiceableService;
+import group.aelysium.rustyconnector.toolkit.common.serviceable.interfaces.IServiceableService;
 import group.aelysium.rustyconnector.toolkit.velocity.util.Version;
 
 import java.util.UUID;

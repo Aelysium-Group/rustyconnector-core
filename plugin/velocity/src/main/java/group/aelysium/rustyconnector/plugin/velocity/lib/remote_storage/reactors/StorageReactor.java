@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.plugin.velocity.lib.remote_storage.reactors;
 
 import com.google.gson.JsonObject;
-import group.aelysium.rustyconnector.toolkit.core.absolute_redundancy.Particle;
+import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.velocity.family.static_family.IServerResidence;
 import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IRankResolver;
 import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IVelocityPlayerRank;

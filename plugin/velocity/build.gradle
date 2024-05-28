@@ -7,6 +7,7 @@ dependencies {
     implementation "org.xerial:sqlite-jdbc:${project.sqlite_version}"
     implementation "mysql:mysql-connector-java:${project.mysql_version}"
     implementation "org.mongodb:mongodb-driver-reactivestreams:${project.mongodb_version}"
+    implementation "com.velocitypowered:velocity-api:${project.velocity_version}"
 
     // Dev Only
     shadow project(configuration: 'shadow', path: ':proxy')

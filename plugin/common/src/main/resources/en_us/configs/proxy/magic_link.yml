@@ -23,21 +23,6 @@
 
 
 #
-# The provider to use for Magic Link solution.
-#
-provider: REDIS
-
-available-providers:
-    REDIS:
-        host: "0.0.0.0"
-        port: 3306
-        user: "default"
-        password: "password"
-        data-channel: "rustyConnector-sync"
-
-
-
-#
 # Amount of time, in seconds, that an MCLoader can go without pinging the proxy.
 # If an MCLoader doesn't ping the proxy in this time, it will be declared stale and be unregistered from the proxy.
 #

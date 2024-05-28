@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.toolkit.velocity.connection;
 
-import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
+import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
 import net.kyori.adventure.text.Component;
 
 import java.util.Optional;

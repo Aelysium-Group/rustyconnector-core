@@ -6,7 +6,7 @@ import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.family.load_balancing.ILoadBalancer;
 import group.aelysium.rustyconnector.toolkit.velocity.family.whitelist.IWhitelist;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
-import group.aelysium.rustyconnector.toolkit.velocity.server.IMCLoader;
+import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +38,7 @@ public interface IScalarFamily extends IFamily {
         }
 
         @Override
-        public void register(IMCLoader mcloader) {
+        public IMCLoader register(IMCLoader.Unregistered mcloader) {
             this.loadBalancer.executeNow(m -> m.add(mcloader));
         }
         @Override

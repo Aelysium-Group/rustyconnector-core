@@ -1,12 +1,12 @@
 package group.aelysium.rustyconnector.plugin.velocity.lib.config.configs;
 
-import group.aelysium.rustyconnector.core.common.config.YAML;
-import group.aelysium.rustyconnector.core.common.lang.LangService;
+import group.aelysium.rustyconnector.common.config.YAML;
+import group.aelysium.rustyconnector.common.lang.LangService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.config.ConfigService;
-import group.aelysium.rustyconnector.core.proxy.family.Family;
-import group.aelysium.rustyconnector.toolkit.core.config.IConfigService;
-import group.aelysium.rustyconnector.toolkit.core.config.IYAML;
-import group.aelysium.rustyconnector.toolkit.core.lang.LangFileMappings;
+import group.aelysium.rustyconnector.proxy.family.Family;
+import group.aelysium.rustyconnector.toolkit.common.config.IConfigService;
+import group.aelysium.rustyconnector.toolkit.common.config.IYAML;
+import group.aelysium.rustyconnector.toolkit.common.lang.LangFileMappings;
 import group.aelysium.rustyconnector.toolkit.velocity.config.IProxyConfigService;
 import group.aelysium.rustyconnector.toolkit.velocity.config.LoadBalancerConfig;
 import group.aelysium.rustyconnector.toolkit.velocity.config.WhitelistConfig;

@@ -1,8 +1,8 @@
 package group.aelysium.rustyconnector.plugin.velocity.lib.config;
 
-import group.aelysium.rustyconnector.core.common.config.YAML;
+import group.aelysium.rustyconnector.common.config.YAML;
 import group.aelysium.rustyconnector.plugin.velocity.lib.config.configs.*;
-import group.aelysium.rustyconnector.toolkit.core.config.IYAML;
+import group.aelysium.rustyconnector.toolkit.common.config.IYAML;
 import group.aelysium.rustyconnector.toolkit.velocity.config.IProxyConfigService;
 
 import java.util.HashMap;

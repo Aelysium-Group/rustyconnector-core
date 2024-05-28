@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.toolkit.velocity.config;
 
-import group.aelysium.rustyconnector.toolkit.core.config.IConfigService;
+import group.aelysium.rustyconnector.toolkit.common.config.IConfigService;
 
 import java.util.Optional;
 

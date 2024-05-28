@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.toolkit.mc_loader.server_info;
 
-import group.aelysium.rustyconnector.toolkit.core.server.ServerAssignment;
-import group.aelysium.rustyconnector.toolkit.core.serviceable.interfaces.Service;
+import group.aelysium.rustyconnector.toolkit.common.server.ServerAssignment;
+import group.aelysium.rustyconnector.toolkit.common.serviceable.interfaces.Service;
 
 import java.util.UUID;
 

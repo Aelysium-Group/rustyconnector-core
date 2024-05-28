@@ -1,8 +1,8 @@
 package group.aelysium.rustyconnector.toolkit.mc_loader.central;
 
-import group.aelysium.rustyconnector.toolkit.core.lang.ILangService;
-import group.aelysium.rustyconnector.toolkit.core.lang.ILanguageResolver;
-import group.aelysium.rustyconnector.toolkit.core.logger.PluginLogger;
+import group.aelysium.rustyconnector.toolkit.common.lang.ILangService;
+import group.aelysium.rustyconnector.toolkit.common.lang.ILanguageResolver;
+import group.aelysium.rustyconnector.toolkit.common.logger.PluginLogger;
 import net.kyori.adventure.text.Component;
 
 import java.io.InputStream;
