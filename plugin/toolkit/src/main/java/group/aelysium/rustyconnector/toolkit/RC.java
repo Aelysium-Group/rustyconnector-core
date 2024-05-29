@@ -1,10 +1,10 @@
 package group.aelysium.rustyconnector.toolkit;
 
 import group.aelysium.rustyconnector.toolkit.common.events.IEventManager;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.IMagicLink;
 import group.aelysium.rustyconnector.toolkit.velocity.central.ProxyAdapter;
 import group.aelysium.rustyconnector.toolkit.velocity.family.IFamilies;
 import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
-import group.aelysium.rustyconnector.toolkit.velocity.magic_link.IMagicLink;
 import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.velocity.storage.ILocalStorage;
@@ -28,7 +28,7 @@ public interface RC {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Families().orElseThrow();
         }
 
-        static IMagicLink MagicLink() throws NoSuchElementException {
+        static IMagicLink.Proxy MagicLink() throws NoSuchElementException {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().MagicLink().orElseThrow();
         }
 
@@ -69,7 +69,7 @@ public interface RC {
      * The interface containing MCLoader based operations.
      */
     interface M {
-        static IMagicLink MagicLink() throws NoSuchElementException {
+        static IMagicLink.MCLoader MagicLink() throws NoSuchElementException {
             return RustyConnector.Toolkit.MCLoader().orElseThrow().orElseThrow().MagicLink().orElseThrow();
         }
     }

@@ -2,6 +2,7 @@ package group.aelysium.rustyconnector.toolkit.velocity.family.mcloader;
 
 import com.sun.jdi.request.DuplicateRequestException;
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.IPacket;
 import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.family.load_balancing.ILoadBalancer;
 import group.aelysium.rustyconnector.toolkit.velocity.family.load_balancing.ISortable;
@@ -143,7 +144,6 @@ public interface IMCLoader extends ISortable, IPlayerConnectable {
      * If the server is already unlocked, or doesn't exist in the load balancer, nothing will happen.
      */
     void unlock();
-
     record Unregistered(
             @NotNull UUID uuid,
             @NotNull InetSocketAddress address,

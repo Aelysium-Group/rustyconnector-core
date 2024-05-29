@@ -1,6 +1,7 @@
 package group.aelysium.rustyconnector.common.packets;
 
-import group.aelysium.rustyconnector.toolkit.common.packet.Packet;
+import group.aelysium.rustyconnector.common.magic_link.Packet;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.IPacket;
 import group.aelysium.rustyconnector.toolkit.velocity.util.ColorMapper;
 import net.kyori.adventure.text.format.NamedTextColor;
 
@@ -29,7 +30,7 @@ public interface MagicLink {
                 return Optional.of(podName);
             }
 
-            public Ping(Packet packet) {
+            public Ping(IPacket packet) {
                 super(packet);
             }
 
@@ -47,7 +48,7 @@ public interface MagicLink {
                 return this.parameters().get(Parameters.REASON).getAsString();
             }
 
-            public Failure(Packet packet) {
+            public Failure(IPacket packet) {
                 super(packet);
             }
 
@@ -67,7 +68,7 @@ public interface MagicLink {
                 return this.parameters().get(Parameters.INTERVAL).getAsInt();
             }
 
-            public Success(Packet packet) {
+            public Success(IPacket packet) {
                 super(packet);
             }
 
@@ -80,13 +81,13 @@ public interface MagicLink {
     }
 
     class Disconnect extends Packet.Wrapper {
-        public Disconnect(Packet packet) {
+        public Disconnect(IPacket packet) {
             super(packet);
         }
     }
 
     class StalePing extends Packet.Wrapper {
-        public StalePing(Packet packet) {
+        public StalePing(IPacket packet) {
             super(packet);
         }
     }

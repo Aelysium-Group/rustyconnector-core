@@ -44,11 +44,6 @@ public interface BuiltInIdentifications {
     PacketIdentification SEND_PLAYER = PacketIdentification.from("RC","SP");
 
     /**
-     * `Proxy > MCLoader` | Queues a tpa on a specific MCLoader. When that player joins the server, they'll be teleported to the other player.
-     */
-    PacketIdentification QUEUE_TPA = PacketIdentification.from("RC","TPAQP");
-
-    /**
      * `Server > MCLoader` | Tells the proxy to open a server.
      */
     PacketIdentification UNLOCK_SERVER = PacketIdentification.from("RC","US");
@@ -58,29 +53,6 @@ public interface BuiltInIdentifications {
      */
     PacketIdentification LOCK_SERVER = PacketIdentification.from("RC","LS");
 
-    /**
-     * `MCLoader > Proxy` | Tells the proxy to end a game.
-     *                    | Games ended with this packet will result in some player winning, and some losing.
-     */
-    PacketIdentification RANKED_GAME_END = PacketIdentification.from("RC","ERG");
-
-    /**
-     * `MCLoader > Proxy` | Tells the proxy to end a game.
-     *                    | Games ended with this packet will result in all players receiving a "tie".
-     */
-    PacketIdentification RANKED_GAME_END_TIE = PacketIdentification.from("RC","ERGT");
-
-    /**
-     * `Proxy > MCLoader` | Informs the MCLoader that the game has imploded and was forced to end.
-     *                    | Implosion occurs when to many players leave the session.
-     */
-    PacketIdentification RANKED_GAME_IMPLODE = PacketIdentification.from("RC","RGI");
-
-    /**
-     * `Proxy > MCLoader` | Tells the MCLoader to start a game.
-     */
-    PacketIdentification RANKED_GAME_READY = PacketIdentification.from("RC","SRG");
-
     static List<PacketIdentification> toList() {
         List<PacketIdentification> list = new ArrayList<>();
 
@@ -89,11 +61,8 @@ public interface BuiltInIdentifications {
         list.add(MAGICLINK_HANDSHAKE_DISCONNECT);
         list.add(MAGICLINK_HANDSHAKE_SUCCESS);
         list.add(SEND_PLAYER);
-        list.add(QUEUE_TPA);
         list.add(UNLOCK_SERVER);
         list.add(LOCK_SERVER);
-        list.add(RANKED_GAME_END);
-        list.add(RANKED_GAME_READY);
 
         return list;
     }

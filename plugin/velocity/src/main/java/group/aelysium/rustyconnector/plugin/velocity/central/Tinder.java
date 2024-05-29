@@ -4,10 +4,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
-import group.aelysium.rustyconnector.common.cache.MessageCacheService;
+import group.aelysium.rustyconnector.toolkit.common.cache.MessageCache;
 import group.aelysium.rustyconnector.common.config.common.PrivateKeyConfig;
 import group.aelysium.rustyconnector.common.config.common.UUIDConfig;
-import group.aelysium.rustyconnector.common.crypt.AESCryptor;
+import group.aelysium.rustyconnector.toolkit.common.crypt.AESCryptor;
 import group.aelysium.rustyconnector.common.data_transit.DataTransitService;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.messenger.implementors.redis.RedisConnection;
@@ -170,7 +170,7 @@ public class Tinder extends Kernel.Tinder {
             DefaultConfig defaultConfig = initialize.defaultConfig(inject(langService, configService));
             initialize.loggerConfig(inject(langService, configService));
 
-            MessageCacheService messageCacheService = initialize.dataTransit(inject(langService, configService));
+            MessageCache messageCacheService = initialize.dataTransit(inject(langService, configService));
 
             logger.send(Component.text("Initializing 20%...", NamedTextColor.DARK_GRAY));
             DependencyInjector.DI2<IMessengerConnector, Storage> connectors = initialize.connectors(inject(cryptor, messageCacheService, Particle.Tinder.get().logger(), langService), uuid);
@@ -266,7 +266,7 @@ class Initialize {
         services.put(EventManager.class, rcEventManager);
     }
 
-    public void commands(DependencyInjector.DI3<Flame, PluginLogger, MessageCacheService> dependencies) {
+    public void commands(DependencyInjector.DI3<Flame, PluginLogger, MessageCache> dependencies) {
         CommandManager commandManager = api.velocityServer().getCommandManager();
 
         commandManager.register(
@@ -298,7 +298,7 @@ class Initialize {
         PluginLogger.init(loggerConfig);
     }
 
-    public DependencyInjector.DI2<IMessengerConnector, Storage> connectors(DependencyInjector.DI4<AESCryptor, MessageCacheService, PluginLogger, LangService> dependencies, UUID uuid) throws IOException, SQLException {
+    public DependencyInjector.DI2<IMessengerConnector, Storage> connectors(DependencyInjector.DI4<AESCryptor, MessageCache, PluginLogger, LangService> dependencies, UUID uuid) throws IOException, SQLException {
         bootOutput.add(Component.text("Building Connectors...", NamedTextColor.DARK_GRAY));
 
         StorageConfig config = StorageConfig.construct(api.dataFolder(), dependencies.d4(), true, true);
@@ -416,14 +416,14 @@ class Initialize {
             bootOutput.add(Component.text("Finished building proxy whitelist. No whitelist is enabled for the proxy.", NamedTextColor.GREEN));
     }
 
-    public MessageCacheService dataTransit(DependencyInjector.DI2<LangService, ConfigService> deps) throws IOException {
+    public MessageCache dataTransit(DependencyInjector.DI2<LangService, ConfigService> deps) throws IOException {
         bootOutput.add(Component.text("Building data transit service...", NamedTextColor.DARK_GRAY));
 
         DataTransitConfig dataTransitConfig = DataTransitConfig.construct(api.dataFolder(), deps.d1(), deps.d2());
 
         bootOutput.add(Component.text(" | Building message cache service...", NamedTextColor.DARK_GRAY));
-        MessageCacheService messageCacheService = new MessageCacheService(dataTransitConfig.cache_size(), dataTransitConfig.cache_ignoredStatuses(), dataTransitConfig.cache_ignoredTypes());
-        services.put(MessageCacheService.class, messageCacheService);
+        MessageCache messageCacheService = new MessageCache(dataTransitConfig.cache_size(), dataTransitConfig.cache_ignoredStatuses(), dataTransitConfig.cache_ignoredTypes());
+        services.put(MessageCache.class, messageCacheService);
         bootOutput.add(Component.text(" | Message cache size set to: "+dataTransitConfig.cache_size(), NamedTextColor.YELLOW));
         bootOutput.add(Component.text(" | Finished building message cache service.", NamedTextColor.GREEN));
 

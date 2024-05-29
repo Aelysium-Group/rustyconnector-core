@@ -1,18 +1,19 @@
 package group.aelysium.rustyconnector.proxy.magic_link.packet_handlers;
 
+import group.aelysium.rustyconnector.common.magic_link.Packet;
 import group.aelysium.rustyconnector.common.packets.MagicLink;
 import group.aelysium.rustyconnector.common.packets.BuiltInIdentifications;
 import group.aelysium.rustyconnector.toolkit.RC;
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.toolkit.common.packet.Packet;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.IMagicLink;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.IPacket;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketIdentification;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketParameter;
 import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.MCLoaderRegisterEvent;
 import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
-import group.aelysium.rustyconnector.toolkit.velocity.magic_link.IMagicLink;
 import group.aelysium.rustyconnector.toolkit.velocity.util.AddressUtil;
 import net.kyori.adventure.text.format.NamedTextColor;
 
@@ -26,7 +27,7 @@ public class HandshakePingListener extends PacketListener<MagicLink.Handshake.Pi
     }
 
     @Override
-    public MagicLink.Handshake.Ping wrap(Packet packet) {
+    public MagicLink.Handshake.Ping wrap(IPacket packet) {
         return new MagicLink.Handshake.Ping(packet);
     }
 
@@ -38,8 +39,8 @@ public class HandshakePingListener extends PacketListener<MagicLink.Handshake.Pi
             mcloader.setTimeout(serverService.serverTimeout());
             mcloader.setPlayerCount(packet.playerCount());
         } catch (Exception e) {
-            IMagicLink magicLink = RC.P.MagicLink();
-            IMagicLink.MagicLinkMCLoaderSettings config = magicLink.magicConfig(packet.magicConfigName()).orElseThrow(
+            IMagicLink.Proxy magicLink = RC.P.MagicLink();
+            IMagicLink.Proxy.MagicLinkMCLoaderSettings config = magicLink.magicConfig(packet.magicConfigName()).orElseThrow(
                     () -> new NullPointerException("No Magic Config exists with the name "+packet.magicConfigName()+"!")
             );
 

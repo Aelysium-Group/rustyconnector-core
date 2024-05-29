@@ -1,9 +1,9 @@
 package group.aelysium.central;
 
 import group.aelysium.rustyconnector.common.events.EventManager;
-import group.aelysium.rustyconnector.common.cache.MessageCacheService;
+import group.aelysium.rustyconnector.toolkit.common.cache.MessageCache;
 import group.aelysium.rustyconnector.common.config.common.UUIDConfig;
-import group.aelysium.rustyconnector.common.crypt.AESCryptor;
+import group.aelysium.rustyconnector.toolkit.common.crypt.AESCryptor;
 import group.aelysium.rustyconnector.common.config.common.PrivateKeyConfig;
 import group.aelysium.rustyconnector.common.lang.LangService;
 import group.aelysium.rustyconnector.common.packets.BuiltInIdentifications;
@@ -97,7 +97,7 @@ public class MCLoaderFlame extends ServiceableService<CoreServiceHandler> implem
             DefaultConfig defaultConfig = initialize.defaultConfig(langService);
             ServerInfoService serverInfoService = initialize.serverInfo(uuid, defaultConfig, port);
 
-            MessageCacheService messageCacheService = initialize.messageCache();
+            MessageCache messageCacheService = initialize.messageCache();
             RedisConnector messenger = initialize.connectors(cryptor, messageCacheService, logger, langService, serverInfoService.uuid());
 
             initialize.dynamicTeleport();
@@ -197,7 +197,7 @@ class Initialize {
         return DefaultConfig.construct(Path.of(api.dataFolder()), lang, this.configVersion());
     }
 
-    public RedisConnector connectors(AESCryptor cryptor, MessageCacheService cacheService, PluginLogger logger, LangService lang, UUID senderUUID) throws IOException {
+    public RedisConnector connectors(AESCryptor cryptor, MessageCache cacheService, PluginLogger logger, LangService lang, UUID senderUUID) throws IOException {
         logger.send(Component.text("Building Connectors...", NamedTextColor.DARK_GRAY));
 
         ConnectorsConfig config = ConnectorsConfig.construct(Path.of(api.dataFolder()), lang);
@@ -253,9 +253,9 @@ class Initialize {
         return serverInfoService;
     }
 
-    public MessageCacheService messageCache() {
-        MessageCacheService service = new MessageCacheService(50);
-        services.put(MessageCacheService.class, service);
+    public MessageCache messageCache() {
+        MessageCache service = new MessageCache(50);
+        services.put(MessageCache.class, service);
 
         logger.log("Set message cache size to be: 50");
         return service;

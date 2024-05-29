@@ -1,4 +1,4 @@
-package group.aelysium.rustyconnector.common.cache;
+package group.aelysium.rustyconnector.toolkit.common.cache;
 
 import group.aelysium.rustyconnector.toolkit.common.message_cache.ICacheableMessage;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketStatus;

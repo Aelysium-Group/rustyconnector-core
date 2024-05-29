@@ -9,6 +9,7 @@ import group.aelysium.rustyconnector.proxy.magic_link.MagicLink;
 import group.aelysium.rustyconnector.proxy.remote_storage.RemoteStorage;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.proxy.family.Families;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.IMagicLink;
 import group.aelysium.rustyconnector.toolkit.velocity.central.ProxyAdapter;
 import group.aelysium.rustyconnector.common.lang.LangService;
 import group.aelysium.rustyconnector.toolkit.common.events.IEventManager;
@@ -18,7 +19,6 @@ import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.MCLoaderU
 import group.aelysium.rustyconnector.toolkit.velocity.events.player.FamilyLeaveEvent;
 import group.aelysium.rustyconnector.toolkit.velocity.events.player.MCLoaderLeaveEvent;
 import group.aelysium.rustyconnector.toolkit.velocity.family.IFamilies;
-import group.aelysium.rustyconnector.toolkit.velocity.magic_link.IMagicLink;
 import group.aelysium.rustyconnector.toolkit.velocity.storage.ILocalStorage;
 import group.aelysium.rustyconnector.toolkit.velocity.storage.IRemoteStorage;
 import group.aelysium.rustyconnector.toolkit.velocity.util.Version;
@@ -30,17 +30,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * The core RustyConnector kernel.
- * All aspects of the plugin should be accessible from here.
- * If not, check {@link Tinder}.
- */
-public class Flame extends Kernel.Particle {
+public class Flame extends Kernel {
     private final UUID uuid;
     private final Version version;
     private final ProxyAdapter adapter;
     private final Flux<IFamilies> families;
-    private final Flux<IMagicLink> magicLink;
+    private final Flux<IMagicLink.Proxy> magicLink;
     private final Flux<IRemoteStorage> remoteStorage;
     private final ILocalStorage localStorage;
     private final IEventManager eventManager;
@@ -52,7 +47,7 @@ public class Flame extends Kernel.Particle {
             @NotNull ProxyAdapter adapter,
             @NotNull List<Component> bootOutput,
             @NotNull Flux<IFamilies> families,
-            @NotNull Flux<IMagicLink> magicLink,
+            @NotNull Flux<IMagicLink.Proxy> magicLink,
             @NotNull Flux<IRemoteStorage> remoteStorage,
             @NotNull ILocalStorage localStorage,
             @NotNull IEventManager eventManager
@@ -83,7 +78,7 @@ public class Flame extends Kernel.Particle {
     }
 
     @Override
-    public Flux<IMagicLink> MagicLink() {
+    public Flux<IMagicLink.Proxy> MagicLink() {
         return this.magicLink;
     }
 
@@ -160,7 +155,7 @@ public class Flame extends Kernel.Particle {
             this.eventManager = eventManager;
         }
 
-        public Kernel.@NotNull Particle ignite() throws RuntimeException {
+        public @NotNull Kernel ignite() throws RuntimeException {
             this.eventManager.on(FamilyLeaveEvent.class, new OnFamilyLeave());
             this.eventManager.on(MCLoaderRegisterEvent.class, new OnMCLoaderRegister());
             this.eventManager.on(MCLoaderUnregisterEvent.class, new OnMCLoaderUnregister());

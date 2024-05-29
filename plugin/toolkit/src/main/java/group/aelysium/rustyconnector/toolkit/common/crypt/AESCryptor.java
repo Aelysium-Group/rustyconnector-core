@@ -1,6 +1,4 @@
-package group.aelysium.rustyconnector.common.crypt;
-
-import group.aelysium.rustyconnector.toolkit.common.crypt.IAESCryptor;
+package group.aelysium.rustyconnector.toolkit.common.crypt;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -10,7 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
-public class AESCryptor implements IAESCryptor {
+public class AESCryptor {
     private final SecretKey key;
 
     public AESCryptor(SecretKey key) {

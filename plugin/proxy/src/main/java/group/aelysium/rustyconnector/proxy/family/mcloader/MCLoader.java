@@ -5,7 +5,6 @@ import group.aelysium.rustyconnector.proxy.Permission;
 import group.aelysium.rustyconnector.toolkit.RC;
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.common.log_gate.GateKey;
-import group.aelysium.rustyconnector.toolkit.common.packet.Packet;
 import group.aelysium.rustyconnector.toolkit.velocity.central.ProxyAdapter;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.IPlayerConnectable;
 import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.MCLoaderUnregisterEvent;

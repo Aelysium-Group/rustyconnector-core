@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.plugin.velocity.lang;
 
-import group.aelysium.rustyconnector.common.cache.CacheableMessage;
+import group.aelysium.rustyconnector.toolkit.common.cache.CacheableMessage;
 import group.aelysium.rustyconnector.common.lang.ASCIIAlphabet;
 import group.aelysium.rustyconnector.common.lang.Lang;
 import group.aelysium.rustyconnector.common.lang.LanguageResolver;

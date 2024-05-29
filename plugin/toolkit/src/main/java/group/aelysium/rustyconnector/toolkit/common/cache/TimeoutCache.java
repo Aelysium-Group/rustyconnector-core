@@ -1,4 +1,4 @@
-package group.aelysium.rustyconnector.common.cache;
+package group.aelysium.rustyconnector.toolkit.common.cache;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -51,7 +52,7 @@ public class TimeoutCache<K, V> implements Closeable, Map<K, V> {
 
     @Override
     public V put(K key, V value) {
-        this.map.put(key, new TimedValue<>(value, this.expiration.epochFromNow()));
+        this.map.put(key, new TimedValue<>(value, this.expiration));
         return value;
     }
 
@@ -72,7 +73,7 @@ public class TimeoutCache<K, V> implements Closeable, Map<K, V> {
 
     @Override
     public boolean containsValue(Object value) {
-        return this.map.containsValue(new TimedValue<>(value, 0));
+        return this.map.containsValue(new TimedValue<>(value, LiquidTimestamp.from(0, TimeUnit.SECONDS)));
     }
 
     @Override
@@ -89,7 +90,7 @@ public class TimeoutCache<K, V> implements Closeable, Map<K, V> {
 
     @Override
     public void putAll(Map<? extends K, ? extends V> m) {
-        m.forEach((k, v) -> this.map.put(k, new TimedValue<>(v, this.expiration.epochFromNow())));
+        m.forEach((k, v) -> this.map.put(k, new TimedValue<>(v, this.expiration)));
     }
 
     @Override
@@ -115,12 +116,12 @@ public class TimeoutCache<K, V> implements Closeable, Map<K, V> {
     }
 
     protected static class TimedValue<V> {
-        private V value;
-        private long expiration;
+        private final V value;
+        private final long expiration;
 
-        public TimedValue(V value, long expiration) {
+        public TimedValue(V value, LiquidTimestamp expireAfter) {
             this.value = value;
-            this.expiration = expiration;
+            this.expiration = expireAfter.epochFromNow();
         }
 
         public V value() {

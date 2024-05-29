@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.proxy.family.dynamic_scale;
 
-import group.aelysium.rustyconnector.common.crypt.Token;
+import group.aelysium.rustyconnector.toolkit.common.crypt.Token;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import io.fabric8.kubernetes.api.model.*;
 import io.fabric8.kubernetes.client.*;

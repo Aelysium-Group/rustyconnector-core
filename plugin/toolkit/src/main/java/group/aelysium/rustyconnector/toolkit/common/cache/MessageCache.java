@@ -1,21 +1,20 @@
-package group.aelysium.rustyconnector.common.cache;
+package group.aelysium.rustyconnector.toolkit.common.cache;
 
-import group.aelysium.rustyconnector.common.crypt.Snowflake;
-import group.aelysium.rustyconnector.toolkit.common.message_cache.IMessageCacheService;
-import group.aelysium.rustyconnector.toolkit.common.packet.Packet;
+import group.aelysium.rustyconnector.toolkit.common.crypt.Snowflake;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.IPacket;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketStatus;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketIdentification;
 
 import java.util.*;
 
-public class MessageCacheService implements IMessageCacheService<CacheableMessage> {
+public class MessageCache {
     private final Snowflake snowflakeGenerator = new Snowflake();
     private final List<PacketStatus> ignoredStatuses;
     private final List<PacketIdentification> ignoredTypes;
     protected final int max;
     protected final Map<Long, CacheableMessage> messages;
 
-    public MessageCacheService(int max, List<PacketStatus> ignoredStatuses, List<PacketIdentification> ignoredTypes) {
+    public MessageCache(int max, List<PacketStatus> ignoredStatuses, List<PacketIdentification> ignoredTypes) {
         if(max <= 0) max = 0;
         if(max > 500) max = 500;
 
@@ -31,10 +30,10 @@ public class MessageCacheService implements IMessageCacheService<CacheableMessag
             }
         };
     }
-    public MessageCacheService(int max) {
+    public MessageCache(int max) {
         this(max, List.of(), List.of());
     }
-    public MessageCacheService() {
+    public MessageCache() {
         this(50);
     }
 
@@ -55,7 +54,7 @@ public class MessageCacheService implements IMessageCacheService<CacheableMessag
         return cacheableMessage;
     }
 
-    public boolean ignoredType(Packet message) {
+    public boolean ignoredType(IPacket message) {
         return this.ignoredTypes.contains(message.identification());
     }
 

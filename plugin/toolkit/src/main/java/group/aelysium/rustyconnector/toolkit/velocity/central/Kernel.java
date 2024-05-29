@@ -5,6 +5,7 @@ import group.aelysium.rustyconnector.toolkit.common.events.IEventManager;
 import group.aelysium.rustyconnector.toolkit.common.lang.ILangService;
 import group.aelysium.rustyconnector.toolkit.common.lang.ILanguageResolver;
 import group.aelysium.rustyconnector.toolkit.common.logger.PluginLogger;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.IMagicLink;
 import group.aelysium.rustyconnector.toolkit.velocity.family.IFamilies;
 import group.aelysium.rustyconnector.toolkit.velocity.magic_link.IMagicLink;
 import group.aelysium.rustyconnector.toolkit.velocity.storage.ILocalStorage;
@@ -35,7 +36,7 @@ public abstract class Kernel implements Particle {
     public abstract Version version();
     public abstract ProxyAdapter Adapter();
     public abstract Flux<IFamilies> Families();
-    public abstract Flux<IMagicLink> MagicLink();
+    public abstract Flux<IMagicLink.Proxy> MagicLink();
     public abstract Flux<IRemoteStorage> RemoteStorage();
     public abstract ILocalStorage LocalStorage();
     public abstract IEventManager EventManager();

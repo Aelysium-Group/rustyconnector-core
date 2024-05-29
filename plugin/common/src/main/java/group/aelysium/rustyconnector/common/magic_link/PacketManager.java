@@ -1,17 +1,17 @@
 package group.aelysium.rustyconnector.common.magic_link;
 
-import group.aelysium.rustyconnector.common.cache.TimeoutCache;
+import group.aelysium.rustyconnector.toolkit.common.cache.TimeoutCache;
 import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
 
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-public class PacketManager implements IPacketManagerCore {
+public class PacketManager implements AutoCloseable {
     private final TimeoutCache<UUID, Packet> packetsAwaitingReply = new TimeoutCache<>(LiquidTimestamp.from(10, TimeUnit.SECONDS));
 
     public Packet.Builder newPacketBuilder() {
-        return new Packet.Builder(this.flame);
+        return new Packet.Builder();
     }
 
     public Map<UUID, Packet> activeReplyEndpoints() {
@@ -19,7 +19,7 @@ public class PacketManager implements IPacketManagerCore {
     }
 
     @Override
-    public void kill() {
+    public void close() throws Exception {
         try {
             this.packetsAwaitingReply.clear();
             this.packetsAwaitingReply.close();

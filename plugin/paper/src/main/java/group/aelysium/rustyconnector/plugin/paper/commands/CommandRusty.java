@@ -9,8 +9,8 @@ import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.bukkit.parsers.PlayerArgument;
 import cloud.commandframework.paper.PaperCommandManager;
 import group.aelysium.TinderAdapterForCore;
-import group.aelysium.rustyconnector.common.cache.CacheableMessage;
-import group.aelysium.rustyconnector.common.cache.MessageCacheService;
+import group.aelysium.rustyconnector.toolkit.common.cache.CacheableMessage;
+import group.aelysium.rustyconnector.toolkit.common.cache.MessageCache;
 import group.aelysium.rustyconnector.common.packets.BuiltInIdentifications;
 import group.aelysium.rustyconnector.plugin.paper.PluginLogger;
 import group.aelysium.rustyconnector.plugin.paper.central.Tinder;
@@ -47,7 +47,7 @@ public final class CommandRusty {
                 .argument(LongArgument.of("snowflake"), ArgumentDescription.of("Message ID"))
                 .handler(context -> manager.taskRecipe().begin(context)
                         .asynchronous(commandContext -> {
-                            MessageCacheService cache = TinderAdapterForCore.getTinder().services().messageCache();
+                            MessageCache cache = TinderAdapterForCore.getTinder().services().messageCache();
                             try {
                                 final Long snowflake = commandContext.get("snowflake");
 
@@ -72,7 +72,7 @@ public final class CommandRusty {
                 .argument(StaticArgument.of("list"))
                 .handler(context -> manager.taskRecipe().begin(context)
                         .asynchronous(commandContext -> {
-                            MessageCacheService cache = TinderAdapterForCore.getTinder().services().messageCache();
+                            MessageCache cache = TinderAdapterForCore.getTinder().services().messageCache();
                             try {
                                 if(cache.size() > 10) {
                                     int numberOfPages = Math.floorDiv(cache.size(),10) + 1;
@@ -104,7 +104,7 @@ public final class CommandRusty {
                 .argument(IntegerArgument.of("page"), ArgumentDescription.of("The page number to fetch."))
                 .handler(context -> manager.taskRecipe().begin(context)
                         .asynchronous(commandContext -> {
-                            MessageCacheService cache = TinderAdapterForCore.getTinder().services().messageCache();
+                            MessageCache cache = TinderAdapterForCore.getTinder().services().messageCache();
                             try {
                                 final Integer page = context.get("page");
 

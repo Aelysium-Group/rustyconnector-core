@@ -11,7 +11,7 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
-import group.aelysium.rustyconnector.common.cache.CacheableMessage;
+import group.aelysium.rustyconnector.toolkit.common.cache.CacheableMessage;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.ranked_family.RankedFamily;
 import group.aelysium.rustyconnector.plugin.velocity.lib.players.Player;
@@ -26,7 +26,7 @@ import group.aelysium.rustyconnector.proxy.family.static_family.StaticFamily;
 import group.aelysium.rustyconnector.proxy.family.dynamic_scale.K8Service;
 import group.aelysium.rustyconnector.plugin.velocity.lang.ProxyLang;
 import group.aelysium.rustyconnector.proxy.family.mcloader.MCLoader;
-import group.aelysium.rustyconnector.common.cache.MessageCacheService;
+import group.aelysium.rustyconnector.toolkit.common.cache.MessageCache;
 import io.fabric8.kubernetes.api.model.Pod;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -37,10 +37,10 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public final class CommandRusty {
-    public static BrigadierCommand create(DependencyInjector.DI3<Flame, PluginLogger, MessageCacheService> dependencies) {
+    public static BrigadierCommand create(DependencyInjector.DI3<Flame, PluginLogger, MessageCache> dependencies) {
         Flame flame = dependencies.d1();
         PluginLogger logger = dependencies.d2();
-        MessageCacheService messageCacheService = dependencies.d3();
+        MessageCache messageCacheService = dependencies.d3();
 
         LiteralCommandNode<CommandSource> rusty = LiteralArgumentBuilder
             .<CommandSource>literal("rc")
@@ -69,7 +69,7 @@ public final class CommandRusty {
 }
 
 class Message {
-    public static ArgumentBuilder<CommandSource, ?> build(Flame flame, PluginLogger logger, MessageCacheService messageCacheService) {
+    public static ArgumentBuilder<CommandSource, ?> build(Flame flame, PluginLogger logger, MessageCache messageCacheService) {
         return LiteralArgumentBuilder.<CommandSource>literal("message")
                 .executes(context -> {
                     logger.send(ProxyLang.RC_MESSAGE_ROOT_USAGE);
@@ -79,7 +79,7 @@ class Message {
                 .then(getMessage(flame, logger, messageCacheService));
     }
 
-    private static ArgumentBuilder<CommandSource, ?> listMessages(Flame flame, PluginLogger logger, MessageCacheService messageCacheService) {
+    private static ArgumentBuilder<CommandSource, ?> listMessages(Flame flame, PluginLogger logger, MessageCache messageCacheService) {
         return LiteralArgumentBuilder.<CommandSource>literal("list")
                 .executes(context -> {
                     new Thread(() -> {
@@ -126,7 +126,7 @@ class Message {
                 );
     }
 
-    private static ArgumentBuilder<CommandSource, ?> getMessage(Flame flame, PluginLogger logger, MessageCacheService messageCacheService) {
+    private static ArgumentBuilder<CommandSource, ?> getMessage(Flame flame, PluginLogger logger, MessageCache messageCacheService) {
         return LiteralArgumentBuilder.<CommandSource>literal("get")
                 .executes(context -> {
                     logger.send(ProxyLang.RC_MESSAGE_GET_USAGE);
@@ -151,7 +151,7 @@ class Message {
     }
 }
 class FamilyC {
-    public static ArgumentBuilder<CommandSource, ?> build(Flame flame, PluginLogger logger, MessageCacheService messageCacheService) {
+    public static ArgumentBuilder<CommandSource, ?> build(Flame flame, PluginLogger logger, MessageCache messageCacheService) {
         return LiteralArgumentBuilder.<CommandSource>literal("family")
                 .executes(context -> {
                     try {
@@ -187,7 +187,7 @@ class FamilyC {
                 );
     }
 
-    private static ArgumentBuilder<CommandSource, ?> resetIndex(Flame flame, PluginLogger logger, MessageCacheService messageCacheService) {
+    private static ArgumentBuilder<CommandSource, ?> resetIndex(Flame flame, PluginLogger logger, MessageCache messageCacheService) {
         return LiteralArgumentBuilder.<CommandSource>literal("resetIndex")
                 .executes(context -> {
                     try {
@@ -214,7 +214,7 @@ class FamilyC {
                 });
     }
 
-    private static ArgumentBuilder<CommandSource, ?> sort(Flame flame, PluginLogger logger, MessageCacheService messageCacheService) {
+    private static ArgumentBuilder<CommandSource, ?> sort(Flame flame, PluginLogger logger, MessageCache messageCacheService) {
         return LiteralArgumentBuilder.<CommandSource>literal("sort")
                 .executes(context -> {
                     try {
@@ -241,7 +241,7 @@ class FamilyC {
                 });
     }
 
-    private static ArgumentBuilder<CommandSource, ?> locked(Flame flame, PluginLogger logger, MessageCacheService messageCacheService) {
+    private static ArgumentBuilder<CommandSource, ?> locked(Flame flame, PluginLogger logger, MessageCache messageCacheService) {
         return LiteralArgumentBuilder.<CommandSource>literal("locked")
                 .executes(context -> {
                     try {
@@ -263,7 +263,7 @@ class FamilyC {
                 });
     }
 
-    private static ArgumentBuilder<CommandSource, ?> players(Flame flame, PluginLogger logger, MessageCacheService messageCacheService) {
+    private static ArgumentBuilder<CommandSource, ?> players(Flame flame, PluginLogger logger, MessageCache messageCacheService) {
         return LiteralArgumentBuilder.<CommandSource>literal("players")
                 .executes(context -> {
                     try {
@@ -294,7 +294,7 @@ class FamilyC {
     }
 }
 class Send {
-    public static ArgumentBuilder<CommandSource, ?> build(Flame flame, PluginLogger logger, MessageCacheService messageCacheService) {
+    public static ArgumentBuilder<CommandSource, ?> build(Flame flame, PluginLogger logger, MessageCache messageCacheService) {
         return LiteralArgumentBuilder.<CommandSource>literal("send")
                 .executes(context -> {
                     logger.send(ProxyLang.RC_SEND_USAGE);
@@ -304,7 +304,7 @@ class Send {
                 .then(serverSender(flame, logger, messageCacheService));
     }
 
-    private static ArgumentBuilder<CommandSource, ?> defaultSender(Flame flame, PluginLogger logger, MessageCacheService messageCacheService) {
+    private static ArgumentBuilder<CommandSource, ?> defaultSender(Flame flame, PluginLogger logger, MessageCache messageCacheService) {
         return RequiredArgumentBuilder.<CommandSource, String>argument("username", StringArgumentType.string())
                 .executes(context -> {
                     logger.send(ProxyLang.RC_SEND_USAGE);
@@ -347,7 +347,7 @@ class Send {
                 );
     }
 
-    private static ArgumentBuilder<CommandSource, ?> serverSender(Flame flame, PluginLogger logger, MessageCacheService messageCacheService) {
+    private static ArgumentBuilder<CommandSource, ?> serverSender(Flame flame, PluginLogger logger, MessageCache messageCacheService) {
         return LiteralArgumentBuilder.<CommandSource>literal("server")
                 .executes(context -> {
                     logger.send(ProxyLang.RC_SEND_USAGE);
@@ -392,7 +392,7 @@ class Send {
     }
 }
 class Debug {
-    public static ArgumentBuilder<CommandSource, ?> build(Flame flame, PluginLogger logger, MessageCacheService messageCacheService) {
+    public static ArgumentBuilder<CommandSource, ?> build(Flame flame, PluginLogger logger, MessageCache messageCacheService) {
         return LiteralArgumentBuilder.<CommandSource>literal("debug")
                 .executes(context -> {
                     flame.bootLog().forEach(logger::send);
@@ -401,7 +401,7 @@ class Debug {
     }
 }
 class Reload {
-    public static ArgumentBuilder<CommandSource, ?> build(Flame flame, PluginLogger logger, MessageCacheService messageCacheService) {
+    public static ArgumentBuilder<CommandSource, ?> build(Flame flame, PluginLogger logger, MessageCache messageCacheService) {
         return LiteralArgumentBuilder.<CommandSource>literal("reload")
                 .executes(context -> {
                     logger.log("Reloading the proxy...");
@@ -417,7 +417,7 @@ class Reload {
     }
 }
 class K8 {
-    public static ArgumentBuilder<CommandSource, ?> build(Flame flame, PluginLogger logger, MessageCacheService messageCacheService) {
+    public static ArgumentBuilder<CommandSource, ?> build(Flame flame, PluginLogger logger, MessageCache messageCacheService) {
         return LiteralArgumentBuilder.<CommandSource>literal("k8") // k8 createPod <familyName> <containerName> <containerPort>
                 .then(LiteralArgumentBuilder.<CommandSource>literal("createPod")
                         .then(RequiredArgumentBuilder.<CommandSource, String>argument("familyName", StringArgumentType.string())
@@ -480,7 +480,7 @@ class K8 {
     }
 }
 class Database {
-    public static ArgumentBuilder<CommandSource, ?> build(Flame flame, PluginLogger logger, MessageCacheService messageCacheService) {
+    public static ArgumentBuilder<CommandSource, ?> build(Flame flame, PluginLogger logger, MessageCache messageCacheService) {
         return LiteralArgumentBuilder.<CommandSource>literal("database") // k8 createPod <familyName> <containerName> <containerPort>
                 .then(bulk(flame, logger, messageCacheService))
                 .then(LiteralArgumentBuilder.literal("players"))
@@ -489,7 +489,7 @@ class Database {
                 ;
     }
 
-    private static ArgumentBuilder<CommandSource, ?> bulk(Flame flame, PluginLogger logger, MessageCacheService messageCacheService) {
+    private static ArgumentBuilder<CommandSource, ?> bulk(Flame flame, PluginLogger logger, MessageCache messageCacheService) {
         return LiteralArgumentBuilder.<CommandSource>literal("bulk")
                 .then(LiteralArgumentBuilder.<CommandSource>literal("purgeGameRecords")
                         .then(RequiredArgumentBuilder.<CommandSource, String>argument("gameId", StringArgumentType.string())

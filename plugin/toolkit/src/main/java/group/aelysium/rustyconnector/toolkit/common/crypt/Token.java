@@ -1,4 +1,4 @@
-package group.aelysium.rustyconnector.common.crypt;
+package group.aelysium.rustyconnector.toolkit.common.crypt;
 
 import java.security.SecureRandom;
 import java.util.Locale;

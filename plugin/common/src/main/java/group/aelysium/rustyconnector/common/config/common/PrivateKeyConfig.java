@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.common.config.common;
 
-import group.aelysium.rustyconnector.common.crypt.AESCryptor;
+import group.aelysium.rustyconnector.toolkit.common.crypt.AESCryptor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 

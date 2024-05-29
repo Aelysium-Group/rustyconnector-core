@@ -1,14 +1,12 @@
 package group.aelysium.rustyconnector.proxy.magic_link;
 
-import group.aelysium.rustyconnector.common.crypt.AESCryptor;
+import group.aelysium.rustyconnector.toolkit.common.crypt.AESCryptor;
+import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.messenger.MessengerConnection;
 import group.aelysium.rustyconnector.common.messenger.MessengerConnector;
-import group.aelysium.rustyconnector.common.messenger.implementors.redis.RedisConnector;
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.toolkit.common.magic_link.IMessengerConnection;
-import group.aelysium.rustyconnector.toolkit.common.magic_link.IMessengerConnector;
-import group.aelysium.rustyconnector.toolkit.velocity.magic_link.IMagicLink;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.IMagicLink;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.ConnectException;
@@ -19,7 +17,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class MagicLink extends IMagicLink {
+public class MagicLink extends MagicLinkCore implements IMagicLink.Proxy {
     protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     protected IMessengerConnector connector;
     protected Map<String, MagicLinkMCLoaderSettings> settingsMap;
@@ -88,7 +86,7 @@ public class MagicLink extends IMagicLink {
         this.executor.shutdownNow();
     }
 
-    public static class Tinder extends Particle.Tinder<IMagicLink> {
+    public static class Tinder extends Particle.Tinder<IMagicLink.Proxy> {
         private Map<String, MagicLinkMCLoaderSettings> magicConfigs = new ConcurrentHashMap<>();
         private AESCryptor cryptor;
         private RedisConnector.Settings redis;
@@ -116,7 +114,7 @@ public class MagicLink extends IMagicLink {
         }
 
         @Override
-        public @NotNull IMagicLink ignite() throws Exception {
+        public @NotNull IMagicLink.Proxy ignite() throws Exception {
             IMessengerConnector connector = this.connector();
 
             MagicLink service = new MagicLink(connector, this.magicConfigs);

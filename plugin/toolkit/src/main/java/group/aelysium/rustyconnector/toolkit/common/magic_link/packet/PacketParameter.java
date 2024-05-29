@@ -92,7 +92,7 @@ public class PacketParameter {
         return (JsonObject) this.object;
     }
 
-    protected JsonElement toJSON() {
+    public JsonElement toJSON() {
         return switch (type) {
             case 'n' -> new JsonPrimitive((Number) this.object);
             case 'b' -> new JsonPrimitive((Boolean) this.object);

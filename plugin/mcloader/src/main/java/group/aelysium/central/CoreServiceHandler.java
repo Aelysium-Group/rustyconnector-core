@@ -5,7 +5,7 @@ import group.aelysium.lib.ranked_game_interface.RankedGameInterfaceService;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.MCLoaderPacketBuilder;
 import group.aelysium.rustyconnector.toolkit.common.serviceable.ServiceHandler;
 import group.aelysium.rustyconnector.toolkit.mc_loader.central.ICoreServiceHandler;
-import group.aelysium.rustyconnector.common.cache.MessageCacheService;
+import group.aelysium.rustyconnector.toolkit.common.cache.MessageCache;
 import group.aelysium.rustyconnector.toolkit.common.serviceable.interfaces.Service;
 import group.aelysium.lib.dynamic_teleport.DynamicTeleportService;
 import group.aelysium.lib.magic_link.MagicLink;
@@ -28,8 +28,8 @@ public class CoreServiceHandler extends ServiceHandler implements ICoreServiceHa
     public EventManager events() {
         return this.find(EventManager.class).orElseThrow();
     }
-    public MessageCacheService messageCache() {
-        return this.find(MessageCacheService.class).orElseThrow();
+    public MessageCache messageCache() {
+        return this.find(MessageCache.class).orElseThrow();
     }
     public ServerInfoService serverInfo() {
         return this.find(ServerInfoService.class).orElseThrow();
