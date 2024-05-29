@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -73,6 +74,19 @@ public abstract class ProxyAdapter {
      * @param component The component to log.
      */
     public abstract void messagePlayer(@NotNull IPlayer player, @NotNull Component component);
+
+    /**
+     * Fetches the MCLoader for the player.
+     * @param player The player to fetch the MCLoader for.
+     */
+    public abstract Optional<IMCLoader> fetchMCLoader(@NotNull IPlayer player);
+
+    /**
+     * Logs the specified component into the console.
+     * @param player The player.
+     * @param reason The reason for the disconnect.
+     */
+    public abstract void disconnect(@NotNull IPlayer player, @NotNull Component reason);
 
     /**
      * Checks if the player has the specified permission.

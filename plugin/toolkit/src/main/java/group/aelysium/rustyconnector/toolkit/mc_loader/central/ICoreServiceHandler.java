@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.toolkit.mc_loader.central;
 
 import group.aelysium.rustyconnector.toolkit.common.events.IEventManager;
-import group.aelysium.rustyconnector.toolkit.common.packet.MCLoaderPacketBuilder;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.MCLoaderPacketBuilder;
 import group.aelysium.rustyconnector.toolkit.common.serviceable.interfaces.IServiceHandler;
 import group.aelysium.rustyconnector.toolkit.mc_loader.dynamic_teleport.ICoordinateRequest;
 import group.aelysium.rustyconnector.toolkit.mc_loader.dynamic_teleport.IDynamicTeleportService;

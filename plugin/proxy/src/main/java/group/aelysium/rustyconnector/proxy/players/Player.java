@@ -1,10 +1,6 @@
 package group.aelysium.rustyconnector.proxy.players;
 
-import group.aelysium.rustyconnector.proxy.family.matchmaking.rank.DefaultRankResolver;
-import group.aelysium.rustyconnector.proxy.family.mcloader.MCLoader;
-import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
 import group.aelysium.rustyconnector.toolkit.RC;
-import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IVelocityPlayerRank;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
 import net.kyori.adventure.text.Component;
@@ -32,39 +28,23 @@ public class Player implements IPlayer {
 
     public void sendMessage(Component message) {
         try {
-            this.resolve().orElseThrow().sendMessage(message);
+            RC.P.Adapter().messagePlayer(this, message);
         } catch (Exception ignore) {}
     }
 
     public void disconnect(Component reason) {
         try {
-            this.resolve().orElseThrow().disconnect(reason);
+            RC.P.Adapter().disconnect(this, reason);
         } catch (Exception ignore) {}
-    }
-
-    public Optional<com.velocitypowered.api.proxy.Player> resolve() {
-        return Tinder.get().velocityServer().getPlayer(this.uuid);
     }
 
     @Override
     public boolean online() {
-        return resolve().isPresent();
-    }
-
-    public Optional<IVelocityPlayerRank> rank(String gameId) {
-        return RC.P.RemoteStorage().ranks().get(this, gameId, DefaultRankResolver.New());
+        return RC.P.Adapter().fetchMCLoader(this).isPresent();
     }
 
     public Optional<IMCLoader> server() {
-        try {
-            com.velocitypowered.api.proxy.Player resolvedPlayer = this.resolve().orElseThrow();
-            UUID mcLoaderUUID = UUID.fromString(resolvedPlayer.getCurrentServer().orElseThrow().getServerInfo().getName());
-
-            MCLoader mcLoader = new MCLoader.Reference(mcLoaderUUID).get();
-
-            return Optional.of(mcLoader);
-        } catch (Exception ignore) {}
-        return Optional.empty();
+        return RC.P.Adapter().fetchMCLoader(this);
     }
 
     @Override
@@ -79,13 +59,5 @@ public class Player implements IPlayer {
     @Override
     public String toString() {
         return "<Player uuid="+this.uuid.toString()+" username="+this.username+">";
-    }
-
-    /**
-     * Anytime a new player joins the proxy, RustyConnector automatically stores them to your database.
-     * Running this method is rarely necessary for you.
-     */
-    public void store() {
-        RC.P.RemoteStorage().players().set(this);
     }
 }

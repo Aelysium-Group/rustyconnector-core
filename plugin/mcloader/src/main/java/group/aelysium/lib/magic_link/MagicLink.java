@@ -2,10 +2,11 @@ package group.aelysium.lib.magic_link;
 
 import group.aelysium.rustyconnector.common.packets.BuiltInIdentifications;
 import group.aelysium.central.MCLoaderFlame;
-import group.aelysium.rustyconnector.toolkit.common.messenger.IMessengerConnection;
-import group.aelysium.rustyconnector.toolkit.common.messenger.IMessengerConnector;
+import group.aelysium.rustyconnector.toolkit.RC;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.IMessengerConnection;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.IMessengerConnector;
 import group.aelysium.rustyconnector.toolkit.common.packet.Packet;
-import group.aelysium.rustyconnector.toolkit.common.packet.PacketParameter;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketParameter;
 import group.aelysium.rustyconnector.toolkit.mc_loader.central.ICoreServiceHandler;
 import group.aelysium.rustyconnector.toolkit.mc_loader.central.IMCLoaderFlame;
 import group.aelysium.rustyconnector.toolkit.mc_loader.events.magic_link.DisconnectedEvent;
@@ -42,7 +43,7 @@ public class MagicLink implements IMagicLink {
             if(stopPinging.get()) return;
 
             try {
-                Packet.MCLoaderPacketBuilder.ReadyForParameters packet = api.services().packetBuilder().newBuilder()
+                Packet.MCLoaderPacketBuilder.ReadyForParameters packet = RC.P.MagicLink().packetBuilder().newBuilder()
                         .identification(BuiltInIdentifications.MAGICLINK_HANDSHAKE_PING)
                         .sendingToProxy()
                         .parameter(group.aelysium.rustyconnector.common.packets.MagicLink.Handshake.Ping.Parameters.ADDRESS, serverInfoService.address())
@@ -53,7 +54,7 @@ public class MagicLink implements IMagicLink {
                 if(podName != null)
                     packet.parameter(group.aelysium.rustyconnector.common.packets.MagicLink.Handshake.Ping.Parameters.POD_NAME, this.podName);
 
-                api.services().magicLink().connection().orElseThrow().publish(packet.build());
+                RC.P.MagicLink().connection().orElseThrow().publish(packet.build());
             } catch (Exception e) {
                 e.printStackTrace();
             }

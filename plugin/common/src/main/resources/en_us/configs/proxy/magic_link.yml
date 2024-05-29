@@ -34,7 +34,7 @@ timeout: 15
 # Amount of time, in seconds, that an MCLoader should wait to ping the proxy.
 # This setting cannot be higher than "server-timeout".
 #
-keep-alive-interval: 10
+keep-alive: 10
 
 
 

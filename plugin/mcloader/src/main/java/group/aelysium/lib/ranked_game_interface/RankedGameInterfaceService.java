@@ -8,7 +8,7 @@ import group.aelysium.rustyconnector.common.packets.BuiltInIdentifications;
 import group.aelysium.rustyconnector.common.packets.RankedGame;
 import group.aelysium.central.MCLoaderTinder;
 import group.aelysium.rustyconnector.toolkit.common.packet.Packet;
-import group.aelysium.rustyconnector.toolkit.common.packet.PacketParameter;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketParameter;
 import group.aelysium.rustyconnector.toolkit.mc_loader.events.ranked_game.RankedGameEndEvent;
 import group.aelysium.rustyconnector.toolkit.mc_loader.ranked_game_interface.IRankedGameInterfaceService;
 import group.aelysium.rustyconnector.toolkit.mc_loader.ranked_game_interface.MCLoaderMatchPlayer;

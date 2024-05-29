@@ -4,8 +4,8 @@ import group.aelysium.TinderAdapterForCore;
 import group.aelysium.rustyconnector.common.packets.BuiltInIdentifications;
 import group.aelysium.rustyconnector.common.packets.RankedGame;
 import group.aelysium.rustyconnector.toolkit.common.packet.Packet;
-import group.aelysium.rustyconnector.toolkit.common.packet.PacketListener;
-import group.aelysium.rustyconnector.toolkit.common.packet.PacketIdentification;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketListener;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketIdentification;
 import group.aelysium.rustyconnector.toolkit.mc_loader.central.IMCLoaderTinder;
 import group.aelysium.rustyconnector.toolkit.mc_loader.events.ranked_game.RankedGameReadyEvent;
 

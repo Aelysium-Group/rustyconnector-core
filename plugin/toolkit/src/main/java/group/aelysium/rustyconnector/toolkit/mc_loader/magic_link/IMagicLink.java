@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.toolkit.mc_loader.magic_link;
 
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.toolkit.common.messenger.IMessengerConnection;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.IMessengerConnection;
 import group.aelysium.rustyconnector.toolkit.mc_loader.central.ICoreServiceHandler;
 import group.aelysium.rustyconnector.toolkit.mc_loader.central.IMCLoaderFlame;
 

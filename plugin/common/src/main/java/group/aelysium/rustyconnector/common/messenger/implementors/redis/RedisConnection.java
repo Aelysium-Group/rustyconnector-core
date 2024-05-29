@@ -3,13 +3,13 @@ package group.aelysium.rustyconnector.common.messenger.implementors.redis;
 import group.aelysium.rustyconnector.common.crypt.AESCryptor;
 import group.aelysium.rustyconnector.toolkit.common.logger.PluginLogger;
 import group.aelysium.rustyconnector.toolkit.common.message_cache.IMessageCacheService;
-import group.aelysium.rustyconnector.toolkit.common.messenger.IMessengerConnection;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.IMessengerConnection;
 import group.aelysium.rustyconnector.toolkit.common.packet.Packet;
 import group.aelysium.rustyconnector.common.messenger.MessengerConnection;
 import group.aelysium.rustyconnector.common.model.FailService;
-import group.aelysium.rustyconnector.toolkit.common.packet.PacketIdentification;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketIdentification;
 import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
-import group.aelysium.rustyconnector.toolkit.common.packet.PacketListener;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketListener;
 
 import java.util.*;
 

@@ -24,7 +24,7 @@ import group.aelysium.rustyconnector.plugin.velocity.PluginLogger;
 import group.aelysium.rustyconnector.proxy.family.scalar_family.ScalarFamily;
 import group.aelysium.rustyconnector.proxy.family.static_family.StaticFamily;
 import group.aelysium.rustyconnector.proxy.family.dynamic_scale.K8Service;
-import group.aelysium.rustyconnector.plugin.velocity.lib.lang.ProxyLang;
+import group.aelysium.rustyconnector.plugin.velocity.lang.ProxyLang;
 import group.aelysium.rustyconnector.proxy.family.mcloader.MCLoader;
 import group.aelysium.rustyconnector.common.cache.MessageCacheService;
 import io.fabric8.kubernetes.api.model.Pod;

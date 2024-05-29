@@ -6,8 +6,8 @@ import group.aelysium.rustyconnector.common.messenger.MessengerConnector;
 import group.aelysium.rustyconnector.common.messenger.implementors.redis.RedisConnector;
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.toolkit.common.messenger.IMessengerConnection;
-import group.aelysium.rustyconnector.toolkit.common.messenger.IMessengerConnector;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.IMessengerConnection;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.IMessengerConnector;
 import group.aelysium.rustyconnector.toolkit.velocity.magic_link.IMagicLink;
 import org.jetbrains.annotations.NotNull;
 

@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.toolkit.common.message_cache;
 
 import group.aelysium.rustyconnector.toolkit.common.packet.Packet;
-import group.aelysium.rustyconnector.toolkit.common.packet.PacketStatus;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketStatus;
 import group.aelysium.rustyconnector.toolkit.common.serviceable.interfaces.Service;
 
 import java.util.List;

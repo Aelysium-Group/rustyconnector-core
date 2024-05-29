@@ -69,6 +69,8 @@ public interface RC {
      * The interface containing MCLoader based operations.
      */
     interface M {
-
+        static IMagicLink MagicLink() throws NoSuchElementException {
+            return RustyConnector.Toolkit.MCLoader().orElseThrow().orElseThrow().MagicLink().orElseThrow();
+        }
     }
 }

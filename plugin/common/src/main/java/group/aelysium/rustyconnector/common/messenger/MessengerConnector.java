@@ -2,8 +2,8 @@ package group.aelysium.rustyconnector.common.messenger;
 
 import group.aelysium.rustyconnector.common.crypt.AESCryptor;
 import group.aelysium.rustyconnector.toolkit.common.UserPass;
-import group.aelysium.rustyconnector.toolkit.common.messenger.IMessengerConnection;
-import group.aelysium.rustyconnector.toolkit.common.messenger.IMessengerConnector;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.IMessengerConnection;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.IMessengerConnector;
 
 import java.net.ConnectException;
 import java.net.InetSocketAddress;

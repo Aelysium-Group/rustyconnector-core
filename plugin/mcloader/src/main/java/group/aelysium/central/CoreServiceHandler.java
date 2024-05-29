@@ -2,7 +2,7 @@ package group.aelysium.central;
 
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.lib.ranked_game_interface.RankedGameInterfaceService;
-import group.aelysium.rustyconnector.toolkit.common.packet.MCLoaderPacketBuilder;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.MCLoaderPacketBuilder;
 import group.aelysium.rustyconnector.toolkit.common.serviceable.ServiceHandler;
 import group.aelysium.rustyconnector.toolkit.mc_loader.central.ICoreServiceHandler;
 import group.aelysium.rustyconnector.common.cache.MessageCacheService;

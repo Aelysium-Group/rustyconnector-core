@@ -5,8 +5,8 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 import group.aelysium.rustyconnector.common.exception.NoOutputException;
-import group.aelysium.rustyconnector.plugin.velocity.lib.players.Player;
 import group.aelysium.rustyconnector.proxy.family.mcloader.MCLoader;
+import group.aelysium.rustyconnector.proxy.players.Player;
 import group.aelysium.rustyconnector.toolkit.velocity.central.ProxyAdapter;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.ConnectionResult;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.IPlayerConnectable;
@@ -68,6 +68,11 @@ public class VelocityProxyAdapter extends ProxyAdapter {
     @Override
     public void messagePlayer(@NotNull IPlayer player, @NotNull Component message) {
         ((com.velocitypowered.api.proxy.Player) this.convertToProxyPlayer(player)).sendMessage(message);
+    }
+
+    @Override
+    public void disconnect(@NotNull IPlayer player, @NotNull Component reason) {
+        ((com.velocitypowered.api.proxy.Player) this.convertToProxyPlayer(player)).disconnect(reason);
     }
 
     @Override

@@ -7,13 +7,6 @@
 version: 7
 
 #
-# Define the MCLoader Config to load from the proxy.
-# To define new custom configs in the proxy look in the "magic_configs" folder.
-# The definition below can contain ".yml" or not, it doesn't matter.
-#
-magic-config: "default"
-
-#
 # The address used to connect to this server.
 # This address should match what a player would enter if they were trying to connect directly to this server.
 # Make sure you also include the port number!
@@ -30,8 +23,34 @@ address: ""
 #
 # An optional display name that can be used to represent this MCLoader in the console.
 # If you do not provide a display name, this MCLoader's UUID will be shown instead.
-# Please keep in mind that an MCLoader's UUID will change each time you restart it.
 #
 # Display names can't be longer than 16 characters.
 #
 display-name: ""
+
+#
+# Magic Link uses a combination of REST API endpoints and IPv6 broadcasting protocol
+# to dynamically send your MCLoader details to the Proxy.
+#
+magic-link:
+    #
+    # Define the MCLoader Config to load from the proxy.
+    # To define new custom configs in the proxy look in the "magic_configs" folder.
+    # The definition below can contain ".yml" or not, it doesn't matter.
+    #
+    magic-config: "default"
+
+    #
+    # If this is set to true, the MCLoader will use IPv6 multicast broadcasting
+    # to attempt to establish connection with the Proxy.
+    # This setting should only be enabled if your MCLoaders are on the same network as the Proxy.
+    #
+    internal-network: true
+
+    #
+    # The address of the proxy for this MCLoader. Include the port as well.
+    # This setting is only required if "internal-network" is set to "false"
+    #
+    # Example: 127.0.0.1:25565
+    #
+    proxy-address: ""

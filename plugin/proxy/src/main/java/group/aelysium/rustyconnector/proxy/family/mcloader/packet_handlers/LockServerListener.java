@@ -3,8 +3,8 @@ package group.aelysium.rustyconnector.proxy.family.mcloader.packet_handlers;
 import group.aelysium.rustyconnector.common.packets.BuiltInIdentifications;
 import group.aelysium.rustyconnector.toolkit.RC;
 import group.aelysium.rustyconnector.toolkit.common.packet.Packet;
-import group.aelysium.rustyconnector.toolkit.common.packet.PacketIdentification;
-import group.aelysium.rustyconnector.toolkit.common.packet.PacketListener;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketIdentification;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketListener;
 
 public class LockServerListener extends PacketListener<group.aelysium.rustyconnector.common.packets.MCLoader.Lock> {
     @Override

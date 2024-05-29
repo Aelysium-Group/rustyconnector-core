@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.toolkit.velocity.config;
 
-import group.aelysium.rustyconnector.toolkit.common.packet.PacketStatus;
-import group.aelysium.rustyconnector.toolkit.common.packet.PacketIdentification;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketStatus;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketIdentification;
 
 import java.util.List;
 

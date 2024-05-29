@@ -5,8 +5,6 @@ compileJava {
 dependencies {
     implementation 'org.bstats:bstats-velocity:3.0.2'
     implementation "org.xerial:sqlite-jdbc:${project.sqlite_version}"
-    implementation "mysql:mysql-connector-java:${project.mysql_version}"
-    implementation "org.mongodb:mongodb-driver-reactivestreams:${project.mongodb_version}"
     implementation "com.velocitypowered:velocity-api:${project.velocity_version}"
 
     // Dev Only

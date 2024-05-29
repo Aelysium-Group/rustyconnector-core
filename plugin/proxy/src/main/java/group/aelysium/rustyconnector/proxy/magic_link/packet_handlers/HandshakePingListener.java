@@ -6,9 +6,9 @@ import group.aelysium.rustyconnector.toolkit.RC;
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.common.packet.Packet;
-import group.aelysium.rustyconnector.toolkit.common.packet.PacketIdentification;
-import group.aelysium.rustyconnector.toolkit.common.packet.PacketListener;
-import group.aelysium.rustyconnector.toolkit.common.packet.PacketParameter;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketIdentification;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketListener;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketParameter;
 import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.MCLoaderRegisterEvent;
 import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
@@ -32,20 +32,12 @@ public class HandshakePingListener extends PacketListener<MagicLink.Handshake.Pi
 
     @Override
     public void execute(MagicLink.Handshake.Ping packet) throws Exception {
-        //if(api.logger().loggerGate().check(GateKey.PING))
-        //    api.logger().send(ProxyLang.PING.build(serverInfo));
         try {
             IMCLoader mcloader = RC.P.MCLoader(packet.sender().uuid()).orElseThrow();
 
             mcloader.setTimeout(serverService.serverTimeout());
             mcloader.setPlayerCount(packet.playerCount());
         } catch (Exception e) {
-            RegisterServer.register(api, packet);
-        }
-    }
-
-    private static class RegisterServer {
-        public static void register(MagicLink.Handshake.Ping packet) {
             IMagicLink magicLink = RC.P.MagicLink();
             IMagicLink.MagicLinkMCLoaderSettings config = magicLink.magicConfig(packet.magicConfigName()).orElseThrow(
                     () -> new NullPointerException("No Magic Config exists with the name "+packet.magicConfigName()+"!")
@@ -53,7 +45,7 @@ public class HandshakePingListener extends PacketListener<MagicLink.Handshake.Pi
 
             try {
                 Particle.Flux<IFamily> familyFlux = RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Families().orElseThrow().find(config.family()).orElseThrow(() ->
-                    new InvalidAlgorithmParameterException("A family with the id `"+config.family()+"` doesn't exist!")
+                        new InvalidAlgorithmParameterException("A family with the id `"+config.family()+"` doesn't exist!")
                 );
                 IFamily family = familyFlux.access().get(10, TimeUnit.SECONDS);
 
@@ -85,10 +77,10 @@ public class HandshakePingListener extends PacketListener<MagicLink.Handshake.Pi
                         .parameter(MagicLink.Handshake.Success.Parameters.INTERVAL, new PacketParameter(serverService.serverInterval()))
                         .build();
                 magicLink.connection().orElseThrow().publish(response);
-            } catch(Exception e) {
+            } catch(Exception e2) {
                 Packet response = packet.reply()
                         .identification(BuiltInIdentifications.MAGICLINK_HANDSHAKE_FAIL)
-                        .parameter(MagicLink.Handshake.Failure.Parameters.REASON, "Attempt to connect to proxy failed! " + e.getMessage())
+                        .parameter(MagicLink.Handshake.Failure.Parameters.REASON, "Attempt to connect to proxy failed! " + e2.getMessage())
                         .build();
                 magicLink.connection().orElseThrow().publish(response);
             }

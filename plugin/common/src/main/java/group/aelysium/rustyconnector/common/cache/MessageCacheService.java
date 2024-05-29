@@ -3,8 +3,8 @@ package group.aelysium.rustyconnector.common.cache;
 import group.aelysium.rustyconnector.common.crypt.Snowflake;
 import group.aelysium.rustyconnector.toolkit.common.message_cache.IMessageCacheService;
 import group.aelysium.rustyconnector.toolkit.common.packet.Packet;
-import group.aelysium.rustyconnector.toolkit.common.packet.PacketStatus;
-import group.aelysium.rustyconnector.toolkit.common.packet.PacketIdentification;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketStatus;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketIdentification;
 
 import java.util.*;
 

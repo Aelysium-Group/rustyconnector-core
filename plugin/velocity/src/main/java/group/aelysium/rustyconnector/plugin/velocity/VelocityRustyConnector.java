@@ -10,7 +10,7 @@ import group.aelysium.rustyconnector.common.lang.LangService;
 import group.aelysium.rustyconnector.common.lang.config.RootLanguageConfig;
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
 import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
-import group.aelysium.rustyconnector.plugin.velocity.lib.lang.ProxyLang;
+import group.aelysium.rustyconnector.plugin.velocity.lang.ProxyLang;
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.velocity.central.Kernel;
 import net.kyori.adventure.text.Component;

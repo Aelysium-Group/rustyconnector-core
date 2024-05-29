@@ -3,7 +3,7 @@ package group.aelysium.rustyconnector.common.messenger.implementors.redis;
 import group.aelysium.rustyconnector.common.crypt.AESCryptor;
 import group.aelysium.rustyconnector.toolkit.common.UserPass;
 import group.aelysium.rustyconnector.common.messenger.MessengerConnector;
-import group.aelysium.rustyconnector.toolkit.common.messenger.IMessengerConnection;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.IMessengerConnection;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.resource.ClientResources;
 import org.jetbrains.annotations.NotNull;

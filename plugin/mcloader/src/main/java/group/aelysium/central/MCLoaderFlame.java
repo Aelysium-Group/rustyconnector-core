@@ -26,9 +26,9 @@ import group.aelysium.lib.ranked_game_interface.handlers.RankedGameImplodedListe
 import group.aelysium.lib.ranked_game_interface.handlers.RankedGameReadyListener;
 import group.aelysium.lib.server_info.ServerInfoService;
 import group.aelysium.rustyconnector.toolkit.common.logger.PluginLogger;
-import group.aelysium.rustyconnector.toolkit.common.messenger.IMessengerConnection;
-import group.aelysium.rustyconnector.toolkit.common.messenger.IMessengerConnector;
-import group.aelysium.rustyconnector.toolkit.common.packet.MCLoaderPacketBuilder;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.IMessengerConnection;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.IMessengerConnector;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.MCLoaderPacketBuilder;
 import group.aelysium.rustyconnector.toolkit.common.packet.Packet;
 import group.aelysium.rustyconnector.toolkit.common.serviceable.ServiceableService;
 import group.aelysium.rustyconnector.toolkit.common.serviceable.interfaces.Service;

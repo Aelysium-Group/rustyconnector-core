@@ -1,17 +1,14 @@
 package group.aelysium.rustyconnector.proxy.family.mcloader.packet_handlers;
 
 import group.aelysium.rustyconnector.common.packets.BuiltInIdentifications;
-import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.toolkit.RC;
 import group.aelysium.rustyconnector.toolkit.common.packet.Packet;
-import group.aelysium.rustyconnector.toolkit.common.packet.PacketListener;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.common.packets.SendPlayerPacket;
-import group.aelysium.rustyconnector.toolkit.common.packet.PacketIdentification;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketIdentification;
 import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 import net.kyori.adventure.text.Component;
-
-import java.security.InvalidAlgorithmParameterException;
 
 public class SendPlayerListener extends PacketListener<SendPlayerPacket> {
     @Override
