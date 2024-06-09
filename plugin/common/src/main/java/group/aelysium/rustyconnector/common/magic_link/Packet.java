@@ -7,7 +7,6 @@ import group.aelysium.rustyconnector.toolkit.common.magic_link.IMagicLink;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.IPacket;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketIdentification;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketParameter;
-import group.aelysium.rustyconnector.toolkit.mc_loader.central.IMCLoaderFlame;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -211,7 +210,7 @@ public class Packet implements IPacket {
          * Identification is what differentiates a "Server ping packet" from a "Teleport player packet"
          */
         public ReadyForSending identification(PacketIdentification id) {
-            return new ReadyForSending(this.flame, builder.identification(id));
+            return new ReadyForSending(builder.identification(id));
         }
     }
 

@@ -5,6 +5,7 @@ import group.aelysium.central.MCLoaderTinder;
 import group.aelysium.lib.lang.MCLoaderLang;
 import group.aelysium.lib.ranked_game_interface.RankedGameInterfaceService;
 import group.aelysium.rustyconnector.toolkit.common.logger.PluginLogger;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.IPacket;
 import group.aelysium.rustyconnector.toolkit.common.packet.Packet;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketIdentification;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketListener;
@@ -14,20 +15,16 @@ import group.aelysium.rustyconnector.toolkit.mc_loader.events.magic_link.Connect
 import net.kyori.adventure.text.Component;
 
 public class HandshakeSuccessListener extends PacketListener<group.aelysium.rustyconnector.common.packets.MagicLink.Handshake.Success> {
-    protected MCLoaderTinder api;
-
-    public HandshakeSuccessListener(MCLoaderTinder api) {
-        this.api = api;
-    }
-
-    @Override
-    public PacketIdentification target() {
-        return BuiltInIdentifications.MAGICLINK_HANDSHAKE_SUCCESS;
-    }
-
-    @Override
-    public group.aelysium.rustyconnector.common.packets.MagicLink.Handshake.Success wrap(Packet packet) {
-        return new group.aelysium.rustyconnector.common.packets.MagicLink.Handshake.Success(packet);
+    public HandshakeSuccessListener() {
+        super(
+                BuiltInIdentifications.MAGICLINK_HANDSHAKE_PING,
+                new Wrapper<>() {
+                    @Override
+                    public group.aelysium.rustyconnector.common.packets.MagicLink.Handshake.Success wrap(IPacket packet) {
+                        return new group.aelysium.rustyconnector.common.packets.MagicLink.Handshake.Success(packet);
+                    }
+                }
+        );
     }
 
     @Override

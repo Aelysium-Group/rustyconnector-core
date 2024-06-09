@@ -1,34 +1,30 @@
 package group.aelysium.lib.magic_link.handlers;
 
+import group.aelysium.rustyconnector.common.magic_link.Packet;
 import group.aelysium.rustyconnector.common.packets.BuiltInIdentifications;
 import group.aelysium.central.MCLoaderTinder;
 import group.aelysium.lib.magic_link.MagicLink;
 import group.aelysium.lib.server_info.ServerInfoService;
 import group.aelysium.rustyconnector.toolkit.common.logger.PluginLogger;
-import group.aelysium.rustyconnector.toolkit.common.packet.Packet;
-import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketIdentification;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.IPacket;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketParameter;
-import group.aelysium.rustyconnector.toolkit.mc_loader.central.IMCLoaderTinder;
 import group.aelysium.rustyconnector.toolkit.mc_loader.events.magic_link.TimeoutEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 public class HandshakeStalePingListener extends PacketListener<group.aelysium.rustyconnector.common.packets.MagicLink.StalePing> {
-    protected IMCLoaderTinder api;
 
-    public HandshakeStalePingListener(IMCLoaderTinder api) {
-        this.api = api;
-    }
-
-    @Override
-    public PacketIdentification target() {
-        return BuiltInIdentifications.MAGICLINK_HANDSHAKE_STALE_PING;
-    }
-
-    @Override
-    public group.aelysium.rustyconnector.common.packets.MagicLink.StalePing wrap(Packet packet) {
-        return new group.aelysium.rustyconnector.common.packets.MagicLink.StalePing(packet);
+    public HandshakeStalePingListener() {
+        super(
+                BuiltInIdentifications.MAGICLINK_HANDSHAKE_STALE_PING,
+                new Wrapper<>() {
+                    @Override
+                    public group.aelysium.rustyconnector.common.packets.MagicLink.StalePing wrap(IPacket packet) {
+                        return new group.aelysium.rustyconnector.common.packets.MagicLink.StalePing(packet);
+                    }
+                }
+        );
     }
 
     @Override

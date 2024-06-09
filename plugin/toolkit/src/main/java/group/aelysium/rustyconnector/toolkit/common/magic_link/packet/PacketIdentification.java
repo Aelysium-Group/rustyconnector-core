@@ -7,7 +7,7 @@ import java.util.Objects;
 public class PacketIdentification {
     protected String id;
 
-    protected PacketIdentification(String id) {
+    public PacketIdentification(String id) {
         this.id = id;
     }
 

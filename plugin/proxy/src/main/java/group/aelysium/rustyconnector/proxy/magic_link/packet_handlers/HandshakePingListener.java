@@ -21,14 +21,17 @@ import java.security.InvalidAlgorithmParameterException;
 import java.util.concurrent.TimeUnit;
 
 public class HandshakePingListener extends PacketListener<MagicLink.Handshake.Ping> {
-    @Override
-    public PacketIdentification target() {
-        return BuiltInIdentifications.MAGICLINK_HANDSHAKE_PING;
-    }
 
-    @Override
-    public MagicLink.Handshake.Ping wrap(IPacket packet) {
-        return new MagicLink.Handshake.Ping(packet);
+    public HandshakePingListener() {
+        super(
+                BuiltInIdentifications.MAGICLINK_HANDSHAKE_PING,
+                new Wrapper<>() {
+                    @Override
+                    public MagicLink.Handshake.Ping wrap(IPacket packet) {
+                        return new MagicLink.Handshake.Ping(packet);
+                    }
+                }
+        );
     }
 
     @Override

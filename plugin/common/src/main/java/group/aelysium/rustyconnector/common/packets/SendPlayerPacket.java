@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.common.packets;
 
-import group.aelysium.rustyconnector.toolkit.common.packet.Packet;
+import group.aelysium.rustyconnector.common.magic_link.Packet;
 
 import java.util.ArrayList;
 import java.util.List;

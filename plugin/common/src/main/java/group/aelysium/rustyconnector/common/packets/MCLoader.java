@@ -1,7 +1,6 @@
 package group.aelysium.rustyconnector.common.packets;
 
-import group.aelysium.central.MCLoaderFlame;
-import group.aelysium.rustyconnector.toolkit.common.packet.Packet;
+import group.aelysium.rustyconnector.common.magic_link.Packet;
 
 public interface MCLoader {
     class Lock extends Packet.Wrapper {
