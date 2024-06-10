@@ -2,7 +2,7 @@ package group.aelysium.rustyconnector.common.lang.config;
 
 import group.aelysium.rustyconnector.toolkit.common.config.IConfigService;
 import group.aelysium.rustyconnector.toolkit.common.config.IYAML;
-import group.aelysium.rustyconnector.toolkit.common.logger.PluginLogger;
+import group.aelysium.rustyconnector.toolkit.common.logger.IPluginLogger;
 import group.aelysium.rustyconnector.common.config.YAML;
 import group.aelysium.rustyconnector.common.exception.NoOutputException;
 import net.kyori.adventure.text.Component;
@@ -20,7 +20,7 @@ public class RootLanguageConfig extends YAML {
     protected String language;
     public String getLanguage() { return this.language; }
 
-    protected void generate(PluginLogger logger) throws Exception {
+    protected void generate(IPluginLogger logger) throws Exception {
         logger.send(Component.text("Building "+this.configPointer.getName()+"...", NamedTextColor.DARK_GRAY));
         try {
             if (!this.configPointer.exists()) {

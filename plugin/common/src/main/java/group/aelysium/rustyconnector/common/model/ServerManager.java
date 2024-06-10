@@ -9,13 +9,13 @@ public interface ServerManager<S, F> {
 
     /**
      * Creates a new server which can be registered to the proxy.
-     * @param server The server to register to this manager.
+     * @param server The server to registerProxy to this manager.
      */
     void add(S server);
 
     /**
      * Register a server to the network
-     * @param server The server to register
+     * @param server The server to registerProxy
      */
     void registerServer(S server, F family);
 

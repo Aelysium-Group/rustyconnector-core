@@ -28,7 +28,7 @@ public class FailService implements Service {
     }
 
     /**
-     * Triggers the fail service, telling it to register a new failure.
+     * Triggers the fail service, telling it to registerProxy a new failure.
      * @param message The error message to throw if this trigger fails.
      * @throws RuntimeException When the {@link FailService} has failed to many times and can't anymore.
      */

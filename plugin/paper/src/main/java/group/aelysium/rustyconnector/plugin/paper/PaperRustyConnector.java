@@ -1,40 +1,46 @@
 package group.aelysium.rustyconnector.plugin.paper;
 
+import group.aelysium.rustyconnector.common.events.EventManager;
+import group.aelysium.rustyconnector.mcloader.Flame;
+import group.aelysium.rustyconnector.mcloader.magic_link.MagicLink;
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
-import group.aelysium.TinderAdapterForCore;
-import group.aelysium.lib.lang.MCLoaderLang;
-import group.aelysium.rustyconnector.plugin.paper.central.Tinder;
-import org.bukkit.Bukkit;
-import org.bukkit.event.Listener;
-import org.bukkit.plugin.java.JavaPlugin;
+import group.aelysium.rustyconnector.mcloader.lang.MCLoaderLang;
+import group.aelysium.rustyconnector.toolkit.velocity.util.Version;
+
+import java.net.InetSocketAddress;
+import java.util.UUID;
 
 public final class PaperRustyConnector extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
-        Tinder api = Tinder.gather(this, this.getSLF4JLogger());
+        api.logger().log("Initializing RustyConnector...");
 
+        MagicLink.Tinder magicLink = new MagicLink.Tinder();
+        Flame.Tinder tinder = new Flame.Tinder(
+                UUID.randomUUID(),
+                new Version("0.0.0"),
+                new PaperMCLoaderAdapter(),
+                "",
+                new InetSocketAddress(0),
+                magicLink,
+                new EventManager()
+        );
+
+        MCLoaderLang.WORDMARK_RUSTY_CONNECTOR.send(api.logger(), api.flame().versionAsString());
+
+        RustyConnector.Toolkit.registerMCLoader(tinder.flux());
         try {
-            TinderAdapterForCore.init(api);
-
-            api.logger().log("Initializing RustyConnector...");
-            api.ignite(Bukkit.getPort());
-            MCLoaderLang.WORDMARK_RUSTY_CONNECTOR.send(api.logger(), api.flame().versionAsString());
-
-            RustyConnector.Toolkit.register(api);
-            try {
-                api.logger().log("Registered to bstats!");
-            } catch (Exception e) {
-                api.logger().log("Failed to register to bstats!");
-            }
+            api.logger().log("Registered to bstats!");
         } catch (Exception e) {
-            e.printStackTrace();
-            Bukkit.getPluginManager().disablePlugin(this);
+            api.logger().log("Failed to registerProxy to bstats!");
         }
     }
 
     @Override
     public void onDisable() {
         RustyConnector.Toolkit.unregister();
-        Tinder.get().exhaust();
+        try {
+            RustyConnector.Toolkit.MCLoader().orElseThrow().close();
+        } catch (Exception ignore) {}
     }
 }

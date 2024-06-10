@@ -8,11 +8,10 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import group.aelysium.rustyconnector.common.lang.LangService;
 import group.aelysium.rustyconnector.common.lang.config.RootLanguageConfig;
-import group.aelysium.rustyconnector.toolkit.RustyConnector;
-import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
 import group.aelysium.rustyconnector.plugin.velocity.lang.ProxyLang;
-import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.toolkit.velocity.central.Kernel;
+import group.aelysium.rustyconnector.proxy.Flame;
+import group.aelysium.rustyconnector.toolkit.RustyConnector;
+import group.aelysium.rustyconnector.toolkit.velocity.util.Version;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -20,22 +19,20 @@ import org.bstats.velocity.Metrics;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
+import java.util.UUID;
 
 public class VelocityRustyConnector {
     private final Metrics.Factory metricsFactory;
-    private final Particle.Flux<Kernel.Particle> kernel;
     private final PluginLogger logger;
     private final ProxyServer server;
+    private final Path dataFolder;
 
     @Inject
     public VelocityRustyConnector(ProxyServer server, Logger logger, @DataDirectory Path dataFolder, Metrics.Factory metricsFactory) {
-        RootLanguageConfig config = RootLanguageConfig.construct(dataFolder);
-        this.lang = LangService.resolveLanguageCode(config.getLanguage(), dataFolder);
-        this.kernel = new Tinder(this, dataFolder).flux();
         this.logger = new PluginLogger(logger);
         this.server = server;
-
         this.metricsFactory = metricsFactory;
+        this.dataFolder = dataFolder;
     }
 
     @Subscribe
@@ -47,21 +44,38 @@ public class VelocityRustyConnector {
 
         try {
             metricsFactory.make(this, 17972);
-            Tinder.get().logger().log("Registered to bstats!");
+            this.logger.log("Registered to bstats!");
         } catch (Exception e) {
             e.printStackTrace();
-            Tinder.get().logger().log("Failed to register to bstats!");
+            this.logger.log("Failed to registerProxy to bstats!");
         }
 
-        ProxyLang.WORDMARK_RUSTY_CONNECTOR.send(Tinder.get().logger(), "v"+Tinder.get().flame().version().toString());
-        RustyConnector.Toolkit.register(Tinder.get());
+        RootLanguageConfig config = RootLanguageConfig.construct(dataFolder);
 
-        if(!Tinder.get().velocityServer().getConfiguration().isOnlineMode())
-            Tinder.get().logger().send(ProxyLang.BOXED_MESSAGE_COLORED.build("Your network is running in offline mode! YOU WILL RECEIVE NO SUPPORT AT ALL WITH RUSTYCONNECTOR!", NamedTextColor.RED));
+        RustyConnector.Toolkit.registerProxy(
+            new Flame.Tinder(
+                UUID.randomUUID(),
+                new Version("0.0.0"),
+                new VelocityProxyAdapter(this.server),
+                LangService.resolveLanguageCode(config.getLanguage(), dataFolder),
+            ).flux()
+        );
+
+        try {
+            RustyConnector.Toolkit.Proxy().orElseThrow().access().get();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+
+        ProxyLang.WORDMARK_RUSTY_CONNECTOR.send(this.logger, "v"+Tinder.get().flame().version().toString());
+
+        if(!this.server.getConfiguration().isOnlineMode())
+            this.logger.send(ProxyLang.BOXED_MESSAGE_COLORED.build("Your network is running in offline mode! YOU WILL RECEIVE NO SUPPORT AT ALL WITH RUSTYCONNECTOR!", NamedTextColor.RED));
 
         // Velocity requires that at least one server is always defined in velocity.toml
-        if(Tinder.get().velocityServer().getConfiguration().getServers().size() > 1)
-            Tinder.get().logger().send(ProxyLang.BOXED_COMPONENT_COLORED.build(
+        if(this.server.getConfiguration().getServers().size() > 1)
+            this.logger.send(ProxyLang.BOXED_COMPONENT_COLORED.build(
                     Component.join(
                             JoinConfiguration.newlines(),
                             Component.text("Your network is identified as having multiple, pre-defined, non-RC servers, in it!"),
@@ -73,7 +87,6 @@ public class VelocityRustyConnector {
     @Subscribe
     public void onUnload(ProxyShutdownEvent event) {
         try {
-            RustyConnector.Toolkit.unregister();
             this.kernel.close();
         } catch (Exception e) {
             e.printStackTrace();

@@ -7,21 +7,16 @@ import cloud.commandframework.arguments.standard.IntegerArgument;
 import cloud.commandframework.arguments.standard.LongArgument;
 import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.bukkit.parsers.PlayerArgument;
-import cloud.commandframework.paper.PaperCommandManager;
-import group.aelysium.TinderAdapterForCore;
 import group.aelysium.rustyconnector.toolkit.common.cache.CacheableMessage;
 import group.aelysium.rustyconnector.toolkit.common.cache.MessageCache;
 import group.aelysium.rustyconnector.common.packets.BuiltInIdentifications;
 import group.aelysium.rustyconnector.plugin.paper.PluginLogger;
 import group.aelysium.rustyconnector.plugin.paper.central.Tinder;
-import group.aelysium.lib.lang.MCLoaderLang;
-import group.aelysium.rustyconnector.toolkit.common.packet.Packet;
+import group.aelysium.rustyconnector.mcloader.lang.MCLoaderLang;
+import group.aelysium.rustyconnector.toolkit.common.logger.IPluginLogger;
 import group.aelysium.rustyconnector.common.packets.SendPlayerPacket;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
-import org.bukkit.entity.Player;
 
 import java.util.List;
 
@@ -95,7 +90,7 @@ public final class CommandRusty {
 
     private static Command.Builder<CommandSender> messageListPage(PaperCommandManager<CommandSender> manager) {
         Tinder api = Tinder.get();
-        group.aelysium.rustyconnector.toolkit.common.logger.PluginLogger logger = api.logger();
+        IPluginLogger logger = api.logger();
         final Command.Builder<CommandSender> builder = api.commandManager().commandBuilder("rc", "/rc");
 
         return builder.literal("message")

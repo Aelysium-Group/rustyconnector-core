@@ -2,7 +2,8 @@ package group.aelysium.rustyconnector.toolkit;
 
 import group.aelysium.rustyconnector.toolkit.common.events.IEventManager;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.IMagicLink;
-import group.aelysium.rustyconnector.toolkit.velocity.central.ProxyAdapter;
+import group.aelysium.rustyconnector.toolkit.mc_loader.MCLoaderAdapter;
+import group.aelysium.rustyconnector.toolkit.velocity.ProxyAdapter;
 import group.aelysium.rustyconnector.toolkit.velocity.family.IFamilies;
 import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
@@ -71,6 +72,14 @@ public interface RC {
     interface M {
         static IMagicLink.MCLoader MagicLink() throws NoSuchElementException {
             return RustyConnector.Toolkit.MCLoader().orElseThrow().orElseThrow().MagicLink().orElseThrow();
+        }
+
+        static MCLoaderAdapter Adapter() throws NoSuchElementException {
+            return RustyConnector.Toolkit.MCLoader().orElseThrow().orElseThrow().Adapter();
+        }
+
+        static IEventManager EventManager() throws NoSuchElementException {
+            return RustyConnector.Toolkit.MCLoader().orElseThrow().orElseThrow().EventManager();
         }
     }
 }

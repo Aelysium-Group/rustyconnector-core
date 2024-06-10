@@ -1,37 +1,37 @@
 package group.aelysium.rustyconnector.toolkit;
 
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.toolkit.mc_loader.central.IMCLoaderTinder;
-import group.aelysium.rustyconnector.toolkit.velocity.central.Kernel;
+import group.aelysium.rustyconnector.toolkit.mc_loader.IMCLoaderFlame;
+import group.aelysium.rustyconnector.toolkit.velocity.IProxyFlame;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
 public class RustyConnector {
     public static class Toolkit {
-        private static IMCLoaderTinder mcLoaderKernel = null;
-        private static Particle.Flux<Kernel> velocityKernel = null;
+        private static Particle.Flux<IMCLoaderFlame> mcLoaderKernel = null;
+        private static Particle.Flux<IProxyFlame> velocityKernel = null;
 
         /**
          * Fetches the MCLoader API for RustyConnector.
-         * @return {@link IMCLoaderTinder}
+         * @return {@link IMCLoaderFlame}
          */
-        public static Optional<IMCLoaderTinder> MCLoader() throws IllegalAccessError {
-            if(mcLoaderKernel == null) return Optional.empty();
-            return Optional.of(mcLoaderKernel);
+        public static Optional<Particle.Flux<IMCLoaderFlame>> MCLoader() throws IllegalAccessError {
+            return Optional.ofNullable(mcLoaderKernel);
         }
 
         /**
          * Fetches the Proxy API for RustyConnector.
-         * @return {@link Kernel}
+         * @return {@link IProxyFlame}
          */
-        public static Optional<Particle.Flux<Kernel>> Proxy() throws IllegalAccessError {
+        public static Optional<Particle.Flux<IProxyFlame>> Proxy() throws IllegalAccessError {
             return Optional.ofNullable(velocityKernel);
         }
 
-        public static void register(IMCLoaderTinder kernel) {
+        public static void registerMCLoader(@NotNull Particle.Flux<IMCLoaderFlame> kernel) {
             mcLoaderKernel = kernel;
         }
-        public static void register(Particle.Flux<Kernel> kernel) {
+        public static void registerProxy(@NotNull Particle.Flux<IProxyFlame> kernel) {
             velocityKernel = kernel;
         }
 

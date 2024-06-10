@@ -1,6 +1,7 @@
 package group.aelysium.rustyconnector.common.packets;
 
 import group.aelysium.rustyconnector.common.magic_link.Packet;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.IPacket;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +16,7 @@ public class SendPlayerPacket extends Packet.Wrapper {
         return UUID.fromString(this.parameters().get(Parameters.PLAYER_UUID).getAsString());
     }
 
-    public SendPlayerPacket(Packet packet) {
+    public SendPlayerPacket(IPacket packet) {
         super(packet);
     }
 

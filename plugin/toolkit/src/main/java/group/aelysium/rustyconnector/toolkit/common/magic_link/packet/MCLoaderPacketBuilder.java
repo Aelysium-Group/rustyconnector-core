@@ -2,7 +2,7 @@ package group.aelysium.rustyconnector.toolkit.common.magic_link.packet;
 
 import group.aelysium.rustyconnector.toolkit.common.serviceable.interfaces.Service;
 import group.aelysium.rustyconnector.toolkit.mc_loader.central.ICoreServiceHandler;
-import group.aelysium.rustyconnector.toolkit.mc_loader.central.IMCLoaderFlame;
+import group.aelysium.rustyconnector.toolkit.mc_loader.IMCLoaderFlame;
 
 public class MCLoaderPacketBuilder implements Service {
     private final IMCLoaderFlame<? extends ICoreServiceHandler> flame;

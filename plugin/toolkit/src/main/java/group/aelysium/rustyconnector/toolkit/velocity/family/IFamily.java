@@ -1,14 +1,11 @@
 package group.aelysium.rustyconnector.toolkit.velocity.family;
 
-import group.aelysium.rustyconnector.toolkit.RustyConnector;
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.toolkit.velocity.central.Kernel;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.IPlayerConnectable;
 
 import java.util.Optional;
 
 public interface IFamily extends IPlayerConnectable, Particle {
-
     String id();
     String displayName();
 

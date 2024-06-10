@@ -21,6 +21,6 @@ public class UnlockServerListener extends PacketListener<MCLoader.Unlock> {
 
     @Override
     public void execute(MCLoader.Unlock packet) throws Exception {
-        RC.P.MCLoader(packet.sender().uuid()).unlock();
+        RC.P.MCLoader(packet.sender().uuid()).orElseThrow().unlock();
     }
 }

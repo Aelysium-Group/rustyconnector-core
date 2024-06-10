@@ -10,10 +10,9 @@ import group.aelysium.rustyconnector.proxy.remote_storage.RemoteStorage;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.proxy.family.Families;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.IMagicLink;
-import group.aelysium.rustyconnector.toolkit.velocity.central.ProxyAdapter;
-import group.aelysium.rustyconnector.common.lang.LangService;
+import group.aelysium.rustyconnector.toolkit.velocity.ProxyAdapter;
 import group.aelysium.rustyconnector.toolkit.common.events.IEventManager;
-import group.aelysium.rustyconnector.toolkit.velocity.central.Kernel;
+import group.aelysium.rustyconnector.toolkit.velocity.IProxyFlame;
 import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.MCLoaderRegisterEvent;
 import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.MCLoaderUnregisterEvent;
 import group.aelysium.rustyconnector.toolkit.velocity.events.player.FamilyLeaveEvent;
@@ -25,12 +24,11 @@ import group.aelysium.rustyconnector.toolkit.velocity.util.Version;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class Flame extends Kernel {
+public class Flame implements IProxyFlame {
     private final UUID uuid;
     private final Version version;
     private final ProxyAdapter adapter;
@@ -112,19 +110,7 @@ public class Flame extends Kernel {
         this.bootOutput.clear();
     }
 
-    public PluginLogger logger() {
-        return this.pluginLogger;
-    }
-
-    public Path dataFolder() {
-        return this.dataFolder;
-    }
-
-    public LangService lang() {
-        return this.lang;
-    }
-
-    public static class Tinder extends Kernel.Tinder {
+    public static class Tinder extends IProxyFlame.Tinder {
         private final UUID uuid;
         private final Version version;
         private final ProxyAdapter adapter;
@@ -155,7 +141,7 @@ public class Flame extends Kernel {
             this.eventManager = eventManager;
         }
 
-        public @NotNull Kernel ignite() throws RuntimeException {
+        public @NotNull Flame ignite() throws RuntimeException {
             this.eventManager.on(FamilyLeaveEvent.class, new OnFamilyLeave());
             this.eventManager.on(MCLoaderRegisterEvent.class, new OnMCLoaderRegister());
             this.eventManager.on(MCLoaderUnregisterEvent.class, new OnMCLoaderUnregister());

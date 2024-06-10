@@ -27,7 +27,7 @@ public class Scaler {
      * This method doesn't actually alter any internal state.
      * The graduate methods query Kubernetes directly.
      * This method is just a mask which resolves the {@link CompletableFuture} that's waiting for a
-     * specific MCLoader to register.
+     * specific MCLoader to registerProxy.
      * @param podName The name of the pod to graduate.
      * @param mcLoader The MCLoader that the pod has graduated as.
      * @return `true` if the pod was successfully graduated. `false` otherwise (includes if the podName doesn't exist as an undergraduate)

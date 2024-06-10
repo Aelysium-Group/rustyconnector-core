@@ -44,6 +44,11 @@ public interface IMagicLink extends Particle {
 
     interface MCLoader extends IMagicLink {
         /**
+         * Gets the Magic Config that this MagicLink connection is governed by.
+         */
+        String magicConfig();
+
+        /**
          * Set the ping delay for this upcoming ping.
          * @param delay The delay to set.
          */
@@ -51,6 +56,6 @@ public interface IMagicLink extends Particle {
     }
 
     abstract class MessageHandler {
-        public abstract onMessage(String message, )
+        public abstract void onMessage(String message);
     }
 }

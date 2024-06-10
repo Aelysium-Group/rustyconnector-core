@@ -2,8 +2,6 @@ package group.aelysium.rustyconnector.proxy.magic_link;
 
 import group.aelysium.rustyconnector.toolkit.common.crypt.AESCryptor;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
-import group.aelysium.rustyconnector.common.messenger.MessengerConnection;
-import group.aelysium.rustyconnector.common.messenger.MessengerConnector;
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.IMagicLink;

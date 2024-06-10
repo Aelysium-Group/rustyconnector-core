@@ -39,7 +39,7 @@ public class HandshakePingListener extends PacketListener<MagicLink.Handshake.Pi
         try {
             IMCLoader mcloader = RC.P.MCLoader(packet.sender().uuid()).orElseThrow();
 
-            mcloader.setTimeout(serverService.serverTimeout());
+            mcloader.setTimeout(15);
             mcloader.setPlayerCount(packet.playerCount());
         } catch (Exception e) {
             IMagicLink.Proxy magicLink = RC.P.MagicLink();
@@ -54,7 +54,7 @@ public class HandshakePingListener extends PacketListener<MagicLink.Handshake.Pi
                 IFamily family = familyFlux.access().get(10, TimeUnit.SECONDS);
 
                 RC.P.MCLoader(packet.sender().uuid()).ifPresent(m -> {
-                    throw new RuntimeException("MCLoader " + packet.sender().uuid() + " can't be registered twice!")
+                    throw new RuntimeException("MCLoader " + packet.sender().uuid() + " can't be registered twice!");
                 });
 
                 IMCLoader.Unregistered unregisteredMCLoader = new IMCLoader.Unregistered(
@@ -74,19 +74,19 @@ public class HandshakePingListener extends PacketListener<MagicLink.Handshake.Pi
 
                 RC.P.EventManager().fireEvent(new MCLoaderRegisterEvent(familyFlux, mcloader));
 
-                Packet response = packet.reply()
+                Packet.New()
                         .identification(BuiltInIdentifications.MAGICLINK_HANDSHAKE_SUCCESS)
                         .parameter(MagicLink.Handshake.Success.Parameters.MESSAGE, "Connected to the proxy! Registered as `"+mcloader.uuidOrDisplayName()+"` into the family `"+family.id()+"`. Loaded using the magic config `"+packet.magicConfigName()+"`.")
                         .parameter(MagicLink.Handshake.Success.Parameters.COLOR, NamedTextColor.GREEN.toString())
-                        .parameter(MagicLink.Handshake.Success.Parameters.INTERVAL, new PacketParameter(serverService.serverInterval()))
-                        .build();
-                magicLink.connection().orElseThrow().publish(response);
+                        .parameter(MagicLink.Handshake.Success.Parameters.INTERVAL, new PacketParameter(10))
+                        .addressedTo(packet)
+                        .send();
             } catch(Exception e2) {
-                Packet response = packet.reply()
+                Packet.New()
                         .identification(BuiltInIdentifications.MAGICLINK_HANDSHAKE_FAIL)
                         .parameter(MagicLink.Handshake.Failure.Parameters.REASON, "Attempt to connect to proxy failed! " + e2.getMessage())
-                        .build();
-                magicLink.connection().orElseThrow().publish(response);
+                        .addressedTo(packet)
+                        .send();
             }
         }
     }

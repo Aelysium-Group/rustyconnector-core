@@ -1,9 +1,7 @@
 package group.aelysium.rustyconnector.proxy.family;
 
-import group.aelysium.rustyconnector.proxy.family.ranked_family.RankedFamily;
 import group.aelysium.rustyconnector.proxy.family.scalar_family.RootFamily;
 import group.aelysium.rustyconnector.proxy.family.scalar_family.ScalarFamily;
-import group.aelysium.rustyconnector.proxy.family.static_family.StaticFamily;
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.family.IFamilies;

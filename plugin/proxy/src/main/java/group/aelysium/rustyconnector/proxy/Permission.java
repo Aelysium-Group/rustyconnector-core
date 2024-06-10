@@ -1,11 +1,9 @@
 package group.aelysium.rustyconnector.proxy;
 
-import com.velocitypowered.api.proxy.Player;
 import group.aelysium.rustyconnector.toolkit.RC;
-import group.aelysium.rustyconnector.toolkit.velocity.central.ProxyAdapter;
+import group.aelysium.rustyconnector.toolkit.velocity.ProxyAdapter;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 
-import java.util.Arrays;
 import java.util.Locale;
 
 public class Permission {

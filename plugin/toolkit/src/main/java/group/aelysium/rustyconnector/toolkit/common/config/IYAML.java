@@ -69,7 +69,7 @@ public interface IYAML {
         } catch (ClassCastException e) {
             throw new IllegalStateException("The node ["+node+"] is of the wrong data type! Make sure you are using the correct type of data!");
         } catch (Exception e) {
-            throw new IllegalStateException("Unable to register the node: "+node);
+            throw new IllegalStateException("Unable to registerProxy the node: "+node);
         }
     }
 

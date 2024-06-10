@@ -7,7 +7,7 @@ import com.velocitypowered.api.proxy.server.ServerInfo;
 import group.aelysium.rustyconnector.common.exception.NoOutputException;
 import group.aelysium.rustyconnector.proxy.family.mcloader.MCLoader;
 import group.aelysium.rustyconnector.proxy.players.Player;
-import group.aelysium.rustyconnector.toolkit.velocity.central.ProxyAdapter;
+import group.aelysium.rustyconnector.toolkit.velocity.ProxyAdapter;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.ConnectionResult;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.IPlayerConnectable;
 import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.InetSocketAddress;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -68,6 +69,11 @@ public class VelocityProxyAdapter extends ProxyAdapter {
     @Override
     public void messagePlayer(@NotNull IPlayer player, @NotNull Component message) {
         ((com.velocitypowered.api.proxy.Player) this.convertToProxyPlayer(player)).sendMessage(message);
+    }
+
+    @Override
+    public Optional<IMCLoader> fetchMCLoader(@NotNull IPlayer player) {
+        return Optional.empty();
     }
 
     @Override

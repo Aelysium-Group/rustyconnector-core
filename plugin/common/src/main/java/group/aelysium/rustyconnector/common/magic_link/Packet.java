@@ -88,7 +88,11 @@ public class Packet implements IPacket {
         return object;
     }
 
-    protected static class NakedBuilder {
+    public static Builder New() {
+        return new Builder();
+    }
+
+    private static class NakedBuilder {
         private Integer protocolVersion = Packet.protocolVersion();
         private PacketIdentification id;
         private Target sender;
@@ -139,31 +143,23 @@ public class Packet implements IPacket {
     public static class Builder implements IPacket.Builder {
         private final NakedBuilder builder = new NakedBuilder();
 
-        public static class ReadyForSending implements IPacket.Builder.ReadyForSending {
+        protected Builder() {}
+
+        public static class PrepareForSending implements IPacket.Builder.PrepareForSending {
             private final NakedBuilder builder;
 
-            protected ReadyForSending(NakedBuilder builder) {
+            protected PrepareForSending(NakedBuilder builder) {
                 this.builder = builder;
             }
 
-            public ReadyForSending parameter(String key, String value) {
+            public PrepareForSending parameter(String key, String value) {
                 this.builder.parameter(key, new PacketParameter(value));
                 return this;
             }
 
-            public ReadyForSending parameter(String key, PacketParameter value) {
+            public PrepareForSending parameter(String key, PacketParameter value) {
                 this.builder.parameter(key, value);
                 return this;
-            }
-
-            private IMagicLink fetchMagicLink() {
-                try {
-                    return RC.P.MagicLink();
-                } catch (Exception ignore) {}
-                try {
-                    return RC.M.MagicLink();
-                } catch (Exception ignore) {}
-                throw new RuntimeException("No available flames existed in order to send the packet!");
             }
 
             private void assignTargetAndSender(@NotNull Packet.Target target, Target sender) {
@@ -185,19 +181,38 @@ public class Packet implements IPacket {
                 assignTargetAndSender(target, null);
             }
 
-            public void sendTo(Target target) {
+            public ReadyForSending addressedTo(Target target) {
                 assignTargetAndSender(target);
 
-                Packet packet = this.builder.build();
-
-                IMagicLink magicLinkService = fetchMagicLink();
-                ((MagicLinkCore.Connection) magicLinkService.connection().orElseThrow()).publish(packet);
+                return new ReadyForSending(this.builder);
             }
 
-            public void replyTo(IPacket targetPacket) {
+            public ReadyForSending addressedTo(IPacket targetPacket) {
                 assignTargetAndSender(targetPacket.target(), targetPacket.sender());
                 this.builder.response(ResponseTarget.respondTo(targetPacket.responseTarget().ownTarget()));
 
+                return new ReadyForSending(this.builder);
+            }
+        }
+        public static class ReadyForSending implements IPacket.Builder.ReadyForSending {
+            private final NakedBuilder builder;
+
+            protected ReadyForSending(NakedBuilder builder) {
+                this.builder = builder;
+            }
+
+            private IMagicLink fetchMagicLink() {
+                try {
+                    return RC.P.MagicLink();
+                } catch (Exception ignore) {}
+                try {
+                    return RC.M.MagicLink();
+                } catch (Exception ignore) {}
+                throw new RuntimeException("No available flames existed in order to send the packet!");
+            }
+
+            @Override
+            public void send() throws RuntimeException {
                 Packet packet = this.builder.build();
 
                 IMagicLink magicLinkService = fetchMagicLink();
@@ -209,8 +224,8 @@ public class Packet implements IPacket {
          * The identification of this packet.
          * Identification is what differentiates a "Server ping packet" from a "Teleport player packet"
          */
-        public ReadyForSending identification(PacketIdentification id) {
-            return new ReadyForSending(builder.identification(id));
+        public PrepareForSending identification(PacketIdentification id) {
+            return new PrepareForSending(builder.identification(id));
         }
     }
 

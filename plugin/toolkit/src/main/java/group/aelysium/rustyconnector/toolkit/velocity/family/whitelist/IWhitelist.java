@@ -2,7 +2,7 @@ package group.aelysium.rustyconnector.toolkit.velocity.family.whitelist;
 
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.toolkit.velocity.central.Kernel;
+import group.aelysium.rustyconnector.toolkit.velocity.IProxyFlame;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 
 import java.util.List;
@@ -45,7 +45,7 @@ public interface IWhitelist extends Particle {
         }
 
         public <TWhitelist extends IWhitelist> TWhitelist get() {
-            Kernel tinder = RustyConnector.Toolkit.proxy().orElseThrow();
+            IProxyFlame tinder = RustyConnector.Toolkit.proxy().orElseThrow();
             return (TWhitelist) tinder.services().whitelist().find(this.referencer).orElseThrow();
         }
     }

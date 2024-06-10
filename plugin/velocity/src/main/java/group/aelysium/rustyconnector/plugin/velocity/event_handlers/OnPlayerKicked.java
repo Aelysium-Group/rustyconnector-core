@@ -7,7 +7,7 @@ import com.velocitypowered.api.event.player.KickedFromServerEvent;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import group.aelysium.rustyconnector.plugin.velocity.lib.players.Player;
 import group.aelysium.rustyconnector.toolkit.RC;
-import group.aelysium.rustyconnector.toolkit.velocity.central.ProxyAdapter;
+import group.aelysium.rustyconnector.toolkit.velocity.ProxyAdapter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 

@@ -1,22 +1,17 @@
 package group.aelysium.rustyconnector.plugin.velocity;
 
-import group.aelysium.rustyconnector.toolkit.common.log_gate.GateKey;
-import group.aelysium.rustyconnector.toolkit.common.log_gate.LoggerGate;
-import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
+import com.velocitypowered.api.proxy.ProxyServer;
+import group.aelysium.rustyconnector.toolkit.common.logger.IPluginLogger;
 import net.kyori.adventure.text.Component;
 import org.slf4j.Logger;
 
-public class PluginLogger implements group.aelysium.rustyconnector.toolkit.common.logger.PluginLogger {
-    private final LoggerGate gate = new LoggerGate();
+public class PluginLogger implements IPluginLogger {
+    private final ProxyServer server;
     private final Logger logger;
 
-    public PluginLogger(Logger logger) {
+    public PluginLogger(Logger logger, ProxyServer server) {
         this.logger = logger;
-    }
-
-    @Override
-    public LoggerGate loggerGate() {
-        return this.gate;
+        this.server = server;
     }
 
     @Override
@@ -60,57 +55,7 @@ public class PluginLogger implements group.aelysium.rustyconnector.toolkit.commo
 
     public void send(Component message) {
         try {
-            Tinder.get().velocityServer().getConsoleCommandSource().sendMessage(message);
+            this.server.getConsoleCommandSource().sendMessage(message);
         } catch (Exception ignore) {}
-    }
-
-    public static void init(LoggerConfig config) {
-        PluginLogger pluginLogger = Tinder.get().logger();
-
-        LoggerGate gate = pluginLogger.loggerGate();
-
-        gate.registerNode(
-                GateKey.SAVE_TRASH_MESSAGES,
-                config.shouldSaveTrashedMessages()
-        );
-
-        gate.registerNode(
-                GateKey.REGISTRATION_ATTEMPT,
-                config.isMessaging_registration()
-        );
-        gate.registerNode(
-                GateKey.UNREGISTRATION_ATTEMPT,
-                config.isMessaging_unregistration()
-        );
-        gate.registerNode(
-                GateKey.PING,
-                config.isMessaging_ping()
-        );
-        gate.registerNode(
-                GateKey.MESSAGE_PARSER_TRASH,
-                config.isMessaging_messageParserTrash()
-        );
-
-        gate.registerNode(
-                GateKey.MESSAGE_TUNNEL_FAILED_MESSAGE,
-                config.isSecurity_messageTunnelFailedMessage()
-        );
-
-        gate.registerNode(
-                GateKey.PLAYER_JOIN,
-                config.isLog_playerJoin()
-        );
-        gate.registerNode(
-                GateKey.PLAYER_LEAVE,
-                config.isLog_playerLeave()
-        );
-        gate.registerNode(
-                GateKey.PLAYER_MOVE,
-                config.isLog_playerMove()
-        );
-        gate.registerNode(
-                GateKey.FAMILY_BALANCING,
-                config.isLog_familyBalancing()
-        );
     }
 }

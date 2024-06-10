@@ -1,13 +1,10 @@
 package group.aelysium.rustyconnector.proxy.family.mcloader;
 
-import group.aelysium.rustyconnector.common.packets.BuiltInIdentifications;
 import group.aelysium.rustyconnector.proxy.Permission;
 import group.aelysium.rustyconnector.toolkit.RC;
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.toolkit.common.log_gate.GateKey;
-import group.aelysium.rustyconnector.toolkit.velocity.central.ProxyAdapter;
+import group.aelysium.rustyconnector.toolkit.velocity.ProxyAdapter;
 import group.aelysium.rustyconnector.toolkit.velocity.connection.IPlayerConnectable;
-import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.MCLoaderUnregisterEvent;
 import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
@@ -93,46 +90,13 @@ public class MCLoader implements IMCLoader {
         return this.timeout.get();
     }
 
-    public String address() {
-        return this.address.getHostName() + ":" + this.address.getPort();
+    public InetSocketAddress address() {
+        return this.address;
     }
 
     @Override
     public Object raw() {
         return this.raw;
-    }
-
-    public void unregister(boolean removeFromFamily) throws Exception {
-        Tinder api = Tinder.get();
-        PluginLogger logger = api.logger();
-        try {
-            MCLoader server = new MCLoader.Reference(this.uuid).get();
-
-            if (logger.loggerGate().check(GateKey.UNREGISTRATION_ATTEMPT))
-                ProxyLang.UNREGISTRATION_REQUEST.send(logger, uuidOrDisplayName(), family.id());
-
-            Family family = server.family();
-
-            api.velocityServer().unregisterServer(server.serverInfo());
-            api.services().server().remove(this);
-
-            try {
-                Packet packet = api.services().packetBuilder().newBuilder()
-                        .identification(BuiltInIdentifications.MAGICLINK_HANDSHAKE_STALE_PING)
-                        .sendingToMCLoader(server.uuid())
-                        .build();
-                api.services().magicLink().connection().orElseThrow().publish(packet);
-            } catch (Exception ignore) {}
-
-            if (removeFromFamily)
-                family.loadBalancer().optimistic(lb->lb.remove(server));
-
-            EventDispatch.UnSafe.fireAndForget(new MCLoaderUnregisterEvent(family, server));
-        } catch (Exception e) {
-            if(logger.loggerGate().check(GateKey.UNREGISTRATION_ATTEMPT))
-                ProxyLang.ERROR.send(logger, uuidOrDisplayName(), family.id());
-            throw new Exception(e);
-        }
     }
 
     /**
@@ -203,12 +167,9 @@ public class MCLoader implements IMCLoader {
         return !this.full();
     }
 
-    private IPlayerConnectable.Request internalConnect(IPlayer player) {
-    }
-
     public IPlayerConnectable.Request connect(IPlayer player) {
         ProxyAdapter adapter = RC.P.Adapter();
-        return adapter.connectServer(this.raw, adapter.convertToProxyPlayer(player));
+        return adapter.connectServer(this, player);
     }
 
     @Override

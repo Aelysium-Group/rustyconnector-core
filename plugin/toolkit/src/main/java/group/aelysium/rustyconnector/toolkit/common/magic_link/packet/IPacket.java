@@ -1,11 +1,8 @@
 package group.aelysium.rustyconnector.toolkit.common.magic_link.packet;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import group.aelysium.rustyconnector.toolkit.common.JSONParseable;
-import group.aelysium.rustyconnector.toolkit.mc_loader.central.IMCLoaderFlame;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -70,23 +67,30 @@ public interface IPacket extends JSONParseable {
          * The identification of this packet.
          * Identification is what differentiates a "Server ping packet" from a "Teleport player packet"
          */
-        ReadyForSending identification(PacketIdentification id);
+        PrepareForSending identification(PacketIdentification id);
 
+        interface PrepareForSending {
+            PrepareForSending parameter(String key, String value);
+            PrepareForSending parameter(String key, PacketParameter value);
+
+            /**
+             * Prepares the packet to the specified {@link Target}.
+             * @throws RuntimeException If this packet was already sent or used in a reply, and then you try to send it again.
+             */
+            ReadyForSending addressedTo(Target target) throws RuntimeException;
+
+            /**
+             * Prepares the packet as a reply to the specified {@link IPacket}.
+             * @throws RuntimeException If this packet was already sent or used in a reply, and then you try to send it again.
+             */
+            ReadyForSending addressedTo(IPacket packet) throws RuntimeException;
+        }
         interface ReadyForSending {
-            ReadyForSending parameter(String key, String value);
-            ReadyForSending parameter(String key, PacketParameter value);
-
             /**
-             * Sends the packet to the specified {@link Target}.
-             * @throws RuntimeException If this packet was already sent or used in a reply, and then you try to send it again.
+             * Sends the packet.
+             * @throws RuntimeException If there was an issue sending the packet.
              */
-            void sendTo(Target target) throws RuntimeException;
-
-            /**
-             * Sends the packet as a reply to another packet.
-             * @throws RuntimeException If this packet was already sent or used in a reply, and then you try to send it again.
-             */
-            void replyTo(IPacket packet) throws RuntimeException;
+            void send() throws RuntimeException;
         }
     }
 

@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.common.lang;
 
-import group.aelysium.rustyconnector.toolkit.common.logger.PluginLogger;
+import group.aelysium.rustyconnector.toolkit.common.logger.IPluginLogger;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 
@@ -21,7 +21,7 @@ public class Lang {
     public interface Message {
         Component build();
 
-        default void send(PluginLogger sender) {
+        default void send(IPluginLogger sender) {
             sender.send(
                     join(
                             newlines(),
@@ -34,7 +34,7 @@ public class Lang {
     public interface ParameterizedMessage1<A1> {
         Component build(A1 arg1);
 
-        default void send(PluginLogger sender, A1 arg1) {
+        default void send(IPluginLogger sender, A1 arg1) {
             sender.send(
                     join(
                             JoinConfiguration.separator(newline()),
@@ -47,7 +47,7 @@ public class Lang {
     public interface ParameterizedMessage2<A1, A2> {
         Component build(A1 arg1, A2 arg2);
 
-        default void send(PluginLogger sender, A1 arg1, A2 arg2) {
+        default void send(IPluginLogger sender, A1 arg1, A2 arg2) {
             sender.send(
                     join(
                             newlines(),
@@ -60,7 +60,7 @@ public class Lang {
     public interface ParameterizedMessage3<A1, A2, A3> {
         Component build(A1 arg1, A2 arg2, A3 arg3);
 
-        default void send(PluginLogger sender, A1 arg1, A2 arg2, A3 arg3) {
+        default void send(IPluginLogger sender, A1 arg1, A2 arg2, A3 arg3) {
             sender.send(
                     join(
                             newlines(),
@@ -73,7 +73,7 @@ public class Lang {
     public interface ParameterizedMessage4<A1, A2, A3, A4> {
         Component build(A1 arg1, A2 arg2, A3 arg3, A4 arg4);
 
-        default void send(PluginLogger sender, A1 arg1, A2 arg2, A3 arg3, A4 arg4) {
+        default void send(IPluginLogger sender, A1 arg1, A2 arg2, A3 arg3, A4 arg4) {
             sender.send(
                     join(
                             newlines(),

@@ -1,22 +1,22 @@
 package group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader;
 
 import group.aelysium.rustyconnector.toolkit.common.events.Event;
-import group.aelysium.rustyconnector.toolkit.velocity.family.Family;
+import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
 import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
 
 /**
  * Represents an MCLoader unregistering from the Proxy.
  */
 public class MCLoaderUnregisterEvent implements Event {
-    protected final Family family;
+    protected final IFamily family;
     protected final IMCLoader mcLoader;
 
-    public MCLoaderUnregisterEvent(Family family, IMCLoader mcLoader) {
+    public MCLoaderUnregisterEvent(IFamily family, IMCLoader mcLoader) {
         this.family = family;
         this.mcLoader = mcLoader;
     }
 
-    public Family family() {
+    public IFamily family() {
         return family;
     }
     public IMCLoader mcLoader() {
