@@ -1,9 +1,7 @@
 package group.aelysium.rustyconnector.common.config;
 
-import group.aelysium.rustyconnector.common.lang.LangService;
-import group.aelysium.rustyconnector.toolkit.common.config.IConfigService;
 import group.aelysium.rustyconnector.toolkit.common.lang.LangFileMappings;
-import group.aelysium.rustyconnector.toolkit.common.config.IYAML;
+import group.aelysium.rustyconnector.toolkit.common.config.IConfig;
 import org.spongepowered.configurate.ConfigurationNode;
 
 import java.io.File;
@@ -13,7 +11,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public abstract class YAML implements IYAML {
+public abstract class YAML implements IConfig {
     protected String name;
     protected String target;
     protected File configPointer;
@@ -47,7 +45,7 @@ public abstract class YAML implements IYAML {
 
                 InputStream stream;
                 if (lang.isInline())
-                    stream = IYAML.getResource(lang.code() + "/" + template.path());
+                    stream = IConfig.getResource(lang.code() + "/" + template.path());
                 else
                     stream = new FileInputStream(lang.get(template));
 
@@ -61,7 +59,7 @@ public abstract class YAML implements IYAML {
             }
 
             try {
-                this.data = IYAML.loadYAML(this.configPointer);
+                this.data = IConfig.loadYAML(this.configPointer);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -77,7 +75,7 @@ public abstract class YAML implements IYAML {
      */
     public void processVersion(int currentVersion) {
         try {
-            Integer version = IYAML.getValue(this.data, "version", Integer.class);
+            Integer version = IConfig.getValue(this.data, "version", Integer.class);
 
             if(currentVersion > version)
                 throw new UnsupportedClassVersionError("Your configuration file is outdated! " +
@@ -91,12 +89,12 @@ public abstract class YAML implements IYAML {
             return;
         } catch (IllegalStateException e1) {
             try {
-                IYAML.getValue(this.data, "version", String.class);
+                IConfig.getValue(this.data, "version", String.class);
 
                 throw new RuntimeException("You have set the value of `version` in config.yml to be a string! `version` must be an integer!");
             } catch (IllegalStateException e2) {
                 try {
-                    IYAML.getValue(this.data, "config-version", Integer.class);
+                    IConfig.getValue(this.data, "config-version", Integer.class);
 
                     throw new UnsupportedClassVersionError("Your configuration file is outdated! " +
                             "(v1 < v"+ currentVersion +") " +

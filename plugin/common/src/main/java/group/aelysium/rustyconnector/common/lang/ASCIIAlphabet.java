@@ -309,8 +309,6 @@ public interface ASCIIAlphabet {
     /**
      * Converts a string to an ASCIIAlphabet equivalent.
      * This method does not recognize, numbers, punctuation, nor newlines.
-     * @param string
-     * @return
      */
     static Component generate(String string) {
         Map<Character, Lang.Message> map = map();
@@ -346,8 +344,6 @@ public interface ASCIIAlphabet {
     /**
      * Converts a string to an ASCIIAlphabet equivalent.
      * This method does not recognize, numbers, punctuation, nor newlines.
-     * @param string
-     * @return
      */
     static Component generate(String string, NamedTextColor color) {
         Map<Character, Lang.Message> map = map();

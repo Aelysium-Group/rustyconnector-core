@@ -1,9 +1,9 @@
-package group.aelysium.rustyconnector.plugin.velocity.config.configs;
+package group.aelysium.rustyconnector.plugin.velocity.config;
 
 import group.aelysium.rustyconnector.common.config.YAML;
 import group.aelysium.rustyconnector.common.lang.LangService;
 import group.aelysium.rustyconnector.toolkit.common.config.IConfigService;
-import group.aelysium.rustyconnector.toolkit.common.config.IYAML;
+import group.aelysium.rustyconnector.toolkit.common.config.IConfig;
 import group.aelysium.rustyconnector.toolkit.common.lang.LangFileMappings;
 import group.aelysium.rustyconnector.toolkit.velocity.family.load_balancing.AlgorithmType;
 
@@ -42,11 +42,11 @@ public class LoadBalancerConfig extends YAML implements group.aelysium.rustyconn
     }
 
     protected void register() throws IllegalStateException {
-        this.weighted = IYAML.getValue(this.data,"weighted",Boolean.class);
-        this.algorithm = AlgorithmType.valueOf(IYAML.getValue(this.data,"algorithm",String.class));
+        this.weighted = IConfig.getValue(this.data,"weighted",Boolean.class);
+        this.algorithm = AlgorithmType.valueOf(IConfig.getValue(this.data,"algorithm",String.class));
 
-        this.persistence_enabled = IYAML.getValue(this.data,"persistence.enabled",Boolean.class);
-        this.persistence_attempts = IYAML.getValue(this.data,"persistence.attempts",Integer.class);
+        this.persistence_enabled = IConfig.getValue(this.data,"persistence.enabled",Boolean.class);
+        this.persistence_attempts = IConfig.getValue(this.data,"persistence.attempts",Integer.class);
         if(this.persistence_enabled && this.persistence_attempts <= 0)
             throw new IllegalStateException("Load balancing persistence must allow at least 1 attempt.");
     }

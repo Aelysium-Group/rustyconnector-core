@@ -1,40 +1,18 @@
 package group.aelysium.rustyconnector.toolkit.common.config;
 
-import org.spongepowered.configurate.ConfigurationNode;
-import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 
-public interface IYAML {
+public interface IConfig {
     /**
-     * Gets all the configuration nodes in this YAML.
+     * Returns the compiled settings built by this config.
      */
-    ConfigurationNode nodes();
-
-    /**
-     * Gets the target path used for loading this YAML.
-     * Path the final path is calculated using dataFolder + this.
-     */
-    String fileTarget();
-
-    /**
-     * The name of this YAML.
-     * Name does not include the file extension.
-     * If this file is a scalar family called "lobby", instead of "lobby.scalar.yml". Name is simply "lobby".
-     */
-    String name();
-
-    /**
-     * The config key used by {@link IConfigService} to store this config.
-     * @return {@link IConfigService.ConfigKey}
-     */
-    IConfigService.ConfigKey key();
+    Object settings();
 
     static InputStream getResource(String path) {
-        return IYAML.class.getClassLoader().getResourceAsStream(path);
+        return IConfig.class.getClassLoader().getResourceAsStream(path);
     }
 
     static ConfigurationNode get(ConfigurationNode node, String path) {
@@ -79,4 +57,6 @@ public interface IYAML {
                 .path(file.toPath())
                 .build().load();
     }
+
+    void print(File location);
 }

@@ -54,3 +54,18 @@ magic-link:
     # Example: 127.0.0.1:25565
     #
     proxy-address: ""
+
+#
+# Git will switch RustyConnector's config locator, so it starts using the config files
+# found on the specific branch in the provided repository.
+# Any config changes you choose to make in the future must be pushed to the Git repo
+# in order for the changes to be made in RustyConnector.
+#
+git:
+    enabled: false
+
+    repository: "https://github.com/Aelysium-Group/rustyconnector.git"
+
+    branch: "main"
+
+    access-token: ""

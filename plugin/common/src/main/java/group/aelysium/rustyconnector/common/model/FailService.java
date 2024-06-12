@@ -4,9 +4,8 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import group.aelysium.rustyconnector.toolkit.common.crypt.Snowflake;
 import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
-import group.aelysium.rustyconnector.toolkit.common.serviceable.interfaces.Service;
 
-public class FailService implements Service {
+public class FailService implements AutoCloseable {
     protected final Cache<Long, Boolean> fails;
     protected int numberOfFails;
     protected LiquidTimestamp period;
@@ -48,7 +47,7 @@ public class FailService implements Service {
     }
 
     @Override
-    public void kill() {
+    public void close() throws Exception {
         this.numberOfFails = 0;
         this.fails.invalidateAll();
         this.fails.cleanUp();

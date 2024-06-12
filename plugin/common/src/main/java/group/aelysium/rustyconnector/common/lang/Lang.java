@@ -6,7 +6,6 @@ import net.kyori.adventure.text.JoinConfiguration;
 
 import static net.kyori.adventure.text.Component.*;
 
-@SuppressWarnings("ConstantConditions")
 public class Lang {
     public final static String attachedWordmark = "RustyConnector:";
     /*

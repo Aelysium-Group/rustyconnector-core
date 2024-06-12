@@ -1,4 +1,4 @@
-package group.aelysium.rustyconnector.plugin.velocity.config.configs;
+package group.aelysium.rustyconnector.plugin.velocity.config;
 
 import group.aelysium.rustyconnector.common.config.YAML;
 import group.aelysium.rustyconnector.common.lang.LangService;
@@ -7,7 +7,7 @@ import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
 import group.aelysium.rustyconnector.plugin.velocity.config.ConfigService;
 import group.aelysium.rustyconnector.plugin.velocity.lang.ProxyLang;
 import group.aelysium.rustyconnector.toolkit.common.config.IConfigService;
-import group.aelysium.rustyconnector.toolkit.common.config.IYAML;
+import group.aelysium.rustyconnector.toolkit.common.config.IConfig;
 import group.aelysium.rustyconnector.toolkit.common.lang.LangFileMappings;
 import net.kyori.adventure.text.format.NamedTextColor;
 
@@ -70,28 +70,28 @@ public class WhitelistConfig extends YAML implements group.aelysium.rustyconnect
     protected void register() throws IllegalStateException {
         PluginLogger logger = Tinder.get().logger();
 
-        this.use_players = IYAML.getValue(this.data,"use-players",Boolean.class);
+        this.use_players = IConfig.getValue(this.data,"use-players",Boolean.class);
         try {
-            this.players = (IYAML.getValue(this.data,"players",List.class));
+            this.players = (IConfig.getValue(this.data,"players",List.class));
         } catch (ClassCastException e) {
             throw new IllegalStateException("The node [players] in "+this.name()+" is invalid! Make sure you are using the correct type of data!");
         }
 
-        this.use_permission = IYAML.getValue(this.data,"use-permission",Boolean.class);
+        this.use_permission = IConfig.getValue(this.data,"use-permission",Boolean.class);
 
-        this.use_country = IYAML.getValue(this.data,"use-country",Boolean.class);
+        this.use_country = IConfig.getValue(this.data,"use-country",Boolean.class);
         if(this.use_country)
             ProxyLang.BOXED_MESSAGE_COLORED.send(logger, "RustyConnector does not currently support country codes in whitelists. Setting `use-country` to false.", NamedTextColor.YELLOW);
         this.use_country = false;
         this.countries = new ArrayList<>();
 
-        this.message = IYAML.getValue(data,"message",String.class);
+        this.message = IConfig.getValue(data,"message",String.class);
         if(this.message.equalsIgnoreCase(""))
             throw new IllegalStateException("Whitelist kick messages cannot be empty!");
 
-        this.strict = IYAML.getValue(data,"strict",Boolean.class);
+        this.strict = IConfig.getValue(data,"strict",Boolean.class);
 
-        this.inverted = IYAML.getValue(data,"inverted",Boolean.class);
+        this.inverted = IConfig.getValue(data,"inverted",Boolean.class);
     }
 
     public static WhitelistConfig construct(Path dataFolder, String whitelistName, LangService lang, ConfigService configService) {

@@ -1,11 +1,11 @@
-package group.aelysium.rustyconnector.plugin.velocity.config.configs;
+package group.aelysium.rustyconnector.plugin.velocity.config;
 
 import group.aelysium.rustyconnector.common.config.YAML;
 import group.aelysium.rustyconnector.common.lang.LangService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.remote_storage.Storage;
 import group.aelysium.rustyconnector.toolkit.common.UserPass;
 import group.aelysium.rustyconnector.toolkit.common.config.IConfigService;
-import group.aelysium.rustyconnector.toolkit.common.config.IYAML;
+import group.aelysium.rustyconnector.toolkit.common.config.IConfig;
 import group.aelysium.rustyconnector.toolkit.common.lang.LangFileMappings;
 
 import java.net.InetSocketAddress;
@@ -25,21 +25,21 @@ public class StorageConfig extends YAML {
 
     @SuppressWarnings("unchecked")
     protected void register() throws IllegalStateException {
-        Storage.StorageType storageType = Storage.StorageType.valueOf(IYAML.getValue(this.data, "provider", String.class));
+        Storage.StorageType storageType = Storage.StorageType.valueOf(IConfig.getValue(this.data, "provider", String.class));
         switch (storageType) {
             case MYSQL -> {
-                String host = IYAML.getValue(this.data, "available-providers.MYSQL.host", String.class);
+                String host = IConfig.getValue(this.data, "available-providers.MYSQL.host", String.class);
                 if (host.equals(""))
                     throw new IllegalStateException("Please configure your connector settings. `host` cannot be empty.");
-                int port = IYAML.getValue(this.data, "available-providers.MYSQL.port", Integer.class);
+                int port = IConfig.getValue(this.data, "available-providers.MYSQL.port", Integer.class);
                 InetSocketAddress address = new InetSocketAddress(host, port);
 
-                String user = IYAML.getValue(this.data, "available-providers.MYSQL.user", String.class);
+                String user = IConfig.getValue(this.data, "available-providers.MYSQL.user", String.class);
                 if (user.equals(""))
                     throw new IllegalStateException("Please configure your connector settings. `user` cannot be empty.");
-                char[] password = IYAML.getValue(this.data, "available-providers.MYSQL.password", String.class).toCharArray();
+                char[] password = IConfig.getValue(this.data, "available-providers.MYSQL.password", String.class).toCharArray();
                 UserPass userPass = new UserPass(user, password);
-                String database = IYAML.getValue(this.data, "available-providers.MYSQL.database", String.class);
+                String database = IConfig.getValue(this.data, "available-providers.MYSQL.database", String.class);
 
                 this.configuration = new Storage.Configuration.MySQL(address, userPass, database);
             }

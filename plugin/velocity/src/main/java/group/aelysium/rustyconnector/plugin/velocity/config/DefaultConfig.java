@@ -1,41 +1,22 @@
-package group.aelysium.rustyconnector.plugin.velocity.config.configs;
+package group.aelysium.rustyconnector.plugin.velocity.config;
 
 import group.aelysium.rustyconnector.common.config.YAML;
 import group.aelysium.rustyconnector.common.exception.NoOutputException;
-import group.aelysium.rustyconnector.common.lang.LangService;
 import group.aelysium.rustyconnector.plugin.velocity.PluginLogger;
-import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
-import group.aelysium.rustyconnector.plugin.velocity.config.ConfigService;
 import group.aelysium.rustyconnector.plugin.velocity.lang.ProxyLang;
-import group.aelysium.rustyconnector.toolkit.common.config.IConfigService;
-import group.aelysium.rustyconnector.toolkit.common.config.IYAML;
+import group.aelysium.rustyconnector.toolkit.common.config.IConfig;
 import group.aelysium.rustyconnector.toolkit.common.lang.LangFileMappings;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.PrintWriter;
 import java.nio.file.Path;
 
-public class DefaultConfig extends YAML implements group.aelysium.rustyconnector.toolkit.velocity.config.DefaultConfig {
-    private boolean whitelist_enabled = false;
-    private String whitelist_name = "whitelist-template";
-
-    private Integer magicLink_serverTimeout = 15;
-    private Integer magicLink_serverPingInterval = 10;
-
-    public boolean whitelist_enabled() {
-        return this.whitelist_enabled;
-    }
-
-    public String whitelist_name() {
-        return this.whitelist_name;
-    }
-
-    public Integer magicLink_serverTimeout() {
-        return magicLink_serverTimeout;
-    }
-
-    public Integer magicLink_serverPingInterval() {
-        return magicLink_serverPingInterval;
-    }
+public class DefaultConfig extends YAML {
 
     protected DefaultConfig(Path dataFolder, String target, String name, LangService lang) {
         super(dataFolder, target, name, lang, LangFileMappings.PROXY_CONFIG_TEMPLATE);
@@ -59,20 +40,20 @@ public class DefaultConfig extends YAML implements group.aelysium.rustyconnector
 
         // Whitelist
 
-        this.whitelist_enabled = IYAML.getValue(this.data,"whitelist.enabled",Boolean.class);
-        this.whitelist_name = IYAML.getValue(this.data,"whitelist.name",String.class);
+        this.whitelist_enabled = IConfig.getValue(this.data,"whitelist.enabled",Boolean.class);
+        this.whitelist_name = IConfig.getValue(this.data,"whitelist.name",String.class);
         if(this.whitelist_enabled && this.whitelist_name.equals(""))
             throw new IllegalStateException("whitelist.id cannot be empty in order to use a whitelist on the proxy!");
 
         this.whitelist_name = this.whitelist_name.replaceFirst("\\.yml$|\\.yaml$","");
 
         // Hearts
-        this.magicLink_serverTimeout = IYAML.getValue(this.data,"magic-link.server-timeout",Integer.class);
+        this.magicLink_serverTimeout = IConfig.getValue(this.data,"magic-link.server-timeout",Integer.class);
         if(this.magicLink_serverTimeout < 5) {
             ProxyLang.BOXED_MESSAGE_COLORED.send(logger, "Server timeout is set dangerously fast: " + this.magicLink_serverTimeout + "s. Setting to default of 5s.", NamedTextColor.YELLOW);
             this.magicLink_serverTimeout = 5;
         }
-        this.magicLink_serverPingInterval = IYAML.getValue(this.data,"magic-link.server-ping-interval",Integer.class);
+        this.magicLink_serverPingInterval = IConfig.getValue(this.data,"magic-link.server-ping-interval",Integer.class);
         if(this.magicLink_serverPingInterval < 5) {
             ProxyLang.BOXED_MESSAGE_COLORED.send(logger, "Server ping interval is set dangerously fast: " + this.magicLink_serverPingInterval + "s. Setting to minimum of 5s.", NamedTextColor.YELLOW);
             this.magicLink_serverPingInterval = 5;
@@ -88,5 +69,18 @@ public class DefaultConfig extends YAML implements group.aelysium.rustyconnector
         config.register(pluginConfigVersion);
         configService.put(config);
         return config;
+    }
+
+    public void read(File target) {
+        InputStream inputStream = new FileInputStream(target);
+        Yaml yaml = new Yaml(new Constructor(Student.class));
+        Student data = yaml.load(inputStream);
+        System.out.println(data);
+    }
+
+    public void print(File target) {
+        PrintWriter writer = new PrintWriter(new File("./src/main/resources/student_output.yml"));
+        Yaml yaml = new Yaml();
+        yaml.dump(dataMap, writer);
     }
 }

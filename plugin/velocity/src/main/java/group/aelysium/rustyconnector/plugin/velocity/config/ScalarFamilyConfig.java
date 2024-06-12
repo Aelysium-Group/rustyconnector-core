@@ -1,11 +1,11 @@
-package group.aelysium.rustyconnector.plugin.velocity.config.configs;
+package group.aelysium.rustyconnector.plugin.velocity.config;
 
 import group.aelysium.rustyconnector.common.config.YAML;
 import group.aelysium.rustyconnector.common.lang.LangService;
 import group.aelysium.rustyconnector.plugin.velocity.config.ConfigService;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.toolkit.common.config.IConfigService;
-import group.aelysium.rustyconnector.toolkit.common.config.IYAML;
+import group.aelysium.rustyconnector.toolkit.common.config.IConfig;
 import group.aelysium.rustyconnector.toolkit.common.lang.LangFileMappings;
 import group.aelysium.rustyconnector.toolkit.velocity.config.IProxyConfigService;
 import group.aelysium.rustyconnector.toolkit.velocity.config.LoadBalancerConfig;
@@ -54,22 +54,22 @@ public class ScalarFamilyConfig extends YAML implements group.aelysium.rustyconn
 
     protected void register() throws IllegalStateException {
         try {
-            this.displayName = IYAML.getValue(this.data, "display-name", String.class);
+            this.displayName = IConfig.getValue(this.data, "display-name", String.class);
         } catch (Exception ignore) {}
 
         try {
-            this.parent_family = new Family.Reference(IYAML.getValue(this.data, "parent-family", String.class));
+            this.parent_family = new Family.Reference(IConfig.getValue(this.data, "parent-family", String.class));
         } catch (Exception ignore) {}
 
         try {
-            this.loadBalancer = IYAML.getValue(this.data, "load-balancer", String.class);
+            this.loadBalancer = IConfig.getValue(this.data, "load-balancer", String.class);
         } catch (Exception ignore) {
             this.loadBalancer = "default";
         }
         this.loadBalancer = this.loadBalancer.replaceFirst("\\.yml$|\\.yaml$","");
 
-        this.whitelist_enabled = IYAML.getValue(this.data,"whitelist.enabled",Boolean.class);
-        this.whitelist_name = IYAML.getValue(this.data,"whitelist.name",String.class);
+        this.whitelist_enabled = IConfig.getValue(this.data,"whitelist.enabled",Boolean.class);
+        this.whitelist_name = IConfig.getValue(this.data,"whitelist.name",String.class);
         if(this.whitelist_enabled && this.whitelist_name.equals(""))
             throw new IllegalStateException("whitelist.id cannot be empty in order to use a whitelist in a family!");
 

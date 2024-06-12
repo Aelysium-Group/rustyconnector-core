@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.common.lang.config;
 
 import group.aelysium.rustyconnector.toolkit.common.config.IConfigService;
-import group.aelysium.rustyconnector.toolkit.common.config.IYAML;
+import group.aelysium.rustyconnector.toolkit.common.config.IConfig;
 import group.aelysium.rustyconnector.toolkit.common.logger.IPluginLogger;
 import group.aelysium.rustyconnector.common.config.YAML;
 import group.aelysium.rustyconnector.common.exception.NoOutputException;
@@ -37,7 +37,7 @@ public class RootLanguageConfig extends YAML {
             }
 
             try {
-                this.data = IYAML.loadYAML(this.configPointer);
+                this.data = IConfig.loadYAML(this.configPointer);
                 if (this.data == null) throw new NullPointerException();
                 logger.send(Component.text("Finished building " + this.configPointer.getName(), NamedTextColor.GREEN));
             } catch (Exception e) {
@@ -50,7 +50,7 @@ public class RootLanguageConfig extends YAML {
 
     protected void register() throws IllegalStateException, NoOutputException {
         try {
-            this.language = IYAML.getValue(this.data,"language", String.class);
+            this.language = IConfig.getValue(this.data,"language", String.class);
         } catch (Exception e) {
             this.language = "en_us";
         }

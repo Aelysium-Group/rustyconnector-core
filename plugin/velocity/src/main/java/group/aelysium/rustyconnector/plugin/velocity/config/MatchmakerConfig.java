@@ -1,11 +1,11 @@
-package group.aelysium.rustyconnector.plugin.velocity.config.configs;
+package group.aelysium.rustyconnector.plugin.velocity.config;
 
 import group.aelysium.rustyconnector.common.config.YAML;
 import group.aelysium.rustyconnector.common.lang.LangService;
 import group.aelysium.rustyconnector.plugin.velocity.config.ConfigService;
 import group.aelysium.rustyconnector.proxy.family.matchmaking.rank.*;
 import group.aelysium.rustyconnector.toolkit.common.config.IConfigService;
-import group.aelysium.rustyconnector.toolkit.common.config.IYAML;
+import group.aelysium.rustyconnector.toolkit.common.config.IConfig;
 import group.aelysium.rustyconnector.toolkit.common.lang.LangFileMappings;
 import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IMatchmaker;
 import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IVelocityPlayerRank;
@@ -31,30 +31,30 @@ public class MatchmakerConfig extends YAML implements group.aelysium.rustyconnec
     }
 
     protected void register() throws IllegalStateException {
-        String algorithm = IYAML.getValue(this.data,"algorithm",String.class);
-        int min = IYAML.getValue(this.data,"min",Integer.class);
-        int max = IYAML.getValue(this.data,"max",Integer.class);
-        double variance = IYAML.getValue(this.data,"variance",Double.class);
-        boolean reconnect = IYAML.getValue(this.data,"reconnect",Boolean.class);
-        double varianceExpansionCoefficient = IYAML.getValue(this.data,"variance-expansion-coefficient",Double.class);
-        int requiredExpansionsForAccept = IYAML.getValue(this.data,"required-expansions-for-accept",Integer.class);
+        String algorithm = IConfig.getValue(this.data,"algorithm",String.class);
+        int min = IConfig.getValue(this.data,"min",Integer.class);
+        int max = IConfig.getValue(this.data,"max",Integer.class);
+        double variance = IConfig.getValue(this.data,"variance",Double.class);
+        boolean reconnect = IConfig.getValue(this.data,"reconnect",Boolean.class);
+        double varianceExpansionCoefficient = IConfig.getValue(this.data,"variance-expansion-coefficient",Double.class);
+        int requiredExpansionsForAccept = IConfig.getValue(this.data,"required-expansions-for-accept",Integer.class);
 
         LiquidTimestamp sessionDispatchInterval = LiquidTimestamp.from(10, TimeUnit.SECONDS);
         try {
-            sessionDispatchInterval = LiquidTimestamp.from(IYAML.getValue(this.data, "session-dispatch-interval", String.class));
+            sessionDispatchInterval = LiquidTimestamp.from(IConfig.getValue(this.data, "session-dispatch-interval", String.class));
         } catch (Exception ignore) {}
 
-        boolean freezeActiveSessions = IYAML.getValue(this.data,"freeze-active-sessions",Boolean.class);
+        boolean freezeActiveSessions = IConfig.getValue(this.data,"freeze-active-sessions",Boolean.class);
 
-        int closingThreshold = IYAML.getValue(this.data,"closing-threshold",Integer.class);
+        int closingThreshold = IConfig.getValue(this.data,"closing-threshold",Integer.class);
         if(closingThreshold == -1) closingThreshold = min;
 
-        boolean quittersLose = IYAML.getValue(this.data,"quitters-lose",Boolean.class);
-        boolean stayersWin = IYAML.getValue(this.data,"stayers-win",Boolean.class);
+        boolean quittersLose = IConfig.getValue(this.data,"quitters-lose",Boolean.class);
+        boolean stayersWin = IConfig.getValue(this.data,"stayers-win",Boolean.class);
 
-        boolean leaveCommand = IYAML.getValue(this.data, "leave-command", Boolean.class);
-        boolean parentFamilyOnLeave = IYAML.getValue(this.data, "parent-family-on-leave", Boolean.class);
-        boolean showInfo = IYAML.getValue(this.data, "show-info", Boolean.class);
+        boolean leaveCommand = IConfig.getValue(this.data, "leave-command", Boolean.class);
+        boolean parentFamilyOnLeave = IConfig.getValue(this.data, "parent-family-on-leave", Boolean.class);
+        boolean showInfo = IConfig.getValue(this.data, "show-info", Boolean.class);
 
         Class<? extends IVelocityPlayerRank> actualSchema = RandomizedPlayerRank.class;
         if(algorithm.equals(WinLossPlayerRank.schema()))    actualSchema = WinLossPlayerRank.class;
@@ -64,9 +64,9 @@ public class MatchmakerConfig extends YAML implements group.aelysium.rustyconnec
 
 
 
-        double eloInitialRank = IYAML.getValue(this.data, "elo.initial-rank", Double.class);
-        double eloFactor = IYAML.getValue(this.data, "elo.elo-factor", Double.class);
-        double eloKFactor = IYAML.getValue(this.data, "elo.k-factor", Double.class);
+        double eloInitialRank = IConfig.getValue(this.data, "elo.initial-rank", Double.class);
+        double eloFactor = IConfig.getValue(this.data, "elo.elo-factor", Double.class);
+        double eloKFactor = IConfig.getValue(this.data, "elo.k-factor", Double.class);
 
 
 

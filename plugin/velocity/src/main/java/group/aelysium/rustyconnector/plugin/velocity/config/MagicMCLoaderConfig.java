@@ -1,11 +1,11 @@
-package group.aelysium.rustyconnector.plugin.velocity.config.configs;
+package group.aelysium.rustyconnector.plugin.velocity.config;
 
 import group.aelysium.rustyconnector.common.config.YAML;
 import group.aelysium.rustyconnector.common.lang.LangService;
 import group.aelysium.rustyconnector.plugin.velocity.config.ConfigService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.MagicLink;
 import group.aelysium.rustyconnector.toolkit.common.config.IConfigService;
-import group.aelysium.rustyconnector.toolkit.common.config.IYAML;
+import group.aelysium.rustyconnector.toolkit.common.config.IConfig;
 import group.aelysium.rustyconnector.toolkit.common.lang.LangFileMappings;
 
 import java.nio.file.Path;
@@ -42,14 +42,14 @@ public class MagicMCLoaderConfig extends YAML implements group.aelysium.rustycon
     }
 
     protected void register() throws IllegalStateException {
-        this.server_family = IYAML.getValue(this.data,"family",String.class);
+        this.server_family = IConfig.getValue(this.data,"family",String.class);
         if(this.server_family.equals("")) throw new IllegalStateException("You must provide a family id in order for RustyConnector to work! The family id must also exist on your families.yml configuration.");
 
-        this.server_weight = IYAML.getValue(this.data,"weight",Integer.class);
+        this.server_weight = IConfig.getValue(this.data,"weight",Integer.class);
         if(this.server_weight < 0) throw new IllegalStateException("Server weight cannot be a negative number.");
 
-        this.server_playerCap_soft = IYAML.getValue(this.data,"player-cap.soft",Integer.class);
-        this.server_playerCap_hard = IYAML.getValue(this.data,"player-cap.hard",Integer.class);
+        this.server_playerCap_soft = IConfig.getValue(this.data,"player-cap.soft",Integer.class);
+        this.server_playerCap_hard = IConfig.getValue(this.data,"player-cap.hard",Integer.class);
         if(this.server_playerCap_soft >= this.server_playerCap_hard) this.server_playerCap_soft = this.server_playerCap_hard;
     }
 
