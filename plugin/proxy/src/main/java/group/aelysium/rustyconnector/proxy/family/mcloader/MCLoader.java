@@ -3,11 +3,11 @@ package group.aelysium.rustyconnector.proxy.family.mcloader;
 import group.aelysium.rustyconnector.proxy.Permission;
 import group.aelysium.rustyconnector.toolkit.RC;
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.toolkit.velocity.ProxyAdapter;
-import group.aelysium.rustyconnector.toolkit.velocity.connection.IPlayerConnectable;
-import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
-import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
-import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
+import group.aelysium.rustyconnector.toolkit.proxy.ProxyAdapter;
+import group.aelysium.rustyconnector.toolkit.proxy.connection.IPlayerConnectable;
+import group.aelysium.rustyconnector.toolkit.proxy.family.IFamily;
+import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.IMCLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

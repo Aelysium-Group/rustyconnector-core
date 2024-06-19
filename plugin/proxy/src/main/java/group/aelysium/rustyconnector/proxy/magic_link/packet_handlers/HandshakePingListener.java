@@ -8,13 +8,12 @@ import group.aelysium.rustyconnector.toolkit.RustyConnector;
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.IMagicLink;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.IPacket;
-import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketIdentification;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketParameter;
-import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.MCLoaderRegisterEvent;
-import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
-import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
-import group.aelysium.rustyconnector.toolkit.velocity.util.AddressUtil;
+import group.aelysium.rustyconnector.toolkit.proxy.events.mc_loader.MCLoaderRegisterEvent;
+import group.aelysium.rustyconnector.toolkit.proxy.family.IFamily;
+import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.IMCLoader;
+import group.aelysium.rustyconnector.toolkit.proxy.util.AddressUtil;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.security.InvalidAlgorithmParameterException;

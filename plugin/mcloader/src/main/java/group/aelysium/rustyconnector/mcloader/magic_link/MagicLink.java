@@ -9,7 +9,7 @@ import group.aelysium.rustyconnector.toolkit.common.magic_link.IMagicLink;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.IPacket;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketParameter;
 import group.aelysium.rustyconnector.toolkit.mc_loader.events.magic_link.DisconnectedEvent;
-import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
+import group.aelysium.rustyconnector.toolkit.proxy.util.LiquidTimestamp;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.ConnectException;

@@ -9,7 +9,8 @@ import group.aelysium.rustyconnector.toolkit.common.magic_link.IMagicLink;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.IPacket;
 import group.aelysium.rustyconnector.toolkit.mc_loader.IMCLoaderFlame;
 import group.aelysium.rustyconnector.toolkit.mc_loader.MCLoaderAdapter;
-import group.aelysium.rustyconnector.toolkit.velocity.util.Version;
+import group.aelysium.rustyconnector.toolkit.mc_loader.lang.MCLoaderLangLibrary;
+import group.aelysium.rustyconnector.toolkit.proxy.util.Version;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetSocketAddress;
@@ -19,6 +20,7 @@ public class Flame implements IMCLoaderFlame {
     private final UUID uuid;
     private final Version version;
     private final MCLoaderAdapter adapter;
+    private final Flux<MCLoaderLangLibrary> lang;
     private final String displayName;
     private final InetSocketAddress address;
     private final Flux<IMagicLink.MCLoader> magicLink;
@@ -28,6 +30,7 @@ public class Flame implements IMCLoaderFlame {
             @NotNull UUID uuid,
             @NotNull Version version,
             @NotNull MCLoaderAdapter adapter,
+            @NotNull Flux<MCLoaderLangLibrary> lang,
             @NotNull String displayName,
             @NotNull InetSocketAddress address,
             @NotNull Flux<IMagicLink.MCLoader> magicLink,
@@ -36,6 +39,7 @@ public class Flame implements IMCLoaderFlame {
         this.uuid = uuid;
         this.version = version;
         this.adapter = adapter;
+        this.lang = lang;
         this.displayName = displayName;
         this.address = address;
         this.magicLink = magicLink;
@@ -107,6 +111,10 @@ public class Flame implements IMCLoaderFlame {
         return this.adapter;
     }
 
+    public Flux<MCLoaderLangLibrary> Lang() {
+        return this.lang;
+    }
+
     public EventManager EventManager() {
         return this.eventManager;
     }
@@ -120,6 +128,7 @@ public class Flame implements IMCLoaderFlame {
         private final UUID uuid;
         private final Version version;
         private final MCLoaderAdapter adapter;
+        private final MCLoaderLangLibrary.Tinder lang;
         private final String displayName;
         private final InetSocketAddress address;
         private final MagicLink.Tinder magicLink;
@@ -129,6 +138,7 @@ public class Flame implements IMCLoaderFlame {
                 @NotNull UUID uuid,
                 @NotNull Version version,
                 @NotNull MCLoaderAdapter adapter,
+                @NotNull MCLoaderLangLibrary.Tinder lang,
                 @NotNull String displayName,
                 @NotNull InetSocketAddress address,
                 @NotNull MagicLink.Tinder magicLink,
@@ -137,6 +147,7 @@ public class Flame implements IMCLoaderFlame {
             this.uuid = uuid;
             this.version = version;
             this.adapter = adapter;
+            this.lang = lang;
             this.displayName = displayName;
             this.address = address;
             this.magicLink = magicLink;
@@ -149,6 +160,7 @@ public class Flame implements IMCLoaderFlame {
                     uuid,
                     version,
                     adapter,
+                    lang.flux(),
                     displayName,
                     address,
                     magicLink.flux(),

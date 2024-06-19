@@ -6,10 +6,10 @@ import group.aelysium.rustyconnector.proxy.family.load_balancing.RoundRobin;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.whitelist.Whitelist;
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
-import group.aelysium.rustyconnector.toolkit.velocity.family.scalar_family.IScalarFamily;
-import group.aelysium.rustyconnector.toolkit.velocity.family.load_balancing.ILoadBalancer;
-import group.aelysium.rustyconnector.toolkit.velocity.family.whitelist.IWhitelist;
+import group.aelysium.rustyconnector.toolkit.proxy.family.IFamily;
+import group.aelysium.rustyconnector.toolkit.proxy.family.scalar_family.IScalarFamily;
+import group.aelysium.rustyconnector.toolkit.proxy.family.load_balancing.ILoadBalancer;
+import group.aelysium.rustyconnector.toolkit.proxy.family.whitelist.IWhitelist;
 import org.jetbrains.annotations.NotNull;
 
 public class ScalarFamily extends Family implements IScalarFamily {

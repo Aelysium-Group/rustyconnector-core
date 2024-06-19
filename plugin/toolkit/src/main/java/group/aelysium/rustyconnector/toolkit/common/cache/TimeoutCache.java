@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
+import group.aelysium.rustyconnector.toolkit.proxy.util.LiquidTimestamp;
 
 public class TimeoutCache<K, V> implements Closeable, Map<K, V> {
     private final Map<K, TimedValue<V>> map = new ConcurrentHashMap<>();

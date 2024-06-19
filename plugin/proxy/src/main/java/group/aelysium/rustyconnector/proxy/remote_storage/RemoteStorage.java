@@ -4,8 +4,8 @@ import group.aelysium.rustyconnector.proxy.remote_storage.reactors.MySQLReactor;
 import group.aelysium.rustyconnector.proxy.remote_storage.reactors.StorageReactor;
 import group.aelysium.rustyconnector.toolkit.common.UserPass;
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
-import group.aelysium.rustyconnector.toolkit.velocity.storage.IRemoteStorage;
+import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.proxy.storage.IRemoteStorage;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetSocketAddress;

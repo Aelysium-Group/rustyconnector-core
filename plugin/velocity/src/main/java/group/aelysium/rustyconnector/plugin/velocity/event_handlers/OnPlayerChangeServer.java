@@ -7,7 +7,7 @@ import com.velocitypowered.api.event.player.ServerPreConnectEvent;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import group.aelysium.rustyconnector.plugin.velocity.lib.players.Player;
 import group.aelysium.rustyconnector.toolkit.RC;
-import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
+import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.IMCLoader;
 
 import java.util.UUID;
 

@@ -1,9 +1,9 @@
 package group.aelysium.rustyconnector.proxy.local_storage;
 
 
-import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
-import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
-import group.aelysium.rustyconnector.toolkit.velocity.storage.ILocalStorage;
+import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.IMCLoader;
+import group.aelysium.rustyconnector.toolkit.proxy.storage.ILocalStorage;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

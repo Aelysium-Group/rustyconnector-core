@@ -3,7 +3,7 @@ package group.aelysium.rustyconnector.common.model;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import group.aelysium.rustyconnector.toolkit.common.crypt.Snowflake;
-import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
+import group.aelysium.rustyconnector.toolkit.proxy.util.LiquidTimestamp;
 
 public class FailService implements AutoCloseable {
     protected final Cache<Long, Boolean> fails;

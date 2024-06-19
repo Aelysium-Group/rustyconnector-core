@@ -2,10 +2,10 @@ package group.aelysium.rustyconnector.proxy.family.whitelist;
 
 import group.aelysium.rustyconnector.proxy.Permission;
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
-import group.aelysium.rustyconnector.toolkit.velocity.family.whitelist.IWhitelist;
+import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.proxy.family.whitelist.IWhitelist;
 import group.aelysium.rustyconnector.common.Callable;
-import group.aelysium.rustyconnector.toolkit.velocity.family.whitelist.IWhitelistPlayerFilter;
+import group.aelysium.rustyconnector.toolkit.proxy.family.whitelist.IWhitelistPlayerFilter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;

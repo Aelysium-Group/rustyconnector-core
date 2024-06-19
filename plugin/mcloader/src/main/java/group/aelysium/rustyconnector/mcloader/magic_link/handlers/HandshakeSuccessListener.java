@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.mcloader.magic_link.handlers;
 
 import group.aelysium.rustyconnector.common.packets.BuiltInIdentifications;
-import group.aelysium.rustyconnector.mcloader.lang.MCLoaderLang;
+import group.aelysium.rustyconnector.toolkit.mc_loader.lang.MCLoaderLang;
 import group.aelysium.rustyconnector.mcloader.magic_link.MagicLink;
 import group.aelysium.lib.ranked_game_interface.RankedGameInterfaceService;
 import group.aelysium.rustyconnector.toolkit.common.logger.IPluginLogger;

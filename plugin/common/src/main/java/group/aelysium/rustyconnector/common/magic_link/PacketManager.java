@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.common.magic_link;
 
 import group.aelysium.rustyconnector.toolkit.common.cache.TimeoutCache;
-import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
+import group.aelysium.rustyconnector.toolkit.proxy.util.LiquidTimestamp;
 
 import java.util.Map;
 import java.util.UUID;

@@ -2,7 +2,7 @@ package group.aelysium.rustyconnector.toolkit;
 
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.mc_loader.IMCLoaderFlame;
-import group.aelysium.rustyconnector.toolkit.velocity.IProxyFlame;
+import group.aelysium.rustyconnector.toolkit.proxy.IProxyFlame;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;

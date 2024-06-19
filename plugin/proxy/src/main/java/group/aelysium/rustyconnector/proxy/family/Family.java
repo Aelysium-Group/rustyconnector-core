@@ -1,11 +1,11 @@
 package group.aelysium.rustyconnector.proxy.family;
 
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
-import group.aelysium.rustyconnector.toolkit.velocity.family.IFamilyConnector;
-import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
-import group.aelysium.rustyconnector.toolkit.velocity.family.load_balancing.ILoadBalancer;
-import group.aelysium.rustyconnector.toolkit.velocity.family.whitelist.IWhitelist;
-import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.proxy.family.IFamilyConnector;
+import group.aelysium.rustyconnector.toolkit.proxy.family.IFamily;
+import group.aelysium.rustyconnector.toolkit.proxy.family.load_balancing.ILoadBalancer;
+import group.aelysium.rustyconnector.toolkit.proxy.family.whitelist.IWhitelist;
+import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;

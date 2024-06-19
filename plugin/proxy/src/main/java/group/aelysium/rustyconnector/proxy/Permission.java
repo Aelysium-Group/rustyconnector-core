@@ -1,8 +1,8 @@
 package group.aelysium.rustyconnector.proxy;
 
 import group.aelysium.rustyconnector.toolkit.RC;
-import group.aelysium.rustyconnector.toolkit.velocity.ProxyAdapter;
-import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.proxy.ProxyAdapter;
+import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
 
 import java.util.Locale;
 

@@ -1,18 +1,18 @@
 package group.aelysium.rustyconnector.plugin.velocity.config;
 
-import group.aelysium.rustyconnector.common.config.YAML;
+import group.aelysium.rustyconnector.common.config.Config;
 import group.aelysium.rustyconnector.common.lang.LangService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.magic_link.MagicLink;
 import group.aelysium.rustyconnector.plugin.velocity.lib.remote_storage.Storage;
 import group.aelysium.rustyconnector.toolkit.common.UserPass;
 import group.aelysium.rustyconnector.toolkit.common.config.IConfigService;
-import group.aelysium.rustyconnector.toolkit.common.config.IConfig;
+import group.aelysium.rustyconnector.toolkit.common.lang.IConfig;
 import group.aelysium.rustyconnector.toolkit.common.lang.LangFileMappings;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 
-public class MagicLinkConfig extends YAML {
+public class MagicLinkConfig extends Config {
     private MagicLink.Configuration configuration;
     public MagicLink.Configuration storageConfiguration() {
         return this.configuration;

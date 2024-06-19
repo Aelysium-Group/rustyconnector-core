@@ -3,13 +3,15 @@ package group.aelysium.rustyconnector.toolkit;
 import group.aelysium.rustyconnector.toolkit.common.events.IEventManager;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.IMagicLink;
 import group.aelysium.rustyconnector.toolkit.mc_loader.MCLoaderAdapter;
-import group.aelysium.rustyconnector.toolkit.velocity.ProxyAdapter;
-import group.aelysium.rustyconnector.toolkit.velocity.family.IFamilies;
-import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
-import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
-import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
-import group.aelysium.rustyconnector.toolkit.velocity.storage.ILocalStorage;
-import group.aelysium.rustyconnector.toolkit.velocity.storage.IRemoteStorage;
+import group.aelysium.rustyconnector.toolkit.mc_loader.lang.MCLoaderLangLibrary;
+import group.aelysium.rustyconnector.toolkit.proxy.ProxyAdapter;
+import group.aelysium.rustyconnector.toolkit.proxy.family.IFamilies;
+import group.aelysium.rustyconnector.toolkit.proxy.family.IFamily;
+import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.IMCLoader;
+import group.aelysium.rustyconnector.toolkit.proxy.lang.ProxyLangLibrary;
+import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.proxy.storage.ILocalStorage;
+import group.aelysium.rustyconnector.toolkit.proxy.storage.IRemoteStorage;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -49,6 +51,10 @@ public interface RC {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Adapter();
         }
 
+        static ProxyLangLibrary Lang() throws NoSuchElementException {
+            return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Lang().orElseThrow();
+        }
+
         static Optional<IFamily> Family(String id) throws NoSuchElementException {
             IFamily family = null;
             try {
@@ -76,6 +82,10 @@ public interface RC {
 
         static MCLoaderAdapter Adapter() throws NoSuchElementException {
             return RustyConnector.Toolkit.MCLoader().orElseThrow().orElseThrow().Adapter();
+        }
+
+        static MCLoaderLangLibrary Lang() throws NoSuchElementException {
+            return RustyConnector.Toolkit.MCLoader().orElseThrow().orElseThrow().Lang().orElseThrow();
         }
 
         static IEventManager EventManager() throws NoSuchElementException {

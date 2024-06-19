@@ -3,9 +3,9 @@ package group.aelysium.rustyconnector.proxy.family;
 import group.aelysium.rustyconnector.proxy.family.scalar_family.RootFamily;
 import group.aelysium.rustyconnector.proxy.family.scalar_family.ScalarFamily;
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
-import group.aelysium.rustyconnector.toolkit.velocity.family.IFamilies;
-import group.aelysium.rustyconnector.toolkit.velocity.family.scalar_family.IRootFamily;
+import group.aelysium.rustyconnector.toolkit.proxy.family.IFamily;
+import group.aelysium.rustyconnector.toolkit.proxy.family.IFamilies;
+import group.aelysium.rustyconnector.toolkit.proxy.family.scalar_family.IRootFamily;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

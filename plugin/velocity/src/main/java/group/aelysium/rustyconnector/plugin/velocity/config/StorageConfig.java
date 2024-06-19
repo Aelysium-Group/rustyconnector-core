@@ -1,17 +1,17 @@
 package group.aelysium.rustyconnector.plugin.velocity.config;
 
-import group.aelysium.rustyconnector.common.config.YAML;
+import group.aelysium.rustyconnector.common.config.Config;
 import group.aelysium.rustyconnector.common.lang.LangService;
 import group.aelysium.rustyconnector.plugin.velocity.lib.remote_storage.Storage;
 import group.aelysium.rustyconnector.toolkit.common.UserPass;
 import group.aelysium.rustyconnector.toolkit.common.config.IConfigService;
-import group.aelysium.rustyconnector.toolkit.common.config.IConfig;
+import group.aelysium.rustyconnector.toolkit.common.lang.IConfig;
 import group.aelysium.rustyconnector.toolkit.common.lang.LangFileMappings;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 
-public class StorageConfig extends YAML {
+public class StorageConfig extends Config {
     private Storage.Configuration configuration;
     public Storage.Configuration storageConfiguration() {
         return this.configuration;

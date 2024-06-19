@@ -6,9 +6,9 @@ import group.aelysium.rustyconnector.common.packets.MagicLink;
 import group.aelysium.rustyconnector.toolkit.RC;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.IPacket;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketListener;
-import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.MCLoaderUnregisterEvent;
-import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
-import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
+import group.aelysium.rustyconnector.toolkit.proxy.events.mc_loader.MCLoaderUnregisterEvent;
+import group.aelysium.rustyconnector.toolkit.proxy.family.IFamily;
+import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.IMCLoader;
 
 import java.util.concurrent.TimeUnit;
 

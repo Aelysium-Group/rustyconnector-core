@@ -1,20 +1,20 @@
 package group.aelysium.rustyconnector.plugin.velocity.config;
 
-import group.aelysium.rustyconnector.common.config.YAML;
+import group.aelysium.rustyconnector.common.config.Config;
 import group.aelysium.rustyconnector.common.lang.LangService;
 import group.aelysium.rustyconnector.plugin.velocity.config.ConfigService;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.toolkit.common.config.IConfigService;
-import group.aelysium.rustyconnector.toolkit.common.config.IConfig;
+import group.aelysium.rustyconnector.toolkit.common.lang.IConfig;
 import group.aelysium.rustyconnector.toolkit.common.lang.LangFileMappings;
-import group.aelysium.rustyconnector.toolkit.velocity.config.IProxyConfigService;
-import group.aelysium.rustyconnector.toolkit.velocity.config.LoadBalancerConfig;
-import group.aelysium.rustyconnector.toolkit.velocity.config.WhitelistConfig;
+import group.aelysium.rustyconnector.toolkit.proxy.config.IProxyConfigService;
+import group.aelysium.rustyconnector.toolkit.proxy.config.LoadBalancerConfig;
+import group.aelysium.rustyconnector.toolkit.proxy.config.WhitelistConfig;
 
 import java.nio.file.Path;
 import java.util.Optional;
 
-public class ScalarFamilyConfig extends YAML implements group.aelysium.rustyconnector.toolkit.velocity.config.ScalarFamilyConfig {
+public class ScalarFamilyConfig extends Config implements group.aelysium.rustyconnector.toolkit.proxy.config.ScalarFamilyConfig {
     private String displayName;
     private Family.Reference parent_family = Family.Reference.rootFamily();
     private String loadBalancer = "default";
@@ -71,7 +71,7 @@ public class ScalarFamilyConfig extends YAML implements group.aelysium.rustyconn
         this.whitelist_enabled = IConfig.getValue(this.data,"whitelist.enabled",Boolean.class);
         this.whitelist_name = IConfig.getValue(this.data,"whitelist.name",String.class);
         if(this.whitelist_enabled && this.whitelist_name.equals(""))
-            throw new IllegalStateException("whitelist.id cannot be empty in order to use a whitelist in a family!");
+            throw new IllegalStateException("whitelist.word_id cannot be empty in order to use a whitelist in a family!");
 
         this.whitelist_name = this.whitelist_name.replaceFirst("\\.yml$|\\.yaml$","");
     }

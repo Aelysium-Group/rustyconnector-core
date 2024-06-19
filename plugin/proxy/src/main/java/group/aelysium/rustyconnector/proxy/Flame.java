@@ -10,17 +10,18 @@ import group.aelysium.rustyconnector.proxy.remote_storage.RemoteStorage;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.proxy.family.Families;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.IMagicLink;
-import group.aelysium.rustyconnector.toolkit.velocity.ProxyAdapter;
+import group.aelysium.rustyconnector.toolkit.proxy.ProxyAdapter;
 import group.aelysium.rustyconnector.toolkit.common.events.IEventManager;
-import group.aelysium.rustyconnector.toolkit.velocity.IProxyFlame;
-import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.MCLoaderRegisterEvent;
-import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.MCLoaderUnregisterEvent;
-import group.aelysium.rustyconnector.toolkit.velocity.events.player.FamilyLeaveEvent;
-import group.aelysium.rustyconnector.toolkit.velocity.events.player.MCLoaderLeaveEvent;
-import group.aelysium.rustyconnector.toolkit.velocity.family.IFamilies;
-import group.aelysium.rustyconnector.toolkit.velocity.storage.ILocalStorage;
-import group.aelysium.rustyconnector.toolkit.velocity.storage.IRemoteStorage;
-import group.aelysium.rustyconnector.toolkit.velocity.util.Version;
+import group.aelysium.rustyconnector.toolkit.proxy.IProxyFlame;
+import group.aelysium.rustyconnector.toolkit.proxy.events.mc_loader.MCLoaderRegisterEvent;
+import group.aelysium.rustyconnector.toolkit.proxy.events.mc_loader.MCLoaderUnregisterEvent;
+import group.aelysium.rustyconnector.toolkit.proxy.events.player.FamilyLeaveEvent;
+import group.aelysium.rustyconnector.toolkit.proxy.events.player.MCLoaderLeaveEvent;
+import group.aelysium.rustyconnector.toolkit.proxy.family.IFamilies;
+import group.aelysium.rustyconnector.toolkit.proxy.lang.ProxyLangLibrary;
+import group.aelysium.rustyconnector.toolkit.proxy.storage.ILocalStorage;
+import group.aelysium.rustyconnector.toolkit.proxy.storage.IRemoteStorage;
+import group.aelysium.rustyconnector.toolkit.proxy.util.Version;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,6 +33,7 @@ public class Flame implements IProxyFlame {
     private final UUID uuid;
     private final Version version;
     private final ProxyAdapter adapter;
+    private final Flux<ProxyLangLibrary> lang;
     private final Flux<IFamilies> families;
     private final Flux<IMagicLink.Proxy> magicLink;
     private final Flux<IRemoteStorage> remoteStorage;
@@ -43,6 +45,7 @@ public class Flame implements IProxyFlame {
             @NotNull UUID uuid,
             @NotNull Version version,
             @NotNull ProxyAdapter adapter,
+            @NotNull Flux<ProxyLangLibrary> lang,
             @NotNull List<Component> bootOutput,
             @NotNull Flux<IFamilies> families,
             @NotNull Flux<IMagicLink.Proxy> magicLink,
@@ -53,6 +56,7 @@ public class Flame implements IProxyFlame {
         this.uuid = uuid;
         this.version = version;
         this.adapter = adapter;
+        this.lang = lang;
         this.bootOutput = bootOutput;
         this.families = families;
         this.magicLink = magicLink;
@@ -68,6 +72,11 @@ public class Flame implements IProxyFlame {
     @Override
     public ProxyAdapter Adapter() {
         return this.adapter;
+    }
+
+    @Override
+    public Flux<ProxyLangLibrary> Lang() {
+        return this.lang;
     }
 
     @Override
@@ -114,6 +123,7 @@ public class Flame implements IProxyFlame {
         private final UUID uuid;
         private final Version version;
         private final ProxyAdapter adapter;
+        private final ProxyLangLibrary.Tinder lang;
         private final Families.Tinder families;
         private final MagicLink.Tinder magicLink;
         private final RemoteStorage.Tinder remoteStorage;
@@ -124,6 +134,7 @@ public class Flame implements IProxyFlame {
                 @NotNull UUID uuid,
                 @NotNull Version version,
                 @NotNull ProxyAdapter adapter,
+                @NotNull ProxyLangLibrary.Tinder lang,
                 @NotNull Families.Tinder families,
                 @NotNull MagicLink.Tinder magicLink,
                 @NotNull RemoteStorage.Tinder remoteStorage,
@@ -134,6 +145,7 @@ public class Flame implements IProxyFlame {
             this.uuid = uuid;
             this.version = version;
             this.adapter = adapter;
+            this.lang = lang;
             this.families = families;
             this.magicLink = magicLink;
             this.remoteStorage = remoteStorage;
@@ -151,6 +163,7 @@ public class Flame implements IProxyFlame {
                     this.uuid,
                     this.version,
                     this.adapter,
+                    this.lang.flux(),
                     new ArrayList<>(),
                     this.families.flux(),
                     this.magicLink.flux(),

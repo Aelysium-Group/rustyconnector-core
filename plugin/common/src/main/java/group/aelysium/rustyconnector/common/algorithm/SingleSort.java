@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.common.algorithm;
 
-import group.aelysium.rustyconnector.toolkit.velocity.family.load_balancing.ISortable;
+import group.aelysium.rustyconnector.toolkit.proxy.family.load_balancing.ISortable;
 
 import java.util.List;
 

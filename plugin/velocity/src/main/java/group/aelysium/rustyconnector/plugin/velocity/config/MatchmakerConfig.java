@@ -1,20 +1,20 @@
 package group.aelysium.rustyconnector.plugin.velocity.config;
 
-import group.aelysium.rustyconnector.common.config.YAML;
+import group.aelysium.rustyconnector.common.config.Config;
 import group.aelysium.rustyconnector.common.lang.LangService;
 import group.aelysium.rustyconnector.plugin.velocity.config.ConfigService;
 import group.aelysium.rustyconnector.proxy.family.matchmaking.rank.*;
 import group.aelysium.rustyconnector.toolkit.common.config.IConfigService;
-import group.aelysium.rustyconnector.toolkit.common.config.IConfig;
+import group.aelysium.rustyconnector.toolkit.common.lang.IConfig;
 import group.aelysium.rustyconnector.toolkit.common.lang.LangFileMappings;
-import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IMatchmaker;
-import group.aelysium.rustyconnector.toolkit.velocity.family.matchmaking.IVelocityPlayerRank;
-import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
+import group.aelysium.rustyconnector.toolkit.proxy.family.matchmaking.IMatchmaker;
+import group.aelysium.rustyconnector.toolkit.proxy.family.matchmaking.IVelocityPlayerRank;
+import group.aelysium.rustyconnector.toolkit.proxy.util.LiquidTimestamp;
 
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
-public class MatchmakerConfig extends YAML implements group.aelysium.rustyconnector.toolkit.velocity.config.MatchMakerConfig {
+public class MatchmakerConfig extends Config implements group.aelysium.rustyconnector.toolkit.proxy.config.MatchMakerConfig {
     private IMatchmaker.Settings settings;
 
     public IMatchmaker.Settings settings() {

@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.toolkit.common.absolute_redundancy;
 
-import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
+import group.aelysium.rustyconnector.toolkit.proxy.util.LiquidTimestamp;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

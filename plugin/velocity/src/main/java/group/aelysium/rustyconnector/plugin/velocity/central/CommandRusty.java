@@ -16,15 +16,15 @@ import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.ranked_family.RankedFamily;
 import group.aelysium.rustyconnector.plugin.velocity.lib.players.Player;
 import group.aelysium.rustyconnector.plugin.velocity.lib.remote_storage.Storage;
-import group.aelysium.rustyconnector.toolkit.velocity.connection.ConnectionResult;
-import group.aelysium.rustyconnector.toolkit.velocity.connection.IPlayerConnectable;
-import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
-import group.aelysium.rustyconnector.toolkit.velocity.util.DependencyInjector;
+import group.aelysium.rustyconnector.toolkit.proxy.connection.ConnectionResult;
+import group.aelysium.rustyconnector.toolkit.proxy.connection.IPlayerConnectable;
+import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.proxy.util.DependencyInjector;
 import group.aelysium.rustyconnector.plugin.velocity.PluginLogger;
 import group.aelysium.rustyconnector.proxy.family.scalar_family.ScalarFamily;
 import group.aelysium.rustyconnector.proxy.family.static_family.StaticFamily;
 import group.aelysium.rustyconnector.proxy.family.dynamic_scale.K8Service;
-import group.aelysium.rustyconnector.plugin.velocity.lang.ProxyLang;
+import group.aelysium.rustyconnector.toolkit.proxy.lang.ProxyLang;
 import group.aelysium.rustyconnector.proxy.family.mcloader.MCLoader;
 import group.aelysium.rustyconnector.toolkit.common.cache.MessageCache;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -175,7 +175,7 @@ class FamilyC {
                                 if(family instanceof RankedFamily)
                                     ProxyLang.RC_RANKED_FAMILY_INFO.send(logger, (RankedFamily) family, false);
                             } catch (NoSuchElementException e) {
-                                logger.send(Component.text("A family with that id doesn't exist!", NamedTextColor.RED));
+                                logger.send(Component.text("A family with that word_id doesn't exist!", NamedTextColor.RED));
                             } catch (Exception e) {
                                 logger.send(Component.text("Something prevented us from getting that family!\n"+e.getMessage(), NamedTextColor.RED));
                             }
@@ -206,7 +206,7 @@ class FamilyC {
                                 ProxyLang.RC_RANKED_FAMILY_INFO.send(logger, (RankedFamily) family, false);
                         }, () -> {throw new NullPointerException("This family is currently not available. Try again later!");});
                     } catch (NoSuchElementException e) {
-                        logger.send(Component.text("A family with that id doesn't exist!", NamedTextColor.RED));
+                        logger.send(Component.text("A family with that word_id doesn't exist!", NamedTextColor.RED));
                     } catch (Exception e) {
                         logger.send(Component.text("Something prevented us from doing that!\n"+e.getMessage(), NamedTextColor.RED));
                     }
@@ -233,7 +233,7 @@ class FamilyC {
                         }, () -> {throw new NullPointerException("This family is currently not available. Try again later!");});
 
                     } catch (NoSuchElementException e) {
-                        logger.send(Component.text("A family with that id doesn't exist!", NamedTextColor.RED));
+                        logger.send(Component.text("A family with that word_id doesn't exist!", NamedTextColor.RED));
                     } catch (Exception e) {
                         logger.send(Component.text("Something prevented us from doing that!\n"+e.getMessage(), NamedTextColor.RED));
                     }
@@ -255,7 +255,7 @@ class FamilyC {
                         if(family instanceof RankedFamily)
                             ProxyLang.RC_RANKED_FAMILY_INFO.send(logger, (RankedFamily) family, true);
                     } catch (NoSuchElementException e) {
-                        logger.send(Component.text("A family with that id doesn't exist!", NamedTextColor.RED));
+                        logger.send(Component.text("A family with that word_id doesn't exist!", NamedTextColor.RED));
                     } catch (Exception e) {
                         logger.send(Component.text("Something prevented us from doing that!\n"+e.getMessage(), NamedTextColor.RED));
                     }
@@ -284,7 +284,7 @@ class FamilyC {
                         logger.send(Component.text(playerNames));
                     } catch (NoSuchElementException e) {
                         ProxyLang.RC_FAMILY.send(logger);
-                        logger.send(Component.text("A family with that id doesn't exist!", NamedTextColor.RED));
+                        logger.send(Component.text("A family with that word_id doesn't exist!", NamedTextColor.RED));
                     } catch (Exception e) {
                         ProxyLang.RC_FAMILY.send(logger);
                         logger.send(Component.text("Something prevented us from doing that!\n"+e.getMessage(), NamedTextColor.RED));

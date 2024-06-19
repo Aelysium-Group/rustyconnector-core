@@ -6,7 +6,7 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import group.aelysium.rustyconnector.plugin.velocity.lib.players.Player;
 import group.aelysium.rustyconnector.toolkit.RC;
-import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
 
 public class OnPlayerDisconnect {
     /**

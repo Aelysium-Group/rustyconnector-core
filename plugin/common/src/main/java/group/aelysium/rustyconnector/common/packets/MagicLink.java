@@ -2,7 +2,7 @@ package group.aelysium.rustyconnector.common.packets;
 
 import group.aelysium.rustyconnector.common.magic_link.Packet;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.IPacket;
-import group.aelysium.rustyconnector.toolkit.velocity.util.ColorMapper;
+import group.aelysium.rustyconnector.toolkit.proxy.util.ColorMapper;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.util.*;

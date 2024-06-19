@@ -1,8 +1,8 @@
 package group.aelysium.rustyconnector.proxy.players;
 
 import group.aelysium.rustyconnector.toolkit.RC;
-import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
-import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
+import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.IMCLoader;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 

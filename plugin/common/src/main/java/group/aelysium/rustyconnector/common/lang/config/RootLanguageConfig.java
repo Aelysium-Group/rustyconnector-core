@@ -1,9 +1,9 @@
 package group.aelysium.rustyconnector.common.lang.config;
 
 import group.aelysium.rustyconnector.toolkit.common.config.IConfigService;
-import group.aelysium.rustyconnector.toolkit.common.config.IConfig;
+import group.aelysium.rustyconnector.toolkit.common.lang.IConfig;
 import group.aelysium.rustyconnector.toolkit.common.logger.IPluginLogger;
-import group.aelysium.rustyconnector.common.config.YAML;
+import group.aelysium.rustyconnector.common.config.Config;
 import group.aelysium.rustyconnector.common.exception.NoOutputException;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -12,7 +12,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class RootLanguageConfig extends YAML {
+public class RootLanguageConfig extends Config {
     protected RootLanguageConfig(Path dataFolder) {
         super(dataFolder, "language.yml", "language");
     }
@@ -29,7 +29,7 @@ public class RootLanguageConfig extends YAML {
                     parent.mkdirs();
 
                 try {
-                    InputStream stream = YAML.class.getClassLoader().getResourceAsStream("language.yml");
+                    InputStream stream = Config.class.getClassLoader().getResourceAsStream("language.yml");
                     Files.copy(stream, this.configPointer.toPath());
                 } catch (Exception e) {
                     throw new RuntimeException(e);

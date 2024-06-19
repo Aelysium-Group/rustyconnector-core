@@ -5,7 +5,7 @@ import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
 import group.aelysium.rustyconnector.plugin.velocity.lib.lang.ProxyLang;
 import group.aelysium.rustyconnector.toolkit.common.events.Listener;
 import group.aelysium.rustyconnector.toolkit.common.log_gate.GateKey;
-import group.aelysium.rustyconnector.toolkit.velocity.events.mc_loader.MCLoaderRegisterEvent;
+import group.aelysium.rustyconnector.toolkit.proxy.events.mc_loader.MCLoaderRegisterEvent;
 
 public class OnMCLoaderRegister implements Listener<MCLoaderRegisterEvent> {
     public void handler(MCLoaderRegisterEvent event) {

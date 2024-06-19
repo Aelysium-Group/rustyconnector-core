@@ -11,7 +11,7 @@ import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.IPacket;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketStatus;
 import group.aelysium.rustyconnector.toolkit.common.message_cache.ICacheableMessage;
-import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
+import group.aelysium.rustyconnector.toolkit.proxy.util.LiquidTimestamp;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

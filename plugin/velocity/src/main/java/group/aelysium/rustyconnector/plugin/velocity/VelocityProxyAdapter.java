@@ -7,11 +7,11 @@ import com.velocitypowered.api.proxy.server.ServerInfo;
 import group.aelysium.rustyconnector.common.exception.NoOutputException;
 import group.aelysium.rustyconnector.proxy.family.mcloader.MCLoader;
 import group.aelysium.rustyconnector.proxy.players.Player;
-import group.aelysium.rustyconnector.toolkit.velocity.ProxyAdapter;
-import group.aelysium.rustyconnector.toolkit.velocity.connection.ConnectionResult;
-import group.aelysium.rustyconnector.toolkit.velocity.connection.IPlayerConnectable;
-import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
-import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.proxy.ProxyAdapter;
+import group.aelysium.rustyconnector.toolkit.proxy.connection.ConnectionResult;
+import group.aelysium.rustyconnector.toolkit.proxy.connection.IPlayerConnectable;
+import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.IMCLoader;
+import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,18 +47,13 @@ public class VelocityProxyAdapter extends ProxyAdapter {
     }
 
     @Override
-    public void handleInitialCommit(@NotNull Object player, @NotNull IMCLoader mcloader) {
-
-    }
-
-    @Override
     public void registerMCLoader(@NotNull IMCLoader mcloader) {
-        this.velocity.registerServer(new ServerInfo(mcloader.uuid().toString(), mcloader.address()));
+        this.velocity.registerServer(new ServerInfo(mcloader.uuidOrDisplayName(), mcloader.address()));
     }
 
     @Override
     public void unregisterMCLoader(@NotNull IMCLoader mcloader) {
-        this.velocity.unregisterServer(new ServerInfo(mcloader.uuid().toString(), mcloader.address()));
+        this.velocity.unregisterServer(new ServerInfo(mcloader.uuidOrDisplayName(), mcloader.address()));
     }
 
     @Override

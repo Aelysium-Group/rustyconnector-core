@@ -5,8 +5,8 @@ import group.aelysium.rustyconnector.toolkit.RC;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.IPacket;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.common.packets.SendPlayerPacket;
-import group.aelysium.rustyconnector.toolkit.velocity.family.IFamily;
-import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.proxy.family.IFamily;
+import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
 import net.kyori.adventure.text.Component;
 
 public class SendPlayerListener extends PacketListener<SendPlayerPacket> {

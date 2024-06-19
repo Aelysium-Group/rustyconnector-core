@@ -1,15 +1,15 @@
 package group.aelysium.rustyconnector.plugin.velocity.config;
 
-import group.aelysium.rustyconnector.common.config.YAML;
+import group.aelysium.rustyconnector.common.config.Config;
 import group.aelysium.rustyconnector.common.lang.LangService;
 import group.aelysium.rustyconnector.toolkit.common.config.IConfigService;
-import group.aelysium.rustyconnector.toolkit.common.config.IConfig;
+import group.aelysium.rustyconnector.toolkit.common.lang.IConfig;
 import group.aelysium.rustyconnector.toolkit.common.lang.LangFileMappings;
-import group.aelysium.rustyconnector.toolkit.velocity.family.load_balancing.AlgorithmType;
+import group.aelysium.rustyconnector.toolkit.proxy.family.load_balancing.AlgorithmType;
 
 import java.nio.file.Path;
 
-public class LoadBalancerConfig extends YAML implements group.aelysium.rustyconnector.toolkit.velocity.config.LoadBalancerConfig {
+public class LoadBalancerConfig extends Config implements group.aelysium.rustyconnector.toolkit.proxy.config.LoadBalancerConfig {
     private boolean weighted = false;
 
     private AlgorithmType algorithm = AlgorithmType.ROUND_ROBIN;

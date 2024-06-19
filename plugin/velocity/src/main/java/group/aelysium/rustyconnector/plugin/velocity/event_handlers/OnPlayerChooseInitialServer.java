@@ -5,10 +5,10 @@ import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
-import group.aelysium.rustyconnector.plugin.velocity.lib.players.Player;
+import group.aelysium.rustyconnector.proxy.players.Player;
 import group.aelysium.rustyconnector.toolkit.RC;
-import group.aelysium.rustyconnector.toolkit.velocity.connection.ConnectionResult;
-import group.aelysium.rustyconnector.toolkit.velocity.connection.IPlayerConnectable;
+import group.aelysium.rustyconnector.toolkit.proxy.connection.ConnectionResult;
+import group.aelysium.rustyconnector.toolkit.proxy.connection.IPlayerConnectable;
 import net.kyori.adventure.text.Component;
 
 import java.util.concurrent.TimeUnit;

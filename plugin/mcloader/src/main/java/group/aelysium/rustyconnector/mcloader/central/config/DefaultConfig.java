@@ -2,13 +2,13 @@ package group.aelysium.rustyconnector.mcloader.central.config;
 
 import group.aelysium.rustyconnector.common.lang.LangService;
 import group.aelysium.rustyconnector.toolkit.common.config.IConfigService;
-import group.aelysium.rustyconnector.toolkit.common.config.IConfig;
+import group.aelysium.rustyconnector.toolkit.common.lang.IConfig;
 import group.aelysium.rustyconnector.toolkit.common.lang.LangFileMappings;
-import group.aelysium.rustyconnector.common.config.YAML;
+import group.aelysium.rustyconnector.common.config.Config;
 
 import java.nio.file.Path;
 
-public class DefaultConfig extends YAML {
+public class DefaultConfig extends Config {
     private String address;
     private String magicConfig;
     private String displayName = null;

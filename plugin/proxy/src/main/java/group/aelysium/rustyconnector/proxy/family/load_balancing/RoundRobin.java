@@ -2,7 +2,7 @@ package group.aelysium.rustyconnector.proxy.family.load_balancing;
 
 import group.aelysium.rustyconnector.common.algorithm.WeightOnlyQuickSort;
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.toolkit.velocity.family.load_balancing.ILoadBalancer;
+import group.aelysium.rustyconnector.toolkit.proxy.family.load_balancing.ILoadBalancer;
 import org.jetbrains.annotations.NotNull;
 
 public class RoundRobin extends LoadBalancer {

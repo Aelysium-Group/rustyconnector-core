@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.proxy.remote_storage.reactors;
 
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.toolkit.velocity.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
 
 import java.util.Optional;
 import java.util.UUID;

@@ -1,8 +1,8 @@
 package group.aelysium.rustyconnector.proxy.family.dynamic_scale;
 
-import group.aelysium.rustyconnector.toolkit.velocity.family.Family;
-import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
-import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
+import group.aelysium.rustyconnector.toolkit.proxy.family.Family;
+import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.IMCLoader;
+import group.aelysium.rustyconnector.toolkit.proxy.util.LiquidTimestamp;
 import io.fabric8.kubernetes.api.model.Pod;
 
 import java.util.ArrayList;

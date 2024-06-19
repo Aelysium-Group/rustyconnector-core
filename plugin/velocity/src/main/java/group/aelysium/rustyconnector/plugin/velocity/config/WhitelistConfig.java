@@ -1,13 +1,13 @@
 package group.aelysium.rustyconnector.plugin.velocity.config;
 
-import group.aelysium.rustyconnector.common.config.YAML;
+import group.aelysium.rustyconnector.common.config.Config;
 import group.aelysium.rustyconnector.common.lang.LangService;
 import group.aelysium.rustyconnector.plugin.velocity.PluginLogger;
 import group.aelysium.rustyconnector.plugin.velocity.central.Tinder;
 import group.aelysium.rustyconnector.plugin.velocity.config.ConfigService;
-import group.aelysium.rustyconnector.plugin.velocity.lang.ProxyLang;
+import group.aelysium.rustyconnector.toolkit.proxy.lang.ProxyLang;
 import group.aelysium.rustyconnector.toolkit.common.config.IConfigService;
-import group.aelysium.rustyconnector.toolkit.common.config.IConfig;
+import group.aelysium.rustyconnector.toolkit.common.lang.IConfig;
 import group.aelysium.rustyconnector.toolkit.common.lang.LangFileMappings;
 import net.kyori.adventure.text.format.NamedTextColor;
 
@@ -15,7 +15,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WhitelistConfig extends YAML implements group.aelysium.rustyconnector.toolkit.velocity.config.WhitelistConfig {
+public class WhitelistConfig extends Config implements group.aelysium.rustyconnector.toolkit.proxy.config.WhitelistConfig {
     private boolean use_players = false;
     private List<Object> players = new ArrayList<>();
 

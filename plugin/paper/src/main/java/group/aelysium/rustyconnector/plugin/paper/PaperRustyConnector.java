@@ -4,8 +4,8 @@ import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.mcloader.Flame;
 import group.aelysium.rustyconnector.mcloader.magic_link.MagicLink;
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
-import group.aelysium.rustyconnector.mcloader.lang.MCLoaderLang;
-import group.aelysium.rustyconnector.toolkit.velocity.util.Version;
+import group.aelysium.rustyconnector.toolkit.mc_loader.lang.MCLoaderLang;
+import group.aelysium.rustyconnector.toolkit.proxy.util.Version;
 
 import java.net.InetSocketAddress;
 import java.util.UUID;

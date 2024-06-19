@@ -3,9 +3,9 @@ package group.aelysium.rustyconnector.proxy.family.load_balancing;
 import group.aelysium.rustyconnector.common.algorithm.QuickSort;
 import group.aelysium.rustyconnector.common.algorithm.WeightedQuickSort;
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.toolkit.velocity.family.load_balancing.ILoadBalancer;
-import group.aelysium.rustyconnector.toolkit.velocity.family.mcloader.IMCLoader;
-import group.aelysium.rustyconnector.toolkit.velocity.util.LiquidTimestamp;
+import group.aelysium.rustyconnector.toolkit.proxy.family.load_balancing.ILoadBalancer;
+import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.IMCLoader;
+import group.aelysium.rustyconnector.toolkit.proxy.util.LiquidTimestamp;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
