@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.toolkit.mc_loader;
 
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.toolkit.common.events.IEventManager;
+import group.aelysium.rustyconnector.toolkit.common.events.EventManager;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.IMagicLink;
 import group.aelysium.rustyconnector.toolkit.mc_loader.lang.MCLoaderLangLibrary;
 import group.aelysium.rustyconnector.toolkit.proxy.util.Version;
@@ -68,7 +68,7 @@ public interface IMCLoaderFlame extends Particle {
     Flux<IMagicLink.MCLoader> MagicLink();
     MCLoaderAdapter Adapter();
     Flux<MCLoaderLangLibrary> Lang();
-    IEventManager EventManager();
+    EventManager EventManager();
 
     abstract class Tinder extends Particle.Tinder<IMCLoaderFlame> {}
 }

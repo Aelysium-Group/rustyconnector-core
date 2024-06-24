@@ -10,21 +10,11 @@ import java.util.Optional;
  * Magic Link is the dynamic messaging protocol used to handle connections between the Proxy and MCLoaders.
  */
 public interface IMagicLink extends Particle {
-    Flux<Connection> connection();
-
-    interface Connection extends Particle {
-        /**
-         * Register a listener to handle particular packets.
-         * @param listener The listener to use.
-         */
-        void on(PacketListener<IPacket> listener);
-
-        /**
-         * Unregister a listener from handling particular packets.
-         * @param listener The listener to remove.
-         */
-        void off(PacketListener<IPacket> listener);
-    }
+    /**
+     * Register a listener to handle particular packets.
+     * @param listener The listener to use.
+     */
+    void on(PacketListener<? extends IPacket> listener);
 
     interface Proxy extends IMagicLink {
         /**
@@ -53,9 +43,5 @@ public interface IMagicLink extends Particle {
          * @param delay The delay to set.
          */
         void setDelay(int delay);
-    }
-
-    abstract class MessageHandler {
-        public abstract void onMessage(String message);
     }
 }

@@ -1,20 +1,13 @@
 package group.aelysium.rustyconnector.plugin.velocity.config;
 
 import group.aelysium.rustyconnector.common.config.Config;
-import group.aelysium.rustyconnector.common.lang.LangService;
-import group.aelysium.rustyconnector.plugin.velocity.config.ConfigService;
-import group.aelysium.rustyconnector.proxy.family.Family;
-import group.aelysium.rustyconnector.toolkit.common.config.IConfigService;
 import group.aelysium.rustyconnector.toolkit.common.lang.IConfig;
-import group.aelysium.rustyconnector.toolkit.common.lang.LangFileMappings;
-import group.aelysium.rustyconnector.toolkit.proxy.config.IProxyConfigService;
-import group.aelysium.rustyconnector.toolkit.proxy.config.LoadBalancerConfig;
-import group.aelysium.rustyconnector.toolkit.proxy.config.WhitelistConfig;
+import group.aelysium.rustyconnector.toolkit.proxy.family.scalar_family.ScalarFamily;
 
 import java.nio.file.Path;
 import java.util.Optional;
 
-public class ScalarFamilyConfig extends Config implements group.aelysium.rustyconnector.toolkit.proxy.config.ScalarFamilyConfig {
+public class ScalarFamilyConfig extends Config<ScalarFamily.Tinder> {
     private String displayName;
     private Family.Reference parent_family = Family.Reference.rootFamily();
     private String loadBalancer = "default";

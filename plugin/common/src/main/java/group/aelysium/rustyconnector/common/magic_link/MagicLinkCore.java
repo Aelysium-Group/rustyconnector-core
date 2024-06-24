@@ -2,147 +2,103 @@ package group.aelysium.rustyconnector.common.magic_link;
 
 import group.aelysium.rustyconnector.toolkit.common.cache.MessageCache;
 import group.aelysium.rustyconnector.toolkit.common.cache.TimeoutCache;
-import group.aelysium.rustyconnector.common.exception.BlockedMessageException;
-import group.aelysium.rustyconnector.common.exception.NoOutputException;
 import group.aelysium.rustyconnector.toolkit.common.crypt.AESCryptor;
-import group.aelysium.rustyconnector.toolkit.common.log_gate.GateKey;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.IMagicLink;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.IPacket;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketIdentification;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketStatus;
 import group.aelysium.rustyconnector.toolkit.common.message_cache.ICacheableMessage;
 import group.aelysium.rustyconnector.toolkit.proxy.util.LiquidTimestamp;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
-public class MagicLinkCore implements IMagicLink {
+public abstract class MagicLinkCore implements IMagicLink {
+    private final TimeoutCache<UUID, IPacket> packetsAwaitingReply = new TimeoutCache<>(LiquidTimestamp.from(10, TimeUnit.SECONDS));
+    private final Map<PacketIdentification, List<PacketListener<? extends IPacket>>> listeners = new ConcurrentHashMap<>();
     protected final AESCryptor cryptor;
     protected final MessageCache cache;
-    protected final IMagicLink.MessageHandler messageHandler;
+    protected final IPacket.Target self;
 
-    protected MagicLinkCore(@NotNull AESCryptor cryptor, @NotNull MessageCache cache, @NotNull IMagicLink.MessageHandler messageHandler) {
+    protected MagicLinkCore(
+            @NotNull AESCryptor cryptor,
+            @NotNull MessageCache cache,
+            @NotNull IPacket.Target self
+    ) {
         this.cryptor = cryptor;
         this.cache = cache;
-        this.messageHandler = messageHandler;
+        this.self = self;
+    }
+
+    public final void publish(IPacket packet) {
+        packetsAwaitingReply.put(packet.responseTarget().ownTarget(), packet);
     }
 
     @Override
-    public Flux<IMagicLink.Connection> connection() {
-        return null;
+    public void on(PacketListener<? extends IPacket> listener) {
+        this.listeners.putIfAbsent(listener.target(), new ArrayList<>());
+        this.listeners.get(listener.target()).add(listener);
     }
 
     @Override
     public void close() throws Exception {
+        this.listeners.clear();
+        this.cache.kill();
+        this.packetsAwaitingReply.close();
     }
 
-    public static class Connection implements IMagicLink.Connection {
-        private final TimeoutCache<UUID, IPacket> packetsAwaitingReply = new TimeoutCache<>(LiquidTimestamp.from(10, TimeUnit.SECONDS));
-
-        public final void publish(IPacket packet) {
-            packetsAwaitingReply.put(packet.responseTarget().ownTarget(), packet);
-        }
-
-        @Override
-        public void on(PacketListener<IPacket> listener) {
-
-        }
-
-        @Override
-        public void off(PacketListener<IPacket> listener) {
-
-        }
-
-        @Override
-        public void close() throws Exception {
-            this.packetsAwaitingReply.close();
-        }
-    }
-
-    public static final Consumer<String> DEFAULT_MESSAGE_HANDLER = (String rawMessage) -> {
-        // If the proxy doesn't have a message cache (maybe it's in the middle of a reload)
-        // Set a temporary, worthless, message cache so that the system can still "cache" messages into the worthless cache if needed.
-        if(messageCache == null) {
-            this.messageCache = new MessageCache(1);
-        }
-
+    public void handleMessage(String rawMessage) {
         ICacheableMessage cachedMessage = null;
+        String decryptedMessage;
         try {
-            String decryptedMessage;
-            try {
-                decryptedMessage = this.cryptor().decrypt(rawMessage);
-                cachedMessage = messageCache.cacheMessage(decryptedMessage, PacketStatus.UNDEFINED);
-            } catch (Exception e) {
-                cachedMessage = messageCache.cacheMessage(rawMessage, PacketStatus.UNDEFINED);
-                cachedMessage.sentenceMessage(PacketStatus.AUTH_DENIAL, "This message was encrypted using a different private key from what I have!");
+            decryptedMessage = this.cryptor.decrypt(rawMessage);
+            cachedMessage = this.cache.cacheMessage(decryptedMessage, PacketStatus.UNDEFINED);
+        } catch (Exception e) {
+            cachedMessage = this.cache.cacheMessage(rawMessage, PacketStatus.UNDEFINED);
+            cachedMessage.sentenceMessage(PacketStatus.AUTH_DENIAL, "This message was encrypted using a different private key from what I have!");
+            return;
+        }
+
+        Packet message = Packet.parseReceived(decryptedMessage);
+
+        if(this.cache.ignoredType(message)) this.cache.removeMessage(cachedMessage.getSnowflake());
+
+        if(!this.self.isNodeEquivalentToMe(message.target())) {
+            cachedMessage.sentenceMessage(PacketStatus.TRASHED, "Message wasn't addressed to us.");
+            return;
+        }
+
+        if(message.replying()) {
+            IPacket reply = this.packetsAwaitingReply.get(message.responseTarget().remoteTarget().orElse(null));
+
+            if(reply == null) {
+                cachedMessage.sentenceMessage(PacketStatus.TRASHED, "The packet that this is replying to doesn't exist.");
                 return;
             }
 
-            Packet message = Packet.Serializer.parseReceived(decryptedMessage);
-
-            if (messageCache.ignoredType(message)) messageCache.removeMessage(cachedMessage.getSnowflake());
-
-            if(!self.isNodeEquivalentToMe(message.target())) throw new Exception("Message was not addressed to us.");
-
-            try {
-                cachedMessage.sentenceMessage(PacketStatus.ACCEPTED);
-
-
-                if(message.replying()) {
-                    ICoreMagicLinkService magicLink = null;
-                    try {
-                        magicLink = ((VelocityFlame<?>) RustyConnector.Toolkit.proxy().orElseThrow()).services().magicLink();
-                    } catch (Exception ignore) {}
-                    try {
-                        magicLink = ((MCLoaderFlame) RustyConnector.Toolkit.mcLoader().orElseThrow()).services().magicLink();
-                    } catch (Exception ignore) {}
-                    if(magicLink == null) throw new Exception("There was no flame available to handle the message!");
-
-                    Packet reply = magicLink.packetManager().activeReplyEndpoints().get(message.responseTarget().remoteTarget().orElseThrow(() ->
-                            new NoSuchElementException("There was no available packet to reply to.")
-                    ));
-
-                    reply.issueResponse(message);
-                    return;
-                }
-
-                List<PacketListener<? extends Packet.Wrapper>> listeners = this.listeners.get(message.identification());
-                if(listeners == null) throw new NullPointerException("No packet handler with the type "+message.identification()+" exists!");
-                if(listeners.isEmpty()) throw new NullPointerException("No packet handler with the type "+message.identification()+" exists!");
-
-                listeners.forEach(listener -> {
-                    try {
-                        listener.wrapAndExecute(message);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-            } catch (BlockedMessageException e) {
-                cachedMessage.sentenceMessage(PacketStatus.AUTH_DENIAL, e.getMessage());
-
-                if(!logger.loggerGate().check(GateKey.MESSAGE_TUNNEL_FAILED_MESSAGE)) return;
-
-                logger.error("An incoming message from: "+message.sender().toString()+" was blocked by the message tunnel!");
-                logger.log("To view the thrown away message use: /rc message get "+cachedMessage.getSnowflake());
-            } catch (NoOutputException e) {
-                cachedMessage.sentenceMessage(PacketStatus.AUTH_DENIAL, e.getMessage());
-            }
-        } catch (Exception e) {
-            if(cachedMessage == null) cachedMessage = messageCache.cacheMessage(rawMessage, PacketStatus.UNDEFINED);
-
-            if(logger.loggerGate().check(GateKey.SAVE_TRASH_MESSAGES))
-                cachedMessage.sentenceMessage(PacketStatus.TRASHED, e.getMessage());
-            else
-                messageCache.removeMessage(cachedMessage.getSnowflake());
-
-            if(!logger.loggerGate().check(GateKey.MESSAGE_PARSER_TRASH)) return;
-
-            logger.error("An incoming message was thrown away!");
-            logger.log("To view the thrown away message use: /rc message get "+cachedMessage.getSnowflake());
+            ((Packet) reply).replyListeners().forEach(l -> l.accept(message));
+            return;
         }
+
+        List<PacketListener<? extends IPacket>> listeners = this.listeners.get(message.identification());
+        if(listeners == null) {
+            cachedMessage.sentenceMessage(PacketStatus.TRASHED, "No listeners exist to handle this packet.");
+            return;
+        }
+        if(listeners.isEmpty()) {
+            cachedMessage.sentenceMessage(PacketStatus.TRASHED, "No listeners exist to handle this packet.");
+            return;
+        }
+
+        listeners.forEach(listener -> {
+            try {
+                listener.wrapAndExecute(message);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 }

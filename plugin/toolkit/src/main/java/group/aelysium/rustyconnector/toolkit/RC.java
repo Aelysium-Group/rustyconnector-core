@@ -1,17 +1,19 @@
 package group.aelysium.rustyconnector.toolkit;
 
-import group.aelysium.rustyconnector.toolkit.common.events.IEventManager;
+import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
+import group.aelysium.rustyconnector.toolkit.common.events.EventManager;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.IMagicLink;
 import group.aelysium.rustyconnector.toolkit.mc_loader.MCLoaderAdapter;
 import group.aelysium.rustyconnector.toolkit.mc_loader.lang.MCLoaderLangLibrary;
 import group.aelysium.rustyconnector.toolkit.proxy.ProxyAdapter;
-import group.aelysium.rustyconnector.toolkit.proxy.family.IFamilies;
-import group.aelysium.rustyconnector.toolkit.proxy.family.IFamily;
-import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.IMCLoader;
+import group.aelysium.rustyconnector.toolkit.proxy.family.Families;
+import group.aelysium.rustyconnector.toolkit.proxy.family.Family;
+import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.MCLoader;
+import group.aelysium.rustyconnector.toolkit.proxy.family.whitelist.Whitelist;
 import group.aelysium.rustyconnector.toolkit.proxy.lang.ProxyLangLibrary;
 import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
-import group.aelysium.rustyconnector.toolkit.proxy.storage.ILocalStorage;
-import group.aelysium.rustyconnector.toolkit.proxy.storage.IRemoteStorage;
+import group.aelysium.rustyconnector.toolkit.proxy.storage.RemoteStorage;
+import group.aelysium.rustyconnector.toolkit.proxy.storage.LocalStorage;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -27,27 +29,33 @@ public interface RC {
      * The interface containing Proxy based operations.
      */
     interface P {
-        static IFamilies Families() throws NoSuchElementException {
+        static Families Families() throws NoSuchElementException {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Families().orElseThrow();
+        }
+
+        static Optional<Whitelist> Whitelist() throws NoSuchElementException {
+            Optional<Particle.Flux<Whitelist>> whitelistOptional = RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Whitelist();
+            if(whitelistOptional.isEmpty()) return Optional.empty();
+            return Optional.of(whitelistOptional.orElseThrow().orElseThrow());
         }
 
         static IMagicLink.Proxy MagicLink() throws NoSuchElementException {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().MagicLink().orElseThrow();
         }
 
-        static IRemoteStorage RemoteStorage() throws NoSuchElementException {
+        static RemoteStorage RemoteStorage() throws NoSuchElementException {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().RemoteStorage().orElseThrow();
         }
 
-        static ILocalStorage LocalStorage() throws NoSuchElementException {
+        static LocalStorage LocalStorage() throws NoSuchElementException {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().LocalStorage();
         }
 
-        static IEventManager EventManager() throws NoSuchElementException {
+        static EventManager EventManager() throws NoSuchElementException {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().EventManager();
         }
 
-        static ProxyAdapter Adapter() throws NoSuchElementException {
+        static ProxyAdapter<?, ?> Adapter() throws NoSuchElementException {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Adapter();
         }
 
@@ -55,15 +63,15 @@ public interface RC {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Lang().orElseThrow();
         }
 
-        static Optional<IFamily> Family(String id) throws NoSuchElementException {
-            IFamily family = null;
+        static Optional<Family> Family(String id) throws NoSuchElementException {
+            Family family = null;
             try {
                 family = RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Families().orElseThrow().find(id).orElseThrow().orElseThrow();
             } catch (Exception ignore) {}
             return Optional.ofNullable(family);
         }
 
-        static Optional<IMCLoader> MCLoader(UUID uuid) throws NoSuchElementException {
+        static Optional<MCLoader> MCLoader(UUID uuid) throws NoSuchElementException {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().LocalStorage().mcloaders().fetch(uuid);
         }
 
@@ -88,7 +96,7 @@ public interface RC {
             return RustyConnector.Toolkit.MCLoader().orElseThrow().orElseThrow().Lang().orElseThrow();
         }
 
-        static IEventManager EventManager() throws NoSuchElementException {
+        static EventManager EventManager() throws NoSuchElementException {
             return RustyConnector.Toolkit.MCLoader().orElseThrow().orElseThrow().EventManager();
         }
     }

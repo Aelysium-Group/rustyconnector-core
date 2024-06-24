@@ -35,7 +35,7 @@ public class PacketIdentification {
 
     /**
      * Create a new Packet Mapping from a pluginID and a packetID.
-     * @param pluginID
+     * @param namespace
      *        Should be a name representing your plugin.<br>
      *        Should be in the format of UPPER_SNAKE_CASE.<br>
      *        Should start with the prefix `RC_`.<br>
@@ -47,11 +47,11 @@ public class PacketIdentification {
      * @return {@link PacketIdentification}
      * @throws IllegalArgumentException If illegal names are passed.
      */
-    public static PacketIdentification from(@NotNull String pluginID, @NotNull String packetID) throws IllegalArgumentException {
-        String idToCheck = pluginID.toUpperCase();
+    public static PacketIdentification from(@NotNull String namespace, @NotNull String packetID) throws IllegalArgumentException {
+        String idToCheck = namespace.toUpperCase();
         if(idToCheck.isEmpty()) throw new IllegalArgumentException("pluginID can't be empty!");
         if(packetID.isEmpty()) throw new IllegalArgumentException("packetID can't be empty!");
 
-        return new PacketIdentification(pluginID + "-" + packetID);
+        return new PacketIdentification(namespace + "-" + packetID);
     }
 }

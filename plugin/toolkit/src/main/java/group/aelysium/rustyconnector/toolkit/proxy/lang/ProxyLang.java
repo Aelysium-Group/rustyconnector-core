@@ -4,9 +4,9 @@ import group.aelysium.rustyconnector.toolkit.common.lang.ASCIIAlphabet;
 import group.aelysium.rustyconnector.toolkit.RC;
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.common.lang.Lang;
-import group.aelysium.rustyconnector.toolkit.proxy.family.IFamily;
-import group.aelysium.rustyconnector.toolkit.proxy.family.load_balancing.ILoadBalancer;
-import group.aelysium.rustyconnector.toolkit.proxy.family.scalar_family.IScalarFamily;
+import group.aelysium.rustyconnector.toolkit.proxy.family.Family;
+import group.aelysium.rustyconnector.toolkit.proxy.family.load_balancing.LoadBalancer;
+import group.aelysium.rustyconnector.toolkit.proxy.family.scalar_family.ScalarFamily;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +63,7 @@ public class ProxyLang extends Lang {
     public Component families() {
         AtomicReference<Component> families = new AtomicReference<>(text(""));
 
-        for (Particle.Flux<IFamily> family : RC.P.Families().dump())
+        for (Particle.Flux<Family> family : RC.P.Families().dump())
             family.executeNow(f -> families.set(families.get().append(text("["+f.id()+"*] ").color(BLUE))));
 
         return boxed(
@@ -86,9 +86,9 @@ public class ProxyLang extends Lang {
         );
     };
 
-    public Component loadBalancer(ILoadBalancer loadBalancer) {
-        int locked = loadBalancer.size(true);
-        int unlocked = loadBalancer.size(false);
+    public Component loadBalancer(LoadBalancer loadBalancer) {
+        int locked = loadBalancer.lockedMCLoaders().size();
+        int unlocked = loadBalancer.unlockedMCLoaders().size();
         int total = locked + unlocked;
 
         double lockedPercentage = 0;
@@ -115,17 +115,16 @@ public class ProxyLang extends Lang {
         return blocks;
     }
 
-    public Component scalarFamily(IScalarFamily family) throws ExecutionException, InterruptedException, TimeoutException {
+    public Component scalarFamily(ScalarFamily family) throws ExecutionException, InterruptedException, TimeoutException {
         Component servers = text("");
         int i = 0;
 
-        IScalarFamily.Connector connector = (IScalarFamily.Connector) family.connector();
-        ILoadBalancer loadBalancer = connector.loadBalancer().access().get(5, TimeUnit.SECONDS);
+        LoadBalancer loadBalancer = family.loadBalancer().access().get(5, TimeUnit.SECONDS);
 
-        if(connector.mcloaders().isEmpty()) servers = text("There are no registered servers.", DARK_GRAY);
-        else if(loadBalancer.size(false) == 0) servers = text("All the MCLoaders in this family are locked.", DARK_GRAY);
+        if(family.mcloaders().isEmpty()) servers = text("There are no registered servers.", DARK_GRAY);
+        else if(family.unlockedMCLoaders().isEmpty()) servers = text("All the MCLoaders in this family are locked.", DARK_GRAY);
 
-        IFamily rootFamily = RC.P.Families().rootFamily().orElseThrow();
+        Family rootFamily = RC.P.Families().rootFamily().orElseThrow();
         String parentFamilyName = rootFamily.id();
         try {
             parentFamilyName = family.parent().orElseThrow().orElseThrow().id();
@@ -137,10 +136,10 @@ public class ProxyLang extends Lang {
                 newlines(),
                 text("   ---| Display Name: "+family.displayName()),
                 text("   ---| Parent Family: "+parentFamilyName),
-                text("   ---| Online Players: "+family.connector().players()),
+                text("   ---| Online Players: "+family.players()),
                 text(""),
                 text("   ---| Servers:"),
-                text("      | - Total: "+family.connector().mcloaders().size()),
+                text("      | - Total: "+family.mcloaders().size()),
                 text("      | - Open: "),
                 text("      | - Locked: "),
                 space(),

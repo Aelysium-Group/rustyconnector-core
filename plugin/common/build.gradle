@@ -8,9 +8,7 @@ dependencies {
 
     // Dev only
     shadow project(path: ':toolkit', configuration: 'shadow')
-    shadow "com.velocitypowered:velocity-api:${project.velocity_version}"
     shadow "org.yaml:snakeyaml:${project.snakeyaml_version}"
-    implementation "io.lettuce:lettuce-core:${project.lettuce_version}"
     implementation 'org.eclipse.jgit:org.eclipse.jgit:4.6.0.201612231935-r'
 }
 

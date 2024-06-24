@@ -5,12 +5,9 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 import group.aelysium.rustyconnector.common.exception.NoOutputException;
-import group.aelysium.rustyconnector.proxy.family.mcloader.MCLoader;
 import group.aelysium.rustyconnector.proxy.players.Player;
 import group.aelysium.rustyconnector.toolkit.proxy.ProxyAdapter;
-import group.aelysium.rustyconnector.toolkit.proxy.connection.ConnectionResult;
-import group.aelysium.rustyconnector.toolkit.proxy.connection.IPlayerConnectable;
-import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.IMCLoader;
+import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.MCLoader;
 import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
@@ -19,10 +16,9 @@ import org.jetbrains.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-public class VelocityProxyAdapter extends ProxyAdapter {
+public class VelocityProxyAdapter extends ProxyAdapter<com.velocitypowered.api.proxy.Player, RegisteredServer> {
     private final ProxyServer velocity;
 
     public VelocityProxyAdapter(ProxyServer velocity) {
@@ -30,29 +26,27 @@ public class VelocityProxyAdapter extends ProxyAdapter {
     }
 
     @Override
-    public @Nullable Object convertToProxyPlayer(@NotNull IPlayer player) {
+    public @Nullable com.velocitypowered.api.proxy.Player convertToProxyPlayer(@NotNull IPlayer player) {
         return this.velocity.getPlayer(player.uuid()).orElse(null);
     }
 
     @Override
-    public @NotNull IPlayer convertToRCPlayer(@NotNull Object player) {
-        com.velocitypowered.api.proxy.Player velocityPlayer = (com.velocitypowered.api.proxy.Player) player;
-        return new Player(velocityPlayer.getUniqueId(), velocityPlayer.getUsername());
+    public @NotNull IPlayer convertToRCPlayer(@NotNull com.velocitypowered.api.proxy.Player player) {
+        return new Player(player.getUniqueId(), player.getUsername());
     }
 
     @Override
-    public @NotNull String extractHostname(@NotNull Object player) {
-        com.velocitypowered.api.proxy.Player velocityPlayer = (com.velocitypowered.api.proxy.Player) player;
-        return velocityPlayer.getVirtualHost().map(InetSocketAddress::getHostString).orElse("").toLowerCase(Locale.ROOT);
+    public @NotNull String extractHostname(@NotNull IPlayer player) {
+        return this.convertToProxyPlayer(player).getVirtualHost().map(InetSocketAddress::getHostString).orElse("").toLowerCase(Locale.ROOT);
     }
 
     @Override
-    public void registerMCLoader(@NotNull IMCLoader mcloader) {
+    public void registerMCLoader(@NotNull MCLoader mcloader) {
         this.velocity.registerServer(new ServerInfo(mcloader.uuidOrDisplayName(), mcloader.address()));
     }
 
     @Override
-    public void unregisterMCLoader(@NotNull IMCLoader mcloader) {
+    public void unregisterMCLoader(@NotNull MCLoader mcloader) {
         this.velocity.unregisterServer(new ServerInfo(mcloader.uuidOrDisplayName(), mcloader.address()));
     }
 
@@ -63,59 +57,42 @@ public class VelocityProxyAdapter extends ProxyAdapter {
 
     @Override
     public void messagePlayer(@NotNull IPlayer player, @NotNull Component message) {
-        ((com.velocitypowered.api.proxy.Player) this.convertToProxyPlayer(player)).sendMessage(message);
+        this.convertToProxyPlayer(player).sendMessage(message);
     }
 
     @Override
-    public Optional<IMCLoader> fetchMCLoader(@NotNull IPlayer player) {
+    public Optional<MCLoader> fetchMCLoader(@NotNull IPlayer player) {
         return Optional.empty();
     }
 
     @Override
     public void disconnect(@NotNull IPlayer player, @NotNull Component reason) {
-        ((com.velocitypowered.api.proxy.Player) this.convertToProxyPlayer(player)).disconnect(reason);
+        this.convertToProxyPlayer(player).disconnect(reason);
     }
 
     @Override
     public boolean checkPermission(@NotNull IPlayer player, @NotNull String permission) {
-        return ((com.velocitypowered.api.proxy.Player) this.convertToProxyPlayer(player)).hasPermission(permission);
+        return this.convertToProxyPlayer(player).hasPermission(permission);
     }
 
     @Override
-    public IPlayerConnectable.Request connectServer(@NotNull IMCLoader mcloader, @NotNull IPlayer player) {
-        CompletableFuture<ConnectionResult> result = new CompletableFuture<>();
-        IPlayerConnectable.Request request = new IPlayerConnectable.Request(player, result);
+    public IPlayer.Connection.Request connectServer(@NotNull MCLoader mcloader, @NotNull IPlayer player) {
+        RegisteredServer server = (RegisteredServer) mcloader.raw();
 
+        com.velocitypowered.api.proxy.Player velocityPlayer = this.convertToProxyPlayer(player);
+        if(velocityPlayer == null) {
+            return IPlayer.Connection.Request.failedRequest(player, Component.text("No player could be found!"));
+        }
+
+        ConnectionRequestBuilder connection = velocityPlayer.createConnectionRequest(server);
         try {
-            if (!player.online()) {
-                result.complete(ConnectionResult.failed(Component.text(player.username() + " isn't online.")));
-                return request;
-            }
+            ConnectionRequestBuilder.Result connectionResult = connection.connect().orTimeout(5, TimeUnit.SECONDS).get();
 
-            com.velocitypowered.api.proxy.Player velocityPlayer = (com.velocitypowered.api.proxy.Player) this.convertToProxyPlayer(player);
-            if (velocityPlayer == null) {
-                result.complete(ConnectionResult.failed(Component.text(player.username() + " couldn't be found.")));
-                return request;
-            }
+            if (!connectionResult.isSuccessful()) throw new NoOutputException();
 
-            if (!((MCLoader) mcloader).validatePlayerLimits(player)) {
-                result.complete(ConnectionResult.failed(Component.text("The server is currently full. Try again later.")));
-                return request;
-            }
-
-            ConnectionRequestBuilder connection = velocityPlayer.createConnectionRequest((RegisteredServer) mcloader.raw());
-            try {
-                ConnectionRequestBuilder.Result connectionResult = connection.connect().orTimeout(5, TimeUnit.SECONDS).get();
-
-                if (!connectionResult.isSuccessful()) throw new NoOutputException();
-
-                mcloader.setPlayerCount(mcloader.playerCount() + 1);
-                result.complete(ConnectionResult.success(Component.text("You successfully connected to the server!"), mcloader));
-                return request;
-            } catch (Exception ignore) {}
+            mcloader.setPlayerCount((int) (mcloader.players() + 1));
+            return IPlayer.Connection.Request.successfulRequest(player, Component.text("You successfully connected to the server!"), mcloader);
         } catch (Exception ignore) {}
-
-        result.complete(ConnectionResult.failed(Component.text("Unable to connect you to the server!")));
-        return request;
+        return IPlayer.Connection.Request.failedRequest(player, Component.text("There was an issue connecting!"));
     }
 }

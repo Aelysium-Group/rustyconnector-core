@@ -92,7 +92,7 @@ public class Packet implements IPacket {
         return new Builder();
     }
 
-    private static class NakedBuilder {
+    protected static class NakedBuilder {
         private Integer protocolVersion = Packet.protocolVersion();
         private PacketIdentification id;
         private Target sender;
@@ -216,7 +216,7 @@ public class Packet implements IPacket {
                 Packet packet = this.builder.build();
 
                 IMagicLink magicLinkService = fetchMagicLink();
-                ((MagicLinkCore.Connection) magicLinkService.connection().orElseThrow()).publish(packet);
+                ((MagicLinkCore) magicLinkService).publish(packet);
             }
         }
 

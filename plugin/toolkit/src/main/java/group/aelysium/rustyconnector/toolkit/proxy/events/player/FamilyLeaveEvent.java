@@ -2,9 +2,9 @@ package group.aelysium.rustyconnector.toolkit.proxy.events.player;
 
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.common.events.Event;
-import group.aelysium.rustyconnector.toolkit.proxy.family.IFamily;
+import group.aelysium.rustyconnector.toolkit.proxy.family.Family;
+import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.MCLoader;
 import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
-import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.IMCLoader;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,14 +14,14 @@ import org.jetbrains.annotations.NotNull;
  * This event will also fire if a player leaves the family by logging out of the network.
  */
 public class FamilyLeaveEvent implements Event {
-    protected final Particle.Flux<IFamily> family;
-    protected final IMCLoader mcLoader;
+    protected final Particle.Flux<Family> family;
+    protected final MCLoader mcLoader;
     protected final IPlayer player;
     protected final boolean disconnected;
 
     public FamilyLeaveEvent(
-            @NotNull Particle.Flux<IFamily> family,
-            @NotNull IMCLoader mcLoader,
+            @NotNull Particle.Flux<Family> family,
+            @NotNull MCLoader mcLoader,
             @NotNull IPlayer player,
             boolean disconnected
     ) {
@@ -31,10 +31,10 @@ public class FamilyLeaveEvent implements Event {
         this.disconnected = disconnected;
     }
 
-    public Particle.Flux<IFamily> family() {
+    public Particle.Flux<Family> family() {
         return family;
     }
-    public IMCLoader mcLoader() {
+    public MCLoader mcLoader() {
         return mcLoader;
     }
     public IPlayer player() {

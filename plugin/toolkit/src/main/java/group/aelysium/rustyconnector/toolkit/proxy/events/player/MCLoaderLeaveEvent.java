@@ -2,7 +2,7 @@ package group.aelysium.rustyconnector.toolkit.proxy.events.player;
 
 import group.aelysium.rustyconnector.toolkit.common.events.Event;
 import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
-import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.IMCLoader;
+import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.MCLoader;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -12,12 +12,12 @@ import org.jetbrains.annotations.NotNull;
  * This event will also fire if a player leaves the family by logging out of the network.
  */
 public class MCLoaderLeaveEvent implements Event {
-    protected final IMCLoader mcLoader;
+    protected final MCLoader mcLoader;
     protected final IPlayer player;
     protected final boolean disconnected;
 
     public MCLoaderLeaveEvent(
-            @NotNull IMCLoader mcLoader,
+            @NotNull MCLoader mcLoader,
             @NotNull IPlayer player,
             boolean disconnected
     ) {
@@ -26,7 +26,7 @@ public class MCLoaderLeaveEvent implements Event {
         this.disconnected = disconnected;
     }
 
-    public IMCLoader mcLoader() {
+    public MCLoader mcLoader() {
         return mcLoader;
     }
     public IPlayer player() {

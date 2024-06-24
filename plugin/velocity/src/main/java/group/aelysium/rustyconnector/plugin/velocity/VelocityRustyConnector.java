@@ -7,8 +7,8 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import group.aelysium.rustyconnector.common.lang.config.RootLanguageConfig;
+import group.aelysium.rustyconnector.proxy.ProxyFlame;
 import group.aelysium.rustyconnector.toolkit.proxy.lang.ProxyLang;
-import group.aelysium.rustyconnector.proxy.Flame;
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
 import group.aelysium.rustyconnector.toolkit.proxy.util.Version;
 import net.kyori.adventure.text.Component;
@@ -52,11 +52,10 @@ public class VelocityRustyConnector {
         RootLanguageConfig config = RootLanguageConfig.construct(dataFolder);
 
         RustyConnector.Toolkit.registerProxy(
-            new Flame.Tinder(
+            new ProxyFlame.Tinder(
                 UUID.randomUUID(),
                 new Version("0.0.0"),
                 new VelocityProxyAdapter(this.server),
-                LangService.resolveLanguageCode(config.getLanguage(), dataFolder),
             ).flux()
         );
 

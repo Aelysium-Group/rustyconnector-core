@@ -3,10 +3,10 @@ package group.aelysium.rustyconnector.toolkit.proxy.lang;
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.common.lang.ASCIIAlphabet;
 import group.aelysium.rustyconnector.toolkit.common.lang.IConfig;
-import group.aelysium.rustyconnector.toolkit.common.lang.Lang;
-import group.aelysium.rustyconnector.toolkit.mc_loader.lang.MCLoaderLangLibrary;
-import group.aelysium.rustyconnector.toolkit.proxy.family.load_balancing.ILoadBalancer;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.IMagicLink;
+import group.aelysium.rustyconnector.toolkit.proxy.family.load_balancing.LoadBalancer;
 import group.aelysium.rustyconnector.toolkit.proxy.family.whitelist.IWhitelist;
+import group.aelysium.rustyconnector.toolkit.proxy.family.whitelist.Whitelist;
 import org.jetbrains.annotations.NotNull;
 
 public class ProxyLangLibrary implements Particle {
@@ -15,9 +15,9 @@ public class ProxyLangLibrary implements Particle {
     private final IConfig git;
     private final IConfig config;
     private final IConfig family;
-    private final IConfig<ILoadBalancer.Settings> loadBalancer;
-    private final IConfig<IWhitelist.Settings> whitelist;
-    private final IConfig magicConfig;
+    private final IConfig<Particle.Tinder<LoadBalancer>> loadBalancer;
+    private final IConfig<Whitelist.Tinder> whitelist;
+    private final IConfig<> magicConfig;
     private final IConfig magicLink;
 
     protected ProxyLangLibrary(
@@ -26,9 +26,9 @@ public class ProxyLangLibrary implements Particle {
             @NotNull IConfig git,
             @NotNull IConfig config,
             @NotNull IConfig family,
-            @NotNull IConfig<ILoadBalancer.Settings> loadBalancer,
-            @NotNull IConfig<IWhitelist.Settings> whitelist,
-            @NotNull IConfig magicConfig,
+            @NotNull IConfig<LoadBalancer.Settings> loadBalancer,
+            @NotNull IConfig<Whitelist.Settings> whitelist,
+            @NotNull IConfig<> magicConfig,
             @NotNull IConfig magicLink
     ) {
 
@@ -41,6 +41,14 @@ public class ProxyLangLibrary implements Particle {
         this.whitelist = whitelist;
         this.magicConfig = magicConfig;
         this.magicLink = magicLink;
+    }
+
+    public ProxyLang lang() {
+        return this.lang;
+    }
+
+    public ASCIIAlphabet asciiAlphabet() {
+        return this.asciiAlphabet;
     }
 
     @Override
@@ -72,14 +80,5 @@ public class ProxyLangLibrary implements Particle {
     }
 
     public record Settings(
-            @NotNull ProxyLang lang,
-            @NotNull ASCIIAlphabet asciiAlphabet,
-            @NotNull IConfig git,
-            @NotNull IConfig config,
-            @NotNull IConfig family,
-            @NotNull IConfig<ILoadBalancer.Settings> loadBalancer,
-            @NotNull IConfig<IWhitelist.Settings> whitelist,
-            @NotNull IConfig magicConfig,
-            @NotNull IConfig magicLink
     ) {}
 }
