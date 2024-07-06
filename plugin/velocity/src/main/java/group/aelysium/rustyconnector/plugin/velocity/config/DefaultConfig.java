@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.plugin.velocity.config;
 
-import group.aelysium.rustyconnector.common.config.Config;
+import group.aelysium.rustyconnector.toolkit.common.config.Config;
 import group.aelysium.rustyconnector.common.exception.NoOutputException;
 import group.aelysium.rustyconnector.plugin.velocity.PluginLogger;
 import group.aelysium.rustyconnector.toolkit.proxy.lang.ProxyLang;

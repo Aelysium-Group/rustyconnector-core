@@ -1,8 +1,8 @@
 package group.aelysium.rustyconnector.toolkit.proxy.events.player;
 
 import group.aelysium.rustyconnector.toolkit.common.events.Event;
-import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.MCLoader;
+import group.aelysium.rustyconnector.toolkit.proxy.player.Player;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -13,12 +13,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public class MCLoaderLeaveEvent implements Event {
     protected final MCLoader mcLoader;
-    protected final IPlayer player;
+    protected final Player player;
     protected final boolean disconnected;
 
     public MCLoaderLeaveEvent(
             @NotNull MCLoader mcLoader,
-            @NotNull IPlayer player,
+            @NotNull Player player,
             boolean disconnected
     ) {
         this.mcLoader = mcLoader;
@@ -29,7 +29,7 @@ public class MCLoaderLeaveEvent implements Event {
     public MCLoader mcLoader() {
         return mcLoader;
     }
-    public IPlayer player() {
+    public Player player() {
         return player;
     }
     public boolean disconnected() {

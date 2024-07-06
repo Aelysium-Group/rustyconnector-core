@@ -9,12 +9,12 @@ import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.bukkit.parsers.PlayerArgument;
 import group.aelysium.rustyconnector.toolkit.common.cache.CacheableMessage;
 import group.aelysium.rustyconnector.toolkit.common.cache.MessageCache;
-import group.aelysium.rustyconnector.common.packets.BuiltInIdentifications;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.buitin_packets.BuiltInIdentifications;
 import group.aelysium.rustyconnector.plugin.paper.PluginLogger;
 import group.aelysium.rustyconnector.plugin.paper.central.Tinder;
 import group.aelysium.rustyconnector.toolkit.mc_loader.lang.MCLoaderLang;
 import group.aelysium.rustyconnector.toolkit.common.logger.IPluginLogger;
-import group.aelysium.rustyconnector.common.packets.SendPlayerPacket;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.buitin_packets.SendPlayerPacket;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 

@@ -2,7 +2,7 @@ package group.aelysium.rustyconnector.toolkit;
 
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.common.events.EventManager;
-import group.aelysium.rustyconnector.toolkit.common.magic_link.IMagicLink;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.toolkit.mc_loader.MCLoaderAdapter;
 import group.aelysium.rustyconnector.toolkit.mc_loader.lang.MCLoaderLangLibrary;
 import group.aelysium.rustyconnector.toolkit.proxy.ProxyAdapter;
@@ -11,7 +11,8 @@ import group.aelysium.rustyconnector.toolkit.proxy.family.Family;
 import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.MCLoader;
 import group.aelysium.rustyconnector.toolkit.proxy.family.whitelist.Whitelist;
 import group.aelysium.rustyconnector.toolkit.proxy.lang.ProxyLangLibrary;
-import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.proxy.magic_link.MagicLink;
+import group.aelysium.rustyconnector.toolkit.proxy.player.Player;
 import group.aelysium.rustyconnector.toolkit.proxy.storage.RemoteStorage;
 import group.aelysium.rustyconnector.toolkit.proxy.storage.LocalStorage;
 
@@ -39,7 +40,7 @@ public interface RC {
             return Optional.of(whitelistOptional.orElseThrow().orElseThrow());
         }
 
-        static IMagicLink.Proxy MagicLink() throws NoSuchElementException {
+        static MagicLink MagicLink() throws NoSuchElementException {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().MagicLink().orElseThrow();
         }
 
@@ -55,7 +56,7 @@ public interface RC {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().EventManager();
         }
 
-        static ProxyAdapter<?, ?> Adapter() throws NoSuchElementException {
+        static ProxyAdapter Adapter() throws NoSuchElementException {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Adapter();
         }
 
@@ -75,7 +76,7 @@ public interface RC {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().LocalStorage().mcloaders().fetch(uuid);
         }
 
-        static Optional<IPlayer> Player(UUID uuid) throws NoSuchElementException {
+        static Optional<Player> Player(UUID uuid) throws NoSuchElementException {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().LocalStorage().players().fetch(uuid);
         }
     }
@@ -84,7 +85,7 @@ public interface RC {
      * The interface containing MCLoader based operations.
      */
     interface M {
-        static IMagicLink.MCLoader MagicLink() throws NoSuchElementException {
+        static MagicLinkCore MagicLink() throws NoSuchElementException {
             return RustyConnector.Toolkit.MCLoader().orElseThrow().orElseThrow().MagicLink().orElseThrow();
         }
 

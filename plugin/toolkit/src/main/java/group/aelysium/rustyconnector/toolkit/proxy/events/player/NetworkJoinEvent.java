@@ -4,7 +4,7 @@ import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle
 import group.aelysium.rustyconnector.toolkit.common.events.Event;
 import group.aelysium.rustyconnector.toolkit.proxy.family.Family;
 import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.MCLoader;
-import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.proxy.player.Player;
 
 /**
  * Represents a player joining the network.
@@ -13,9 +13,9 @@ import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
 public class NetworkJoinEvent implements Event {
     protected final Particle.Flux<Family> family;
     protected final MCLoader mcLoader;
-    protected final IPlayer player;
+    protected final Player player;
 
-    public NetworkJoinEvent(Particle.Flux<Family> family, MCLoader mcLoader, IPlayer player) {
+    public NetworkJoinEvent(Particle.Flux<Family> family, MCLoader mcLoader, Player player) {
         this.family = family;
         this.mcLoader = mcLoader;
         this.player = player;
@@ -27,7 +27,7 @@ public class NetworkJoinEvent implements Event {
     public MCLoader mcLoader() {
         return mcLoader;
     }
-    public IPlayer player() {
+    public Player player() {
         return player;
     }
 }

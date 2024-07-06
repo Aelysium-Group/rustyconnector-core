@@ -1,10 +1,10 @@
 package group.aelysium.rustyconnector.proxy.family.mcloader.packet_handlers;
 
-import group.aelysium.rustyconnector.common.packets.BuiltInIdentifications;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.buitin_packets.BuiltInIdentifications;
 import group.aelysium.rustyconnector.toolkit.RC;
-import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.IPacket;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketListener;
-import group.aelysium.rustyconnector.common.packets.SendPlayerPacket;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.buitin_packets.SendPlayerPacket;
 import group.aelysium.rustyconnector.toolkit.proxy.family.IFamily;
 import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
 import net.kyori.adventure.text.Component;
@@ -15,7 +15,7 @@ public class SendPlayerListener extends PacketListener<SendPlayerPacket> {
                 BuiltInIdentifications.SEND_PLAYER,
                 new Wrapper<>() {
                     @Override
-                    public SendPlayerPacket wrap(IPacket packet) {
+                    public SendPlayerPacket wrap(Packet packet) {
                         return new SendPlayerPacket(packet);
                     }
                 }

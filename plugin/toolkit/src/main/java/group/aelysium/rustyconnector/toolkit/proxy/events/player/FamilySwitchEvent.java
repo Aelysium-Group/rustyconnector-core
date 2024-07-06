@@ -2,9 +2,9 @@ package group.aelysium.rustyconnector.toolkit.proxy.events.player;
 
 import group.aelysium.rustyconnector.toolkit.common.events.Event;
 import group.aelysium.rustyconnector.toolkit.proxy.family.Family;
-import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.MCLoader;
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
+import group.aelysium.rustyconnector.toolkit.proxy.player.Player;
 
 /**
  * Represents a player switching from one family to another family.
@@ -15,9 +15,9 @@ public class FamilySwitchEvent implements Event {
     protected final Particle.Flux<Family> newFamily;
     protected final MCLoader oldMCLoader;
     protected final MCLoader newMCLoader;
-    protected final IPlayer player;
+    protected final Player player;
 
-    public FamilySwitchEvent(Particle.Flux<Family> oldFamily, Particle.Flux<Family> newFamily, MCLoader oldMCLoader, MCLoader newMCLoader, IPlayer player) {
+    public FamilySwitchEvent(Particle.Flux<Family> oldFamily, Particle.Flux<Family> newFamily, MCLoader oldMCLoader, MCLoader newMCLoader, Player player) {
         this.oldFamily = oldFamily;
         this.newFamily = newFamily;
         this.oldMCLoader = oldMCLoader;
@@ -37,7 +37,7 @@ public class FamilySwitchEvent implements Event {
     public MCLoader newMCLoader() {
         return newMCLoader;
     }
-    public IPlayer player() {
+    public Player player() {
         return player;
     }
 }

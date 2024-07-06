@@ -1,8 +1,8 @@
 package group.aelysium.rustyconnector.toolkit.proxy.events.player;
 
 import group.aelysium.rustyconnector.toolkit.common.events.Event;
-import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.MCLoader;
+import group.aelysium.rustyconnector.toolkit.proxy.player.Player;
 
 /**
  * Represents a player switching from one mcloader to another.
@@ -11,9 +11,9 @@ import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.MCLoader;
 public class MCLoaderSwitchEvent implements Event {
     protected final MCLoader oldMCLoader;
     protected final MCLoader newMCLoader;
-    protected final IPlayer player;
+    protected final Player player;
 
-    public MCLoaderSwitchEvent(MCLoader oldMCLoader, MCLoader newMCLoader, IPlayer player) {
+    public MCLoaderSwitchEvent(MCLoader oldMCLoader, MCLoader newMCLoader, Player player) {
         this.oldMCLoader = oldMCLoader;
         this.newMCLoader = newMCLoader;
         this.player = player;
@@ -25,7 +25,7 @@ public class MCLoaderSwitchEvent implements Event {
     public MCLoader newMCLoader() {
         return newMCLoader;
     }
-    public IPlayer player() {
+    public Player player() {
         return player;
     }
 }

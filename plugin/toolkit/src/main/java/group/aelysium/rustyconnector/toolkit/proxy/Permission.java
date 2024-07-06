@@ -1,8 +1,7 @@
 package group.aelysium.rustyconnector.toolkit.proxy;
 
 import group.aelysium.rustyconnector.toolkit.RC;
-import group.aelysium.rustyconnector.toolkit.proxy.ProxyAdapter;
-import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.proxy.player.Player;
 
 import java.util.Locale;
 
@@ -14,7 +13,7 @@ public class Permission {
      * @param nodes The permissions to check for
      * @return `true` If the player has any one of the defined permissions. `false` If the player has none of them.
      */
-    public static boolean validate(IPlayer player, String... nodes) {
+    public static boolean validate(Player player, String... nodes) {
         if(player == null) return false;
 
         ProxyAdapter adapter = RC.P.Adapter();

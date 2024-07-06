@@ -7,7 +7,7 @@ import group.aelysium.rustyconnector.toolkit.proxy.family.Family;
 import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.MCLoader;
 import group.aelysium.rustyconnector.toolkit.proxy.family.scalar_family.ScalarFamily;
 import group.aelysium.rustyconnector.toolkit.proxy.family.whitelist.Whitelist;
-import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.proxy.player.Player;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,19 +23,19 @@ import java.util.concurrent.TimeUnit;
  * The Proxy adapter exists to take proxy specific actions and adapt them so that RustyConnector
  * can properly execute them regardless of disparate data types between the wrapper and RustyConnector.
  */
-public abstract class ProxyAdapter<ProxyPlayer, ProxyServer> {
+public abstract class ProxyAdapter {
     /**
      * Converts the RustyConnector player object to the Proxy's version.
      * @param player The RustyConnector player.
      * @return The Proxy's version of the player object.
      */
-    public abstract @Nullable ProxyPlayer convertToProxyPlayer(@NotNull IPlayer player);
+    public abstract @Nullable Object convertToObject(@NotNull Player player);
     /**
      * Converts the Proxy player to RustyConnector's version of the player.
      * @param player The Proxy player.
      * @return The RustyConnector version of the player object.
      */
-    public abstract @NotNull IPlayer convertToRCPlayer(@NotNull ProxyPlayer player);
+    public abstract @NotNull Player convertToRCPlayer(@NotNull Object player);
 
     /**
      * Extracts the player's connection hostname form the player.
@@ -43,7 +43,7 @@ public abstract class ProxyAdapter<ProxyPlayer, ProxyServer> {
      * @param player The player.
      * @return The extracted hostname from the player's connection.
      */
-    public abstract @NotNull String extractHostname(@NotNull IPlayer player);
+    public abstract @NotNull String extractHostname(@NotNull Player player);
 
     /**
      * Registers the MCLoader to the Proxy.
@@ -65,20 +65,20 @@ public abstract class ProxyAdapter<ProxyPlayer, ProxyServer> {
      * Logs the specified component into the console.
      * @param component The component to log.
      */
-    public abstract void messagePlayer(@NotNull IPlayer player, @NotNull Component component);
+    public abstract void messagePlayer(@NotNull Player player, @NotNull Component component);
 
     /**
      * Fetches the MCLoader for the player.
      * @param player The player to fetch the MCLoader for.
      */
-    public abstract Optional<MCLoader> fetchMCLoader(@NotNull IPlayer player);
+    public abstract Optional<MCLoader> fetchMCLoader(@NotNull Player player);
 
     /**
      * Logs the specified component into the console.
      * @param player The player.
      * @param reason The reason for the disconnect.
      */
-    public abstract void disconnect(@NotNull IPlayer player, @NotNull Component reason);
+    public abstract void disconnect(@NotNull Player player, @NotNull Component reason);
 
     /**
      * Checks if the player has the specified permission.
@@ -86,7 +86,7 @@ public abstract class ProxyAdapter<ProxyPlayer, ProxyServer> {
      * @param permission The permission to check for.
      * @return `true` if they have the permission. `false` otherwise.
      */
-    public abstract boolean checkPermission(@NotNull IPlayer player, @NotNull String permission);
+    public abstract boolean checkPermission(@NotNull Player player, @NotNull String permission);
 
     /**
      * Connects the player to the specified server.
@@ -94,10 +94,10 @@ public abstract class ProxyAdapter<ProxyPlayer, ProxyServer> {
      * All you need to do is connect to the underlying server that this MCLoader is backed by.
      * You can use {@link MCLoader#raw()} to fetch the underlying server.
      * @param mcloader The mcloader.
-     * @param player The player. Specifically, the object returned by {@link #convertToProxyPlayer(IPlayer)}.
+     * @param player The player. Specifically, the object returned by {@link #convertToObject(Player)}.
      * @return A connection request.
      */
-    public abstract IPlayer.Connection.Request connectServer(@NotNull MCLoader mcloader, @NotNull IPlayer player);
+    public abstract Player.Connection.Request connectServer(@NotNull MCLoader mcloader, @NotNull Player player);
 
     /**
      * This method contains all the RustyConnector logic for handling a player changing servers.
@@ -107,7 +107,7 @@ public abstract class ProxyAdapter<ProxyPlayer, ProxyServer> {
      * @throws RuntimeException If there's a fatal error at any point.
      */
     public final void onMCLoaderSwitch(
-            @NotNull IPlayer player,
+            @NotNull Player player,
             @Nullable MCLoader oldMCLoader,
             @NotNull MCLoader newMCLoader
             ) throws RuntimeException {
@@ -138,9 +138,9 @@ public abstract class ProxyAdapter<ProxyPlayer, ProxyServer> {
      * @param player The player.
      * @throws RuntimeException If there's a fatal error at any point.
      */
-    public final @NotNull IPlayer.Connection.Request onInitialConnect(@NotNull IPlayer player) throws RuntimeException {
-        CompletableFuture<IPlayer.Connection.Result> result = new CompletableFuture<>();
-        IPlayer.Connection.Request request = new IPlayer.Connection.Request(player, result);
+    public final @NotNull Player.Connection.Request onInitialConnect(@NotNull Player player) throws RuntimeException {
+        CompletableFuture<Player.Connection.Result> result = new CompletableFuture<>();
+        Player.Connection.Request request = new Player.Connection.Request(player, result);
 
         // Check for network whitelist
         try {
@@ -148,7 +148,7 @@ public abstract class ProxyAdapter<ProxyPlayer, ProxyServer> {
             Whitelist whitelist = api.services().whitelist().proxyWhitelist();
             if (whitelist == null) throw new Exception();
             if (!whitelist.validate(player)) {
-                result.complete(IPlayer.Connection.Result.failed(Component.text(whitelist.message())));
+                result.complete(Player.Connection.Result.failed(Component.text(whitelist.message())));
                 return request;
             }
         } catch (Exception ignore) {}
@@ -176,9 +176,9 @@ public abstract class ProxyAdapter<ProxyPlayer, ProxyServer> {
             Optional<MCLoader> mcloader = ((ScalarFamily) family).loadBalancer().access().get(10, TimeUnit.SECONDS).staticFetch();
 
             RC.P.EventManager().fireEvent(new FamilyPostJoinEvent(familyFlux, mcloader.orElseThrow(), player));
-            result.complete(IPlayer.Connection.Result.success(Component.text("Successfully found an MCLoader for the player!"), mcloader));
+            result.complete(Player.Connection.Result.success(Component.text("Successfully found an MCLoader for the player!"), mcloader));
         } catch (Exception e) {
-            result.complete(IPlayer.Connection.Result.failed(Component.text("We were unable to connect you!")));
+            result.complete(Player.Connection.Result.failed(Component.text("We were unable to connect you!")));
         }
 
         // Store player
@@ -190,7 +190,7 @@ public abstract class ProxyAdapter<ProxyPlayer, ProxyServer> {
         return request;
     }
 
-    public final void onDisconnect(@NotNull IPlayer player) {
+    public final void onDisconnect(@NotNull Player player) {
         RC.P.EventManager().fireEvent(new NetworkLeaveEvent(player));
 
         MCLoader mcloader = player.server().orElse(null);
@@ -207,7 +207,7 @@ public abstract class ProxyAdapter<ProxyPlayer, ProxyServer> {
      * @param reason The reason they were kicked.
      * @return A {@link PlayerKickedResponse}. The caller should properly handle the response so that the desired operations are performed.
      */
-    public final @NotNull PlayerKickedResponse onKicked(@NotNull IPlayer player, @Nullable String reason) {
+    public final @NotNull PlayerKickedResponse onKicked(@NotNull Player player, @Nullable String reason) {
         boolean isFromRootFamily = false;
 
         try {
@@ -236,7 +236,7 @@ public abstract class ProxyAdapter<ProxyPlayer, ProxyServer> {
     }
 
     /**
-     * The response which is given when {@link #onKicked(IPlayer, String)} is called.
+     * The response which is given when {@link #onKicked(Player, String)} is called.
      * @param shouldDisconnect If `true`, the player should ultimately be disconnected from the network.
      *                         `reason` will not be null if this is true.
      *                         `mcloader` will always be null if this is true.

@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.toolkit.proxy.storage;
 
 import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.MCLoader;
-import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.proxy.player.Player;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -31,17 +31,17 @@ public class LocalStorage {
     }
 
     public static class Players {
-        private final Map<UUID, IPlayer> players = new LinkedHashMap<>(100){
+        private final Map<UUID, Player> players = new LinkedHashMap<>(100){
             protected boolean removeEldestEntry(Map.Entry eldest) {
                 return this.size() > 100;
             }
         };
 
-        public void store(UUID uuid, IPlayer player) {
+        public void store(UUID uuid, Player player) {
             this.players.put(uuid, player);
         }
 
-        public Optional<IPlayer> fetch(UUID uuid) {
+        public Optional<Player> fetch(UUID uuid) {
             return Optional.ofNullable(this.players.get(uuid));
         }
 

@@ -4,7 +4,7 @@ import group.aelysium.rustyconnector.toolkit.RustyConnector;
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.MCLoader;
 import group.aelysium.rustyconnector.toolkit.proxy.family.whitelist.Whitelist;
-import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.proxy.player.Player;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.Optional;
 
-public abstract class Family implements IPlayer.Connectable, MCLoader.Factory, Particle {
+public abstract class Family implements Player.Connectable, MCLoader.Factory, Particle {
     protected final String id;
     protected final String displayName;
     protected final String parent;

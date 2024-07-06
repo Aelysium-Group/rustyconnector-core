@@ -5,7 +5,7 @@ import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle
 import group.aelysium.rustyconnector.toolkit.proxy.Permission;
 import group.aelysium.rustyconnector.toolkit.proxy.family.Family;
 import group.aelysium.rustyconnector.toolkit.proxy.family.load_balancing.ISortable;
-import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
+import group.aelysium.rustyconnector.toolkit.proxy.player.Player;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +21,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class MCLoader implements ISortable, IPlayer.Connectable {
+public class MCLoader implements ISortable, Player.Connectable {
     private final UUID uuid;
     private final String displayName;
     private final String podName;
@@ -232,7 +232,7 @@ public class MCLoader implements ISortable, IPlayer.Connectable {
     }
 
 
-    private boolean validatePlayerLimits(IPlayer player) throws ExecutionException, InterruptedException, TimeoutException {
+    private boolean validatePlayerLimits(Player player) throws ExecutionException, InterruptedException, TimeoutException {
         Family family = this.family.access().get(10, TimeUnit.SECONDS);
 
         if(Permission.validate(
@@ -253,18 +253,18 @@ public class MCLoader implements ISortable, IPlayer.Connectable {
     }
 
     @Override
-    public IPlayer.Connection.Request connect(IPlayer player) {
+    public Player.Connection.Request connect(Player player) {
         try {
             if (!player.online())
-                return IPlayer.Connection.Request.failedRequest(player, Component.text(player.username() + " isn't online."));
+                return Player.Connection.Request.failedRequest(player, Component.text(player.username() + " isn't online."));
 
             if (!this.validatePlayerLimits(player))
-                return IPlayer.Connection.Request.failedRequest(player, Component.text("The server is currently full. Try again later."));
+                return Player.Connection.Request.failedRequest(player, Component.text("The server is currently full. Try again later."));
 
             return RC.P.Adapter().connectServer(this, player);
         } catch (Exception ignore) {}
 
-        return IPlayer.Connection.Request.failedRequest(player, Component.text("Unable to connect you to the server!"));
+        return Player.Connection.Request.failedRequest(player, Component.text("Unable to connect you to the server!"));
     }
 
     @Override

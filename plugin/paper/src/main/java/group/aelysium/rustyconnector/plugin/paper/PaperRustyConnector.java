@@ -1,8 +1,8 @@
 package group.aelysium.rustyconnector.plugin.paper;
 
 import group.aelysium.rustyconnector.common.events.EventManager;
-import group.aelysium.rustyconnector.mcloader.Flame;
-import group.aelysium.rustyconnector.mcloader.magic_link.MagicLink;
+import group.aelysium.rustyconnector.toolkit.mc_loader.MCLoaderFlame;
+import group.aelysium.rustyconnector.toolkit.mc_loader.magic_link.MagicLink;
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
 import group.aelysium.rustyconnector.toolkit.mc_loader.lang.MCLoaderLang;
 import group.aelysium.rustyconnector.toolkit.proxy.util.Version;
@@ -16,7 +16,7 @@ public final class PaperRustyConnector extends JavaPlugin implements Listener {
         api.logger().log("Initializing RustyConnector...");
 
         MagicLink.Tinder magicLink = new MagicLink.Tinder();
-        Flame.Tinder tinder = new Flame.Tinder(
+        MCLoaderFlame.Tinder tinder = new MCLoaderFlame.Tinder(
                 UUID.randomUUID(),
                 new Version("0.0.0"),
                 new PaperMCLoaderAdapter(),

@@ -22,7 +22,7 @@ import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
 import group.aelysium.rustyconnector.toolkit.proxy.util.DependencyInjector;
 import group.aelysium.rustyconnector.proxy.family.scalar_family.ScalarFamily;
 import group.aelysium.rustyconnector.proxy.family.static_family.StaticFamily;
-import group.aelysium.rustyconnector.proxy.family.dynamic_scale.K8Service;
+import group.aelysium.rustyconnector.toolkit.proxy.family.dynamic_scale.K8Service;
 import group.aelysium.rustyconnector.toolkit.proxy.lang.ProxyLang;
 import group.aelysium.rustyconnector.proxy.family.mcloader.MCLoader;
 import group.aelysium.rustyconnector.toolkit.common.cache.MessageCache;

@@ -5,9 +5,9 @@ import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.player.KickedFromServerEvent;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
-import group.aelysium.rustyconnector.plugin.velocity.lib.players.Player;
 import group.aelysium.rustyconnector.toolkit.RC;
 import group.aelysium.rustyconnector.toolkit.proxy.ProxyAdapter;
+import group.aelysium.rustyconnector.toolkit.proxy.player.Player;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
@@ -20,7 +20,7 @@ public class OnPlayerKicked {
     @Subscribe(order = PostOrder.FIRST)
     public EventTask onPlayerKicked(KickedFromServerEvent event) {
         return EventTask.async(() -> {
-            Player player = new Player(event.getPlayer());
+            Player player = RC.P.Adapter().convertToRCPlayer(event.getPlayer());
             String reason = null;
             if(event.getServerKickReason().isPresent())
                 reason = PlainTextComponentSerializer.plainText().serialize(event.getServerKickReason().orElseThrow());

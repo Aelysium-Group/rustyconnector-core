@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.toolkit.common.cache;
 
 import group.aelysium.rustyconnector.toolkit.common.crypt.Snowflake;
-import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.IPacket;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketStatus;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketIdentification;
 
@@ -54,7 +54,7 @@ public class MessageCache {
         return cacheableMessage;
     }
 
-    public boolean ignoredType(IPacket message) {
+    public boolean ignoredType(Packet message) {
         return this.ignoredTypes.contains(message.identification());
     }
 

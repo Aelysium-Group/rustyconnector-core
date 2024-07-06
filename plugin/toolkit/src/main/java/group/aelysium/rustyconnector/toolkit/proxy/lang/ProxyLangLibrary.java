@@ -1,35 +1,33 @@
 package group.aelysium.rustyconnector.toolkit.proxy.lang;
 
 import group.aelysium.rustyconnector.toolkit.common.absolute_redundancy.Particle;
+import group.aelysium.rustyconnector.toolkit.common.config.Config;
 import group.aelysium.rustyconnector.toolkit.common.lang.ASCIIAlphabet;
-import group.aelysium.rustyconnector.toolkit.common.lang.IConfig;
-import group.aelysium.rustyconnector.toolkit.common.magic_link.IMagicLink;
 import group.aelysium.rustyconnector.toolkit.proxy.family.load_balancing.LoadBalancer;
-import group.aelysium.rustyconnector.toolkit.proxy.family.whitelist.IWhitelist;
 import group.aelysium.rustyconnector.toolkit.proxy.family.whitelist.Whitelist;
 import org.jetbrains.annotations.NotNull;
 
 public class ProxyLangLibrary implements Particle {
     private final ProxyLang lang;
     private final ASCIIAlphabet asciiAlphabet;
-    private final IConfig git;
-    private final IConfig config;
-    private final IConfig family;
-    private final IConfig<Particle.Tinder<LoadBalancer>> loadBalancer;
-    private final IConfig<Whitelist.Tinder> whitelist;
-    private final IConfig<> magicConfig;
-    private final IConfig magicLink;
+    private final Config<?> git;
+    private final Config<?> config;
+    private final Config<?> family;
+    private final Config<Particle.Tinder<LoadBalancer>> loadBalancer;
+    private final Config<Whitelist.Tinder> whitelist;
+    private final Config<?> magicConfig;
+    private final Config<?> magicLink;
 
     protected ProxyLangLibrary(
             @NotNull ProxyLang lang,
             @NotNull ASCIIAlphabet asciiAlphabet,
-            @NotNull IConfig git,
-            @NotNull IConfig config,
-            @NotNull IConfig family,
-            @NotNull IConfig<LoadBalancer.Settings> loadBalancer,
-            @NotNull IConfig<Whitelist.Settings> whitelist,
-            @NotNull IConfig<> magicConfig,
-            @NotNull IConfig magicLink
+            @NotNull Config<?> git,
+            @NotNull Config<?> config,
+            @NotNull Config<?> family,
+            @NotNull Config<LoadBalancer.Settings> loadBalancer,
+            @NotNull Config<Whitelist.Settings> whitelist,
+            @NotNull Config<?> magicConfig,
+            @NotNull Config<?> magicLink
     ) {
 
         this.lang = lang;

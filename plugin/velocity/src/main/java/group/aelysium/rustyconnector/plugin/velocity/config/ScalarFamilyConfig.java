@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.plugin.velocity.config;
 
-import group.aelysium.rustyconnector.common.config.Config;
+import group.aelysium.rustyconnector.toolkit.common.config.Config;
 import group.aelysium.rustyconnector.toolkit.common.lang.IConfig;
 import group.aelysium.rustyconnector.toolkit.proxy.family.scalar_family.ScalarFamily;
 

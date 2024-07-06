@@ -1,9 +1,9 @@
 package group.aelysium.rustyconnector.proxy.family.mcloader.packet_handlers;
 
-import group.aelysium.rustyconnector.common.packets.BuiltInIdentifications;
-import group.aelysium.rustyconnector.common.packets.MCLoader;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.buitin_packets.BuiltInIdentifications;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.buitin_packets.MCLoader;
 import group.aelysium.rustyconnector.toolkit.RC;
-import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.IPacket;
+import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.toolkit.common.magic_link.packet.PacketListener;
 
 public class UnlockServerListener extends PacketListener<MCLoader.Unlock> {
@@ -12,7 +12,7 @@ public class UnlockServerListener extends PacketListener<MCLoader.Unlock> {
                 BuiltInIdentifications.UNLOCK_SERVER,
                 new Wrapper<>() {
                     @Override
-                    public MCLoader.Unlock wrap(IPacket packet) {
+                    public MCLoader.Unlock wrap(Packet packet) {
                         return new MCLoader.Unlock(packet);
                     }
                 }

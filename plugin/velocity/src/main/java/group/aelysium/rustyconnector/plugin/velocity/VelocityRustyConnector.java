@@ -7,7 +7,7 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import group.aelysium.rustyconnector.common.lang.config.RootLanguageConfig;
-import group.aelysium.rustyconnector.proxy.ProxyFlame;
+import group.aelysium.rustyconnector.toolkit.proxy.ProxyFlame;
 import group.aelysium.rustyconnector.toolkit.proxy.lang.ProxyLang;
 import group.aelysium.rustyconnector.toolkit.RustyConnector;
 import group.aelysium.rustyconnector.toolkit.proxy.util.Version;
