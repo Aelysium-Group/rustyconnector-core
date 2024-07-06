@@ -37,17 +37,10 @@ configurations {
 }
 
 dependencies{
-    modules project(':toolkit')
-    modules project(':common')
-
-    modules project(':proxy')
-    modules project(':mcloader')
-
-    modules project(':paper')
-    modules project(':velocity')
+    modules project(':core')
 }
 
-def projects = [":toolkit", ":common", ":proxy", ":mcloader", ":paper", ":velocity"]
+def projects = [":core"]
 jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     dependsOn(projects.collect {it + ":shadowJar"} )

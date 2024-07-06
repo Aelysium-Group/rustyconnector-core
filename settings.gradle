@@ -10,11 +10,4 @@ pluginManagement {
 }
 
 rootProject.name = 'rustyconnector'
-include ':toolkit'
-include ":common"
-
-include ':proxy'
-include ':mcloader'
-
-include ':paper'
-include ':velocity'
+include ':core'
