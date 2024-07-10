@@ -1,14 +1,12 @@
 ![Aelysium Wordmark Image](https://github.com/Aelysium-Group/rusty-connector/blob/development/blob/images/wordmark.png?raw=true)
 
 # 👋 Welcome to RustyConnector
-![Velocity](https://flat.badgen.net/badge/Velocity/3.3.0/1197d1?icon=dockbit)
-![PaperMC](https://flat.badgen.net/badge/Paper/1.16%20-%201.20.6/F96854?icon=telegram)
-![Folia](https://flat.badgen.net/badge/Folia/Supported/E004BC?icon=maven)
 [![Aelysium](https://flat.badgen.net/badge/Discord/Aelysium/5865F2?icon=discord)](https://join.aelysium.group/)
 [![Build](https://flat.badgen.net/github/release/Aelysium-Group/rusty-connector?label=Latest%20Stable%20Release&icon=maven)](https://github.com/Aelysium-Group/rusty-connector/releases)
 [![License](https://flat.badgen.net/badge/License/GPL-V3/5865F2)](https://github.com/Aelysium-Group/rusty-connector/blob/main/LICENSE_rusty-connector)
 
-[RustyConnector] is a load-balancing plugin that can run on [Velocity]/[Paper]/[Folia] networks, which allows your proxy to automatically register or unregister sub-servers while it's running.
+[RustyConnector] is a robust network proxy backbone framework.
+With it, you can implement auto-scaling, load balancing, and whitelists to your game's netoworking system.
 
 <!-- Table-1 -->
 <table>
