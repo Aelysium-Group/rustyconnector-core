@@ -3,6 +3,9 @@ package group.aelysium.rustyconnector.mc_loader.lang;
 import group.aelysium.rustyconnector.common.lang.ASCIIAlphabet;
 import group.aelysium.rustyconnector.common.lang.Lang;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+
+import java.util.concurrent.TimeUnit;
 
 import static net.kyori.adventure.text.Component.*;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
@@ -32,4 +35,12 @@ public class MCLoaderLang extends Lang {
         if(isFolia) return text("rustyconnector-folia");
         return text("rustyconnector-paper");
     };
+
+    public Component magicLinkHandshakeFailure(String reason, int delayAmount, TimeUnit delayUnit) {
+        return join(
+            newlines(),
+            text(reason, NamedTextColor.RED),
+            text("Waiting "+delayAmount+" "+delayUnit+" before trying again...", NamedTextColor.GRAY)
+        );
+    }
 }

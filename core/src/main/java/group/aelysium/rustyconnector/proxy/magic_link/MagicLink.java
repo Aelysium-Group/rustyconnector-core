@@ -72,7 +72,7 @@ public class MagicLink extends MagicLinkCore {
         this.executor.shutdownNow();
     }
 
-    record MagicLinkMCLoaderSettings(
+    public record MagicLinkMCLoaderSettings(
             String family,
             int weight,
             int soft_cap,

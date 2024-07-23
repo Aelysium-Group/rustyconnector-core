@@ -1,112 +1,118 @@
 package group.aelysium.rustyconnector.mc_loader.magic_link;
 
+import group.aelysium.rustyconnector.RustyConnector;
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
+import group.aelysium.rustyconnector.common.cache.MessageCache;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketParameter;
+import group.aelysium.rustyconnector.mc_loader.MCLoaderFlame;
 import group.aelysium.rustyconnector.mc_loader.events.magic_link.DisconnectedEvent;
-import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
-import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.crypt.AESCryptor;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import org.jetbrains.annotations.NotNull;
 
-import java.net.ConnectException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MagicLink extends MagicLinkCore {
-    private final IMessengerConnector messenger;
-    private final ClockService heartbeat = new ClockService(2);
+    protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private final AtomicInteger delay = new AtomicInteger(5);
+    private final String magicConfig;
     private final String podName = System.getenv("POD_NAME");
     private final AtomicBoolean stopPinging = new AtomicBoolean(false);
 
-    public MagicLink(IMessengerConnector messenger) {
-        this.messenger = messenger;
+    protected MagicLink(
+            @NotNull AESCryptor cryptor,
+            @NotNull MessageCache cache,
+            @NotNull Packet.Target self,
+            @NotNull String magicConfig
+    ) {
+        super(cryptor, cache, self);
+        this.magicConfig = magicConfig;
+        this.heartbeat();
     }
 
-    @Override
     public String magicConfig() {
-        return null;
+        return this.magicConfig;
     }
 
     public void setDelay(int delay) {
         this.delay.set(delay);
     }
 
-    private void scheduleNextPing(IMCLoaderFlame<? extends ICoreServiceHandler> api) {
-        IServerInfoService serverInfoService = api.services().serverInfo();
-        this.heartbeat.scheduleDelayed(() -> {
+    private void heartbeat() {
+        this.executor.schedule(() -> {
             if(stopPinging.get()) return;
 
+            MCLoaderFlame flame = RustyConnector.Toolkit.MCLoader().orElseThrow().orElseThrow();
+
             try {
-                Packet.MCLoaderPacketBuilder.ReadyForParameters packet = RC.P.MagicLink().packetBuilder().newBuilder()
-                        .identification(BuiltInIdentifications.MAGICLINK_HANDSHAKE_PING)
-                        .sendingToProxy()
-                        .parameter(group.aelysium.rustyconnector.common.buitin_packets.MagicLink.Handshake.Ping.Parameters.ADDRESS, serverInfoService.address())
-                        .parameter(group.aelysium.rustyconnector.common.buitin_packets.MagicLink.Handshake.Ping.Parameters.DISPLAY_NAME, serverInfoService.displayName())
-                        .parameter(group.aelysium.rustyconnector.common.buitin_packets.MagicLink.Handshake.Ping.Parameters.MAGIC_CONFIG_NAME, serverInfoService.magicConfig())
-                        .parameter(group.aelysium.rustyconnector.common.buitin_packets.MagicLink.Handshake.Ping.Parameters.PLAYER_COUNT, new PacketParameter(serverInfoService.playerCount()));
+                Packet.Builder.PrepareForSending packet = Packet.New()
+                        .identification(Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_PING)
+                        .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.DISPLAY_NAME, flame.displayName())
+                        .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.MAGIC_CONFIG_NAME, this.magicConfig())
+                        .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.ADDRESS, flame.address().getHostName()+":"+flame.address().getPort())
+                        .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.PLAYER_COUNT, new PacketParameter(flame.playerCount()));
 
                 if(podName != null)
-                    packet.parameter(group.aelysium.rustyconnector.common.buitin_packets.MagicLink.Handshake.Ping.Parameters.POD_NAME, this.podName);
+                    packet.parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.POD_NAME, this.podName);
 
-                RC.P.MagicLink().connection().orElseThrow().publish(packet.build());
+                packet.addressedTo(Packet.Target.allAvailableProxies()).send();
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
-            MagicLink.this.scheduleNextPing(api);
-        }, LiquidTimestamp.from(this.delay.get(), TimeUnit.SECONDS));
-    }
-
-    public void startHeartbeat(IMCLoaderFlame<? extends ICoreServiceHandler> api) {
-        this.scheduleNextPing(api);
-    }
-
-    public Optional<IMessengerConnection> connection() {
-        return this.messenger.connection();
-    }
-
-    public IMessengerConnection connect() throws ConnectException {
-        return this.messenger.connect();
+            MagicLink.this.heartbeat();
+        }, this.delay.get(), TimeUnit.SECONDS);
     }
 
     @Override
     public void close() throws Exception {
         stopPinging.set(true);
         try {
-            this.heartbeat.kill();
+            this.executor.shutdownNow();
         } catch (Exception ignore) {}
 
         try {
-            group.aelysium.rustyconnector.mcloader.MCLoaderFlame api = TinderAdapterForCore.getTinder().flame();
+            MCLoaderFlame api = RustyConnector.Toolkit.MCLoader().orElseThrow().orElseThrow();
 
             Packet.New()
-                    .identification(BuiltInIdentifications.MAGICLINK_HANDSHAKE_DISCONNECT)
+                    .identification(Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_DISCONNECT)
                     .addressedTo(Packet.Target.allAvailableProxies())
                     .send();
-            this.connection().orElseThrow().publish(packet);
 
-            api.services().events().fireEvent(new DisconnectedEvent());
+            api.EventManager().fireEvent(new DisconnectedEvent());
         } catch (Exception ignore) {}
-
-        this.messenger.kill();
     }
 
     public static class Tinder extends Particle.Tinder<MagicLink> {
-        private AESCryptor cryptor;
-
-        public Tinder() {}
-
-        public void cryptor(AESCryptor cryptor) {
+        private final AESCryptor cryptor;
+        private final MessageCache cache;
+        private final Packet.Target self;
+        private final String magicConfig;
+        public Tinder(
+                @NotNull AESCryptor cryptor,
+                @NotNull MessageCache cache,
+                @NotNull Packet.Target self,
+                @NotNull String magicConfig
+        ) {
             this.cryptor = cryptor;
+            this.cache = cache;
+            this.self = self;
+            this.magicConfig = magicConfig;
         }
 
-
         @Override
-        public @NotNull MagicLinkCore.Proxy ignite() throws Exception {
+        public @NotNull MagicLink ignite() throws Exception {
+            return new MagicLink(
+                    this.cryptor,
+                    this.cache,
+                    this.self,
+                    this.magicConfig
+            );
         }
 
     }

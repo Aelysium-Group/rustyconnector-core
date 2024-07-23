@@ -41,9 +41,9 @@ public class ScalarFamily extends Family {
     }
 
     @Override
-    public @NotNull Server generateserver(@NotNull UUID uuid, @NotNull InetSocketAddress address, @Nullable String podName, @Nullable String displayName, int softPlayerCap, int hardPlayerCap, int weight, int timeout) {
+    public @NotNull Server generateServer(@NotNull UUID uuid, @NotNull InetSocketAddress address, @Nullable String podName, @Nullable String displayName, int softPlayerCap, int hardPlayerCap, int weight, int timeout) {
         AtomicReference<Server> mcloader = new AtomicReference<>();
-        this.loadBalancer.executeNow(l -> mcloader.set(l.generateMCLoader(uuid, address, podName, displayName, softPlayerCap, hardPlayerCap, weight, timeout)));
+        this.loadBalancer.executeNow(l -> mcloader.set(l.generateServer(uuid, address, podName, displayName, softPlayerCap, hardPlayerCap, weight, timeout)));
         return mcloader.get();
     }
 

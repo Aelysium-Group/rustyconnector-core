@@ -162,7 +162,7 @@ public abstract class LoadBalancer implements Server.Factory, Particle {
     }
 
     @Override
-    public @NotNull Server generateserver(@NotNull UUID uuid, @NotNull InetSocketAddress address, @Nullable String podName, @Nullable String displayName, int softPlayerCap, int hardPlayerCap, int weight, int timeout) {
+    public @NotNull Server generateServer(@NotNull UUID uuid, @NotNull InetSocketAddress address, @Nullable String podName, @Nullable String displayName, int softPlayerCap, int hardPlayerCap, int weight, int timeout) {
         return null;
     }
 

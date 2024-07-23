@@ -1,42 +1,31 @@
 package group.aelysium.rustyconnector.mc_loader.magic_link.handlers;
 
-import group.aelysium.rustyconnector.common.buitin_packets.BuiltInIdentifications;
-import group.aelysium.rustyconnector.common.logger.IPluginLogger;
-import group.aelysium.rustyconnector.mc_loader.lang.MCLoaderLang;
-import group.aelysium.rustyconnector.mc_loader.magic_link.MagicLink;
-import group.aelysium.lib.ranked_game_interface.RankedGameInterfaceService;
+import group.aelysium.rustyconnector.RC;
+import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
-import group.aelysium.rustyconnector.toolkit.common.packet.Packet;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
-import group.aelysium.rustyconnector.toolkit.common.server.ServerAssignment;
 import group.aelysium.rustyconnector.mc_loader.events.magic_link.ConnectedEvent;
 import net.kyori.adventure.text.Component;
 
-public class HandshakeSuccessListener extends PacketListener<group.aelysium.rustyconnector.common.buitin_packets.MagicLink.Handshake.Success> {
+public class HandshakeSuccessListener extends PacketListener<MagicLinkCore.Packets.Handshake.Success> {
     public HandshakeSuccessListener() {
         super(
-                BuiltInIdentifications.MAGICLINK_HANDSHAKE_PING,
+                Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_PING,
                 new Wrapper<>() {
                     @Override
-                    public group.aelysium.rustyconnector.common.buitin_packets.MagicLink.Handshake.Success wrap(Packet packet) {
-                        return new group.aelysium.rustyconnector.common.buitin_packets.MagicLink.Handshake.Success(packet);
+                    public MagicLinkCore.Packets.Handshake.Success wrap(Packet packet) {
+                        return new MagicLinkCore.Packets.Handshake.Success(packet);
                     }
                 }
         );
     }
 
     @Override
-    public void execute(group.aelysium.rustyconnector.common.buitin_packets.MagicLink.Handshake.Success packet) {
-        IPluginLogger logger = api.logger();
-        MagicLink service = api.services().magicLink();
-        api.services().events().fireEvent(new ConnectedEvent(packet.assignment()));
+    public void execute(MagicLinkCore.Packets.Handshake.Success packet) {
+        RC.M.EventManager().fireEvent(new ConnectedEvent());
 
-        logger.send(Component.text(packet.message(), packet.color()));
-        logger.send(MCLoaderLang.MAGIC_LINK.build());
+        RC.M.Adapter().log(Component.text(packet.message(), packet.color()));
 
-        service.setDelay(packet.pingInterval());
-        api.services().serverInfo().assignment(packet.assignment());
-
-        if(packet.assignment() == ServerAssignment.RANKED_GAME_SERVER) api.services().add(new RankedGameInterfaceService());
+        RC.M.MagicLink().setDelay(packet.pingInterval());
     }
 }

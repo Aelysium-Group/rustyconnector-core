@@ -2,13 +2,13 @@ package group.aelysium.rustyconnector.proxy;
 
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.events.EventManager;
+import group.aelysium.rustyconnector.common.lang.LangLibrary;
 import group.aelysium.rustyconnector.proxy.family.Families;
 import group.aelysium.rustyconnector.proxy.family.whitelist.Whitelist;
+import group.aelysium.rustyconnector.proxy.lang.ProxyLang;
 import group.aelysium.rustyconnector.proxy.magic_link.MagicLink;
 import group.aelysium.rustyconnector.proxy.storage.LocalStorage;
-import group.aelysium.rustyconnector.proxy.storage.RemoteStorage;
 import group.aelysium.rustyconnector.proxy.util.Version;
-import group.aelysium.rustyconnector.proxy.lang.ProxyLangLibrary;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,11 +22,10 @@ public class ProxyFlame implements Particle {
     private final UUID uuid;
     private final Version version;
     private final ProxyAdapter adapter;
-    private final Particle.Flux<ProxyLangLibrary> lang;
+    private final Particle.Flux<LangLibrary<ProxyLang>> lang;
     private final Particle.Flux<Whitelist> whitelist;
     private final Particle.Flux<Families> families;
     private final Particle.Flux<MagicLink> magicLink;
-    private final Particle.Flux<RemoteStorage> remoteStorage;
     private final LocalStorage localStorage;
     private final EventManager eventManager;
     private final List<Component> bootOutput;
@@ -35,12 +34,11 @@ public class ProxyFlame implements Particle {
             @NotNull UUID uuid,
             @NotNull Version version,
             @NotNull ProxyAdapter adapter,
-            @NotNull Particle.Flux<ProxyLangLibrary> lang,
+            @NotNull Particle.Flux<LangLibrary<ProxyLang>> lang,
             @Nullable Particle.Flux<Whitelist> whitelist,
             @NotNull List<Component> bootOutput,
             @NotNull Particle.Flux<Families> families,
             @NotNull Particle.Flux<MagicLink> magicLink,
-            @NotNull Particle.Flux<RemoteStorage> remoteStorage,
             @NotNull LocalStorage localStorage,
             @NotNull EventManager eventManager
     ) {
@@ -52,7 +50,6 @@ public class ProxyFlame implements Particle {
         this.bootOutput = bootOutput;
         this.families = families;
         this.magicLink = magicLink;
-        this.remoteStorage = remoteStorage;
         this.localStorage = localStorage;
         this.eventManager = eventManager;
     }
@@ -77,7 +74,7 @@ public class ProxyFlame implements Particle {
     public ProxyAdapter Adapter() {
         return this.adapter;
     }
-    public Particle.Flux<ProxyLangLibrary> Lang() {
+    public Particle.Flux<LangLibrary<ProxyLang>> Lang() {
         return this.lang;
     }
     public Optional<Particle.Flux<Whitelist>> Whitelist() {
@@ -88,9 +85,6 @@ public class ProxyFlame implements Particle {
     }
     public Particle.Flux<MagicLink> MagicLink() {
         return this.magicLink;
-    }
-    public Particle.Flux<RemoteStorage> RemoteStorage() {
-        return this.remoteStorage;
     }
     public LocalStorage LocalStorage() {
         return this.localStorage;
@@ -104,7 +98,6 @@ public class ProxyFlame implements Particle {
     public void close() throws Exception {
         this.families.close();
         this.magicLink.close();
-        this.remoteStorage.close();
         this.localStorage.close();
         this.eventManager.close();
         this.bootOutput.clear();
@@ -114,11 +107,10 @@ public class ProxyFlame implements Particle {
         private final UUID uuid;
         private final Version version;
         private final ProxyAdapter adapter;
-        private final ProxyLangLibrary.Tinder lang;
+        private final LangLibrary.Tinder<ProxyLang> lang;
         private final Whitelist.Tinder whitelist;
         private final Families.Tinder families;
         private final MagicLink.Tinder magicLink;
-        private final RemoteStorage.Tinder remoteStorage;
         private final LocalStorage localStorage;
         private final EventManager eventManager;
 
@@ -126,11 +118,10 @@ public class ProxyFlame implements Particle {
                 @NotNull UUID uuid,
                 @NotNull Version version,
                 @NotNull ProxyAdapter adapter,
-                @NotNull ProxyLangLibrary.Tinder lang,
+                @NotNull LangLibrary.Tinder<ProxyLang> lang,
                 @Nullable Whitelist.Tinder whitelist,
                 @NotNull Families.Tinder families,
                 @NotNull MagicLink.Tinder magicLink,
-                @NotNull RemoteStorage.Tinder remoteStorage,
                 @NotNull LocalStorage localStorage,
                 @NotNull EventManager eventManager
         ) {
@@ -142,7 +133,6 @@ public class ProxyFlame implements Particle {
             this.whitelist = whitelist;
             this.families = families;
             this.magicLink = magicLink;
-            this.remoteStorage = remoteStorage;
             this.localStorage = localStorage;
             this.eventManager = eventManager;
         }
@@ -160,7 +150,6 @@ public class ProxyFlame implements Particle {
                     new ArrayList<>(),
                     this.families.flux(),
                     this.magicLink.flux(),
-                    this.remoteStorage.flux(),
                     this.localStorage,
                     this.eventManager
             );

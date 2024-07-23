@@ -1,11 +1,10 @@
 package group.aelysium.rustyconnector.common.cache;
 
-import group.aelysium.rustyconnector.common.message_cache.ICacheableMessage;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketStatus;
 
 import java.util.Date;
 
-public class CacheableMessage implements ICacheableMessage {
+public class CacheableMessage {
     private final Long snowflake;
     private final Date date;
     private final String contents;

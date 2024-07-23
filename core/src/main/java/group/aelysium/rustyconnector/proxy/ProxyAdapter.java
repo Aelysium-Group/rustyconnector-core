@@ -41,20 +41,24 @@ public abstract class ProxyAdapter {
     public abstract @NotNull String extractHostname(@NotNull Player player);
 
     /**
-     * Registers the MCLoader to the Proxy.
+     * Registers the Server to the Proxy.
      * RustyConnector will already handle the important registration code.
      * This method only exists to ensure the server is registered to the actual proxy software being used.
      */
-    public abstract void registerMCLoader(@NotNull Server mcloader);
+    public abstract void registerServer(@NotNull Server server);
 
     /**
-     * Unregisters the MCLoader from the Proxy.
+     * Unregisters the Server from the Proxy.
      * RustyConnector will already handle the important unregistration code.
      * This method only exists to ensure the server is unregistered from the actual proxy software being used.
      */
-    public abstract void unregisterMCLoader(@NotNull Server mcloader);
+    public abstract void unregisterServer(@NotNull Server server);
 
-    public abstract void logComponent(@NotNull Component component);
+    /**
+     * Logs the components as a message into the console.
+     * @param component The component to log.
+     */
+    public abstract void log(@NotNull Component component);
 
     /**
      * Logs the specified component into the console.
@@ -136,8 +140,8 @@ public abstract class ProxyAdapter {
     public final @NotNull Player.Connection.Request onInitialConnect(@NotNull Player player) throws RuntimeException {
         // Store player
         try {
-            if(RC.P.LocalStorage().players().fetch(player.uuid()).isEmpty())
-                RC.P.RemoteStorage().players().set(player);
+            if(!RC.P.LocalStorage().players().fetch(player.uuid()).isEmpty())
+                RC.P.LocalStorage().players().store(player);
         } catch (Exception ignore) {}
 
         try {

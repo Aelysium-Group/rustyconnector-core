@@ -1,30 +1,26 @@
 package group.aelysium.rustyconnector.proxy.events;
 
+import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.events.Event;
-import group.aelysium.rustyconnector.toolkit.proxy.family.IFamily;
-import group.aelysium.rustyconnector.toolkit.proxy.family.ranked_family.IRankedFamily;
-import group.aelysium.rustyconnector.toolkit.proxy.player.IPlayer;
+import group.aelysium.rustyconnector.proxy.family.Family;
+import group.aelysium.rustyconnector.proxy.player.Player;
 
 /**
  * Represents a player attempting to connect to a family.
- * <p>
- * Please note, if the family that fires this is a {@link IRankedFamily}, this will fire
- * when the player is added to the matchmaker.
- * In such a case, {@link FamilyPostJoinEvent} won't be called until the player actually joins a game.
  */
 public class FamilyPreJoinEvent implements Event {
-    protected IFamily family;
-    protected IPlayer player;
+    protected Particle.Flux<Family> family;
+    protected Player player;
 
-    public FamilyPreJoinEvent(IFamily family, IPlayer player) {
+    public FamilyPreJoinEvent(Particle.Flux<Family> family, Player player) {
         this.family = family;
         this.player = player;
     }
 
-    public IFamily family() {
+    public Particle.Flux<Family> family() {
         return family;
     }
-    public IPlayer player() {
+    public Player player() {
         return player;
     }
 }

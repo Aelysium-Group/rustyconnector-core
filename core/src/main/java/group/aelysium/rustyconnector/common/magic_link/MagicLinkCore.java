@@ -1,7 +1,9 @@
 package group.aelysium.rustyconnector.common.magic_link;
 
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
+import group.aelysium.rustyconnector.common.cache.CacheableMessage;
 import group.aelysium.rustyconnector.common.cache.TimeoutCache;
+import group.aelysium.rustyconnector.proxy.util.ColorMapper;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 import group.aelysium.rustyconnector.common.cache.MessageCache;
 import group.aelysium.rustyconnector.common.crypt.AESCryptor;
@@ -9,7 +11,7 @@ import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketIdentification;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketStatus;
-import group.aelysium.rustyconnector.common.message_cache.ICacheableMessage;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -49,7 +51,7 @@ public abstract class MagicLinkCore implements Particle {
     }
 
     public void handleMessage(String rawMessage) {
-        ICacheableMessage cachedMessage = null;
+        CacheableMessage cachedMessage = null;
         String decryptedMessage;
         try {
             decryptedMessage = this.cryptor.decrypt(rawMessage);
@@ -65,7 +67,7 @@ public abstract class MagicLinkCore implements Particle {
         if(this.cache.ignoredType(message)) this.cache.removeMessage(cachedMessage.getSnowflake());
 
         if(!this.self.isNodeEquivalentToMe(message.target())) {
-            cachedMessage.sentenceMessage(PacketStatus.TRASHED, "Message wasn't addressed to us.");
+            cachedMessage.sentenceMessage(PacketStatus.TRASHED, "This packet wasn't addressed to me.");
             return;
         }
 
@@ -98,5 +100,110 @@ public abstract class MagicLinkCore implements Particle {
                 throw new RuntimeException(e);
             }
         });
+    }
+
+    public interface Packets {
+        interface Handshake {
+            class Ping extends Packet.Wrapper {
+                public String address() {
+                    return this.parameters().get(Parameters.ADDRESS).getAsString();
+                }
+                public Optional<String> displayName() {
+                    String displayName = this.parameters().get(Parameters.DISPLAY_NAME).getAsString();
+                    if(displayName.isEmpty()) return Optional.empty();
+                    return Optional.of(displayName);
+                }
+                public String magicConfigName() {
+                    return this.parameters().get(Parameters.MAGIC_CONFIG_NAME).getAsString();
+                }
+                public Integer playerCount() {
+                    return this.parameters().get(Parameters.PLAYER_COUNT).getAsInt();
+                }
+                public Optional<String> podName() {
+                    String podName = this.parameters().get(Parameters.POD_NAME).getAsString();
+                    if(podName.isEmpty()) return Optional.empty();
+                    return Optional.of(podName);
+                }
+
+                public Ping(Packet packet) {
+                    super(packet);
+                }
+
+                public interface Parameters {
+                    String ADDRESS = "a";
+                    String DISPLAY_NAME = "n";
+                    String MAGIC_CONFIG_NAME = "c";
+                    String PLAYER_COUNT = "pc";
+                    String POD_NAME = "pn";
+                }
+            }
+
+            class Failure extends Packet.Wrapper {
+                public String reason() {
+                    return this.parameters().get(Parameters.REASON).getAsString();
+                }
+
+                public Failure(Packet packet) {
+                    super(packet);
+                }
+
+                public interface Parameters {
+                    String REASON = "r";
+                }
+            }
+
+            class Success extends Packet.Wrapper {
+                public String message() {
+                    return this.parameters().get(Parameters.MESSAGE).getAsString();
+                }
+                public NamedTextColor color() {
+                    return ColorMapper.map(this.parameters().get(Parameters.COLOR).getAsString());
+                }
+                public Integer pingInterval() {
+                    return this.parameters().get(Parameters.INTERVAL).getAsInt();
+                }
+
+                public Success(Packet packet) {
+                    super(packet);
+                }
+
+                public interface Parameters {
+                    String MESSAGE = "m";
+                    String COLOR = "c";
+                    String INTERVAL = "i";
+                }
+            }
+        }
+
+        class Disconnect extends Packet.Wrapper {
+            public Disconnect(Packet packet) {
+                super(packet);
+            }
+        }
+
+        class StalePing extends Packet.Wrapper {
+            public StalePing(Packet packet) {
+                super(packet);
+            }
+        }
+
+        class SendPlayer extends Packet.Wrapper {
+            public String targetFamilyName() {
+                return this.parameters().get(Parameters.TARGET_FAMILY_NAME).getAsString();
+            }
+
+            public UUID uuid() {
+                return UUID.fromString(this.parameters().get(Parameters.PLAYER_UUID).getAsString());
+            }
+
+            public SendPlayer(Packet packet) {
+                super(packet);
+            }
+
+            public interface Parameters {
+                String TARGET_FAMILY_NAME = "f";
+                String PLAYER_UUID = "p";
+            }
+        }
     }
 }

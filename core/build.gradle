@@ -1,6 +1,9 @@
 compileJava {
     options.encoding = "UTF-8"
 }
+javadoc {
+    options.encoding = 'UTF-8'
+}
 
 dependencies {
     shadow "net.kyori:adventure-text-minimessage:${project.minimessage_version}"

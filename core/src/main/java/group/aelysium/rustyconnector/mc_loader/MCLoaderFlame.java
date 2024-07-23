@@ -2,12 +2,12 @@ package group.aelysium.rustyconnector.mc_loader;
 
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.events.EventManager;
-import group.aelysium.rustyconnector.common.magic_link.buitin_packets.BuiltInIdentifications;
-import group.aelysium.rustyconnector.common.magic_link.buitin_packets.SendPlayerPacket;
+import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
+import group.aelysium.rustyconnector.mc_loader.lang.MCLoaderLang;
 import group.aelysium.rustyconnector.mc_loader.magic_link.MagicLink;
 import group.aelysium.rustyconnector.proxy.util.Version;
-import group.aelysium.rustyconnector.mc_loader.lang.MCLoaderLangLibrary;
+import group.aelysium.rustyconnector.common.lang.LangLibrary;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetSocketAddress;
@@ -17,7 +17,7 @@ public class MCLoaderFlame implements Particle {
     private final UUID uuid;
     private final Version version;
     private final MCLoaderAdapter adapter;
-    private final Flux<MCLoaderLangLibrary> lang;
+    private final Flux<LangLibrary<MCLoaderLang>> lang;
     private final String displayName;
     private final InetSocketAddress address;
     private final Flux<MagicLink> magicLink;
@@ -27,7 +27,7 @@ public class MCLoaderFlame implements Particle {
             @NotNull UUID uuid,
             @NotNull Version version,
             @NotNull MCLoaderAdapter adapter,
-            @NotNull Flux<MCLoaderLangLibrary> lang,
+            @NotNull Flux<LangLibrary<MCLoaderLang>> lang,
             @NotNull String displayName,
             @NotNull InetSocketAddress address,
             @NotNull Flux<MagicLink> magicLink,
@@ -89,7 +89,7 @@ public class MCLoaderFlame implements Particle {
      */
     public void lock() {
         Packet.New()
-                .identification(BuiltInIdentifications.LOCK_SERVER)
+                .identification(Packet.BuiltInIdentifications.LOCK_SERVER)
                 .addressedTo(Packet.Target.allAvailableProxies())
                 .send();
     }
@@ -99,7 +99,7 @@ public class MCLoaderFlame implements Particle {
      */
     public void unlock() {
         Packet.New()
-                .identification(BuiltInIdentifications.UNLOCK_SERVER)
+                .identification(Packet.BuiltInIdentifications.UNLOCK_SERVER)
                 .addressedTo(Packet.Target.allAvailableProxies())
                 .send();
     }
@@ -111,9 +111,9 @@ public class MCLoaderFlame implements Particle {
      */
     public void send(UUID player, String familyID) {
         Packet.New()
-                .identification(BuiltInIdentifications.SEND_PLAYER)
-                .parameter(SendPlayerPacket.Parameters.PLAYER_UUID, player.toString())
-                .parameter(SendPlayerPacket.Parameters.TARGET_FAMILY_NAME, familyID)
+                .identification(Packet.BuiltInIdentifications.SEND_PLAYER)
+                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.PLAYER_UUID, player.toString())
+                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.TARGET_FAMILY_NAME, familyID)
                 .addressedTo(Packet.Target.allAvailableProxies())
                 .send();
     }
@@ -135,7 +135,7 @@ public class MCLoaderFlame implements Particle {
         return this.adapter;
     }
 
-    public Flux<MCLoaderLangLibrary> Lang() {
+    public Flux<LangLibrary<MCLoaderLang>> Lang() {
         return this.lang;
     }
 
@@ -152,7 +152,7 @@ public class MCLoaderFlame implements Particle {
         private final UUID uuid;
         private final Version version;
         private final MCLoaderAdapter adapter;
-        private final MCLoaderLangLibrary.Tinder lang;
+        private final LangLibrary.Tinder<MCLoaderLang> lang;
         private final String displayName;
         private final InetSocketAddress address;
         private final MagicLink.Tinder magicLink;
@@ -162,7 +162,7 @@ public class MCLoaderFlame implements Particle {
                 @NotNull UUID uuid,
                 @NotNull Version version,
                 @NotNull MCLoaderAdapter adapter,
-                @NotNull MCLoaderLangLibrary.Tinder lang,
+                @NotNull LangLibrary.Tinder<MCLoaderLang> lang,
                 @NotNull String displayName,
                 @NotNull InetSocketAddress address,
                 @NotNull MagicLink.Tinder magicLink,

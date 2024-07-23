@@ -37,8 +37,8 @@ public class LocalStorage {
             }
         };
 
-        public void store(UUID uuid, Player player) {
-            this.players.put(uuid, player);
+        public void store(Player player) {
+            this.players.put(player.uuid(), player);
         }
 
         public Optional<Player> fetch(UUID uuid) {

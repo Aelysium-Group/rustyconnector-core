@@ -1,46 +1,39 @@
 package group.aelysium.rustyconnector.proxy.magic_link.packet_handlers;
 
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.magic_link.Packet;
-import group.aelysium.rustyconnector.common.buitin_packets.BuiltInIdentifications;
-import group.aelysium.rustyconnector.common.buitin_packets.MagicLink;
+import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.proxy.events.ServerUnregisterEvent;
-import group.aelysium.rustyconnector.toolkit.proxy.family.IFamily;
-import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.IMCLoader;
+import group.aelysium.rustyconnector.proxy.family.Server;
 
-import java.util.concurrent.TimeUnit;
-
-public class HandshakeDisconnectListener extends PacketListener<MagicLink.Disconnect> {
+public class HandshakeDisconnectListener extends PacketListener<MagicLinkCore.Packets.Disconnect> {
     public HandshakeDisconnectListener() {
         super(
-                BuiltInIdentifications.MAGICLINK_HANDSHAKE_DISCONNECT,
+                Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_DISCONNECT,
                 new Wrapper<>() {
                     @Override
-                    public MagicLink.Disconnect wrap(Packet packet) {
-                        return new MagicLink.Disconnect(packet);
+                    public MagicLinkCore.Packets.Disconnect wrap(Packet packet) {
+                        return new MagicLinkCore.Packets.Disconnect(packet);
                     }
                 }
         );
     }
 
     @Override
-    public void execute(MagicLink.Disconnect packet) throws Exception {
-        IMCLoader mcloader = RC.P.MCLoader(packet.sender().uuid()).orElseThrow();
+    public void execute(MagicLinkCore.Packets.Disconnect packet) throws Exception {
+        Server server = RC.P.MCLoader(packet.sender().uuid()).orElseThrow();
 
-        IFamily family = mcloader.family().access().get(10, TimeUnit.SECONDS);
-
-        RC.P.Adapter().unregisterMCLoader(mcloader);
-        family.connector().unregister(mcloader);
+        RC.P.Adapter().unregisterServer(server);
+        server.family().executeNow(f -> f.deleteServer(server));
 
         try {
             Packet.New()
-                    .identification(BuiltInIdentifications.MAGICLINK_HANDSHAKE_STALE_PING)
+                    .identification(Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_STALE_PING)
                     .addressedTo(packet)
                     .send();
         } catch (Exception ignore) {}
 
-        RC.P.EventManager().fireEvent(new ServerUnregisterEvent(family, mcloader));
+        RC.P.EventManager().fireEvent(new ServerUnregisterEvent(server));
     }
 }

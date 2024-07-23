@@ -2,25 +2,25 @@ package group.aelysium.rustyconnector.proxy.events;
 
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.events.Event;
-import group.aelysium.rustyconnector.toolkit.proxy.family.IFamily;
-import group.aelysium.rustyconnector.toolkit.proxy.family.mcloader.IMCLoader;
+import group.aelysium.rustyconnector.proxy.family.Family;
+import group.aelysium.rustyconnector.proxy.family.Server;
 
 /**
  * Represents an MCLoader successfully registering to the Proxy.
  */
 public class ServerRegisterEvent implements Event {
-    protected final Particle.Flux<IFamily> family;
-    protected final IMCLoader mcLoader;
+    protected final Particle.Flux<Family> family;
+    protected final Server server;
 
-    public ServerRegisterEvent(Particle.Flux<IFamily> family, IMCLoader mcLoader) {
+    public ServerRegisterEvent(Particle.Flux<Family> family, Server server) {
         this.family = family;
-        this.mcLoader = mcLoader;
+        this.server = server;
     }
 
-    public Particle.Flux<IFamily> family() {
+    public Particle.Flux<Family> family() {
         return family;
     }
-    public IMCLoader mcLoader() {
-        return mcLoader;
+    public Server server() {
+        return server;
     }
 }

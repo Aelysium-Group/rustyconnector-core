@@ -1,45 +1,38 @@
 package group.aelysium.rustyconnector.mc_loader.magic_link.handlers;
 
-import group.aelysium.rustyconnector.common.magic_link.Packet;
-import group.aelysium.rustyconnector.common.buitin_packets.BuiltInIdentifications;
+import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
-import group.aelysium.rustyconnector.common.magic_link.packet.PacketParameter;
-import group.aelysium.rustyconnector.mc_loader.events.magic_link.TimeoutEvent;
-import group.aelysium.rustyconnector.mcloader.Flame;
-import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.RustyConnector;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import group.aelysium.rustyconnector.common.magic_link.packet.PacketParameter;
+import group.aelysium.rustyconnector.mc_loader.MCLoaderFlame;
+import group.aelysium.rustyconnector.mc_loader.events.magic_link.TimeoutEvent;
+import group.aelysium.rustyconnector.RC;
 
-import java.util.concurrent.TimeUnit;
-
-public class HandshakeStalePingListener extends PacketListener<group.aelysium.rustyconnector.common.buitin_packets.MagicLink.StalePing> {
+public class HandshakeStalePingListener extends PacketListener<MagicLinkCore.Packets.StalePing> {
     public HandshakeStalePingListener() {
         super(
-                BuiltInIdentifications.MAGICLINK_HANDSHAKE_STALE_PING,
+                Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_STALE_PING,
                 new Wrapper<>() {
                     @Override
-                    public group.aelysium.rustyconnector.common.buitin_packets.MagicLink.StalePing wrap(Packet packet) {
-                        return new group.aelysium.rustyconnector.common.buitin_packets.MagicLink.StalePing(packet);
+                    public MagicLinkCore.Packets.StalePing wrap(Packet packet) {
+                        return new MagicLinkCore.Packets.StalePing(packet);
                     }
                 }
         );
     }
 
     @Override
-    public void execute(group.aelysium.rustyconnector.common.buitin_packets.MagicLink.StalePing packet) {
-        Flame flame = RustyConnector.Toolkit.MCLoader().orElseThrow().access().get(20, TimeUnit.SECONDS);
+    public void execute(MagicLinkCore.Packets.StalePing packet) {
+        MCLoaderFlame flame = RC.M.Kernel();
         RC.M.EventManager().fireEvent(new TimeoutEvent());
 
-        logger.send(Component.text("Connection to the Proxy has timed out! Attempting to reconnect...", NamedTextColor.RED));
         RC.M.MagicLink().setDelay(5);
         Packet.New()
-                .identification(BuiltInIdentifications.MAGICLINK_HANDSHAKE_PING)
-                .parameter(group.aelysium.rustyconnector.common.buitin_packets.MagicLink.Handshake.Ping.Parameters.ADDRESS, flame.address().getHostName() + ":" + flame.address().getPort())
-                .parameter(group.aelysium.rustyconnector.common.buitin_packets.MagicLink.Handshake.Ping.Parameters.DISPLAY_NAME, flame.displayName())
-                .parameter(group.aelysium.rustyconnector.common.buitin_packets.MagicLink.Handshake.Ping.Parameters.MAGIC_CONFIG_NAME, flame.MagicLink().orElseThrow().magicConfig())
-                .parameter(group.aelysium.rustyconnector.common.buitin_packets.MagicLink.Handshake.Ping.Parameters.PLAYER_COUNT, new PacketParameter(flame.playerCount()))
+                .identification(Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_PING)
+                .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.ADDRESS, flame.address().getHostName() + ":" + flame.address().getPort())
+                .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.DISPLAY_NAME, flame.displayName())
+                .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.MAGIC_CONFIG_NAME, flame.MagicLink().orElseThrow().magicConfig())
+                .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.PLAYER_COUNT, new PacketParameter(flame.playerCount()))
                 .addressedTo(packet)
                 .send();
     }

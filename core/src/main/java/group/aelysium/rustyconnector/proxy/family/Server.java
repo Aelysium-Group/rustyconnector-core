@@ -2,6 +2,7 @@ package group.aelysium.rustyconnector.proxy.family;
 
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
+import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.proxy.Permission;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.ISortable;
 import group.aelysium.rustyconnector.proxy.player.Player;
@@ -290,7 +291,7 @@ public class Server implements ISortable, Player.Connectable {
     }
 
     public interface Factory {
-        @NotNull Server generateserver(
+        @NotNull Server generateServer(
                 @NotNull UUID uuid,
                 @NotNull InetSocketAddress address,
                 @Nullable String podName,
@@ -328,5 +329,18 @@ public class Server implements ISortable, Player.Connectable {
          * @return `true` if the server is locked. `false` if the server is unlocked. This method also returns `false` if the server simply doesn't exist.
          */
         boolean isLocked(@NotNull Server server);
+    }
+
+    public interface Packets {
+        class Lock extends Packet.Wrapper {
+            public Lock(Packet packet) {
+                super(packet);
+            }
+        }
+        class Unlock extends Packet.Wrapper {
+            public Unlock(Packet packet) {
+                super(packet);
+            }
+        }
     }
 }

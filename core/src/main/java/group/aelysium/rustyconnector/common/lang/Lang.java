@@ -2,7 +2,6 @@ package group.aelysium.rustyconnector.common.lang;
 
 import group.aelysium.rustyconnector.common.cache.CacheableMessage;
 import group.aelysium.rustyconnector.proxy.util.Version;
-import group.aelysium.rustyconnector.common.message_cache.ICacheableMessage;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.TextColor;
@@ -166,7 +165,7 @@ public class Lang {
     }
 
 
-    public Component message(ICacheableMessage message) {
+    public Component message(CacheableMessage message) {
         return headerBox(
                 "Message",
                 join(

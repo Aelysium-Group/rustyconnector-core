@@ -2,17 +2,19 @@ package group.aelysium.rustyconnector;
 
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.events.EventManager;
-import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.mc_loader.MCLoaderAdapter;
+import group.aelysium.rustyconnector.mc_loader.MCLoaderFlame;
+import group.aelysium.rustyconnector.mc_loader.lang.MCLoaderLang;
 import group.aelysium.rustyconnector.proxy.ProxyAdapter;
+import group.aelysium.rustyconnector.proxy.ProxyFlame;
 import group.aelysium.rustyconnector.proxy.family.Families;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.family.whitelist.Whitelist;
+import group.aelysium.rustyconnector.proxy.lang.ProxyLang;
 import group.aelysium.rustyconnector.proxy.magic_link.MagicLink;
 import group.aelysium.rustyconnector.proxy.player.Player;
-import group.aelysium.rustyconnector.mc_loader.lang.MCLoaderLangLibrary;
-import group.aelysium.rustyconnector.proxy.lang.ProxyLangLibrary;
+import group.aelysium.rustyconnector.common.lang.LangLibrary;
 import group.aelysium.rustyconnector.proxy.storage.LocalStorage;
 
 import java.util.NoSuchElementException;
@@ -29,6 +31,10 @@ public interface RC {
      * The interface containing Proxy based operations.
      */
     interface P {
+        static ProxyFlame Kernel() throws NoSuchElementException {
+            return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow();
+        }
+
         static Families Families() throws NoSuchElementException {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Families().orElseThrow();
         }
@@ -55,7 +61,7 @@ public interface RC {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Adapter();
         }
 
-        static ProxyLangLibrary Lang() throws NoSuchElementException {
+        static LangLibrary<ProxyLang> Lang() throws NoSuchElementException {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Lang().orElseThrow();
         }
 
@@ -80,7 +86,11 @@ public interface RC {
      * The interface containing MCLoader based operations.
      */
     interface M {
-        static MagicLinkCore MagicLink() throws NoSuchElementException {
+        static MCLoaderFlame Kernel() throws NoSuchElementException {
+            return RustyConnector.Toolkit.MCLoader().orElseThrow().orElseThrow();
+        }
+
+        static group.aelysium.rustyconnector.mc_loader.magic_link.MagicLink MagicLink() throws NoSuchElementException {
             return RustyConnector.Toolkit.MCLoader().orElseThrow().orElseThrow().MagicLink().orElseThrow();
         }
 
@@ -88,7 +98,7 @@ public interface RC {
             return RustyConnector.Toolkit.MCLoader().orElseThrow().orElseThrow().Adapter();
         }
 
-        static MCLoaderLangLibrary Lang() throws NoSuchElementException {
+        static LangLibrary<MCLoaderLang> Lang() throws NoSuchElementException {
             return RustyConnector.Toolkit.MCLoader().orElseThrow().orElseThrow().Lang().orElseThrow();
         }
 
