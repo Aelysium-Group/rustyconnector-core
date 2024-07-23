@@ -190,11 +190,11 @@ public class Packet implements JSONParseable {
                 if(sender != null) this.builder.sender(sender);
 
                 try {
-                    this.builder.sender(Target.mcLoader(RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().uuid()));
+                    this.builder.sender(Target.server(RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().uuid()));
                     return;
                 } catch (Exception ignore) {}
                 try {
-                    this.builder.sender(Target.mcLoader(RustyConnector.Toolkit.MCLoader().orElseThrow().orElseThrow().uuid()));
+                    this.builder.sender(Target.server(RustyConnector.Toolkit.Server().orElseThrow().orElseThrow().uuid()));
                     return;
                 } catch (Exception ignore) {}
                 throw new RuntimeException("No available flames existed in order to send the packet!");
@@ -236,7 +236,7 @@ public class Packet implements JSONParseable {
                     return RC.P.MagicLink();
                 } catch (Exception ignore) {}
                 try {
-                    return RC.M.MagicLink();
+                    return RC.S.MagicLink();
                 } catch (Exception ignore) {}
                 throw new RuntimeException("No available flames existed in order to send the packet!");
             }
@@ -323,8 +323,8 @@ public class Packet implements JSONParseable {
             );
         }
 
-        public static Target mcLoader(UUID uuid) {
-            return new Target(uuid, Origin.MCLOADER);
+        public static Target server(UUID uuid) {
+            return new Target(uuid, Origin.SERVER);
         }
         public static Target proxy(UUID uuid) {
             return new Target(uuid, Origin.PROXY);
@@ -372,16 +372,16 @@ public class Packet implements JSONParseable {
         public enum Origin {
             PROXY,
             ANY_PROXY,
-            MCLOADER,
-            ANY_MCLOADER
+            SERVER,
+            ANY_SERVER
             ;
 
             public static Origin fromInteger(int number) {
                 return switch (number) {
                     case 0 -> Origin.PROXY;
                     case 1 -> Origin.ANY_PROXY;
-                    case 2 -> Origin.MCLOADER;
-                    case 3 -> Origin.ANY_MCLOADER;
+                    case 2 -> Origin.SERVER;
+                    case 3 -> Origin.ANY_SERVER;
                     default -> throw new ClassCastException(number+" has no associated value!");
                 };
             }
@@ -389,8 +389,8 @@ public class Packet implements JSONParseable {
                 return switch (origin) {
                     case PROXY -> 0;
                     case ANY_PROXY -> 1;
-                    case MCLOADER -> 2;
-                    case ANY_MCLOADER -> 3;
+                    case SERVER -> 2;
+                    case ANY_SERVER -> 3;
                 };
             }
         }
@@ -470,48 +470,48 @@ public class Packet implements JSONParseable {
 
     public interface BuiltInIdentifications {
         /**
-         * `MCLoader > Proxy` | MCLoader requesting to interface with Proxy.
-         *                    | If the MCLoader is new, it will attempt to be registered.
-         *                    | If the MCLoader is already registered, it's connection will refresh.
+         * `Server > Proxy` | Server requesting to interface with Proxy.
+         *                    | If the Server is new, it will attempt to be registered.
+         *                    | If the Server is already registered, it's connection will refresh.
          *
          *                    | This packet is simultaneously a handshake initializer and a keep-alive packet.
          */
         PacketIdentification MAGICLINK_HANDSHAKE_PING = PacketIdentification.from("RC","MLH");
 
         /**
-         * `Proxy > MCLoader` | Tells the MCLoader it couldn't be registered
+         * `Proxy > Server` | Tells the Server it couldn't be registered
          */
         PacketIdentification MAGICLINK_HANDSHAKE_FAIL = PacketIdentification.from("RC","MLHF");
 
         /**
-         * `Proxy > MCLoader` | Tells the MCLoader it was registered and how it should configure itself
+         * `Proxy > Server` | Tells the Server it was registered and how it should configure itself
          */
         PacketIdentification MAGICLINK_HANDSHAKE_SUCCESS = PacketIdentification.from("RC","MLHS");
 
         /**
-         * `MCLoader > Proxy` | Tells the Proxy to drop the Magic Link between this MCLoader.
-         *                    | Typically used when the MCLoader is shutting down so that Magic Link doesn't have to manually scan it.
+         * `Server > Proxy` | Tells the Proxy to drop the Magic Link between this Server.
+         *                    | Typically used when the Server is shutting down so that Magic Link doesn't have to manually scan it.
          */
         PacketIdentification MAGICLINK_HANDSHAKE_DISCONNECT = PacketIdentification.from("RC","MLHK");
 
         /**
-         * `Proxy > MCLoader` | Informs the MCLoader that it's connection to the proxy has gone stale.
-         *                    | It is expected that, if the MCLoader is still available it will respond to this message with a {@link BuiltInIdentifications#MAGICLINK_HANDSHAKE_PING}
+         * `Proxy > Server` | Informs the Server that it's connection to the proxy has gone stale.
+         *                    | It is expected that, if the Server is still available it will respond to this message with a {@link BuiltInIdentifications#MAGICLINK_HANDSHAKE_PING}
          */
         PacketIdentification MAGICLINK_HANDSHAKE_STALE_PING = PacketIdentification.from("RC","MLHSP");
 
         /**
-         * `MCLoader > Proxy` | Request to send a player to a family
+         * `Server > Proxy` | Request to send a player to a family
          */
         PacketIdentification SEND_PLAYER = PacketIdentification.from("RC","SP");
 
         /**
-         * `Server > MCLoader` | Tells the proxy to open a server.
+         * `Server > Server` | Tells the proxy to open a server.
          */
         PacketIdentification UNLOCK_SERVER = PacketIdentification.from("RC","US");
 
         /**
-         * `MCLoader > Proxy` | Tells the proxy to close a server.
+         * `Server > Proxy` | Tells the proxy to close a server.
          */
         PacketIdentification LOCK_SERVER = PacketIdentification.from("RC","LS");
 

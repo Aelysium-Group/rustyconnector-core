@@ -22,10 +22,10 @@ public class HandshakeSuccessListener extends PacketListener<MagicLinkCore.Packe
 
     @Override
     public void execute(MagicLinkCore.Packets.Handshake.Success packet) {
-        RC.M.EventManager().fireEvent(new ConnectedEvent());
+        RC.S.EventManager().fireEvent(new ConnectedEvent());
 
-        RC.M.Adapter().log(Component.text(packet.message(), packet.color()));
+        RC.S.Adapter().log(Component.text(packet.message(), packet.color()));
 
-        RC.M.MagicLink().setDelay(packet.pingInterval());
+        RC.S.MagicLink().setDelay(packet.pingInterval());
     }
 }

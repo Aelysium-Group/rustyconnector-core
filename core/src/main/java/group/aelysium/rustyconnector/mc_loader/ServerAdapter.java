@@ -7,10 +7,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * The MCLoader adapter exists to take loader specific actions and adapt them so that RustyConnector
+ * The Server adapter exists to take loader specific actions and adapt them so that RustyConnector
  * can properly execute them regardless of disparate data types between the wrapper and RustyConnector.
  */
-public abstract class MCLoaderAdapter {
+public abstract class ServerAdapter {
     /**
      * Set the maximum number of players that this server will allow to connect to it.
      * @param max The max number of players that can join this server.

@@ -17,7 +17,7 @@ public class LocalStorage {
     private final Servers servers = new Servers();
     private final Players players = new Players();
 
-    public Servers mcloaders() {
+    public Servers servers() {
         return this.servers;
     }
     

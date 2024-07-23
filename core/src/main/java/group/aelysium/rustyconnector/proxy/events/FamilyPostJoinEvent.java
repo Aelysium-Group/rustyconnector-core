@@ -23,7 +23,7 @@ public class FamilyPostJoinEvent implements Event {
     public Particle.Flux<Family> family() {
         return family;
     }
-    public Server mcLoader() {
+    public Server server() {
         return server;
     }
     public Player player() {

@@ -6,7 +6,7 @@ import group.aelysium.rustyconnector.proxy.player.Player;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents a player leaving an MCLoader.
+ * Represents a player leaving an Server.
  * This event will only fire once {@link FamilyLeaveEvent} has fired.
  * It can be assumed that if this event fires, the player has successfully acquired a new origin.
  * This event will also fire if a player leaves the family by logging out of the network.
@@ -26,7 +26,7 @@ public class ServerLeaveEvent implements Event {
         this.disconnected = disconnected;
     }
 
-    public Server mcLoader() {
+    public Server server() {
         return server;
     }
     public Player player() {

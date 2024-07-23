@@ -5,7 +5,7 @@ import group.aelysium.rustyconnector.proxy.player.Player;
 import group.aelysium.rustyconnector.common.events.Event;
 
 /**
- * Represents a player joining an MCLoader.
+ * Represents a player joining an Server.
  * This event will only fire once {@link FamilyPostJoinEvent} has fired.
  */
 public class ServerJoinEvent implements Event {
@@ -17,7 +17,7 @@ public class ServerJoinEvent implements Event {
         this.player = player;
     }
 
-    public Server mcLoader() {
+    public Server server() {
         return server;
     }
     public Player player() {

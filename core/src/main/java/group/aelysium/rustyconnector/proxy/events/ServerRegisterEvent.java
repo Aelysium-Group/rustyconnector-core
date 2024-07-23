@@ -6,7 +6,7 @@ import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
 
 /**
- * Represents an MCLoader successfully registering to the Proxy.
+ * Represents an Server successfully registering to the Proxy.
  */
 public class ServerRegisterEvent implements Event {
     protected final Particle.Flux<Family> family;

@@ -38,7 +38,7 @@ public class LeastConnection extends LoadBalancer {
 
     @Override
     public String toString() {
-        return "LoadBalancer (LeastConnection): "+this.mcloaders.size()+" items";
+        return "LoadBalancer (LeastConnection): "+this.servers.size()+" items";
     }
 
     public static class Tinder extends Particle.Tinder<LoadBalancer> {

@@ -5,7 +5,7 @@ import group.aelysium.rustyconnector.common.events.Event;
 import group.aelysium.rustyconnector.proxy.family.Family;
 
 /**
- * Represents a family rebalancing its MCLoaders via it's load balancer.
+ * Represents a family rebalancing its Servers via it's load balancer.
  */
 public class FamilyRebalanceEvent implements Event {
     protected final Particle.Flux<Family> family;

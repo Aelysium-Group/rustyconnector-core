@@ -10,9 +10,9 @@ import java.util.concurrent.TimeUnit;
 import static net.kyori.adventure.text.Component.*;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 
-public class MCLoaderLang extends Lang {
+public class ServerLang extends Lang {
 
-    public MCLoaderLang(ASCIIAlphabet asciiAlphabet) {
+    public ServerLang(ASCIIAlphabet asciiAlphabet) {
         super(asciiAlphabet);
     }
 

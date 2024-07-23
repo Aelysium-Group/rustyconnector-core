@@ -2,9 +2,9 @@ package group.aelysium.rustyconnector;
 
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.events.EventManager;
-import group.aelysium.rustyconnector.mc_loader.MCLoaderAdapter;
-import group.aelysium.rustyconnector.mc_loader.MCLoaderFlame;
-import group.aelysium.rustyconnector.mc_loader.lang.MCLoaderLang;
+import group.aelysium.rustyconnector.mc_loader.ServerAdapter;
+import group.aelysium.rustyconnector.mc_loader.ServerFlame;
+import group.aelysium.rustyconnector.mc_loader.lang.ServerLang;
 import group.aelysium.rustyconnector.proxy.ProxyAdapter;
 import group.aelysium.rustyconnector.proxy.ProxyFlame;
 import group.aelysium.rustyconnector.proxy.family.Families;
@@ -73,8 +73,8 @@ public interface RC {
             return Optional.ofNullable(family);
         }
 
-        static Optional<Server> MCLoader(UUID uuid) throws NoSuchElementException {
-            return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().LocalStorage().mcloaders().fetch(uuid);
+        static Optional<Server> Server(UUID uuid) throws NoSuchElementException {
+            return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().LocalStorage().servers().fetch(uuid);
         }
 
         static Optional<Player> Player(UUID uuid) throws NoSuchElementException {
@@ -83,27 +83,27 @@ public interface RC {
     }
 
     /**
-     * The interface containing MCLoader based operations.
+     * The interface containing Server based operations.
      */
-    interface M {
-        static MCLoaderFlame Kernel() throws NoSuchElementException {
-            return RustyConnector.Toolkit.MCLoader().orElseThrow().orElseThrow();
+    interface S {
+        static ServerFlame Kernel() throws NoSuchElementException {
+            return RustyConnector.Toolkit.Server().orElseThrow().orElseThrow();
         }
 
         static group.aelysium.rustyconnector.mc_loader.magic_link.MagicLink MagicLink() throws NoSuchElementException {
-            return RustyConnector.Toolkit.MCLoader().orElseThrow().orElseThrow().MagicLink().orElseThrow();
+            return RustyConnector.Toolkit.Server().orElseThrow().orElseThrow().MagicLink().orElseThrow();
         }
 
-        static MCLoaderAdapter Adapter() throws NoSuchElementException {
-            return RustyConnector.Toolkit.MCLoader().orElseThrow().orElseThrow().Adapter();
+        static ServerAdapter Adapter() throws NoSuchElementException {
+            return RustyConnector.Toolkit.Server().orElseThrow().orElseThrow().Adapter();
         }
 
-        static LangLibrary<MCLoaderLang> Lang() throws NoSuchElementException {
-            return RustyConnector.Toolkit.MCLoader().orElseThrow().orElseThrow().Lang().orElseThrow();
+        static LangLibrary<ServerLang> Lang() throws NoSuchElementException {
+            return RustyConnector.Toolkit.Server().orElseThrow().orElseThrow().Lang().orElseThrow();
         }
 
         static EventManager EventManager() throws NoSuchElementException {
-            return RustyConnector.Toolkit.MCLoader().orElseThrow().orElseThrow().EventManager();
+            return RustyConnector.Toolkit.Server().orElseThrow().orElseThrow().EventManager();
         }
     }
 }

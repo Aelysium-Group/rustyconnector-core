@@ -17,16 +17,16 @@ import java.util.concurrent.TimeUnit;
 
 public class MagicLink extends MagicLinkCore {
     protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-    protected Map<String, MagicLinkMCLoaderSettings> settingsMap;
+    protected Map<String, MagicLinkServerSettings> settingsMap;
 
     protected MagicLink(
             @NotNull AESCryptor cryptor,
             @NotNull MessageCache cache,
             @NotNull Packet.Target self,
-            @NotNull Map<String, MagicLinkMCLoaderSettings> magicLinkMCLoaderSettingsMap
+            @NotNull Map<String, MagicLinkServerSettings> magicLinkServerSettingsMap
     ) {
         super(cryptor, cache, self);
-        this.settingsMap = magicLinkMCLoaderSettingsMap;
+        this.settingsMap = magicLinkServerSettingsMap;
         this.heartbeat();
     }
 
@@ -36,11 +36,11 @@ public class MagicLink extends MagicLinkCore {
                 RC.P.Families().dump().forEach(f -> {
                     try {
                         Family family = f.orElseThrow();
-                        family.servers().forEach(mcLoader -> {
-                            mcLoader.decreaseTimeout(3);
+                        family.servers().forEach(server -> {
+                            server.decreaseTimeout(3);
 
                             try {
-                                if (mcLoader.stale()) family.deleteServer(mcLoader);
+                                if (server.stale()) family.deleteServer(server);
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -56,12 +56,12 @@ public class MagicLink extends MagicLinkCore {
     }
 
     /**
-     * Fetches a Magic Link MCLoader Config based on a name.
+     * Fetches a Magic Link Server Config based on a name.
      * `name` is considered to be the name of the file found in `magic_configs` on the Proxy, minus the file extension.
      * @param name The name to look for.
      */
-    public Optional<MagicLinkMCLoaderSettings> magicConfig(String name) {
-        MagicLinkMCLoaderSettings settings = this.settingsMap.get(name);
+    public Optional<MagicLinkServerSettings> magicConfig(String name) {
+        MagicLinkServerSettings settings = this.settingsMap.get(name);
         if(settings == null) return Optional.empty();
         return Optional.of(settings);
     }
@@ -72,7 +72,7 @@ public class MagicLink extends MagicLinkCore {
         this.executor.shutdownNow();
     }
 
-    public record MagicLinkMCLoaderSettings(
+    public record MagicLinkServerSettings(
             String family,
             int weight,
             int soft_cap,
@@ -82,11 +82,11 @@ public class MagicLink extends MagicLinkCore {
     public static class Tinder extends Particle.Tinder<MagicLink> {
         private final AESCryptor cryptor;
         private final Packet.Target self;
-        private final Map<String, MagicLinkMCLoaderSettings> magicConfigs;
+        private final Map<String, MagicLinkServerSettings> magicConfigs;
         public Tinder(
                 @NotNull AESCryptor cryptor,
                 @NotNull Packet.Target self,
-                @NotNull Map<String, MagicLinkMCLoaderSettings> magicConfigs
+                @NotNull Map<String, MagicLinkServerSettings> magicConfigs
                 ) {
             this.cryptor = cryptor;
             this.self = self;

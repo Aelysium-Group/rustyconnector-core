@@ -33,13 +33,13 @@ public class HandshakePingListener extends PacketListener<MagicLink.Packets.Hand
     @Override
     public void execute(MagicLink.Packets.Handshake.Ping packet) throws Exception {
         try {
-            Server server = RC.P.MCLoader(packet.sender().uuid()).orElseThrow();
+            Server server = RC.P.Server(packet.sender().uuid()).orElseThrow();
 
             server.setTimeout(15);
             server.setPlayerCount(packet.playerCount());
         } catch (Exception e) {
             MagicLink magicLink = RC.P.MagicLink();
-            MagicLink.MagicLinkMCLoaderSettings config = magicLink.magicConfig(packet.magicConfigName()).orElseThrow(
+            MagicLink.MagicLinkServerSettings config = magicLink.magicConfig(packet.magicConfigName()).orElseThrow(
                     () -> new NullPointerException("No Magic Config exists with the name "+packet.magicConfigName()+"!")
             );
 
@@ -49,8 +49,8 @@ public class HandshakePingListener extends PacketListener<MagicLink.Packets.Hand
                 );
                 Family family = familyFlux.access().get(10, TimeUnit.SECONDS);
 
-                RC.P.MCLoader(packet.sender().uuid()).ifPresent(m -> {
-                    throw new RuntimeException("MCLoader " + packet.sender().uuid() + " can't be registered twice!");
+                RC.P.Server(packet.sender().uuid()).ifPresent(m -> {
+                    throw new RuntimeException("Server " + packet.sender().uuid() + " can't be registered twice!");
                 });
 
                 Server server = family.generateServer(

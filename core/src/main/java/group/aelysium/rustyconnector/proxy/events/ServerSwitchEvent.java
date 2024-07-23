@@ -5,7 +5,7 @@ import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.player.Player;
 
 /**
- * Represents a player switching from one mcloader to another.
+ * Represents a player switching from one server to another.
  * This event doesn't care about what family the servers are a part of.
  */
 public class ServerSwitchEvent implements Event {
@@ -19,10 +19,10 @@ public class ServerSwitchEvent implements Event {
         this.player = player;
     }
 
-    public Server oldMCLoader() {
+    public Server oldServer() {
         return oldServer;
     }
-    public Server newMCLoader() {
+    public Server newServer() {
         return newServer;
     }
     public Player player() {

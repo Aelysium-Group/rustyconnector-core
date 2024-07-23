@@ -23,8 +23,8 @@ public class HandshakeFailureListener extends PacketListener<MagicLinkCore.Packe
     @Override
     public void execute(MagicLinkCore.Packets.Handshake.Failure packet) {
         try {
-            RC.M.Adapter().log(RC.M.Lang().lang().magicLinkHandshakeFailure(packet.reason(), 1, TimeUnit.MINUTES));
+            RC.S.Adapter().log(RC.S.Lang().lang().magicLinkHandshakeFailure(packet.reason(), 1, TimeUnit.MINUTES));
         } catch (Exception ignore) {}
-        RC.M.MagicLink().setDelay(60);
+        RC.S.MagicLink().setDelay(60);
     }
 }

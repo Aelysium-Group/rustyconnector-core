@@ -24,7 +24,7 @@ public abstract class LoadBalancer implements Server.Factory, Particle {
     protected int index = 0;
     protected Vector<Server> unlockedServers = new Vector<>();
     protected Vector<Server> lockedServers = new Vector<>();
-    protected Map<UUID, Server> mcloaders = new ConcurrentHashMap<>();
+    protected Map<UUID, Server> servers = new ConcurrentHashMap<>();
     protected Runnable sorter = () -> {
         try {
             Server p = this.unlockedServers.get(0);
@@ -154,8 +154,8 @@ public abstract class LoadBalancer implements Server.Factory, Particle {
     }
 
     /**
-     * Attempt to fetch a "good enough" MCLoader for a potential player connection.
-     * @return The MCLoader.
+     * Attempt to fetch a "good enough" Server for a potential player connection.
+     * @return The Server.
      */
     public Optional<Server> staticFetch() {
         return this.current();
@@ -168,20 +168,20 @@ public abstract class LoadBalancer implements Server.Factory, Particle {
 
     @Override
     public void deleteServer(@NotNull Server server) {
-        if(!this.mcloaders.containsKey(server.uuid())) return;
+        if(!this.servers.containsKey(server.uuid())) return;
         if(!this.unlockedServers.remove(server))
             this.lockedServers.remove(server);
-        this.mcloaders.remove(server.uuid());
+        this.servers.remove(server.uuid());
     }
 
     @Override
     public boolean containsServer(@NotNull Server server) {
-        return this.mcloaders.containsKey(server.uuid());
+        return this.servers.containsKey(server.uuid());
     }
 
     @Override
     public List<Server> servers() {
-        return this.mcloaders.values().stream().toList();
+        return this.servers.values().stream().toList();
     }
 
     @Override
@@ -217,7 +217,7 @@ public abstract class LoadBalancer implements Server.Factory, Particle {
 
     @Override
     public void close() throws Exception {
-        this.mcloaders.clear();
+        this.servers.clear();
         this.unlockedServers.clear();
         this.lockedServers.clear();
         this.executor.shutdownNow();

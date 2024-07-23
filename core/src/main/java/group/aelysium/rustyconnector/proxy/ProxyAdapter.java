@@ -67,10 +67,10 @@ public abstract class ProxyAdapter {
     public abstract void messagePlayer(@NotNull Player player, @NotNull Component component);
 
     /**
-     * Fetches the MCLoader for the player.
-     * @param player The player to fetch the MCLoader for.
+     * Fetches the Server for the player.
+     * @param player The player to fetch the Server for.
      */
-    public abstract Optional<Server> fetchMCLoader(@NotNull Player player);
+    public abstract Optional<Server> fetchServer(@NotNull Player player);
 
     /**
      * Logs the specified component into the console.
@@ -90,22 +90,22 @@ public abstract class ProxyAdapter {
     /**
      * Connects the player to the specified server.
      * By the time this method runs, stuff such as whitelist and player limits have already been addressed.
-     * All you need to do is connect to the underlying server that this MCLoader is backed by.
+     * All you need to do is connect to the underlying server that this Server is backed by.
      * You can use {@link Server#raw()} to fetch the underlying server.
-     * @param mcloader The mcloader.
+     * @param server The server.
      * @param player The player. Specifically, the object returned by {@link #convertToObject(Player)}.
      * @return A connection request.
      */
-    public abstract Player.Connection.Request connectServer(@NotNull Server mcloader, @NotNull Player player);
+    public abstract Player.Connection.Request connectServer(@NotNull Server server, @NotNull Player player);
 
     /**
      * This method contains all the RustyConnector logic for handling a player changing servers.
      * @param player The player.
-     * @param oldServer The MCLoader that the player is disconnecting from. If this is null, it signifies that the player just joined the proxy.
-     * @param newServer The MCLoader that the player is connecting to.
+     * @param oldServer The Server that the player is disconnecting from. If this is null, it signifies that the player just joined the proxy.
+     * @param newServer The Server that the player is connecting to.
      * @throws RuntimeException If there's a fatal error at any point.
      */
-    public final void onMCLoaderSwitch(
+    public final void onServerSwitch(
             @NotNull Player player,
             @Nullable Server oldServer,
             @NotNull Server newServer
@@ -155,11 +155,11 @@ public abstract class ProxyAdapter {
     public final void onDisconnect(@NotNull Player player) {
         RC.P.EventManager().fireEvent(new NetworkLeaveEvent(player));
 
-        Server mcloader = player.server().orElse(null);
-        if(mcloader == null) return;
+        Server server = player.server().orElse(null);
+        if(server == null) return;
 
-        RC.P.EventManager().fireEvent(new FamilyLeaveEvent(mcloader.family(), mcloader, player, true));
-        RC.P.EventManager().fireEvent(new ServerLeaveEvent(mcloader, player, true));
+        RC.P.EventManager().fireEvent(new FamilyLeaveEvent(server.family(), server, player, true));
+        RC.P.EventManager().fireEvent(new ServerLeaveEvent(server, player, true));
     }
 
     /**
@@ -189,9 +189,9 @@ public abstract class ProxyAdapter {
 
             Family family = RC.P.Families().rootFamily().access().get(2, TimeUnit.SECONDS);
 
-            Server mcloader = ((ScalarFamily) family).loadBalancer().orElseThrow().staticFetch().orElseThrow();
+            Server server = ((ScalarFamily) family).loadBalancer().orElseThrow().staticFetch().orElseThrow();
 
-            return new PlayerKickedResponse(false, reason, mcloader);
+            return new PlayerKickedResponse(false, reason, server);
         } catch (Exception e) {
             return new PlayerKickedResponse(false, Objects.requireNonNullElse(reason, "Kicked by server. "+e.getMessage()), null);
         }
@@ -201,9 +201,9 @@ public abstract class ProxyAdapter {
      * The response which is given when {@link #onKicked(Player, String)} is called.
      * @param shouldDisconnect If `true`, the player should ultimately be disconnected from the network.
      *                         `reason` will not be null if this is true.
-     *                         `mcloader` will always be null if this is true.
+     *                         `server` will always be null if this is true.
      * @param reason The reason for the player being kicked. Reason will not be null if: `shouldDisconnect` is true, or in some cases when redirect is not null.
-     * @param redirect The MCLoader that the player should be redirected to.
+     * @param redirect The Server that the player should be redirected to.
      */
     public record PlayerKickedResponse(boolean shouldDisconnect, @Nullable String reason, @Nullable Server redirect) {}
 }

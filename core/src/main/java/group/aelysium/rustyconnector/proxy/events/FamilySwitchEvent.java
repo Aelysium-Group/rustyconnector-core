@@ -31,10 +31,10 @@ public class FamilySwitchEvent implements Event {
     public Particle.Flux<Family> newFamily() {
         return newFamily;
     }
-    public Server oldMCLoader() {
+    public Server oldServer() {
         return oldServer;
     }
-    public Server newMCLoader() {
+    public Server newServer() {
         return newServer;
     }
     public Player player() {

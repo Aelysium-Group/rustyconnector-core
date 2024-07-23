@@ -6,7 +6,7 @@ import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
 
 /**
- * Represents an MCLoader being unlocked on this family.
+ * Represents an Server being unlocked on this family.
  */
 public class ServerUnlockedEvent implements Event {
     protected final Particle.Flux<Family> family;
@@ -20,7 +20,7 @@ public class ServerUnlockedEvent implements Event {
     public Particle.Flux<Family> family() {
         return family;
     }
-    public Server mcLoader() {
+    public Server server() {
         return server;
     }
 }

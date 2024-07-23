@@ -29,7 +29,7 @@ public class Player {
      * @return `true` if the player is online. `false` otherwise.
      */
     public boolean online() {
-        return RC.P.Adapter().fetchMCLoader(this).isPresent();
+        return RC.P.Adapter().fetchServer(this).isPresent();
     }
 
     /**
@@ -55,10 +55,10 @@ public class Player {
     }
 
     /**
-     * Convenience method that will resolve the player and then return their MCLoader if there is one.
+     * Convenience method that will resolve the player and then return their Server if there is one.
      */
     public Optional<Server> server() {
-        return RC.P.Adapter().fetchMCLoader(this);
+        return RC.P.Adapter().fetchServer(this);
     }
 
     public boolean equals(Object object) {
@@ -100,11 +100,11 @@ public class Player {
                         )
                 );
             }
-            public static Request successfulRequest(@NotNull Player player, @NotNull Component message, @Nullable Server mcloader) {
+            public static Request successfulRequest(@NotNull Player player, @NotNull Component message, @Nullable Server server) {
                 return new Request(
                         player,
                         CompletableFuture.completedFuture(
-                                Result.success(message, mcloader)
+                                Result.success(message, server)
                         )
                 );
             }
@@ -115,12 +115,12 @@ public class Player {
          * The returned message is always safe to send directly to the player.
          * @param status The status of this connection result.
          * @param message The player-friendly message of this connection result. This message should always be player friendly.
-         * @param mcloader The MCLoader that this result resolved from.
+         * @param server The Server that this result resolved from.
          */
         record Result(
                 Status status,
                 Component message,
-                Optional<Server> mcloader
+                Optional<Server> server
         ) {
             public boolean connected() {
                 return this.status == Status.SUCCESS;

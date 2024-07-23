@@ -22,7 +22,7 @@ public class HandshakeDisconnectListener extends PacketListener<MagicLinkCore.Pa
 
     @Override
     public void execute(MagicLinkCore.Packets.Disconnect packet) throws Exception {
-        Server server = RC.P.MCLoader(packet.sender().uuid()).orElseThrow();
+        Server server = RC.P.Server(packet.sender().uuid()).orElseThrow();
 
         RC.P.Adapter().unregisterServer(server);
         server.family().executeNow(f -> f.deleteServer(server));

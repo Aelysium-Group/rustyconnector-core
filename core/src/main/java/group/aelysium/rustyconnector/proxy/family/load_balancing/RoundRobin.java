@@ -11,7 +11,7 @@ public class RoundRobin extends LoadBalancer {
 
     @Override
     public String toString() {
-        return "LoadBalancer (RoundRobin): "+this.mcloaders.size()+" items";
+        return "LoadBalancer (RoundRobin): "+this.servers.size()+" items";
     }
 
     @Override

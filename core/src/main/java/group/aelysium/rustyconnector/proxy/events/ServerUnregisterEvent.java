@@ -6,7 +6,7 @@ import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
 
 /**
- * Represents an MCLoader unregistering from the Proxy.
+ * Represents an Server unregistering from the Proxy.
  */
 public class ServerUnregisterEvent implements Event {
     protected final Particle.Flux<Family> family;

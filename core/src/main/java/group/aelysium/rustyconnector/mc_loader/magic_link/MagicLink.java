@@ -5,7 +5,7 @@ import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.cache.MessageCache;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketParameter;
-import group.aelysium.rustyconnector.mc_loader.MCLoaderFlame;
+import group.aelysium.rustyconnector.mc_loader.ServerFlame;
 import group.aelysium.rustyconnector.mc_loader.events.magic_link.DisconnectedEvent;
 import group.aelysium.rustyconnector.common.crypt.AESCryptor;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
@@ -47,7 +47,7 @@ public class MagicLink extends MagicLinkCore {
         this.executor.schedule(() -> {
             if(stopPinging.get()) return;
 
-            MCLoaderFlame flame = RustyConnector.Toolkit.MCLoader().orElseThrow().orElseThrow();
+            ServerFlame flame = RustyConnector.Toolkit.Server().orElseThrow().orElseThrow();
 
             try {
                 Packet.Builder.PrepareForSending packet = Packet.New()
@@ -77,7 +77,7 @@ public class MagicLink extends MagicLinkCore {
         } catch (Exception ignore) {}
 
         try {
-            MCLoaderFlame api = RustyConnector.Toolkit.MCLoader().orElseThrow().orElseThrow();
+            ServerFlame api = RustyConnector.Toolkit.Server().orElseThrow().orElseThrow();
 
             Packet.New()
                     .identification(Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_DISCONNECT)

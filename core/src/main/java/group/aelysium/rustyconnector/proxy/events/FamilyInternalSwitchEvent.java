@@ -7,7 +7,7 @@ import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.player.Player;
 
 /**
- * Represents a player switching from one MCLoader in a family to another MCLoader in that same family.
+ * Represents a player switching from one Server in a family to another Server in that same family.
  */
 public class FamilyInternalSwitchEvent implements Event {
     protected final Particle.Flux<Family> family;
@@ -25,10 +25,10 @@ public class FamilyInternalSwitchEvent implements Event {
     public Particle.Flux<Family> family() {
         return family;
     }
-    public Server previousMCLoader() {
+    public Server previousServer() {
         return previousServer;
     }
-    public Server newMCLoader() {
+    public Server newServer() {
         return newServer;
     }
     public Player player() {

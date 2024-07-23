@@ -42,9 +42,9 @@ public class ScalarFamily extends Family {
 
     @Override
     public @NotNull Server generateServer(@NotNull UUID uuid, @NotNull InetSocketAddress address, @Nullable String podName, @Nullable String displayName, int softPlayerCap, int hardPlayerCap, int weight, int timeout) {
-        AtomicReference<Server> mcloader = new AtomicReference<>();
-        this.loadBalancer.executeNow(l -> mcloader.set(l.generateServer(uuid, address, podName, displayName, softPlayerCap, hardPlayerCap, weight, timeout)));
-        return mcloader.get();
+        AtomicReference<Server> server = new AtomicReference<>();
+        this.loadBalancer.executeNow(l -> server.set(l.generateServer(uuid, address, podName, displayName, softPlayerCap, hardPlayerCap, weight, timeout)));
+        return server.get();
     }
 
     @Override
@@ -101,11 +101,11 @@ public class ScalarFamily extends Family {
 
     @Override
     public List<Server> servers() {
-        AtomicReference<List<Server>> mcloaders = new AtomicReference<>(new ArrayList<>());
+        AtomicReference<List<Server>> servers = new AtomicReference<>(new ArrayList<>());
 
-        this.loadBalancer.executeNow(l -> mcloaders.set(l.servers()));
+        this.loadBalancer.executeNow(l -> servers.set(l.servers()));
 
-        return mcloaders.get();
+        return servers.get();
     }
 
     @Override

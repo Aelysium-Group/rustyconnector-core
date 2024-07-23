@@ -122,7 +122,7 @@ public class ProxyLang extends Lang {
         LoadBalancer loadBalancer = family.loadBalancer().access().get(5, TimeUnit.SECONDS);
 
         if(family.servers().isEmpty()) servers = text("There are no registered servers.", DARK_GRAY);
-        else if(family.unlockedServers().isEmpty()) servers = text("All the MCLoaders in this family are locked.", DARK_GRAY);
+        else if(family.unlockedServers().isEmpty()) servers = text("All the Servers in this family are locked.", DARK_GRAY);
 
         Family rootFamily = RC.P.Families().rootFamily().orElseThrow();
         String parentFamilyName = rootFamily.id();
@@ -151,7 +151,7 @@ public class ProxyLang extends Lang {
                 text("Resort all servers in the family.", DARK_GRAY),
                 space(),
                 text("/rc family <family word_id> resetIndex", GOLD),
-                text("Reset player insertion point to first mcloader in the family.", DARK_GRAY),
+                text("Reset player insertion point to first server in the family.", DARK_GRAY),
                 space(),
                 text("/rc family <family word_id> locked", GOLD),
                 text("View servers that are locked."),

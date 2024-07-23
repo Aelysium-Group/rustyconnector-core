@@ -4,7 +4,7 @@ import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketParameter;
-import group.aelysium.rustyconnector.mc_loader.MCLoaderFlame;
+import group.aelysium.rustyconnector.mc_loader.ServerFlame;
 import group.aelysium.rustyconnector.mc_loader.events.magic_link.TimeoutEvent;
 import group.aelysium.rustyconnector.RC;
 
@@ -23,10 +23,10 @@ public class HandshakeStalePingListener extends PacketListener<MagicLinkCore.Pac
 
     @Override
     public void execute(MagicLinkCore.Packets.StalePing packet) {
-        MCLoaderFlame flame = RC.M.Kernel();
-        RC.M.EventManager().fireEvent(new TimeoutEvent());
+        ServerFlame flame = RC.S.Kernel();
+        RC.S.EventManager().fireEvent(new TimeoutEvent());
 
-        RC.M.MagicLink().setDelay(5);
+        RC.S.MagicLink().setDelay(5);
         Packet.New()
                 .identification(Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_PING)
                 .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.ADDRESS, flame.address().getHostName() + ":" + flame.address().getPort())
