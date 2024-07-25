@@ -9,8 +9,10 @@ import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -77,31 +79,44 @@ public class MagicLink extends MagicLinkCore {
             int weight,
             int soft_cap,
             int hard_cap
-    ) {};
+    ) {
+        public static MagicLinkServerSettings DEFAULT_CONFIGURATION = new MagicLinkServerSettings("lobby", 0, 20, 30);
+    };
 
     public static class Tinder extends Particle.Tinder<MagicLink> {
         private final AESCryptor cryptor;
         private final Packet.Target self;
+        private final MessageCache cache;
         private final Map<String, MagicLinkServerSettings> magicConfigs;
         public Tinder(
                 @NotNull AESCryptor cryptor,
                 @NotNull Packet.Target self,
+                @NotNull MessageCache cache,
                 @NotNull Map<String, MagicLinkServerSettings> magicConfigs
                 ) {
             this.cryptor = cryptor;
             this.self = self;
+            this.cache = cache;
             this.magicConfigs = magicConfigs;
         }
 
         @Override
         public @NotNull MagicLink ignite() throws Exception {
             return new MagicLink(
-                    cryptor,
-                    new MessageCache(50),
+                    this.cryptor,
+                    this.cache,
                     this.self,
                     this.magicConfigs
             );
         }
 
+        public static Tinder DEFAULT_CONFIGURATION(UUID proxyUUID) {
+            return new Tinder(
+                    AESCryptor.DEFAULT_CRYPTOR,
+                    Packet.Target.proxy(proxyUUID),
+                    new MessageCache(50),
+                    new HashMap<>()
+            );
+        }
     }
 }

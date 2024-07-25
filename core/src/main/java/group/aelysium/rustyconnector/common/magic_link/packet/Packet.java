@@ -347,8 +347,8 @@ public class Packet implements JSONParseable {
             // If one of the two is of type "ANY_PROXY" and the other is of type "PROXY", return true.
             if(
                     (this.origin == Origin.ANY_PROXY && target.origin == Origin.PROXY) ||
-                            (this.origin == Origin.PROXY && target.origin == Origin.ANY_PROXY) ||
-                            (this.origin == Origin.ANY_PROXY && target.origin == Origin.ANY_PROXY)
+                    (this.origin == Origin.PROXY && target.origin == Origin.ANY_PROXY) ||
+                    (this.origin == Origin.ANY_PROXY && target.origin == Origin.ANY_PROXY)
             ) return true;
 
             return false;

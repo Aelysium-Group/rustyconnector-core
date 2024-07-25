@@ -50,6 +50,10 @@ public abstract class MagicLinkCore implements Particle {
         this.packetsAwaitingReply.close();
     }
 
+    /**
+     * Handles all of the MagicLink/RustyConnector internals of handling MagicLink packets.
+     * @param rawMessage A AES-256 encrypted MagicLink packet.
+     */
     public void handleMessage(String rawMessage) {
         CacheableMessage cachedMessage = null;
         String decryptedMessage;

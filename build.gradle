@@ -49,7 +49,15 @@ jar {
         it.isDirectory() ? it : zipTree(it)
     }
 
-    from(files("LICENSE_rusty-connector"))
+    from(files("LICENSE"))
 
     exclude("META-INF/*.RSA", "META-INF/*.DSA", "META-INF/*.SF")
+}
+
+tasks.register('generatePropertiesFile') {
+    doLast {
+        def propertiesFile = file("${buildDir}/version.txt")
+        propertiesFile.parentFile.mkdirs()
+        propertiesFile.text = "${version}"
+    }
 }

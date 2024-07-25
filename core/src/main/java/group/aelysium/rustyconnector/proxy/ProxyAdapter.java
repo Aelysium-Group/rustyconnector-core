@@ -1,5 +1,6 @@
 package group.aelysium.rustyconnector.proxy;
 
+import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.proxy.events.*;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.proxy.family.Family;
@@ -110,23 +111,26 @@ public abstract class ProxyAdapter {
             @Nullable Server oldServer,
             @NotNull Server newServer
             ) throws RuntimeException {
+        Particle.Flux<Family> newFamily = newServer.family().orElseThrow();
+
         // Check if the player just joined the proxy.
         if(oldServer == null) {
-            RC.P.EventManager().fireEvent(new FamilyPostJoinEvent(newServer.family(), newServer, player));
-            RC.P.EventManager().fireEvent(new NetworkJoinEvent(newServer.family(), newServer, player));
+            RC.P.EventManager().fireEvent(new FamilyPostJoinEvent(newFamily, newServer, player));
+            RC.P.EventManager().fireEvent(new NetworkJoinEvent(newFamily, newServer, player));
             return;
         }
 
-        boolean isTheSameFamily = newServer.family().equals(oldServer.family());
+        Particle.Flux<Family> oldFamily = oldServer.family().orElseThrow();
+        boolean isTheSameFamily = newFamily.equals(oldFamily);
 
         // Handle an inner-family switch
         if(!isTheSameFamily) {
-            RC.P.EventManager().fireEvent(new FamilySwitchEvent(oldServer.family(), newServer.family(), oldServer, newServer, player));
-            RC.P.EventManager().fireEvent(new FamilyLeaveEvent(oldServer.family(), oldServer, player, false));
-            RC.P.EventManager().fireEvent(new FamilyPostJoinEvent(newServer.family(), newServer, player));
+            RC.P.EventManager().fireEvent(new FamilySwitchEvent(oldFamily, newFamily, oldServer, newServer, player));
+            RC.P.EventManager().fireEvent(new FamilyLeaveEvent(oldFamily, oldServer, player, false));
+            RC.P.EventManager().fireEvent(new FamilyPostJoinEvent(newFamily, newServer, player));
         }
 
-        RC.P.EventManager().fireEvent(new FamilyInternalSwitchEvent(newServer.family(), oldServer, newServer, player));
+        RC.P.EventManager().fireEvent(new FamilyInternalSwitchEvent(newFamily, oldServer, newServer, player));
         RC.P.EventManager().fireEvent(new ServerLeaveEvent(oldServer, player, false));
         RC.P.EventManager().fireEvent(new ServerJoinEvent(newServer, player));
         RC.P.EventManager().fireEvent(new ServerSwitchEvent(oldServer, newServer, player));
@@ -138,10 +142,8 @@ public abstract class ProxyAdapter {
      * @throws RuntimeException If there's a fatal error at any point.
      */
     public final @NotNull Player.Connection.Request onInitialConnect(@NotNull Player player) throws RuntimeException {
-        // Store player
         try {
-            if(!RC.P.LocalStorage().players().fetch(player.uuid()).isEmpty())
-                RC.P.LocalStorage().players().store(player);
+            RC.P.Players().add(player);
         } catch (Exception ignore) {}
 
         try {
@@ -155,10 +157,16 @@ public abstract class ProxyAdapter {
     public final void onDisconnect(@NotNull Player player) {
         RC.P.EventManager().fireEvent(new NetworkLeaveEvent(player));
 
+        try {
+            RC.P.Players().remove(player.uuid());
+        } catch (Exception ignore) {}
+
         Server server = player.server().orElse(null);
         if(server == null) return;
+        Particle.Flux<Family> family = server.family().orElse(null);
+        if(family == null) return;
 
-        RC.P.EventManager().fireEvent(new FamilyLeaveEvent(server.family(), server, player, true));
+        RC.P.EventManager().fireEvent(new FamilyLeaveEvent(family, server, player, true));
         RC.P.EventManager().fireEvent(new ServerLeaveEvent(server, player, true));
     }
 
@@ -174,8 +182,9 @@ public abstract class ProxyAdapter {
 
         try {
             Server oldServer = player.server().orElseThrow();
+            Particle.Flux<Family> family = oldServer.family().orElseThrow();
 
-            RC.P.EventManager().fireEvent(new FamilyLeaveEvent(oldServer.family(), oldServer, player, true));
+            RC.P.EventManager().fireEvent(new FamilyLeaveEvent(family, oldServer, player, true));
             RC.P.EventManager().fireEvent(new ServerLeaveEvent(oldServer, player, true));
 
             isFromRootFamily = RC.P.Families().rootFamily().equals(oldServer.family());

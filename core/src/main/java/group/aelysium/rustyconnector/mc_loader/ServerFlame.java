@@ -6,10 +6,12 @@ import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.mc_loader.lang.ServerLang;
 import group.aelysium.rustyconnector.mc_loader.magic_link.MagicLink;
+import group.aelysium.rustyconnector.proxy.ProxyFlame;
 import group.aelysium.rustyconnector.proxy.util.Version;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.*;
 
@@ -21,26 +23,38 @@ public class ServerFlame implements Particle {
     private final String displayName;
     private final InetSocketAddress address;
     private final Flux<MagicLink> magicLink;
-    private final EventManager eventManager;
+    private final Flux<EventManager> eventManager;
 
     protected ServerFlame(
             @NotNull UUID uuid,
-            @NotNull Version version,
             @NotNull ServerAdapter adapter,
             @NotNull Flux<LangLibrary<ServerLang>> lang,
             @NotNull String displayName,
             @NotNull InetSocketAddress address,
             @NotNull Flux<MagicLink> magicLink,
-            @NotNull EventManager eventManager
+            @NotNull Flux<EventManager> eventManager
     ) {
         this.uuid = uuid;
-        this.version = version;
         this.adapter = adapter;
         this.lang = lang;
         this.displayName = displayName;
         this.address = address;
         this.magicLink = magicLink;
         this.eventManager = eventManager;
+
+        try {
+            try (InputStream input = ProxyFlame.class.getClassLoader().getResourceAsStream("version.txt")) {
+                if (input == null) throw new NullPointerException("Unable to initialize version number from jar.");
+                String stringVersion = new String(input.readAllBytes());
+                this.version = new Version(stringVersion);
+            }
+
+            this.lang.access().get();
+            this.magicLink.access().get();
+            this.eventManager.access().get();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -139,7 +153,7 @@ public class ServerFlame implements Particle {
         return this.lang;
     }
 
-    public EventManager EventManager() {
+    public Flux<EventManager> EventManager() {
         return this.eventManager;
     }
 
@@ -149,46 +163,64 @@ public class ServerFlame implements Particle {
     }
 
     public static class Tinder extends Particle.Tinder<ServerFlame> {
-        private final UUID uuid;
-        private final Version version;
-        private final ServerAdapter adapter;
-        private final LangLibrary.Tinder<ServerLang> lang;
-        private final String displayName;
-        private final InetSocketAddress address;
-        private final MagicLink.Tinder magicLink;
-        private final EventManager eventManager;
+        private UUID uuid = UUID.randomUUID();
+        private ServerAdapter adapter;
+        private LangLibrary.Tinder<ServerLang> lang = LangLibrary.Tinder.DEFAULT_SERVER_CONFIGURATION;
+        private String displayName;
+        private InetSocketAddress address;
+        private MagicLink.Tinder magicLink = null;
+        private EventManager.Tinder eventManager = EventManager.Tinder.DEFAULT_CONFIGURATION;
 
-        public Tinder(
-                @NotNull UUID uuid,
-                @NotNull Version version,
-                @NotNull ServerAdapter adapter,
-                @NotNull LangLibrary.Tinder<ServerLang> lang,
-                @NotNull String displayName,
-                @NotNull InetSocketAddress address,
-                @NotNull MagicLink.Tinder magicLink,
-                @NotNull EventManager eventManager
-                ) {
+        public Tinder() {
+        }
+
+        public Tinder uuid(@NotNull UUID uuid) {
             this.uuid = uuid;
-            this.version = version;
+            return this;
+        }
+
+        public Tinder adapter(@NotNull ServerAdapter adapter) {
             this.adapter = adapter;
+            return this;
+        }
+
+        public Tinder lang(@NotNull LangLibrary.Tinder<ServerLang> lang) {
             this.lang = lang;
+            return this;
+        }
+
+        public Tinder displayName(@NotNull String displayName) {
             this.displayName = displayName;
+            return this;
+        }
+
+        public Tinder address(@NotNull InetSocketAddress address) {
             this.address = address;
+            return this;
+        }
+
+        public Tinder magicLink(@NotNull MagicLink.Tinder magicLink) {
             this.magicLink = magicLink;
+            return this;
+        }
+
+        public Tinder eventManager(@NotNull EventManager.Tinder eventManager) {
             this.eventManager = eventManager;
+            return this;
         }
 
         @Override
         public @NotNull ServerFlame ignite() throws Exception {
+            if(this.magicLink == null) this.magicLink = MagicLink.Tinder.DEFAULT_CONFIGURATION(this.uuid);
+
             return new ServerFlame(
                     uuid,
-                    version,
                     adapter,
                     lang.flux(),
                     displayName,
                     address,
                     magicLink.flux(),
-                    eventManager
+                    eventManager.flux()
             );
         }
     }

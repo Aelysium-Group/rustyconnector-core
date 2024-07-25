@@ -1,5 +1,6 @@
 package group.aelysium.rustyconnector.mc_loader.magic_link;
 
+import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.RustyConnector;
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.cache.MessageCache;
@@ -11,6 +12,8 @@ import group.aelysium.rustyconnector.common.crypt.AESCryptor;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -77,14 +80,12 @@ public class MagicLink extends MagicLinkCore {
         } catch (Exception ignore) {}
 
         try {
-            ServerFlame api = RustyConnector.Toolkit.Server().orElseThrow().orElseThrow();
-
             Packet.New()
                     .identification(Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_DISCONNECT)
                     .addressedTo(Packet.Target.allAvailableProxies())
                     .send();
 
-            api.EventManager().fireEvent(new DisconnectedEvent());
+            RC.S.EventManager().fireEvent(new DisconnectedEvent());
         } catch (Exception ignore) {}
     }
 
@@ -115,5 +116,13 @@ public class MagicLink extends MagicLinkCore {
             );
         }
 
+        public static Tinder DEFAULT_CONFIGURATION(UUID serverUUID) {
+            return new Tinder(
+                    AESCryptor.DEFAULT_CRYPTOR,
+                    new MessageCache(50),
+                    Packet.Target.server(serverUUID),
+                    "default"
+            );
+        }
     }
 }

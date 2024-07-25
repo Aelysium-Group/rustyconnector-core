@@ -33,29 +33,28 @@ public class Player {
     }
 
     /**
-     * Convenience method that will resolve the player and then send a message to them if the resolution was successful.
-     * If the resolution was not successful, nothing will happen.
+     * Sends a message to the player.
+     * If there's an issue messaging the player, nothing will happen.
      * @param message The message to send.
      */
-    public void sendMessage(Component message) {
+    public void message(@NotNull Component message) {
         try {
             RC.P.Adapter().messagePlayer(this, message);
         } catch (Exception ignore) {}
     }
 
     /**
-     * Convenience method that will resolve the player and then disconnect them if the resolution was successful.
-     * If the resolution was not successful, nothing will happen.
+     * Disconnects the player with a message
      * @param reason The message to send as the reason for the disconnection.
      */
-    public void disconnect(Component reason) {
+    public void disconnect(@Nullable Component reason) {
         try {
-            RC.P.Adapter().disconnect(this, reason);
+            RC.P.Adapter().disconnect(this, reason == null ? Component.text("Disconnected from server") : reason);
         } catch (Exception ignore) {}
     }
 
     /**
-     * Convenience method that will resolve the player and then return their Server if there is one.
+     * Fetches the player's server if they're connected to one.
      */
     public Optional<Server> server() {
         return RC.P.Adapter().fetchServer(this);
@@ -139,6 +138,4 @@ public class Player {
             }
         }
     }
-
-
 }

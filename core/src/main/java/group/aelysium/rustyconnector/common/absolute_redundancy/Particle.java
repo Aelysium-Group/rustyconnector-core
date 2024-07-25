@@ -17,8 +17,9 @@ import java.util.function.Consumer;
  */
 public interface Particle extends AutoCloseable {
     /**
-     * Tinder exists as an ignition point for new Particles.
-     * @param <P> The Particles that will be launched via this Tinder.
+     * Tinder is the configuration point for a {@link Particle}.
+     * Via a {@link Flux}, a single Tinder be deterministic of the {@link Particle} produced.
+     * @param <P> The Particle type that will be launched via this Tinder.
      */
     abstract class Tinder<P extends Particle> {
         protected Tinder() {}

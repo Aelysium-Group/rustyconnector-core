@@ -7,8 +7,20 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.concurrent.Callable;
 
 public class AESCryptor {
+    private static SecretKey DEFAULT_AES_KEY;
+    static {
+        try {
+            KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+            keyGen.init(256);
+            DEFAULT_AES_KEY = keyGen.generateKey();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private final SecretKey key;
 
     public AESCryptor(SecretKey key) {
@@ -47,4 +59,9 @@ public class AESCryptor {
 
         return new AESCryptor(secretKey);
     }
+
+    /**
+     * The cryptor returned here is effectively worthless because there's no way to retrieve the AES key used.
+     */
+    public static AESCryptor DEFAULT_CRYPTOR = new AESCryptor(DEFAULT_AES_KEY);
 }

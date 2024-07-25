@@ -11,22 +11,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.InetSocketAddress;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Server implements ISortable, Player.Connectable {
     private final UUID uuid;
     private final String displayName;
     private final String podName;
     private final InetSocketAddress address;
-    private final Particle.Flux<Family> family;
+    private AtomicReference<Particle.Flux<Family>> family = new AtomicReference<>();
     private Object raw = null;
     private final AtomicLong playerCount = new AtomicLong(0);
     private int weight;
@@ -39,7 +37,7 @@ public class Server implements ISortable, Player.Connectable {
             @NotNull InetSocketAddress address,
             @Nullable String podName,
             @Nullable String displayName,
-            @NotNull Particle.Flux<Family> family,
+            @Nullable Particle.Flux<Family> family,
             int softPlayerCap,
             int hardPlayerCap,
             int weight,
@@ -49,7 +47,7 @@ public class Server implements ISortable, Player.Connectable {
         this.address = address;
         this.podName = podName;
         this.displayName = displayName;
-        this.family = family;
+        this.family.set(family);
 
         this.weight = Math.max(weight, 0);
 
@@ -186,10 +184,28 @@ public class Server implements ISortable, Player.Connectable {
 
     /**
      * Get the family this server is associated with.
-     * @return {@link Particle.Flux<Family>}
+     * @return An optional containing the Family in a Flux state if it exists. If this server wasn't assigned a family, this will return an empty optional.
      */
-    public @NotNull Particle.Flux<Family> family() {
-        return this.family;
+    public Optional<Particle.Flux<Family>> family() {
+        return Optional.ofNullable(this.family.get());
+    }
+
+    /**
+     * Assigns a family to this Server.
+     * This method only works if the family is registered in {@link Families}.
+     * @param family The family to store.
+     * @throws NoSuchElementException If the family can not be resolved to its Flux state.
+     */
+    public void assignFamily(Family family) throws NoSuchElementException {
+        this.assignFamily(RC.P.Families().find(family.id()).orElseThrow());
+    }
+
+    /**
+     * Assigns a family to this Server.
+     * @param family The family to store.
+     */
+    public void assignFamily(Particle.Flux<Family> family) {
+        this.family.set(family);
     }
 
     /**
@@ -199,7 +215,9 @@ public class Server implements ISortable, Player.Connectable {
      * This is a convenience method that will fetch this server's family and run {@link Family#lockServer(Server)}.
      */
     public void lock() {
-        this.family.executeNow(f -> f.lockServer(this));
+        try {
+            this.family().orElseThrow().executeNow(f -> f.lockServer(this));
+        } catch(Exception ignore) {}
     }
 
     /**
@@ -209,7 +227,9 @@ public class Server implements ISortable, Player.Connectable {
      * This is a convenience method that will fetch this server's family and run {@link Family#lockServer(Server)}.
      */
     void unlock() {
-        this.family.executeNow(f -> f.unlockServer(this));
+        try {
+            this.family().orElseThrow().executeNow(f -> f.unlockServer(this));
+        } catch(Exception ignore) {}
     }
 
     /**
@@ -218,7 +238,9 @@ public class Server implements ISortable, Player.Connectable {
      * This is a convenience method that will fetch this server's family and run {@link Family#deleteServer(Server)}.
      */
     void unregister() {
-        this.family.executeNow(f -> f.deleteServer(this));
+        try {
+            this.family().orElseThrow().executeNow(f -> f.deleteServer(this));
+        } catch(Exception ignore) {}
     }
 
     @Override
@@ -233,7 +255,7 @@ public class Server implements ISortable, Player.Connectable {
 
 
     private boolean validatePlayerLimits(Player player) throws ExecutionException, InterruptedException, TimeoutException {
-        Family family = this.family.access().get(10, TimeUnit.SECONDS);
+        Family family = this.family().orElseThrow().access().get(10, TimeUnit.SECONDS);
 
         if(Permission.validate(
                 player,
@@ -291,6 +313,19 @@ public class Server implements ISortable, Player.Connectable {
     }
 
     public interface Factory {
+        /**
+         * Generates a server with the provided parameters.
+         * It is expected that he caller assigns the server's Family using {@link Server#assignFamily(Family)}.
+         * @param uuid
+         * @param address
+         * @param podName
+         * @param displayName
+         * @param softPlayerCap
+         * @param hardPlayerCap
+         * @param weight
+         * @param timeout
+         * @return
+         */
         @NotNull Server generateServer(
                 @NotNull UUID uuid,
                 @NotNull InetSocketAddress address,

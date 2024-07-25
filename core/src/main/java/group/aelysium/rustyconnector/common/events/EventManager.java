@@ -1,6 +1,7 @@
 package group.aelysium.rustyconnector.common.events;
 
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.Vector;
@@ -54,5 +55,14 @@ public class EventManager implements Particle {
     public void close() throws Exception {
         this.listeners.clear();
         this.executor.shutdown();
+    }
+
+    public static class Tinder extends Particle.Tinder<EventManager> {
+        @Override
+        public @NotNull EventManager ignite() throws Exception {
+            return new EventManager();
+        }
+
+        public static Tinder DEFAULT_CONFIGURATION = new Tinder();
     }
 }

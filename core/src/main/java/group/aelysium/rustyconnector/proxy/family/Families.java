@@ -3,10 +3,7 @@ package group.aelysium.rustyconnector.proxy.family;
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Families implements Particle {
@@ -93,12 +90,39 @@ public class Families implements Particle {
     }
 
     public static class Tinder extends Particle.Tinder<Families> {
+        protected Map<String, Flux<Family>> initialFamilies = new ConcurrentHashMap<>();
+        protected String rootFamily = null;
+
+        /**
+         * Adds the family to be present on-boot
+         */
+        public void addFamily(Flux<Family> family) {
+            family.executeNow(f -> this.initialFamilies.put(f.id(), family));
+        }
+
+        public void setRootFamily(Flux<Family> family) {
+            family.executeNow(f -> {
+                this.initialFamilies.put(f.id(), family);
+                this.rootFamily = f.id();
+            });
+        }
+
         @Override
         public @NotNull Families ignite() throws Exception {
-            Families service = new Families();
-            service.dump().forEach(Flux::access);
+            Families families = new Families();
 
-            return service;
+            initialFamilies.forEach(families::put);
+            if(this.rootFamily != null) families.setRootFamily(this.rootFamily);
+
+            families.dump().forEach(Flux::access);
+
+            return families;
         }
+
+        /**
+         * Returns the default configuration for a Families manager.
+         * This default configuration has no root family set and no initial families loaded.
+         */
+        public static Tinder DEFAULT_CONFIGURATION = new Tinder();
     }
 }

@@ -1,6 +1,8 @@
 package group.aelysium.rustyconnector.proxy.family.scalar_family;
 
+import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
+import group.aelysium.rustyconnector.proxy.events.FamilyPreJoinEvent;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.LeastConnection;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.LoadBalancer;
@@ -22,6 +24,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Scalar Families are the built-in stateless Family example.
+ * They provide an example for how families should be implemented.
+ */
 public class ScalarFamily extends Family {
     protected final Particle.Flux<LoadBalancer> loadBalancer;
 
@@ -117,6 +123,9 @@ public class ScalarFamily extends Family {
 
     @Override
     public Player.Connection.Request connect(Player player) {
+        try {
+            RC.P.EventManager().fireEvent(new FamilyPreJoinEvent(RC.P.Families().find(this.id).orElseThrow(), player));
+        } catch (Exception ignore) {}
         if(this.whitelist != null)
             try {
                 Whitelist w = this.whitelist.access().get(10, TimeUnit.SECONDS);

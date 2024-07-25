@@ -5,6 +5,7 @@ import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.proxy.events.FamilyRebalanceEvent;
 import group.aelysium.rustyconnector.proxy.events.ServerLockedEvent;
 import group.aelysium.rustyconnector.proxy.events.ServerUnlockedEvent;
+import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,7 @@ public abstract class LoadBalancer implements Server.Factory, Particle {
         try {
             Server p = this.unlockedServers.get(0);
             if(p == null) p = this.lockedServers.get(0);
-            RC.P.EventManager().fireEvent(new FamilyRebalanceEvent(p.family()));
+            RC.P.EventManager().fireEvent(new FamilyRebalanceEvent(p.family().orElseThrow()));
         } catch (Exception ignore) {}
 
         this.completeSort();
@@ -163,7 +164,22 @@ public abstract class LoadBalancer implements Server.Factory, Particle {
 
     @Override
     public @NotNull Server generateServer(@NotNull UUID uuid, @NotNull InetSocketAddress address, @Nullable String podName, @Nullable String displayName, int softPlayerCap, int hardPlayerCap, int weight, int timeout) {
-        return null;
+        Server server = new Server(
+                uuid,
+                address,
+                podName,
+                displayName,
+                null,
+                softPlayerCap,
+                hardPlayerCap,
+                weight,
+                timeout
+        );
+        this.unlockedServers.add(server);
+
+        RC.P.Adapter().registerServer(server);
+
+        return server;
     }
 
     @Override
@@ -199,7 +215,9 @@ public abstract class LoadBalancer implements Server.Factory, Particle {
         if(!this.unlockedServers.remove(server)) return;
         this.lockedServers.add(server);
 
-        RC.P.EventManager().fireEvent(new ServerLockedEvent(server.family(), server));
+        try {
+            RC.P.EventManager().fireEvent(new ServerLockedEvent(server.family().orElseThrow(), server));
+        } catch (Exception ignore) {}
     }
 
     @Override
@@ -207,7 +225,9 @@ public abstract class LoadBalancer implements Server.Factory, Particle {
         if(!this.lockedServers.remove(server)) return;
         this.unlockedServers.add(server);
 
-        RC.P.EventManager().fireEvent(new ServerUnlockedEvent(server.family(), server));
+        try {
+            RC.P.EventManager().fireEvent(new ServerUnlockedEvent(server.family().orElseThrow(), server));
+        } catch (Exception ignore) {}
     }
 
     @Override

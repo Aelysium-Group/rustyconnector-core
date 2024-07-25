@@ -25,7 +25,9 @@ public class HandshakeDisconnectListener extends PacketListener<MagicLinkCore.Pa
         Server server = RC.P.Server(packet.sender().uuid()).orElseThrow();
 
         RC.P.Adapter().unregisterServer(server);
-        server.family().executeNow(f -> f.deleteServer(server));
+        try {
+            server.family().orElseThrow().executeNow(f -> f.deleteServer(server));
+        } catch (Exception ignore) {}
 
         try {
             Packet.New()

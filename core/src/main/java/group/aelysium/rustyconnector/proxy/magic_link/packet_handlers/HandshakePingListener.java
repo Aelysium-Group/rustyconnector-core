@@ -64,8 +64,6 @@ public class HandshakePingListener extends PacketListener<MagicLink.Packets.Hand
                         15
                 );
 
-                RC.P.Adapter().registerServer(server);
-
                 RC.P.EventManager().fireEvent(new ServerRegisterEvent(familyFlux, server));
 
                 Packet.New()

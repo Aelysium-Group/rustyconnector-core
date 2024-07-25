@@ -1,6 +1,8 @@
 package group.aelysium.rustyconnector.common.lang;
 
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
+import group.aelysium.rustyconnector.mc_loader.lang.ServerLang;
+import group.aelysium.rustyconnector.proxy.lang.ProxyLang;
 import org.jetbrains.annotations.NotNull;
 
 public class LangLibrary<L extends Lang> implements Particle {
@@ -47,6 +49,15 @@ public class LangLibrary<L extends Lang> implements Particle {
                     this.asciiAlphabet
             );
         }
+
+        public static LangLibrary.Tinder<ProxyLang> DEFAULT_PROXY_CONFIGURATION = new Tinder<>(
+                new ProxyLang(DEFAULT_ASCII_ALPHABET),
+                DEFAULT_ASCII_ALPHABET
+        );
+        public static LangLibrary.Tinder<ServerLang> DEFAULT_SERVER_CONFIGURATION = new Tinder<>(
+                new ServerLang(DEFAULT_ASCII_ALPHABET),
+                DEFAULT_ASCII_ALPHABET
+        );
     }
 
     public static ASCIIAlphabet DEFAULT_ASCII_ALPHABET = new EnglishAlphabet();
