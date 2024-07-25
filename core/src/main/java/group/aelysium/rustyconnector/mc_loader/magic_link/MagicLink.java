@@ -5,15 +5,23 @@ import group.aelysium.rustyconnector.RustyConnector;
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.cache.MessageCache;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
+import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketParameter;
 import group.aelysium.rustyconnector.mc_loader.ServerFlame;
-import group.aelysium.rustyconnector.mc_loader.events.magic_link.DisconnectedEvent;
+import group.aelysium.rustyconnector.mc_loader.events.DisconnectedEvent;
 import group.aelysium.rustyconnector.common.crypt.AESCryptor;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
+import group.aelysium.rustyconnector.mc_loader.magic_link.handlers.HandshakeFailureListener;
+import group.aelysium.rustyconnector.mc_loader.magic_link.handlers.HandshakeStalePingListener;
+import group.aelysium.rustyconnector.mc_loader.magic_link.handlers.HandshakeSuccessListener;
+import group.aelysium.rustyconnector.proxy.magic_link.packet_handlers.HandshakeDisconnectListener;
+import group.aelysium.rustyconnector.proxy.magic_link.packet_handlers.HandshakePingListener;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
+import java.util.Vector;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -91,38 +99,54 @@ public class MagicLink extends MagicLinkCore {
 
     public static class Tinder extends Particle.Tinder<MagicLink> {
         private final AESCryptor cryptor;
-        private final MessageCache cache;
         private final Packet.Target self;
+        private final MessageCache cache;
         private final String magicConfig;
+        private final List<PacketListener<? extends Packet>> listeners = new Vector<>();
         public Tinder(
                 @NotNull AESCryptor cryptor,
-                @NotNull MessageCache cache,
                 @NotNull Packet.Target self,
+                @NotNull MessageCache cache,
                 @NotNull String magicConfig
         ) {
             this.cryptor = cryptor;
-            this.cache = cache;
             this.self = self;
+            this.cache = cache;
             this.magicConfig = magicConfig;
+        }
+
+        public Tinder on(PacketListener<? extends Packet> listener) {
+            this.listeners.add(listener);
+            return this;
         }
 
         @Override
         public @NotNull MagicLink ignite() throws Exception {
-            return new MagicLink(
+            MagicLink magicLink = new MagicLink(
                     this.cryptor,
                     this.cache,
                     this.self,
                     this.magicConfig
             );
+
+            this.listeners.forEach(magicLink::on);
+
+            return magicLink;
         }
 
         public static Tinder DEFAULT_CONFIGURATION(UUID serverUUID) {
-            return new Tinder(
+            Tinder tinder = new Tinder(
                     AESCryptor.DEFAULT_CRYPTOR,
-                    new MessageCache(50),
                     Packet.Target.server(serverUUID),
+                    new MessageCache(50),
                     "default"
             );
+
+            tinder.on(new HandshakeFailureListener());
+            tinder.on(new HandshakeStalePingListener());
+            tinder.on(new HandshakeSuccessListener());
+
+            return tinder;
         }
     }
 }

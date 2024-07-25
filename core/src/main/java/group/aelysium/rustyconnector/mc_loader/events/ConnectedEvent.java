@@ -1,4 +1,4 @@
-package group.aelysium.rustyconnector.mc_loader.events.magic_link;
+package group.aelysium.rustyconnector.mc_loader.events;
 
 import group.aelysium.rustyconnector.common.events.Event;
 

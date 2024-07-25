@@ -10,17 +10,6 @@ import java.util.Base64;
 import java.util.concurrent.Callable;
 
 public class AESCryptor {
-    private static SecretKey DEFAULT_AES_KEY;
-    static {
-        try {
-            KeyGenerator keyGen = KeyGenerator.getInstance("AES");
-            keyGen.init(256);
-            DEFAULT_AES_KEY = keyGen.generateKey();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private final SecretKey key;
 
     public AESCryptor(SecretKey key) {
@@ -46,12 +35,15 @@ public class AESCryptor {
     }
 
 
-    public static byte[] createKey() throws NoSuchAlgorithmException {
-        KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
-        keyGenerator.init(256);
-        SecretKey secretKey = keyGenerator.generateKey();
+    public static byte[] createKey() {
+        try {
+            KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+            keyGenerator.init(256);
+            SecretKey secretKey = keyGenerator.generateKey();
 
-        return secretKey.getEncoded();
+            return secretKey.getEncoded();
+        } catch (Exception ignore) {}
+        return "".getBytes();
     }
 
     public static AESCryptor from(byte[] key) {
@@ -63,5 +55,5 @@ public class AESCryptor {
     /**
      * The cryptor returned here is effectively worthless because there's no way to retrieve the AES key used.
      */
-    public static AESCryptor DEFAULT_CRYPTOR = new AESCryptor(DEFAULT_AES_KEY);
+    public static AESCryptor DEFAULT_CRYPTOR = AESCryptor.from(AESCryptor.createKey());
 }

@@ -5,7 +5,7 @@ import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketParameter;
 import group.aelysium.rustyconnector.mc_loader.ServerFlame;
-import group.aelysium.rustyconnector.mc_loader.events.magic_link.TimeoutEvent;
+import group.aelysium.rustyconnector.mc_loader.events.TimeoutEvent;
 import group.aelysium.rustyconnector.RC;
 
 public class HandshakeStalePingListener extends PacketListener<MagicLinkCore.Packets.StalePing> {

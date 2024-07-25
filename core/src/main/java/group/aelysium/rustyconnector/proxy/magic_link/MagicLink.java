@@ -6,13 +6,15 @@ import group.aelysium.rustyconnector.common.crypt.AESCryptor;
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
+import group.aelysium.rustyconnector.common.magic_link.packet.PacketIdentification;
+import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.proxy.family.Family;
+import group.aelysium.rustyconnector.proxy.magic_link.packet_handlers.HandshakeDisconnectListener;
+import group.aelysium.rustyconnector.proxy.magic_link.packet_handlers.HandshakePingListener;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -88,6 +90,7 @@ public class MagicLink extends MagicLinkCore {
         private final Packet.Target self;
         private final MessageCache cache;
         private final Map<String, MagicLinkServerSettings> magicConfigs;
+        private final List<PacketListener<? extends Packet>> listeners = new Vector<>();
         public Tinder(
                 @NotNull AESCryptor cryptor,
                 @NotNull Packet.Target self,
@@ -100,23 +103,37 @@ public class MagicLink extends MagicLinkCore {
             this.magicConfigs = magicConfigs;
         }
 
+        public Tinder on(PacketListener<? extends Packet> listener) {
+            this.listeners.add(listener);
+            return this;
+        }
+
         @Override
         public @NotNull MagicLink ignite() throws Exception {
-            return new MagicLink(
+            MagicLink magicLink = new MagicLink(
                     this.cryptor,
                     this.cache,
                     this.self,
                     this.magicConfigs
             );
+
+            this.listeners.forEach(magicLink::on);
+
+            return magicLink;
         }
 
         public static Tinder DEFAULT_CONFIGURATION(UUID proxyUUID) {
-            return new Tinder(
+            Tinder tinder = new Tinder(
                     AESCryptor.DEFAULT_CRYPTOR,
                     Packet.Target.proxy(proxyUUID),
                     new MessageCache(50),
                     new HashMap<>()
             );
+
+            tinder.on(new HandshakePingListener());
+            tinder.on(new HandshakeDisconnectListener());
+
+            return tinder;
         }
     }
 }
