@@ -9,37 +9,37 @@ import group.aelysium.rustyconnector.common.magic_link.packet.PacketParameter;
 import group.aelysium.rustyconnector.proxy.events.ServerRegisterEvent;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
-import group.aelysium.rustyconnector.proxy.magic_link.MagicLink;
+import group.aelysium.rustyconnector.proxy.magic_link.WebSocketMagicLink;
 import group.aelysium.rustyconnector.proxy.util.AddressUtil;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.util.concurrent.TimeUnit;
 
-public class HandshakePingListener extends PacketListener<MagicLink.Packets.Handshake.Ping> {
+public class HandshakePingListener extends PacketListener<WebSocketMagicLink.Packets.Handshake.Ping> {
 
     public HandshakePingListener() {
         super(
                 Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_PING,
                 new Wrapper<>() {
                     @Override
-                    public MagicLink.Packets.Handshake.Ping wrap(Packet packet) {
-                        return new MagicLink.Packets.Handshake.Ping(packet);
+                    public WebSocketMagicLink.Packets.Handshake.Ping wrap(Packet packet) {
+                        return new WebSocketMagicLink.Packets.Handshake.Ping(packet);
                     }
                 }
         );
     }
 
     @Override
-    public void execute(MagicLink.Packets.Handshake.Ping packet) throws Exception {
+    public void execute(WebSocketMagicLink.Packets.Handshake.Ping packet) throws Exception {
         try {
             Server server = RC.P.Server(packet.sender().uuid()).orElseThrow();
 
             server.setTimeout(15);
             server.setPlayerCount(packet.playerCount());
         } catch (Exception e) {
-            MagicLink magicLink = RC.P.MagicLink();
-            MagicLink.MagicLinkServerSettings config = magicLink.magicConfig(packet.magicConfigName()).orElseThrow(
+            WebSocketMagicLink magicLink = RC.P.MagicLink();
+            WebSocketMagicLink.ServerRegistrationConfiguration config = magicLink.registrationConfig(packet.magicConfigName()).orElseThrow(
                     () -> new NullPointerException("No Magic Config exists with the name "+packet.magicConfigName()+"!")
             );
 
@@ -68,15 +68,15 @@ public class HandshakePingListener extends PacketListener<MagicLink.Packets.Hand
 
                 Packet.New()
                         .identification(Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_SUCCESS)
-                        .parameter(MagicLink.Packets.Handshake.Success.Parameters.MESSAGE, "Connected to the proxy! Registered as `"+server.uuidOrDisplayName()+"` into the family `"+family.id()+"`. Loaded using the magic config `"+packet.magicConfigName()+"`.")
-                        .parameter(MagicLink.Packets.Handshake.Success.Parameters.COLOR, NamedTextColor.GREEN.toString())
-                        .parameter(MagicLink.Packets.Handshake.Success.Parameters.INTERVAL, new PacketParameter(10))
+                        .parameter(WebSocketMagicLink.Packets.Handshake.Success.Parameters.MESSAGE, "Connected to the proxy! Registered as `"+server.uuidOrDisplayName()+"` into the family `"+family.id()+"`. Loaded using the magic config `"+packet.magicConfigName()+"`.")
+                        .parameter(WebSocketMagicLink.Packets.Handshake.Success.Parameters.COLOR, NamedTextColor.GREEN.toString())
+                        .parameter(WebSocketMagicLink.Packets.Handshake.Success.Parameters.INTERVAL, new PacketParameter(10))
                         .addressedTo(packet)
                         .send();
             } catch(Exception e2) {
                 Packet.New()
                         .identification(Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_FAIL)
-                        .parameter(MagicLink.Packets.Handshake.Failure.Parameters.REASON, "Attempt to connect to proxy failed! " + e2.getMessage())
+                        .parameter(WebSocketMagicLink.Packets.Handshake.Failure.Parameters.REASON, "Attempt to connect to proxy failed! " + e2.getMessage())
                         .addressedTo(packet)
                         .send();
             }

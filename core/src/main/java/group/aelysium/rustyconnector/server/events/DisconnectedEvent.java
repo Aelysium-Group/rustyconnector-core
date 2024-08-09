@@ -1,4 +1,4 @@
-package group.aelysium.rustyconnector.mc_loader.events;
+package group.aelysium.rustyconnector.server.events;
 
 import group.aelysium.rustyconnector.common.events.Event;
 

@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.common.lang;
 
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.mc_loader.lang.ServerLang;
+import group.aelysium.rustyconnector.server.lang.ServerLang;
 import group.aelysium.rustyconnector.proxy.lang.ProxyLang;
 import org.jetbrains.annotations.NotNull;
 

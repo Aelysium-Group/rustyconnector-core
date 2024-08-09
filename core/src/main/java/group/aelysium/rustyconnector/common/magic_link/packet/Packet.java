@@ -243,6 +243,7 @@ public class Packet implements JSONParseable {
 
             /**
              * Sends the packet.
+             * This method resolves the currently active MagicLink provider and calls {@link MagicLinkCore#publish(Packet)}.
              * @throws RuntimeException If there was an issue sending the packet.
              */
             public void send() throws RuntimeException {

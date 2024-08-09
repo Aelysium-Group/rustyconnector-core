@@ -6,7 +6,7 @@ import group.aelysium.rustyconnector.common.lang.LangLibrary;
 import group.aelysium.rustyconnector.proxy.family.Families;
 import group.aelysium.rustyconnector.proxy.family.whitelist.Whitelist;
 import group.aelysium.rustyconnector.proxy.lang.ProxyLang;
-import group.aelysium.rustyconnector.proxy.magic_link.MagicLink;
+import group.aelysium.rustyconnector.proxy.magic_link.WebSocketMagicLink;
 import group.aelysium.rustyconnector.proxy.player.Players;
 import group.aelysium.rustyconnector.proxy.util.Version;
 import net.kyori.adventure.text.Component;
@@ -23,7 +23,7 @@ public class ProxyFlame implements Particle {
     private final Particle.Flux<LangLibrary<ProxyLang>> lang;
     private final Particle.Flux<Whitelist> whitelist;
     private final Particle.Flux<Families> families;
-    private final Particle.Flux<MagicLink> magicLink;
+    private final Particle.Flux<WebSocketMagicLink> magicLink;
     private final Particle.Flux<Players> players;
     private final Particle.Flux<EventManager> eventManager;
     private final List<Component> bootOutput;
@@ -35,7 +35,7 @@ public class ProxyFlame implements Particle {
             @Nullable Particle.Flux<Whitelist> whitelist,
             @NotNull List<Component> bootOutput,
             @NotNull Particle.Flux<Families> families,
-            @NotNull Particle.Flux<MagicLink> magicLink,
+            @NotNull Particle.Flux<WebSocketMagicLink> magicLink,
             @NotNull Particle.Flux<Players> players,
             @NotNull Particle.Flux<EventManager> eventManager
     ) throws RuntimeException {
@@ -95,7 +95,7 @@ public class ProxyFlame implements Particle {
     public Particle.Flux<Families> Families() {
         return this.families;
     }
-    public Particle.Flux<MagicLink> MagicLink() {
+    public Particle.Flux<WebSocketMagicLink> MagicLink() {
         return this.magicLink;
     }
     public Particle.Flux<Players> Players() {
@@ -121,7 +121,7 @@ public class ProxyFlame implements Particle {
         private LangLibrary.Tinder<ProxyLang> lang = LangLibrary.Tinder.DEFAULT_PROXY_CONFIGURATION;
         private Whitelist.Tinder whitelist = null;
         private Families.Tinder families = Families.Tinder.DEFAULT_CONFIGURATION;
-        private MagicLink.Tinder magicLink = null;
+        private WebSocketMagicLink.Tinder magicLink = null;
         private Players.Tinder players = Players.Tinder.DEFAULT_CONFIGURATION;
         private EventManager.Tinder eventManager = EventManager.Tinder.DEFAULT_CONFIGURATION;
 
@@ -154,7 +154,7 @@ public class ProxyFlame implements Particle {
             return this;
         }
 
-        public Tinder magicLink(@NotNull MagicLink.Tinder magicLink) {
+        public Tinder magicLink(@NotNull WebSocketMagicLink.Tinder magicLink) {
             this.magicLink = magicLink;
             return this;
         }
@@ -171,7 +171,7 @@ public class ProxyFlame implements Particle {
 
         public @NotNull ProxyFlame ignite() throws RuntimeException {
             if(this.adapter == null) throw new IllegalArgumentException("ProxyFlame requires that you set the proxy adapter using ProxyFlame#Tinder#adapter()");
-            if(this.magicLink == null) this.magicLink = MagicLink.Tinder.DEFAULT_CONFIGURATION(this.uuid);
+            if(this.magicLink == null) this.magicLink = WebSocketMagicLink.Tinder.DEFAULT_CONFIGURATION(this.uuid);
 
             return new ProxyFlame(
                     this.uuid,

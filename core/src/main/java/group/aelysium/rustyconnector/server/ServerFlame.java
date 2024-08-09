@@ -1,11 +1,11 @@
-package group.aelysium.rustyconnector.mc_loader;
+package group.aelysium.rustyconnector.server;
 
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
-import group.aelysium.rustyconnector.mc_loader.lang.ServerLang;
-import group.aelysium.rustyconnector.mc_loader.magic_link.MagicLink;
+import group.aelysium.rustyconnector.server.lang.ServerLang;
+import group.aelysium.rustyconnector.server.magic_link.WebSocketMagicLink;
 import group.aelysium.rustyconnector.proxy.ProxyFlame;
 import group.aelysium.rustyconnector.proxy.util.Version;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
@@ -22,7 +22,7 @@ public class ServerFlame implements Particle {
     private final Flux<LangLibrary<ServerLang>> lang;
     private final String displayName;
     private final InetSocketAddress address;
-    private final Flux<MagicLink> magicLink;
+    private final Flux<WebSocketMagicLink> magicLink;
     private final Flux<EventManager> eventManager;
 
     protected ServerFlame(
@@ -31,7 +31,7 @@ public class ServerFlame implements Particle {
             @NotNull Flux<LangLibrary<ServerLang>> lang,
             @NotNull String displayName,
             @NotNull InetSocketAddress address,
-            @NotNull Flux<MagicLink> magicLink,
+            @NotNull Flux<WebSocketMagicLink> magicLink,
             @NotNull Flux<EventManager> eventManager
     ) {
         this.uuid = uuid;
@@ -141,7 +141,7 @@ public class ServerFlame implements Particle {
 
     }
 
-    public Flux<MagicLink> MagicLink() {
+    public Flux<WebSocketMagicLink> MagicLink() {
         return this.magicLink;
     }
 
@@ -168,7 +168,7 @@ public class ServerFlame implements Particle {
         private LangLibrary.Tinder<ServerLang> lang = LangLibrary.Tinder.DEFAULT_SERVER_CONFIGURATION;
         private String displayName;
         private InetSocketAddress address;
-        private MagicLink.Tinder magicLink = null;
+        private WebSocketMagicLink.Tinder magicLink = null;
         private EventManager.Tinder eventManager = EventManager.Tinder.DEFAULT_CONFIGURATION;
 
         public Tinder() {
@@ -199,7 +199,7 @@ public class ServerFlame implements Particle {
             return this;
         }
 
-        public Tinder magicLink(@NotNull MagicLink.Tinder magicLink) {
+        public Tinder magicLink(@NotNull WebSocketMagicLink.Tinder magicLink) {
             this.magicLink = magicLink;
             return this;
         }
@@ -211,7 +211,7 @@ public class ServerFlame implements Particle {
 
         @Override
         public @NotNull ServerFlame ignite() throws Exception {
-            if(this.magicLink == null) this.magicLink = MagicLink.Tinder.DEFAULT_CONFIGURATION(this.uuid);
+            if(this.magicLink == null) this.magicLink = WebSocketMagicLink.Tinder.DEFAULT_CONFIGURATION(this.uuid);
 
             return new ServerFlame(
                     uuid,

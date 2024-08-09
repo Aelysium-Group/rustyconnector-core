@@ -4,34 +4,49 @@ import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.cache.MessageCache;
 import group.aelysium.rustyconnector.common.crypt.AESCryptor;
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
+import group.aelysium.rustyconnector.common.crypt.Token;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
-import group.aelysium.rustyconnector.common.magic_link.packet.PacketIdentification;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.magic_link.packet_handlers.HandshakeDisconnectListener;
 import group.aelysium.rustyconnector.proxy.magic_link.packet_handlers.HandshakePingListener;
+import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
+import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.jetbrains.annotations.NotNull;
+import spark.Service;
 
+import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class MagicLink extends MagicLinkCore {
-    protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-    protected Map<String, MagicLinkServerSettings> settingsMap;
+public class WebSocketMagicLink extends MagicLinkCore.Proxy {
+    protected static final Token tokenGenerator = new Token(128);
+    protected final String endpoint = tokenGenerator.nextString();
+    protected final String authenticationToken = tokenGenerator.nextString();
+    protected Service websocketServer = Service.ignite();
+    protected WebSocketHandler webSocketHandler = new WebSocketHandler();
+    protected final Vector<InetSocketAddress> whitelist;
 
-    protected MagicLink(
+    protected WebSocketMagicLink(
             @NotNull AESCryptor cryptor,
             @NotNull MessageCache cache,
             @NotNull Packet.Target self,
-            @NotNull Map<String, MagicLinkServerSettings> magicLinkServerSettingsMap
+            @NotNull Map<String, ServerRegistrationConfiguration> registrationConfigurations,
+            @NotNull List<InetSocketAddress> whitelist
     ) {
-        super(cryptor, cache, self);
-        this.settingsMap = magicLinkServerSettingsMap;
+        super(cryptor, cache, self, registrationConfigurations);
+        this.whitelist = whitelist;
+
         this.heartbeat();
+
+        websocketServer.get("/register", (request, response) -> {
+            if(this.whitelist.contains(request.ip()))
+        });
+        websocketServer.webSocket("/"+ websocketEndpoint, this.webSocketHandler);
     }
 
     private void heartbeat() {
@@ -59,15 +74,12 @@ public class MagicLink extends MagicLinkCore {
         }, 3, TimeUnit.SECONDS);
     }
 
-    /**
-     * Fetches a Magic Link Server Config based on a name.
-     * `name` is considered to be the name of the file found in `magic_configs` on the Proxy, minus the file extension.
-     * @param name The name to look for.
-     */
-    public Optional<MagicLinkServerSettings> magicConfig(String name) {
-        MagicLinkServerSettings settings = this.settingsMap.get(name);
-        if(settings == null) return Optional.empty();
-        return Optional.of(settings);
+    @Override
+    public void publish(Packet packet) {
+        try {
+            String encrypted = this.cryptor.encrypt(packet.toString());
+            this.webSocketHandler.publish(packet.target(), encrypted);
+        } catch (Exception ignore) {}
     }
 
     @Override
@@ -76,26 +88,17 @@ public class MagicLink extends MagicLinkCore {
         this.executor.shutdownNow();
     }
 
-    public record MagicLinkServerSettings(
-            String family,
-            int weight,
-            int soft_cap,
-            int hard_cap
-    ) {
-        public static MagicLinkServerSettings DEFAULT_CONFIGURATION = new MagicLinkServerSettings("lobby", 0, 20, 30);
-    };
-
-    public static class Tinder extends Particle.Tinder<MagicLink> {
+    public static class Tinder extends Particle.Tinder<WebSocketMagicLink> {
         private final AESCryptor cryptor;
         private final Packet.Target self;
         private final MessageCache cache;
-        private final Map<String, MagicLinkServerSettings> magicConfigs;
+        private final Map<String, Proxy.ServerRegistrationConfiguration> magicConfigs;
         private final List<PacketListener<? extends Packet>> listeners = new Vector<>();
         public Tinder(
                 @NotNull AESCryptor cryptor,
                 @NotNull Packet.Target self,
                 @NotNull MessageCache cache,
-                @NotNull Map<String, MagicLinkServerSettings> magicConfigs
+                @NotNull Map<String, Proxy.ServerRegistrationConfiguration> magicConfigs
                 ) {
             this.cryptor = cryptor;
             this.self = self;
@@ -109,8 +112,8 @@ public class MagicLink extends MagicLinkCore {
         }
 
         @Override
-        public @NotNull MagicLink ignite() throws Exception {
-            MagicLink magicLink = new MagicLink(
+        public @NotNull WebSocketMagicLink ignite() throws Exception {
+            WebSocketMagicLink magicLink = new WebSocketMagicLink(
                     this.cryptor,
                     this.cache,
                     this.self,
@@ -134,6 +137,35 @@ public class MagicLink extends MagicLinkCore {
             tinder.on(new HandshakeDisconnectListener());
 
             return tinder;
+        }
+    }
+
+    @WebSocket
+    protected class WebSocketHandler {
+        protected final Map<Packet.Target, Session> connections = new ConcurrentHashMap<>();
+
+        public void publish(Packet.Target target, String encryptedMessage) {
+            try {
+                this.connections.get(target).getRemote().sendString(encryptedMessage);
+            } catch (Exception ignore) {}
+        }
+
+        @OnWebSocketConnect
+        public void onConnect(Session session) {
+            if(!this.authenticated(session)) {
+                session.close(401, "Unauthorized");
+                return;
+            }
+        }
+
+        @OnWebSocketMessage
+        public void onMessage(Session session, String message) {
+            if(!this.authenticated(session)) {
+                session.close(401, "Unauthorized");
+                return;
+            }
+
+            WebSocketMagicLink.this.handleMessage(message);
         }
     }
 }

@@ -1,4 +1,4 @@
-package group.aelysium.rustyconnector.mc_loader.lang;
+package group.aelysium.rustyconnector.server.lang;
 
 import group.aelysium.rustyconnector.common.lang.ASCIIAlphabet;
 import group.aelysium.rustyconnector.common.lang.Lang;

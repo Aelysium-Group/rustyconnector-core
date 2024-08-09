@@ -8,6 +8,8 @@ javadoc {
 dependencies {
     shadow "net.kyori:adventure-text-minimessage:${project.minimessage_version}"
     shadow "com.google.code.gson:gson:${project.gson_version}"
+    shadow "com.sparkjava:spark-core:${project.spark_version}"
+    implementation "org.java-websocket:Java-WebSocket:${project.websocket_version}"
 }
 
 // If ever strange behaviour check the docs for reference: https://imperceptiblethoughts.com/shadow/

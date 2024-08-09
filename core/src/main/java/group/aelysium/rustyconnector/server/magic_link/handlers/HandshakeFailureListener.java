@@ -1,4 +1,4 @@
-package group.aelysium.rustyconnector.mc_loader.magic_link.handlers;
+package group.aelysium.rustyconnector.server.magic_link.handlers;
 
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;

@@ -2,9 +2,9 @@ package group.aelysium.rustyconnector;
 
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.events.EventManager;
-import group.aelysium.rustyconnector.mc_loader.ServerAdapter;
-import group.aelysium.rustyconnector.mc_loader.ServerFlame;
-import group.aelysium.rustyconnector.mc_loader.lang.ServerLang;
+import group.aelysium.rustyconnector.server.ServerAdapter;
+import group.aelysium.rustyconnector.server.ServerFlame;
+import group.aelysium.rustyconnector.server.lang.ServerLang;
 import group.aelysium.rustyconnector.proxy.ProxyAdapter;
 import group.aelysium.rustyconnector.proxy.ProxyFlame;
 import group.aelysium.rustyconnector.proxy.family.Families;
@@ -12,7 +12,7 @@ import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.family.whitelist.Whitelist;
 import group.aelysium.rustyconnector.proxy.lang.ProxyLang;
-import group.aelysium.rustyconnector.proxy.magic_link.MagicLink;
+import group.aelysium.rustyconnector.proxy.magic_link.WebSocketMagicLink;
 import group.aelysium.rustyconnector.proxy.player.Player;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
 import group.aelysium.rustyconnector.proxy.player.Players;
@@ -50,7 +50,7 @@ public interface RC {
             return Optional.of(whitelistOptional.orElseThrow().orElseThrow());
         }
 
-        static MagicLink MagicLink() throws NoSuchElementException {
+        static WebSocketMagicLink MagicLink() throws NoSuchElementException {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().MagicLink().orElseThrow();
         }
 
@@ -104,7 +104,7 @@ public interface RC {
             return RustyConnector.Toolkit.Server().orElseThrow().orElseThrow();
         }
 
-        static group.aelysium.rustyconnector.mc_loader.magic_link.MagicLink MagicLink() throws NoSuchElementException {
+        static group.aelysium.rustyconnector.server.magic_link.WebSocketMagicLink MagicLink() throws NoSuchElementException {
             return RustyConnector.Toolkit.Server().orElseThrow().orElseThrow().MagicLink().orElseThrow();
         }
 

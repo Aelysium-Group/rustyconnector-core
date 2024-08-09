@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector;
 
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.mc_loader.ServerFlame;
+import group.aelysium.rustyconnector.server.ServerFlame;
 import group.aelysium.rustyconnector.proxy.ProxyFlame;
 import org.jetbrains.annotations.NotNull;
 

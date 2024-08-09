@@ -1,4 +1,4 @@
-package group.aelysium.rustyconnector.mc_loader;
+package group.aelysium.rustyconnector.server;
 
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;

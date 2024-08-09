@@ -3,6 +3,7 @@ package group.aelysium.rustyconnector.common.magic_link;
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.cache.CacheableMessage;
 import group.aelysium.rustyconnector.common.cache.TimeoutCache;
+import group.aelysium.rustyconnector.proxy.magic_link.WebSocketMagicLink;
 import group.aelysium.rustyconnector.proxy.util.ColorMapper;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 import group.aelysium.rustyconnector.common.cache.MessageCache;
@@ -13,12 +14,19 @@ import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketStatus;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.naming.AuthenticationException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class MagicLinkCore implements Particle {
+    protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private final TimeoutCache<UUID, Packet> packetsAwaitingReply = new TimeoutCache<>(LiquidTimestamp.from(10, TimeUnit.SECONDS));
     private final Map<PacketIdentification, List<PacketListener<? extends Packet>>> listeners = new ConcurrentHashMap<>();
     protected final AESCryptor cryptor;
@@ -35,7 +43,7 @@ public abstract class MagicLinkCore implements Particle {
         this.self = self;
     }
 
-    public final void publish(Packet packet) {
+    public void publish(Packet packet) {
         packetsAwaitingReply.put(packet.responseTarget().ownTarget(), packet);
     }
 
@@ -51,7 +59,7 @@ public abstract class MagicLinkCore implements Particle {
     }
 
     /**
-     * Handles all of the MagicLink/RustyConnector internals of handling MagicLink packets.
+     * Handles all the MagicLink/RustyConnector internals of handling MagicLink packets.
      * @param rawMessage A AES-256 encrypted MagicLink packet.
      */
     public void handleMessage(String rawMessage) {
@@ -209,5 +217,56 @@ public abstract class MagicLinkCore implements Particle {
                 String PLAYER_UUID = "p";
             }
         }
+    }
+
+    public static abstract class Server extends MagicLinkCore {
+        protected String registrationConfiguration;
+        protected final AtomicInteger delay = new AtomicInteger(5);
+        protected final AtomicBoolean stopPinging = new AtomicBoolean(false);
+        protected final String podName = System.getenv("POD_NAME");
+
+        protected Server(
+                @NotNull AESCryptor cryptor,
+                @NotNull MessageCache cache,
+                @NotNull Packet.@NotNull Target self,
+                @NotNull String registrationConfiguration
+        ) {
+            super(cryptor, cache, self);
+            this.registrationConfiguration = registrationConfiguration;
+        }
+    }
+
+    public static abstract class Proxy extends MagicLinkCore {
+        protected Map<String, ServerRegistrationConfiguration> registrationConfigurations;
+
+        protected Proxy(
+                @NotNull AESCryptor cryptor,
+                @NotNull MessageCache cache,
+                @NotNull Packet.@NotNull Target self,
+                @NotNull Map<String, ServerRegistrationConfiguration> registrationConfigurations
+        ) {
+            super(cryptor, cache, self);
+            this.registrationConfigurations = registrationConfigurations;
+        }
+
+        /**
+         * Fetches a Magic Link Server Config based on a name.
+         * `name` is considered to be the name of the file found in `magic_configs` on the Proxy, minus the file extension.
+         * @param name The name to look for.
+         */
+        public Optional<ServerRegistrationConfiguration> registrationConfig(String name) {
+            ServerRegistrationConfiguration settings = this.registrationConfigurations.get(name);
+            if(settings == null) return Optional.empty();
+            return Optional.of(settings);
+        }
+
+        public record ServerRegistrationConfiguration(
+                String family,
+                int weight,
+                int soft_cap,
+                int hard_cap
+        ) {
+            public static ServerRegistrationConfiguration DEFAULT_CONFIGURATION = new ServerRegistrationConfiguration("lobby", 0, 20, 30);
+        };
     }
 }
