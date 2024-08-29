@@ -3,9 +3,11 @@ package group.aelysium.rustyconnector.common.crypt;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.concurrent.Callable;
 
@@ -17,18 +19,30 @@ public class AESCryptor {
     }
 
     public String encrypt(String data) throws Exception {
-        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-        cipher.init(Cipher.ENCRYPT_MODE, this.key);
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        IvParameterSpec iv = createIv();
+        cipher.init(Cipher.ENCRYPT_MODE, this.key, iv);
         byte[] encryptedBytes = cipher.doFinal(data.getBytes(StandardCharsets.UTF_8));
 
-        return Base64.getEncoder().encodeToString(encryptedBytes);
+        // Combine IV and encrypted bytes
+        byte[] combined = new byte[iv.getIV().length + encryptedBytes.length];
+        System.arraycopy(iv.getIV(), 0, combined, 0, iv.getIV().length);
+        System.arraycopy(encryptedBytes, 0, combined, iv.getIV().length, encryptedBytes.length);
+
+        return new String(combined, StandardCharsets.UTF_8);
     }
 
     public String decrypt(String encryptedData) throws Exception {
-        byte[] encryptedBytes = Base64.getDecoder().decode(encryptedData);
+        byte[] bytes = encryptedData.getBytes(StandardCharsets.UTF_8);
+        // Extract IV and encrypted bytes
+        byte[] ivBytes = new byte[16];
+        byte[] encryptedBytes = new byte[bytes.length - 16];
+        System.arraycopy(bytes, 0, ivBytes, 0, 16);
+        System.arraycopy(bytes, 16, encryptedBytes, 0, encryptedBytes.length);
 
-        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-        cipher.init(Cipher.DECRYPT_MODE, this.key);
+        IvParameterSpec iv = new IvParameterSpec(ivBytes);
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        cipher.init(Cipher.DECRYPT_MODE, this.key, iv);
         byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
 
         return new String(decryptedBytes, StandardCharsets.UTF_8);
@@ -50,6 +64,12 @@ public class AESCryptor {
         SecretKey secretKey = new SecretKeySpec(key, "AES");
 
         return new AESCryptor(secretKey);
+    }
+
+    private static IvParameterSpec createIv() {
+        byte[] iv = new byte[16];
+        new SecureRandom().nextBytes(iv);
+        return new IvParameterSpec(iv);
     }
 
     /**
