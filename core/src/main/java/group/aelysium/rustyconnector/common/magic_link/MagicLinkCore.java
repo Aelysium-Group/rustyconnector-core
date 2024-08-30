@@ -54,7 +54,7 @@ public abstract class MagicLinkCore implements Particle {
 
     public void close() throws Exception {
         this.listeners.clear();
-        this.cache.kill();
+        this.cache.close();
         this.packetsAwaitingReply.close();
     }
 
@@ -62,7 +62,7 @@ public abstract class MagicLinkCore implements Particle {
      * Handles all the MagicLink/RustyConnector internals of handling MagicLink packets.
      * @param rawMessage A AES-256 encrypted MagicLink packet.
      */
-    public void handleMessage(String rawMessage) {
+    public Packet handleMessage(String rawMessage) {
         CacheableMessage cachedMessage = null;
         String decryptedMessage;
         try {
@@ -71,47 +71,48 @@ public abstract class MagicLinkCore implements Particle {
         } catch (Exception e) {
             cachedMessage = this.cache.cacheMessage(rawMessage, PacketStatus.UNDEFINED);
             cachedMessage.sentenceMessage(PacketStatus.AUTH_DENIAL, "This message was encrypted using a different private key from what I have!");
-            return;
+            throw new RuntimeException();
         }
 
-        Packet message = Packet.parseReceived(decryptedMessage);
+        Packet packet = Packet.parseReceived(decryptedMessage);
 
-        if(this.cache.ignoredType(message)) this.cache.removeMessage(cachedMessage.getSnowflake());
+        if(this.cache.ignoredType(packet)) this.cache.removeMessage(cachedMessage.getSnowflake());
 
-        if(!this.self.isNodeEquivalentToMe(message.target())) {
+        if(!this.self.isNodeEquivalentToMe(packet.target())) {
             cachedMessage.sentenceMessage(PacketStatus.TRASHED, "This packet wasn't addressed to me.");
-            return;
+            return packet;
         }
 
-        if(message.replying()) {
-            Packet reply = this.packetsAwaitingReply.get(message.responseTarget().remoteTarget().orElse(null));
+        if(packet.replying()) {
+            Packet reply = this.packetsAwaitingReply.get(packet.responseTarget().remoteTarget().orElse(null));
 
             if(reply == null) {
                 cachedMessage.sentenceMessage(PacketStatus.TRASHED, "The packet that this is replying to doesn't exist.");
-                return;
+                return packet;
             }
 
-            ((Packet) reply).replyListeners().forEach(l -> l.accept(message));
-            return;
+            reply.replyListeners().forEach(l -> l.accept(packet));
+            return packet;
         }
 
-        List<PacketListener<? extends Packet>> listeners = this.listeners.get(message.identification());
+        List<PacketListener<? extends Packet>> listeners = this.listeners.get(packet.identification());
         if(listeners == null) {
             cachedMessage.sentenceMessage(PacketStatus.TRASHED, "No listeners exist to handle this packet.");
-            return;
+            return packet;
         }
         if(listeners.isEmpty()) {
             cachedMessage.sentenceMessage(PacketStatus.TRASHED, "No listeners exist to handle this packet.");
-            return;
+            return packet;
         }
 
         listeners.forEach(listener -> {
             try {
-                listener.wrapAndExecute(message);
+                listener.wrapAndExecute(packet);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         });
+        return packet;
     }
 
     public interface Packets {

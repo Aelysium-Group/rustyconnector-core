@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.text.ParseException;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
 
 public class LiquidTimestamp implements Comparable<LiquidTimestamp> {
@@ -51,6 +52,18 @@ public class LiquidTimestamp implements Comparable<LiquidTimestamp> {
 
     public TimeUnit unit() {
         return this.unit;
+    }
+
+    public ChronoUnit chronoUnit() {
+        return switch (this.unit) {
+            case DAYS -> ChronoUnit.DAYS;
+            case HOURS -> ChronoUnit.HOURS;
+            case MINUTES -> ChronoUnit.MINUTES;
+            case SECONDS -> ChronoUnit.SECONDS;
+            case MILLISECONDS -> ChronoUnit.MILLIS;
+            case NANOSECONDS -> ChronoUnit.NANOS;
+            case MICROSECONDS -> ChronoUnit.MICROS;
+        };
     }
     public int value() {
         return this.value;

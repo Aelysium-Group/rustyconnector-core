@@ -5,9 +5,11 @@ import group.aelysium.rustyconnector.common.crypt.Snowflake;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketStatus;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketIdentification;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.*;
 
-public class MessageCache {
+public class MessageCache implements Closeable {
     private final Snowflake snowflakeGenerator = new Snowflake();
     private final List<PacketStatus> ignoredStatuses;
     private final List<PacketIdentification> ignoredTypes;
@@ -112,7 +114,8 @@ public class MessageCache {
 
     public void empty() { this.messages.clear(); }
 
-    public void kill() {
+    @Override
+    public void close() throws IOException {
         this.messages.clear();
     }
 }
