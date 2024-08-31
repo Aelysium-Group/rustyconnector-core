@@ -2,38 +2,49 @@ package group.aelysium.rustyconnector.common.events;
 
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import org.jetbrains.annotations.NotNull;
+import org.reflections.Reflections;
+import org.reflections.scanners.Scanners;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
+import java.util.function.Consumer;
 
 public class EventManager implements Particle {
 
     // A map of event types to their listeners
-    private final Map<Class<? extends Event>, Vector<Listener<Event>>> listeners = new ConcurrentHashMap<>();
+    private final Map<Class<? extends Event>, Vector<Consumer<Event>>> listeners = new ConcurrentHashMap<>();
 
     // A ForkJoinPool to execute the events asynchronously
     private final ExecutorService executor = ForkJoinPool.commonPool();
 
     // Constructor
-    public EventManager() {}
+    public EventManager() {
+        Reflections reflections = new Reflections(
+                new ConfigurationBuilder()
+                        .setUrls(ClasspathHelper.forPackage(""))
+                        .setScanners(Scanners.MethodsAnnotated)
+        );
 
-    /**
-     * Registers a new listener to this manager.
-     */
-    public void on(Class<? extends Event> event, Listener<?> listener) {
-        listeners.computeIfAbsent(event, k -> new Vector<>()).add((Listener<Event>) listener);
-    }
+        Set<Method> endpoints = reflections.getMethodsAnnotatedWith(EventListener.class);
 
-    /**
-     * Unregisters a listener from this manager.
-     */
-    public void off(Class<? extends Event> event, Listener<?> listener) {
-        Vector<Listener<Event>> listeners = this.listeners.get(event);
-        if(listeners == null) return;
-        listeners.remove(listener);
+        endpoints.forEach(method -> {
+            EventListener annotation = method.getAnnotation((EventListener.class));
+            this.listeners.computeIfAbsent(annotation.event(), k -> new Vector<>()).add(event -> {
+                try {
+                    method.invoke(null, event);
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        });
     }
 
     /**
@@ -41,14 +52,14 @@ public class EventManager implements Particle {
      */
     public void fireEvent(Event event) {
         // Get the listener for the event type
-        Vector<Listener<Event>> listeners = this.listeners.get(event.getClass());
+        Vector<Consumer<Event>> listeners = this.listeners.get(event.getClass());
 
         // If the listener exists, submit a task to the executor
         if (listeners == null) return;
 
-        executor.execute(() -> {
-            ((Vector<Listener<Event>>) listeners.clone()).forEach(listener -> listener.handler(event));
-        });
+        try {
+            executor.execute(() -> listeners.forEach(listener -> listener.accept(event)));
+        } catch (Exception ignore) {}
     }
 
 
