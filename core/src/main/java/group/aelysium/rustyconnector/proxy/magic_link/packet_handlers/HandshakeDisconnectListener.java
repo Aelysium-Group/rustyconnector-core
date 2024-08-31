@@ -7,20 +7,8 @@ import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.proxy.events.ServerUnregisterEvent;
 import group.aelysium.rustyconnector.proxy.family.Server;
 
-public class HandshakeDisconnectListener extends PacketListener<MagicLinkCore.Packets.Disconnect> {
-    public HandshakeDisconnectListener() {
-        super(
-                Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_DISCONNECT,
-                new Wrapper<>() {
-                    @Override
-                    public MagicLinkCore.Packets.Disconnect wrap(Packet packet) {
-                        return new MagicLinkCore.Packets.Disconnect(packet);
-                    }
-                }
-        );
-    }
-
-    @Override
+public class HandshakeDisconnectListener {
+    @PacketListener(MagicLinkCore.Packets.Disconnect.class)
     public void execute(MagicLinkCore.Packets.Disconnect packet) throws Exception {
         Server server = RC.P.Server(packet.sender().uuid()).orElseThrow();
 

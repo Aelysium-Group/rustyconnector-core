@@ -9,14 +9,12 @@ import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.cache.MessageCache;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
-import group.aelysium.rustyconnector.common.magic_link.packet.PacketParameter;
 import group.aelysium.rustyconnector.proxy.util.AddressUtil;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 import group.aelysium.rustyconnector.server.ServerFlame;
 import group.aelysium.rustyconnector.server.events.DisconnectedEvent;
 import group.aelysium.rustyconnector.common.crypt.AESCryptor;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
-import group.aelysium.rustyconnector.server.lang.ServerLang;
 import group.aelysium.rustyconnector.server.magic_link.handlers.HandshakeFailureListener;
 import group.aelysium.rustyconnector.server.magic_link.handlers.HandshakeStalePingListener;
 import group.aelysium.rustyconnector.server.magic_link.handlers.HandshakeSuccessListener;
@@ -24,14 +22,8 @@ import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -155,7 +147,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                         .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.DISPLAY_NAME, flame.displayName())
                         .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.MAGIC_CONFIG_NAME, this.magicConfig())
                         .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.ADDRESS, flame.address().getHostName()+":"+flame.address().getPort())
-                        .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.PLAYER_COUNT, new PacketParameter(flame.playerCount()));
+                        .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.PLAYER_COUNT, new Packet.Parameter(flame.playerCount()));
 
                 if(podName != null)
                     packet.parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.POD_NAME, this.podName);
@@ -192,7 +184,6 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
         private final MessageCache cache;
         private final InetSocketAddress address;
         private final String magicConfig;
-        private final List<PacketListener<? extends Packet>> listeners = new Vector<>();
         public Tinder(
                 @NotNull AESCryptor cryptor,
                 @NotNull Packet.Target self,
@@ -208,40 +199,25 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
 
         }
 
-        public Tinder on(PacketListener<? extends Packet> listener) {
-            this.listeners.add(listener);
-            return this;
-        }
-
         @Override
         public @NotNull WebSocketMagicLink ignite() throws Exception {
-            WebSocketMagicLink magicLink = new WebSocketMagicLink(
+            return new WebSocketMagicLink(
                     this.cryptor,
                     this.cache,
                     this.self,
                     this.address,
                     this.magicConfig
             );
-
-            this.listeners.forEach(magicLink::on);
-
-            return magicLink;
         }
 
         public static Tinder DEFAULT_CONFIGURATION(UUID serverUUID) {
-            Tinder tinder = new Tinder(
+            return new Tinder(
                     AESCryptor.DEFAULT_CRYPTOR,
                     Packet.Target.server(serverUUID),
                     new MessageCache(50),
                     AddressUtil.parseAddress("localhost:500"),
                     "default"
             );
-
-            tinder.on(new HandshakeFailureListener());
-            tinder.on(new HandshakeStalePingListener());
-            tinder.on(new HandshakeSuccessListener());
-
-            return tinder;
         }
     }
 }

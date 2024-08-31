@@ -1,9 +1,7 @@
 package group.aelysium.rustyconnector.common.cache;
 
-import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.common.crypt.Snowflake;
-import group.aelysium.rustyconnector.common.magic_link.packet.PacketStatus;
-import group.aelysium.rustyconnector.common.magic_link.packet.PacketIdentification;
+import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -11,12 +9,12 @@ import java.util.*;
 
 public class MessageCache implements Closeable {
     private final Snowflake snowflakeGenerator = new Snowflake();
-    private final List<PacketStatus> ignoredStatuses;
-    private final List<PacketIdentification> ignoredTypes;
+    private final List<Packet.Status> ignoredStatuses;
+    private final List<Packet.Identification> ignoredTypes;
     protected final int max;
     protected final Map<Long, CacheableMessage> messages;
 
-    public MessageCache(int max, List<PacketStatus> ignoredStatuses, List<PacketIdentification> ignoredTypes) {
+    public MessageCache(int max, List<Packet.Status> ignoredStatuses, List<Packet.Identification> ignoredTypes) {
         if(max <= 0) max = 0;
         if(max > 500) max = 500;
 
@@ -44,14 +42,14 @@ public class MessageCache implements Closeable {
      * @param message The message to cache.
      * @return The cached message.
      */
-    public CacheableMessage cacheMessage(String message, PacketStatus status) {
+    public CacheableMessage cacheMessage(String message, Packet.Status status) {
         Long snowflake = this.newSnowflake();
 
         CacheableMessage cacheableMessage = new CacheableMessage(snowflake, message, status);
 
         if(this.ignoredStatuses.contains(status)) return cacheableMessage;
 
-        this.messages.put(snowflake,cacheableMessage);
+        this.messages.put(snowflake, cacheableMessage);
 
         return cacheableMessage;
     }

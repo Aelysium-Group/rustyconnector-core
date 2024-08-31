@@ -145,7 +145,6 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
         private final MessageCache cache;
         private final InetSocketAddress address;
         private final Map<String, Proxy.ServerRegistrationConfiguration> magicConfigs;
-        private final List<PacketListener<? extends Packet>> listeners = new Vector<>();
         public Tinder(
                 @NotNull AESCryptor cryptor,
                 @NotNull Packet.Target self,
@@ -160,39 +159,25 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
             this.magicConfigs = magicConfigs;
         }
 
-        public Tinder on(PacketListener<? extends Packet> listener) {
-            this.listeners.add(listener);
-            return this;
-        }
-
         @Override
         public @NotNull WebSocketMagicLink ignite() throws Exception {
-            WebSocketMagicLink magicLink = new WebSocketMagicLink(
+            return new WebSocketMagicLink(
                     this.cryptor,
                     this.cache,
                     this.self,
                     this.address,
                     this.magicConfigs
             );
-
-            this.listeners.forEach(magicLink::on);
-
-            return magicLink;
         }
 
         public static Tinder DEFAULT_CONFIGURATION(UUID proxyUUID) {
-            Tinder tinder = new Tinder(
+            return new Tinder(
                     AESCryptor.DEFAULT_CRYPTOR,
                     Packet.Target.proxy(proxyUUID),
                     new MessageCache(50),
                     AddressUtil.parseAddress("127.0.0.1:500"),
                     new HashMap<>()
             );
-
-            tinder.on(new HandshakePingListener());
-            tinder.on(new HandshakeDisconnectListener());
-
-            return tinder;
         }
     }
 }

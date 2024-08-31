@@ -5,7 +5,6 @@ import group.aelysium.rustyconnector.RustyConnector;
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
-import group.aelysium.rustyconnector.common.magic_link.packet.PacketParameter;
 import group.aelysium.rustyconnector.proxy.events.ServerRegisterEvent;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
@@ -16,22 +15,9 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import java.security.InvalidAlgorithmParameterException;
 import java.util.concurrent.TimeUnit;
 
-public class HandshakePingListener extends PacketListener<WebSocketMagicLink.Packets.Handshake.Ping> {
-
-    public HandshakePingListener() {
-        super(
-                Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_PING,
-                new Wrapper<>() {
-                    @Override
-                    public WebSocketMagicLink.Packets.Handshake.Ping wrap(Packet packet) {
-                        return new WebSocketMagicLink.Packets.Handshake.Ping(packet);
-                    }
-                }
-        );
-    }
-
-    @Override
-    public void execute(WebSocketMagicLink.Packets.Handshake.Ping packet) throws Exception {
+public class HandshakePingListener {
+    @PacketListener(WebSocketMagicLink.Packets.Handshake.Ping.class)
+    public static void execute(WebSocketMagicLink.Packets.Handshake.Ping packet) throws Exception {
         try {
             Server server = RC.P.Server(packet.sender().uuid()).orElseThrow();
 
@@ -70,7 +56,7 @@ public class HandshakePingListener extends PacketListener<WebSocketMagicLink.Pac
                         .identification(Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_SUCCESS)
                         .parameter(WebSocketMagicLink.Packets.Handshake.Success.Parameters.MESSAGE, "Connected to the proxy! Registered as `"+server.uuidOrDisplayName()+"` into the family `"+family.id()+"`. Loaded using the magic config `"+packet.magicConfigName()+"`.")
                         .parameter(WebSocketMagicLink.Packets.Handshake.Success.Parameters.COLOR, NamedTextColor.GREEN.toString())
-                        .parameter(WebSocketMagicLink.Packets.Handshake.Success.Parameters.INTERVAL, new PacketParameter(10))
+                        .parameter(WebSocketMagicLink.Packets.Handshake.Success.Parameters.INTERVAL, new Packet.Parameter(10))
                         .addressedTo(packet)
                         .send();
             } catch(Exception e2) {

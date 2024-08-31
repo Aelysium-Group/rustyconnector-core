@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.common.cache;
 
-import group.aelysium.rustyconnector.common.magic_link.packet.PacketStatus;
+import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 
 import java.util.Date;
 
@@ -9,9 +9,9 @@ public class CacheableMessage {
     private final Date date;
     private final String contents;
     private String reason;
-    private PacketStatus status;
+    private Packet.Status status;
 
-    public CacheableMessage(Long snowflake, String contents, PacketStatus status) {
+    public CacheableMessage(Long snowflake, String contents, Packet.Status status) {
         this.snowflake = snowflake;
         this.contents = contents;
         this.date = new Date();
@@ -30,19 +30,19 @@ public class CacheableMessage {
         return this.date;
     }
 
-    public PacketStatus getSentence() {
+    public Packet.Status getSentence() {
         return this.status;
     }
     public String getSentenceReason() {
         return this.reason;
     }
 
-    public void sentenceMessage(PacketStatus status) {
+    public void sentenceMessage(Packet.Status status) {
         this.status = status;
         this.reason = null;
     }
 
-    public void sentenceMessage(PacketStatus status, String reason) {
+    public void sentenceMessage(Packet.Status status, String reason) {
         this.status = status;
         this.reason = reason;
     }

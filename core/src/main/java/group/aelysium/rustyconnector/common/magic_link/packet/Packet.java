@@ -5,6 +5,7 @@ import group.aelysium.rustyconnector.common.JSONParseable;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.RustyConnector;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -13,12 +14,17 @@ import java.util.function.Consumer;
 public class Packet implements JSONParseable {
     private static final int protocolVersion = 2;
 
+    private UUID uuid = UUID.randomUUID();
+    private final Date date = new Date();
+    private Status status = Status.UNDEFINED;
+    private String reason = "";
+    
     private final int messageVersion;
-    private final PacketIdentification identification;
+    private final Identification identification;
     private final Target sender;
     private final Target target;
     private final ResponseTarget responseTarget;
-    private final Map<String, PacketParameter> parameters;
+    private final Map<String, Parameter> parameters;
     private List<Consumer<Packet>> replyListeners = null; // Intentionally left null, if no responses are saved here, we don't want to bother instantiating a list here.
 
     /**
@@ -44,12 +50,12 @@ public class Packet implements JSONParseable {
     /**
      * The identification of this packet.
      */
-    public PacketIdentification identification() { return this.identification; }
+    public Identification identification() { return this.identification; }
 
     /**
      * The extra parameters that this packet caries.
      */
-    public Map<String, PacketParameter> parameters() { return parameters; }
+    public Map<String, Parameter> parameters() { return parameters; }
 
     /**
      * Checks whether this packet is a response to a previous packet.
@@ -74,8 +80,8 @@ public class Packet implements JSONParseable {
         if(this.replyListeners == null) this.replyListeners = new ArrayList<>();
         this.replyListeners.add(response);
     }
-
-    protected Packet(@NotNull Integer version, @NotNull PacketIdentification identification, @NotNull Packet.Target sender, @NotNull Packet.Target target, @NotNull Packet.ResponseTarget responseTarget, @NotNull Map<String, PacketParameter> parameters) {
+    
+    protected Packet(@NotNull Integer version, @NotNull Identification identification, @NotNull Packet.Target sender, @NotNull Packet.Target target, @NotNull Packet.ResponseTarget responseTarget, @NotNull Map<String, Parameter> parameters) {
         this.messageVersion = version;
         this.identification = identification;
         this.sender = sender;
@@ -116,13 +122,13 @@ public class Packet implements JSONParseable {
 
     protected static class NakedBuilder {
         private Integer protocolVersion = Packet.protocolVersion;
-        private PacketIdentification id;
+        private Identification id;
         private Target sender;
         private Target target;
         private ResponseTarget responseTarget = ResponseTarget.chainStart();
-        private final Map<String, PacketParameter> parameters = new HashMap<>();
+        private final Map<String, Parameter> parameters = new HashMap<>();
 
-        public NakedBuilder identification(@NotNull PacketIdentification id) {
+        public NakedBuilder identification(@NotNull Identification id) {
             this.id = id;
             return this;
         }
@@ -143,10 +149,10 @@ public class Packet implements JSONParseable {
         }
 
         public NakedBuilder parameter(@NotNull String key, @NotNull String value) {
-            this.parameters.put(key, new PacketParameter(value));
+            this.parameters.put(key, new Parameter(value));
             return this;
         }
-        public NakedBuilder parameter(@NotNull String key, @NotNull PacketParameter value) {
+        public NakedBuilder parameter(@NotNull String key, @NotNull Parameter value) {
             this.parameters.put(key, value);
             return this;
         }
@@ -175,11 +181,11 @@ public class Packet implements JSONParseable {
             }
 
             public PrepareForSending parameter(String key, String value) {
-                this.builder.parameter(key, new PacketParameter(value));
+                this.builder.parameter(key, new Parameter(value));
                 return this;
             }
 
-            public PrepareForSending parameter(String key, PacketParameter value) {
+            public PrepareForSending parameter(String key, Parameter value) {
                 this.builder.parameter(key, value);
                 return this;
             }
@@ -257,7 +263,7 @@ public class Packet implements JSONParseable {
          * The identification of this packet.
          * Identification is what differentiates a "Server ping packet" from a "Teleport player packet"
          */
-        public PrepareForSending identification(PacketIdentification id) {
+        public PrepareForSending identification(Identification id) {
             return new PrepareForSending(builder.identification(id));
         }
     }
@@ -274,14 +280,14 @@ public class Packet implements JSONParseable {
 
             switch (key) {
                 case Parameters.PROTOCOL_VERSION -> builder.protocolVersion(value.getAsInt());
-                case Parameters.IDENTIFICATION -> builder.identification(new PacketIdentification(value.getAsString()));
+                case Parameters.IDENTIFICATION -> builder.identification(new Identification(value.getAsString()));
                 case Parameters.SENDER -> builder.sender(Target.fromJSON(value.getAsJsonObject()));
                 case Parameters.TARGET -> builder.target(Target.fromJSON(value.getAsJsonObject()));
                 case Parameters.RESPONSE -> builder.response(ResponseTarget.fromJSON(value.getAsJsonObject()));
                 case Parameters.PARAMETERS -> {
                     value.getAsJsonObject().entrySet().forEach(entry2 -> {
                         String key2 = entry.getKey();
-                        PacketParameter value2 = new PacketParameter(entry2.getValue().getAsJsonPrimitive());
+                        Parameter value2 = new Parameter(entry2.getValue().getAsJsonPrimitive());
 
                         builder.parameter(key2, value2);
                     });
@@ -477,47 +483,47 @@ public class Packet implements JSONParseable {
          *
          *                    | This packet is simultaneously a handshake initializer and a keep-alive packet.
          */
-        PacketIdentification MAGICLINK_HANDSHAKE_PING = PacketIdentification.from("RC","MLH");
+        Identification MAGICLINK_HANDSHAKE_PING = Identification.from("RC","MLH");
 
         /**
          * `Proxy > Server` | Tells the Server it couldn't be registered
          */
-        PacketIdentification MAGICLINK_HANDSHAKE_FAIL = PacketIdentification.from("RC","MLHF");
+        Identification MAGICLINK_HANDSHAKE_FAIL = Identification.from("RC","MLHF");
 
         /**
          * `Proxy > Server` | Tells the Server it was registered and how it should configure itself
          */
-        PacketIdentification MAGICLINK_HANDSHAKE_SUCCESS = PacketIdentification.from("RC","MLHS");
+        Identification MAGICLINK_HANDSHAKE_SUCCESS = Identification.from("RC","MLHS");
 
         /**
          * `Server > Proxy` | Tells the Proxy to drop the Magic Link between this Server.
          *                    | Typically used when the Server is shutting down so that Magic Link doesn't have to manually scan it.
          */
-        PacketIdentification MAGICLINK_HANDSHAKE_DISCONNECT = PacketIdentification.from("RC","MLHK");
+        Identification MAGICLINK_HANDSHAKE_DISCONNECT = Identification.from("RC","MLHK");
 
         /**
          * `Proxy > Server` | Informs the Server that it's connection to the proxy has gone stale.
          *                    | It is expected that, if the Server is still available it will respond to this message with a {@link BuiltInIdentifications#MAGICLINK_HANDSHAKE_PING}
          */
-        PacketIdentification MAGICLINK_HANDSHAKE_STALE_PING = PacketIdentification.from("RC","MLHSP");
+        Identification MAGICLINK_HANDSHAKE_STALE_PING = Identification.from("RC","MLHSP");
 
         /**
          * `Server > Proxy` | Request to send a player to a family
          */
-        PacketIdentification SEND_PLAYER = PacketIdentification.from("RC","SP");
+        Identification SEND_PLAYER = Identification.from("RC","SP");
 
         /**
          * `Server > Server` | Tells the proxy to open a server.
          */
-        PacketIdentification UNLOCK_SERVER = PacketIdentification.from("RC","US");
+        Identification UNLOCK_SERVER = Identification.from("RC","US");
 
         /**
          * `Server > Proxy` | Tells the proxy to close a server.
          */
-        PacketIdentification LOCK_SERVER = PacketIdentification.from("RC","LS");
+        Identification LOCK_SERVER = Identification.from("RC","LS");
 
-        static List<PacketIdentification> toList() {
-            List<PacketIdentification> list = new ArrayList<>();
+        static List<Identification> toList() {
+            List<Identification> list = new ArrayList<>();
 
             list.add(MAGICLINK_HANDSHAKE_PING);
             list.add(MAGICLINK_HANDSHAKE_FAIL);
@@ -530,8 +536,173 @@ public class Packet implements JSONParseable {
             return list;
         }
 
-        static PacketIdentification mapping(String id) {
+        static Identification mapping(String id) {
             return toList().stream().filter(entry -> Objects.equals(entry.get(), id)).findFirst().orElseThrow(NullPointerException::new);
+        }
+    }
+
+    public enum Status {
+        UNDEFINED, // The message hasn't had any status set yet.
+        AUTH_DENIAL, // If the message didn't contain the proper credentials (IP Address (for message tunnel), private-key, over max length, etc)
+        PARSING_ERROR, // If the message failed to be parsed
+        TRASHED, // If the message isn't intended for us.
+        ACCEPTED, // Just cause a message was accepted doesn't mean it was processed. It could still cause an error
+        EXECUTING_ERROR, // If the message failed to be parsed
+        EXECUTED; // The message has successfully processed and handled.
+
+        public NamedTextColor color() {
+            if(this == AUTH_DENIAL) return NamedTextColor.RED;
+            if(this == TRASHED) return NamedTextColor.DARK_GRAY;
+            if(this == PARSING_ERROR) return NamedTextColor.DARK_RED;
+            if(this == ACCEPTED) return NamedTextColor.YELLOW;
+            if(this == EXECUTED) return NamedTextColor.GREEN;
+            if(this == EXECUTING_ERROR) return NamedTextColor.DARK_RED;
+            return NamedTextColor.GRAY;
+        }
+    }
+
+    public static class Identification {
+        protected String id;
+
+        public Identification(String id) {
+            this.id = id;
+        }
+
+        public String get() {
+            return this.id;
+        }
+
+        @Override
+        public String toString() {
+            return this.id;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Identification mapping = (Identification) o;
+            return Objects.equals(this.get(), mapping.get());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(get());
+        }
+
+        /**
+         * Create a new Packet Mapping from a pluginID and a packetID.
+         * @param namespace
+         *        Should be a name representing your plugin.<br>
+         *        Should be in the format of UPPER_SNAKE_CASE.<br>
+         *        Should start with the prefix `RC_`.<br>
+         *        Example: `RC_COMMAND_SYNC`.<br>
+         * @param packetID
+         *        The ID you want to assign this packet.<br>
+         *        Should be in the format of UPPER_SNAKE_CASE.<br>
+         *        Can be whatever you want.<br>
+         * @return {@link Identification}
+         * @throws IllegalArgumentException If illegal names are passed.
+         */
+        public static Identification from(@NotNull String namespace, @NotNull String packetID) throws IllegalArgumentException {
+            String idToCheck = namespace.toUpperCase();
+            if(idToCheck.isEmpty()) throw new IllegalArgumentException("pluginID can't be empty!");
+            if(packetID.isEmpty()) throw new IllegalArgumentException("packetID can't be empty!");
+
+            return new Identification(namespace + "-" + packetID);
+        }
+    }
+
+    public static class Parameter {
+        protected char type;
+        protected Object object;
+
+        private Parameter(@NotNull Object object, char type) {
+            this.object = object;
+            this.type = type;
+        }
+        public Parameter(@NotNull Number object) {
+            this(object, 'n');
+        }
+        public Parameter(@NotNull Boolean object) {
+            this(object, 'b');
+        }
+        public Parameter(@NotNull String object) {
+            this(object, 's');
+        }
+        public Parameter(@NotNull JsonArray object) {
+            this(object, 'a');
+        }
+        public Parameter(@NotNull JsonObject object) {
+            this(object, 'j');
+        }
+        public Parameter(JsonPrimitive object) {
+            if(object.isNumber()) {
+                this.object = object.getAsNumber();
+                this.type = 'n';
+                return;
+            }
+            if(object.isBoolean()) {
+                this.object = object.getAsBoolean();
+                this.type = 'b';
+                return;
+            }
+            if(object.isString()) {
+                this.object = object.getAsString();
+                this.type = 's';
+                return;
+            }
+            if(object.isJsonArray()) {
+                this.object = object.getAsJsonArray();
+                this.type = 'a';
+                return;
+            }
+            if(object.isJsonObject()) {
+                this.object = object.getAsJsonObject();
+                this.type = 'j';
+                return;
+            }
+            throw new IllegalStateException("Unexpected value: " + type);
+        }
+
+        public char type() {
+            return this.type;
+        }
+
+        public int getAsInt() {
+            return ((Number) this.object).intValue();
+        }
+        public long getAsLong() {
+            return ((Number) this.object).longValue();
+        }
+        public double getAsDouble() {
+            return ((Number) this.object).doubleValue();
+        }
+        public boolean getAsBoolean() {
+            return (boolean) this.object;
+        }
+        public String getAsString() {
+            return (String) this.object;
+        }
+        public UUID getStringAsUUID() {
+            return UUID.fromString(this.getAsString());
+        }
+        public JsonArray getAsJsonArray() {
+            return (JsonArray) this.object;
+        }
+        public JsonObject getAsJsonObject() {
+            return (JsonObject) this.object;
+        }
+
+        public JsonElement toJSON() {
+            return switch (type) {
+                case 'n' -> new JsonPrimitive((Number) this.object);
+                case 'b' -> new JsonPrimitive((Boolean) this.object);
+                case 's' -> new JsonPrimitive((String) this.object);
+                case 'a' -> (JsonArray) this.object;
+                case 'j' -> (JsonObject) this.object;
+                default -> throw new IllegalStateException("Unexpected value: " + type);
+            };
         }
     }
 }

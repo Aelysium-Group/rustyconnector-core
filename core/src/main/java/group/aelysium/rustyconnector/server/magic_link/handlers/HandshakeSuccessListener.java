@@ -7,20 +7,8 @@ import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.server.events.ConnectedEvent;
 import net.kyori.adventure.text.Component;
 
-public class HandshakeSuccessListener extends PacketListener<MagicLinkCore.Packets.Handshake.Success> {
-    public HandshakeSuccessListener() {
-        super(
-                Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_PING,
-                new Wrapper<>() {
-                    @Override
-                    public MagicLinkCore.Packets.Handshake.Success wrap(Packet packet) {
-                        return new MagicLinkCore.Packets.Handshake.Success(packet);
-                    }
-                }
-        );
-    }
-
-    @Override
+public class HandshakeSuccessListener {
+    @PacketListener(MagicLinkCore.Packets.Handshake.Success.class)
     public void execute(MagicLinkCore.Packets.Handshake.Success packet) {
         RC.S.EventManager().fireEvent(new ConnectedEvent());
 

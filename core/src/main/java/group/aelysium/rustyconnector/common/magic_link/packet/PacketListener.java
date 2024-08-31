@@ -1,35 +1,16 @@
 package group.aelysium.rustyconnector.common.magic_link.packet;
 
-import org.jetbrains.annotations.NotNull;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public abstract class PacketListener<Packet extends group.aelysium.rustyconnector.common.magic_link.packet.Packet> {
-    private final PacketIdentification target;
-    private final Wrapper<Packet> wrapper;
-
-    public PacketListener(@NotNull PacketIdentification target, @NotNull Wrapper<Packet> wrapper) {
-        this.target = target;
-        this.wrapper = wrapper;
-    }
-
-    protected abstract void execute(Packet packet) throws Exception;
-
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface PacketListener {
     /**
-     * The target will be used to decide if this listener should be executed for the passed packet.
-     * @return {@link PacketIdentification}
+     * The packet that this listener is targeting.
+     * It's expected that, when you
      */
-    public final PacketIdentification target() {
-        return this.target;
-    }
-
-    public final void wrapAndExecute(group.aelysium.rustyconnector.common.magic_link.packet.Packet packet) throws Exception {
-        this.execute(this.wrapper.wrap(packet));
-    }
-
-    /**
-     * Used to wrap the packet as the correct packet for the handler to use.
-     * @param <Packet>
-     */
-    public static abstract class Wrapper<Packet extends group.aelysium.rustyconnector.common.magic_link.packet.Packet> {
-        public abstract Packet wrap(group.aelysium.rustyconnector.common.magic_link.packet.Packet packet);
-    }
+    Class<? extends Packet.Wrapper> value();
 }

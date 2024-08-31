@@ -18,11 +18,8 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.function.Consumer;
 
 public class EventManager implements Particle {
-
-    // A map of event types to their listeners
     private final Map<Class<? extends Event>, Vector<Consumer<Event>>> listeners = new ConcurrentHashMap<>();
 
-    // A ForkJoinPool to execute the events asynchronously
     private final ExecutorService executor = ForkJoinPool.commonPool();
 
     // Constructor
@@ -37,9 +34,13 @@ public class EventManager implements Particle {
 
         endpoints.forEach(method -> {
             EventListener annotation = method.getAnnotation((EventListener.class));
-            this.listeners.computeIfAbsent(annotation.event(), k -> new Vector<>()).add(event -> {
+            this.listeners.computeIfAbsent(annotation.value(), k -> new Vector<>()).add(event -> {
                 try {
-                    method.invoke(null, event);
+                    try {
+                        method.invoke(null, event);
+                    } catch (IllegalArgumentException ignore) {
+                        method.invoke(null);
+                    }
                 } catch (IllegalAccessException | InvocationTargetException e) {
                     throw new RuntimeException(e);
                 }

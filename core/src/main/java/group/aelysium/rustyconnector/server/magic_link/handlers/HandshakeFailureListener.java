@@ -7,21 +7,9 @@ import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 
 import java.util.concurrent.TimeUnit;
 
-public class HandshakeFailureListener extends PacketListener<MagicLinkCore.Packets.Handshake.Failure> {
-    public HandshakeFailureListener() {
-        super(
-                Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_FAIL,
-                new Wrapper<>() {
-                    @Override
-                    public MagicLinkCore.Packets.Handshake.Failure wrap(Packet packet) {
-                        return new MagicLinkCore.Packets.Handshake.Failure(packet);
-                    }
-                }
-        );
-    }
-
-    @Override
-    public void execute(MagicLinkCore.Packets.Handshake.Failure packet) {
+public class HandshakeFailureListener {
+    @PacketListener(MagicLinkCore.Packets.Handshake.Failure.class)
+    public static void execute(MagicLinkCore.Packets.Handshake.Failure packet) {
         try {
             RC.S.Adapter().log(RC.S.Lang().lang().magicLinkHandshakeFailure(packet.reason(), 1, TimeUnit.MINUTES));
         } catch (Exception ignore) {}
