@@ -26,9 +26,7 @@ public class LangLibrary<L extends Lang> implements Particle {
     }
 
     @Override
-    public void close() throws Exception {
-
-    }
+    public void close() {}
 
     public static class Tinder<L extends Lang> extends Particle.Tinder<LangLibrary<L>> {
         private final L lang;

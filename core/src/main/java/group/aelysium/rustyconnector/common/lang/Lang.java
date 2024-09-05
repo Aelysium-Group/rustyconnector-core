@@ -37,13 +37,13 @@ public class Lang {
         return text(borderPlain());
     }
 
-    public String unknown_command() {
+    public String unknownCommand() {
         return "Unknown command. Type \"/help\" for help.";
     }
-    public String no_permission() {
+    public String noPermission() {
         return "You do not have permission to do this.";
     }
-    public String internal_error() {
+    public String internalError() {
         return "There was an internal error while trying to complete your request.";
     }
     public final Component RUSTY_CONNECTOR(Version version) {// font: ANSI Shadow
@@ -135,11 +135,6 @@ public class Lang {
                 content
         );
     }
-
-
-
-
-
 
     public Component messageUsage() {
         return usageBox(

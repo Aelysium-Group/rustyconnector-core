@@ -7,26 +7,23 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Players implements Particle {
-    private final Map<UUID, Player> players = new ConcurrentHashMap<>();
+    private final Map<UUID, Player> playersUUID = new ConcurrentHashMap<>();
+    private final Map<String, Player> playersUsername = new ConcurrentHashMap<>();
 
     /**
      * Adds the player to the record.
      * @param player The player to add.
      */
     public void add(@NotNull Player player) {
-        this.players.put(player.uuid(), player);
+        this.playersUUID.put(player.uuid(), player);
+        this.playersUsername.put(player.username(), player);
     }
 
     public Optional<Player> fetch(@NotNull UUID uuid) {
-        return Optional.ofNullable(this.players.get(uuid));
+        return Optional.ofNullable(this.playersUUID.get(uuid));
     }
-
-    /**
-     * Removes a player.
-     * @param uuid The uuid of the player to remove.
-     */
-    public void remove(@NotNull UUID uuid) {
-        this.players.remove(uuid);
+    public Optional<Player> fetch(@NotNull String username) {
+        return Optional.ofNullable(this.playersUsername.get(username));
     }
 
     /**
@@ -34,16 +31,18 @@ public class Players implements Particle {
      * @param player The player to remove.
      */
     public void remove(@NotNull Player player) {
-        this.remove(player.uuid());
+        this.playersUUID.remove(player.uuid());
+        this.playersUsername.remove(player.username());
     }
 
     public List<Player> dump() {
-        return new ArrayList<>(this.players.values());
+        return new ArrayList<>(this.playersUUID.values());
     }
 
     @Override
-    public void close() throws Exception {
-        this.players.clear();
+    public void close() {
+        this.playersUUID.clear();
+        this.playersUsername.clear();
     }
 
     public static class Tinder extends Particle.Tinder<Players> {

@@ -83,7 +83,24 @@ public abstract class MagicLinkCore implements Particle {
         packetsAwaitingReply.put(packet.responseTarget().ownTarget(), packet);
     }
 
-    public void close() throws Exception {
+    /**
+     * Registers a new packet handler to the magic link provider.
+     * @param identification The identification of the specific packet.
+     * @param handler The handler to use for handling the packet.
+     *                This handler will be handled asynchronously and will not affect other handlers, even if it throws an exception.
+     */
+    public void on(String identification, Consumer<Packet> handler) {
+        this.listeners.computeIfAbsent(identification, k -> new ArrayList<>()).add(handler);
+    }
+
+    /**
+     * Fetches the message cache for this magic link provider.
+     */
+    public MessageCache messageCache() {
+        return this.cache;
+    }
+
+    public void close() {
         this.listeners.clear();
         this.cache.close();
         this.packetsAwaitingReply.close();
@@ -93,7 +110,7 @@ public abstract class MagicLinkCore implements Particle {
      * Handles all the MagicLink/RustyConnector internals of handling MagicLink packets.
      * @param rawMessage A AES-256 encrypted MagicLink packet.
      */
-    public Packet handleMessage(String rawMessage) {
+    protected Packet handleMessage(String rawMessage) {
         CacheableMessage cachedMessage = null;
         String decryptedMessage;
         try {
@@ -136,13 +153,12 @@ public abstract class MagicLinkCore implements Particle {
             return packet;
         }
 
-        listeners.forEach(listener -> {
+        Consumer<Consumer<Packet>> handler = listener -> {
             try {
                 listener.accept(packet);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
+            } catch (Exception ignore) {}
+        };
+        listeners.forEach(handler);
         return packet;
     }
 

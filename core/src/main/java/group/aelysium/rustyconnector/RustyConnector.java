@@ -10,7 +10,7 @@ import java.util.Optional;
 public class RustyConnector {
     public static class Toolkit {
         private static Particle.Flux<ServerFlame> serverKernel = null;
-        private static Particle.Flux<ProxyFlame> velocityKernel = null;
+        private static Particle.Flux<ProxyFlame> proxyKernel = null;
 
         /**
          * Fetches the Server API for RustyConnector.
@@ -25,19 +25,30 @@ public class RustyConnector {
          * @return {@link ProxyFlame}
          */
         public static Optional<Particle.Flux<ProxyFlame>> Proxy() throws IllegalAccessError {
-            return Optional.ofNullable(velocityKernel);
+            return Optional.ofNullable(proxyKernel);
         }
 
-        public static void registerServerKernel(@NotNull Particle.Flux<ServerFlame> kernel) {
+        public static void registerServerKernel(@NotNull Particle.Flux<ServerFlame> kernel) throws IllegalAccessError {
+            if(serverKernel != null) throw new IllegalAccessError("The server kernel has already been established.");
+            if(proxyKernel != null) throw new IllegalAccessError("A proxy kernel has already been established.");
             serverKernel = kernel;
         }
-        public static void registerProxyKernel(@NotNull Particle.Flux<ProxyFlame> kernel) {
-            velocityKernel = kernel;
+
+        public static void registerProxyKernel(@NotNull Particle.Flux<ProxyFlame> kernel) throws IllegalAccessError {
+            if(proxyKernel != null) throw new IllegalAccessError("The proxy kernel has already been established.");
+            if(serverKernel != null) throw new IllegalAccessError("A server kernel has already been established.");
+            proxyKernel = kernel;
         }
 
-        public static void unregister() {
-            serverKernel = null;
-            velocityKernel = null;
+        public static void unregister() throws Exception {
+            if(serverKernel != null) {
+                serverKernel.close();
+                serverKernel = null;
+            }
+            if(proxyKernel != null) {
+                proxyKernel.close();
+                proxyKernel = null;
+            }
         }
     }
 }

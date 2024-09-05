@@ -9,8 +9,10 @@ dependencies {
     shadow "net.kyori:adventure-text-minimessage:${project.minimessage_version}"
     shadow "com.google.code.gson:gson:${project.gson_version}"
 
-    implementation "io.javalin:javalin:6.2.0"
-    implementation "com.fasterxml.jackson.core:jackson-databind:2.17.0"
+    implementation 'org.spongepowered:configurate-yaml:4.0.0'
+
+    implementation "io.javalin:javalin:6.2.0" // REST API
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.17.0" // API HTTP response code exceptions
 
     implementation "org.java-websocket:Java-WebSocket:${project.websocket_version}"
 

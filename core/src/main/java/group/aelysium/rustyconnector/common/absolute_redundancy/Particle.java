@@ -1,5 +1,6 @@
 package group.aelysium.rustyconnector.common.absolute_redundancy;
 
+import group.aelysium.rustyconnector.common.Closure;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +16,7 @@ import java.util.function.Consumer;
  * Particles are the backbone of the Absolute Redundancy Architecture.
  * By leveraging {@link Flux}, Particles are able to exist in a state of super-positioning.
  */
-public interface Particle extends AutoCloseable {
+public interface Particle extends Closure {
     /**
      * Tinder is the configuration point for a {@link Particle}.
      * Via a {@link Flux}, a single Tinder be deterministic of the {@link Particle} produced.
@@ -43,7 +44,7 @@ public interface Particle extends AutoCloseable {
      * {@link Particle.Flux} exists to manage this state.
      * @param <P> The underlying Particle that exists within this flux.
      */
-    class Flux<P extends Particle> implements AutoCloseable {
+    class Flux<P extends Particle> implements Closure {
         private static final ExecutorService executor = Executors.newCachedThreadPool();
         private @Nullable CompletableFuture<P> resolvable = null;
         private @NotNull Tinder<P> tinder;
@@ -283,12 +284,13 @@ public interface Particle extends AutoCloseable {
             return this.tinder;
         }
 
-        public void close() throws Exception {
+        public void close() {
             if(this.resolvable == null) return;
-            if(this.resolvable.isDone()) {
-                this.resolvable.get().close();
-                return;
-            }
+            if(this.resolvable.isDone())
+                try {
+                    this.resolvable.get().close();
+                    return;
+                } catch (Exception ignore) {}
             this.resolvable.completeExceptionally(new InterruptedException("Particle boot was interrupted by Hypervisor closing!"));
         }
 
@@ -314,7 +316,7 @@ public interface Particle extends AutoCloseable {
          * Capacitor is a collection of Flux.
          * As long as the keys are unique, you can store as much Flux as you want here.
          */
-        public static class Capacitor implements AutoCloseable {
+        public static class Capacitor implements Closure {
             private final Map<String, Flux<? extends Particle>> flux = new ConcurrentHashMap<>();
 
             public Capacitor() {}
@@ -334,7 +336,7 @@ public interface Particle extends AutoCloseable {
             }
 
             @Override
-            public void close() throws Exception {
+            public void close() {
                 this.flux.values().forEach(f -> {
                     try {
                         f.close();

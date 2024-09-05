@@ -236,7 +236,7 @@ public abstract class LoadBalancer implements Server.Factory, Particle {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         this.servers.clear();
         this.unlockedServers.clear();
         this.lockedServers.clear();

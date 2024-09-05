@@ -107,7 +107,7 @@ public class ProxyFlame implements Particle {
     }
 
     public List<Component> bootLog() { return this.bootOutput; }
-    public void close() throws Exception {
+    public void close() {
         this.families.close();
         this.magicLink.close();
         this.players.close();

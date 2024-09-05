@@ -162,7 +162,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         stopPinging.set(true);
         try {
             this.executor.shutdownNow();

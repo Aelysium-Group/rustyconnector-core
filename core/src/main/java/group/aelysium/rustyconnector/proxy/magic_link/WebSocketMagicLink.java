@@ -131,7 +131,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         super.close();
         this.server.stop();
         this.clients.clear();

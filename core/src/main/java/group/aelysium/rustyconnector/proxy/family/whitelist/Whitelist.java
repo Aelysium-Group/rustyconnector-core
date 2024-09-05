@@ -108,7 +108,7 @@ public class Whitelist implements Particle {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         this.playerFilters.clear();
     }
 

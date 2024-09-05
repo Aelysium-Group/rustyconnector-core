@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -102,7 +103,17 @@ public class ScalarFamily extends Family {
 
     @Override
     public @NotNull Component details() {
-        return null;
+        return RC.P.Lang().lang().family(
+                this.id(),
+                this.parent,
+                Map.of(
+                        "Players", this.players() + "",
+                        "Whitelist", this.whitelist().isPresent() ? this.whitelist().orElseThrow().orElseThrow().name() : "none",
+                        "Load Balancer", this.loadBalancer().orElseThrow().getClass().getSimpleName()
+                ),
+                this.loadBalancer.orElseThrow().servers(),
+                Component.text("All Servers.")
+        );
     }
 
     @Override
@@ -141,7 +152,7 @@ public class ScalarFamily extends Family {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         this.loadBalancer.close();
         try {
             assert this.whitelist != null;

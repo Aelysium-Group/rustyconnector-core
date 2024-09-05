@@ -1,7 +1,5 @@
 package group.aelysium.rustyconnector.common.cache;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -11,9 +9,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import group.aelysium.rustyconnector.common.Closure;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 
-public class TimeoutCache<K, V> implements Closeable, Map<K, V> {
+public class TimeoutCache<K, V> implements Closure, Map<K, V> {
     private final Map<K, TimedValue<V>> map = new ConcurrentHashMap<>();
     private final LiquidTimestamp expiration;
     private final ScheduledExecutorService clock = Executors.newSingleThreadScheduledExecutor();
@@ -44,7 +43,7 @@ public class TimeoutCache<K, V> implements Closeable, Map<K, V> {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         this.shutdown = true;
         this.onTimeout.clear();
         this.clock.shutdownNow();

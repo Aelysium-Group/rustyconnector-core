@@ -89,6 +89,9 @@ public interface RC {
         static Optional<Player> Player(UUID uuid) throws NoSuchElementException {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Players().orElseThrow().fetch(uuid);
         }
+        static Optional<Player> Player(String username) throws NoSuchElementException {
+            return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Players().orElseThrow().fetch(username);
+        }
     }
 
     /**

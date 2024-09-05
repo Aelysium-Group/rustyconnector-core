@@ -8,6 +8,8 @@ import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -62,6 +64,9 @@ public abstract class Family implements Player.Connectable, Server.Factory, Part
     /**
      * Returns the details of this family in a component which can be
      * printed to the console or sent to a player.
+     * This method can technically return whatever you want, but you should really
+     * consider just using {@link group.aelysium.rustyconnector.proxy.lang.ProxyLang#family(String, String, Map, List, Component)} so that the returned component
+     * matches what other families will return.
      */
     public abstract @NotNull Component details();
 
@@ -74,7 +79,7 @@ public abstract class Family implements Player.Connectable, Server.Factory, Part
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         try {
             if(this.whitelist == null) throw new NullPointerException();
             this.whitelist.close();

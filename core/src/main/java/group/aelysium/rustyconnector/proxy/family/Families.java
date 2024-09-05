@@ -76,7 +76,7 @@ public class Families implements Particle {
         return this.families.size();
     }
 
-    public void close() throws Exception {
+    public void close() {
         // Teardown logic for any families that need it
         for (Particle.Flux<Family> family : this.families.values()) {
             try {

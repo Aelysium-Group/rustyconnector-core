@@ -5,12 +5,17 @@ import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.lang.ASCIIAlphabet;
 import group.aelysium.rustyconnector.common.lang.Lang;
 import group.aelysium.rustyconnector.proxy.family.Family;
+import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.LoadBalancer;
 import group.aelysium.rustyconnector.proxy.family.scalar_family.ScalarFamily;
+import group.aelysium.rustyconnector.proxy.util.AddressUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -24,10 +29,10 @@ public class ProxyLang extends Lang {
         super(asciiAlphabet);
     }
 
-    public String no_player(String username) {
+    public String noPlayer(String username) {
         return "There is no online player with the username " + username;
     }
-    public String already_connected() {
+    public String alreadyConnected() {
         return "You're already connected to this server.";
     }
 
@@ -86,77 +91,36 @@ public class ProxyLang extends Lang {
         );
     };
 
-    public Component loadBalancer(LoadBalancer loadBalancer) {
-        int locked = loadBalancer.lockedServers().size();
-        int unlocked = loadBalancer.unlockedServers().size();
-        int total = locked + unlocked;
-
-        double lockedPercentage = 0;
-        try {
-            lockedPercentage = (double) locked / total;
-        } catch (Exception ignore) {}
-
-        int totalBlocks = 200;
-        double lockedBlocks = Math.floor(totalBlocks * lockedPercentage);
-
-        StringBuilder lockedBlockSB = new StringBuilder();
-        for (int i = 0; i < lockedBlocks; i++)
-            lockedBlockSB.append("█");
-        StringBuilder unlockedBlockSB = new StringBuilder();
-        for (int i = 0; i < totalBlocks - lockedBlocks; i++)
-            unlockedBlockSB.append("█");
-
-        Component blocks = join(
-                JoinConfiguration.noSeparators(),
-                text(lockedBlockSB.toString(), GRAY),
-                text(unlockedBlockSB.toString(), GREEN)
-        );
-
-        return blocks;
+    public Component server(Server server) {
+        boolean hasServerName = server.uuid().toString().equals(server.uuidOrDisplayName());
+        return Component.text("["+server.uuid()+"] "+ (hasServerName ? server.uuidOrDisplayName() : "") +"("+ AddressUtil.addressToString(server.address()) +") ["+server.players()+" ("+server.softPlayerCap()+" <--> "+server.hardPlayerCap()+") w-"+server.weight()+"]");
     }
 
-    public Component scalarFamily(ScalarFamily family) throws ExecutionException, InterruptedException, TimeoutException {
-        Component servers = text("");
-        int i = 0;
+    public Component family(
+            @NotNull String familyID,
+            @Nullable String parentFamily,
+            @NotNull Map<String, String> parameters,
+            @NotNull List<Server> familyServers,
+            @Nullable Component status
+    ) {
+        AtomicReference<Component> serversComponent = new AtomicReference<>(familyServers.isEmpty() ? text("There are no servers to show.", DARK_GRAY) : empty());
+        familyServers.forEach(s -> serversComponent.set(serversComponent.get().appendNewline().append(this.server(s))));
 
-        LoadBalancer loadBalancer = family.loadBalancer().access().get(5, TimeUnit.SECONDS);
+        Component parentFamilyComponent = parentFamily == null ? text("none") : text(parentFamily);
 
-        if(family.servers().isEmpty()) servers = text("There are no registered servers.", DARK_GRAY);
-        else if(family.unlockedServers().isEmpty()) servers = text("All the Servers in this family are locked.", DARK_GRAY);
+        AtomicReference<Component> parametersComponent = new AtomicReference<>(empty());
+        parameters.forEach((k, v)->parametersComponent.set(parametersComponent.get().appendNewline().append(text("   ---| "+k+": "+v))));
 
-        Family rootFamily = RC.P.Families().rootFamily().orElseThrow();
-        String parentFamilyName = rootFamily.id();
-        try {
-            parentFamilyName = family.parent().orElseThrow().orElseThrow().id();
-        } catch (Exception ignore) {}
-        if(family.equals(rootFamily)) parentFamilyName = "none";
-
-        return headerBox(family.id(),
+        return headerBox(familyID,
             join(
                 newlines(),
-                text("   ---| Display Name: "+family.displayName()),
-                text("   ---| Parent Family: "+parentFamilyName),
-                text("   ---| Online Players: "+family.players()),
-                text(""),
-                text("   ---| Servers:"),
-                text("      | - Total: "+family.servers().size()),
-                text("      | - Open: "),
-                text("      | - Locked: "),
+                text("   ---| Parent Family: ").append(parentFamilyComponent),
+                parametersComponent.get(),
                 space(),
                 border(),
                 space(),
-                text("Open Servers", AQUA),
-                space(),
-                text("/rc family <family word_id> sort", GOLD),
-                text("Resort all servers in the family.", DARK_GRAY),
-                space(),
-                text("/rc family <family word_id> resetIndex", GOLD),
-                text("Reset player insertion point to first server in the family.", DARK_GRAY),
-                space(),
-                text("/rc family <family word_id> locked", GOLD),
-                text("View servers that are locked."),
-                space(),
-                loadBalancer(loadBalancer)
+                status == null ? empty() : status.appendNewline().append(space()),
+                serversComponent.get()
             )
         );
     };

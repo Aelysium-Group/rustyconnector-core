@@ -64,7 +64,7 @@ public class EventManager implements Particle {
     }
 
 
-    public void close() throws Exception {
+    public void close() {
         this.listeners.clear();
         this.executor.shutdown();
     }

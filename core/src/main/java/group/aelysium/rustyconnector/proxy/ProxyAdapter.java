@@ -150,7 +150,7 @@ public abstract class ProxyAdapter {
             return RC.P.Families().rootFamily().access().get(10, TimeUnit.SECONDS).connect(player);
         } catch (Exception e) {
             e.printStackTrace();
-            return Player.Connection.Request.failedRequest(player, Component.text(RC.P.Lang().lang().internal_error()));
+            return Player.Connection.Request.failedRequest(player, Component.text(RC.P.Lang().lang().internalError()));
         }
     }
 
@@ -158,7 +158,7 @@ public abstract class ProxyAdapter {
         RC.P.EventManager().fireEvent(new NetworkLeaveEvent(player));
 
         try {
-            RC.P.Players().remove(player.uuid());
+            RC.P.Players().remove(player);
         } catch (Exception ignore) {}
 
         Server server = player.server().orElse(null);
@@ -178,6 +178,17 @@ public abstract class ProxyAdapter {
      * @return A {@link PlayerKickedResponse}. The caller should properly handle the response so that the desired operations are performed.
      */
     public final @NotNull PlayerKickedResponse onKicked(@NotNull Player player, @Nullable String reason) {
+        return onKicked(player, Component.text(reason));
+    }
+
+    /**
+     * Decides what should happen to the kicked player.
+     * Based on the returned {@link PlayerKickedResponse} you should handle the player's connection appropriately.
+     * @param player The player that was kicked.
+     * @param reason The reason they were kicked.
+     * @return A {@link PlayerKickedResponse}. The caller should properly handle the response so that the desired operations are performed.
+     */
+    public final @NotNull PlayerKickedResponse onKicked(@NotNull Player player, @Nullable Component reason) {
         boolean isFromRootFamily = false;
 
         try {
@@ -194,7 +205,7 @@ public abstract class ProxyAdapter {
         try {
             // if (!api.services().family().shouldCatchDisconnectingPlayers()) throw new NoOutputException();
 
-            if(isFromRootFamily) return new PlayerKickedResponse(true, Objects.requireNonNullElse(reason, "Kicked by server."), null);
+            if(isFromRootFamily) return new PlayerKickedResponse(true, Objects.requireNonNullElse(reason, Component.text("Kicked by server.")), null);
 
             Family family = RC.P.Families().rootFamily().access().get(2, TimeUnit.SECONDS);
 
@@ -202,17 +213,17 @@ public abstract class ProxyAdapter {
 
             return new PlayerKickedResponse(false, reason, server);
         } catch (Exception e) {
-            return new PlayerKickedResponse(false, Objects.requireNonNullElse(reason, "Kicked by server. "+e.getMessage()), null);
+            return new PlayerKickedResponse(false, Objects.requireNonNullElse(reason, Component.text("Kicked by server. "+e.getMessage())), null);
         }
     }
 
     /**
-     * The response which is given when {@link #onKicked(Player, String)} is called.
+     * The response which is given when {@link #onKicked(Player, Component)} is called.
      * @param shouldDisconnect If `true`, the player should ultimately be disconnected from the network.
      *                         `reason` will not be null if this is true.
      *                         `server` will always be null if this is true.
      * @param reason The reason for the player being kicked. Reason will not be null if: `shouldDisconnect` is true, or in some cases when redirect is not null.
      * @param redirect The Server that the player should be redirected to.
      */
-    public record PlayerKickedResponse(boolean shouldDisconnect, @Nullable String reason, @Nullable Server redirect) {}
+    public record PlayerKickedResponse(boolean shouldDisconnect, @Nullable Component reason, @Nullable Server redirect) {}
 }
