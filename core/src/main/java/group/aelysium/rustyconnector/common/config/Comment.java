@@ -6,21 +6,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
+@Target({ ElementType.FIELD, ElementType.TYPE })
 /**
  * Allows you to programmatically add YAML comments to your {@link Config}.
+ * Comments only work if they're added to an already existing {@link Node}.
  */
 public @interface Comment {
     /**
-     * The order of this entry.
-     * This value manages how the elements will appear in the config.
-     */
-    int order() default 0;
-
-    /**
      * The comment to show.
      * Each new array element will be put on a newline.
-     * If a entry is provided without a leading # character, one will be added.
+     * If an entry is provided without a leading # character, one will be added.
      */
     String[] value();
 }

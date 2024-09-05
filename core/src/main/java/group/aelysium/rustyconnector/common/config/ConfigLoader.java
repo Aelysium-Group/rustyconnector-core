@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.common.config;
 
 import org.spongepowered.configurate.CommentedConfigurationNode;
-import org.spongepowered.configurate.ConfigurationNode;
+import org.spongepowered.configurate.ConfigurationOptions;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
 import java.io.*;
@@ -47,11 +47,19 @@ public class ConfigLoader {
                 File parent = configPointer.getParentFile();
                 if (!parent.exists()) parent.mkdirs();
 
-                try (FileWriter writer = new FileWriter(configPointer)) {
-                    for (ConfigEntry entry : contents)
-                        for (String line : entry.lines())
-                            writer.write(line + System.lineSeparator());
+                YamlConfigurationLoader loader = YamlConfigurationLoader.builder()
+                        .file(configPointer)
+                        .build();
+
+                CommentedConfigurationNode root = loader.load(ConfigurationOptions.defaults());
+
+                for (ConfigEntry entry : contents) {
+                    if(entry instanceof ConfigNode node)
+                        root.node(Arrays.stream(node.key().split("\\.")).toList()).set(node.value);
+                    if(entry instanceof ConfigComment comment)
+                        root.node(Arrays.stream(comment.key().split("\\.")).toList()).comment(String.join("\n", comment.value()));
                 }
+                loader.save(root);
             }
 
             return YamlConfigurationLoader.builder()
@@ -94,8 +102,13 @@ public class ConfigLoader {
         if(!filePathValidation.matcher(path).matches())
             throw new IOException("Invalid file path defined for config: "+path);
 
-        // Load all Command and Entry annotations
         Map<Integer, List<ConfigEntry>> entries = new HashMap<>();
+        try {
+            Comment comment = clazz.getAnnotation(Comment.class);
+            enterValue(entries, new ConfigComment(Integer.MIN_VALUE, "", comment.value()));
+        } catch (Exception ignore) {}
+
+        // Load all Comment and Entry annotations
         Arrays.stream(clazz.getDeclaredFields())
                 .filter(f -> !Modifier.isStatic(f.getModifiers())).toList()
                 .forEach(f -> {
@@ -103,13 +116,14 @@ public class ConfigLoader {
             boolean hasEntry = f.isAnnotationPresent(Node.class);
             if(!(hasComment || hasEntry)) return;
 
-            if(hasComment) {
-                Comment comment = f.getAnnotation(Comment.class);
-                enterValue(entries, new ConfigComment(comment.order(), comment.value()));
-            }
             if(hasEntry) {
                 Node node = f.getAnnotation(Node.class);
                 enterValue(entries, new ConfigNode(node.order(), node.key(), node.defaultValue(), f));
+
+                if(hasComment) {
+                    Comment comment = f.getAnnotation(Comment.class);
+                    enterValue(entries, new ConfigComment(node.order(), node.key(), comment.value()));
+                }
             }
         });
 
@@ -151,25 +165,23 @@ public class ConfigLoader {
         public int order() {
             return this.order;
         }
-
-        /**
-         * Returns lines of strings which can be printed into the file.
-         */
-        public abstract List<String> lines();
     }
     public static class ConfigComment extends ConfigEntry {
+        private final String key;
         private final List<String> value;
-        public ConfigComment(int order, String[] value) {
+        public ConfigComment(int order, String key, String[] value) {
             super(order);
-            this.value = List.of(value);
+            this.key = key;
+            this.value = Arrays.stream(value).map(s -> {
+                if(s.startsWith("#")) return s;
+                if(s.startsWith(" ")) return "#"+s;
+                return "# "+s;
+            }).toList();
         }
-
+        public String key() {
+            return this.key;
+        }
         public List<String> value() {
-            return this.value;
-        }
-
-        @Override
-        public List<String> lines() {
             return this.value;
         }
     }
@@ -194,11 +206,6 @@ public class ConfigLoader {
 
         public Field field() {
             return this.field;
-        }
-
-        @Override
-        public List<String> lines() {
-            return List.of(this.value.toString());
         }
     }
 }
