@@ -3,6 +3,7 @@ package group.aelysium.rustyconnector.proxy.magic_link.packet_handlers;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.RustyConnector;
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
+import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.proxy.events.ServerRegisterEvent;
@@ -24,13 +25,13 @@ public class HandshakePingListener {
             server.setTimeout(15);
             server.setPlayerCount(packet.playerCount());
         } catch (Exception e) {
-            WebSocketMagicLink magicLink = RC.P.MagicLink();
-            WebSocketMagicLink.ServerRegistrationConfiguration config = magicLink.registrationConfig(packet.serverRegistration()).orElseThrow(
+            MagicLinkCore.Proxy magicLink = RC.P.MagicLink();
+            MagicLinkCore.Proxy.ServerRegistrationConfiguration config = magicLink.registrationConfig(packet.serverRegistration()).orElseThrow(
                     () -> new NullPointerException("No Server Registration exists with the name "+packet.serverRegistration()+"!")
             );
 
             try {
-                Particle.Flux<Family> familyFlux = RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Families().orElseThrow().find(config.family()).orElseThrow(() ->
+                Particle.Flux<? extends Family> familyFlux = RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Families().orElseThrow().find(config.family()).orElseThrow(() ->
                         new InvalidAlgorithmParameterException("A family with the id `"+config.family()+"` doesn't exist!")
                 );
                 Family family = familyFlux.access().get(10, TimeUnit.SECONDS);

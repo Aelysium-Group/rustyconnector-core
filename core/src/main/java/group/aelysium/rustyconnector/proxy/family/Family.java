@@ -45,7 +45,7 @@ public abstract class Family implements Player.Connectable, Server.Factory, Part
      * The parent of this family should always be either another family, or the root family.
      * If this family is the root family, this method will always return `null`.
      */
-    public @NotNull Optional<Flux<Family>> parent() {
+    public @NotNull Optional<Flux<? extends Family>> parent() {
         if(this.parent == null) return Optional.empty();
         try {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Families().orElseThrow().find(this.parent);

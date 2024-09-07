@@ -111,7 +111,7 @@ public abstract class ProxyAdapter {
             @Nullable Server oldServer,
             @NotNull Server newServer
             ) throws RuntimeException {
-        Particle.Flux<Family> newFamily = newServer.family().orElseThrow();
+        Particle.Flux<? extends Family> newFamily = newServer.family().orElseThrow();
 
         // Check if the player just joined the proxy.
         if(oldServer == null) {
@@ -120,7 +120,7 @@ public abstract class ProxyAdapter {
             return;
         }
 
-        Particle.Flux<Family> oldFamily = oldServer.family().orElseThrow();
+        Particle.Flux<? extends Family> oldFamily = oldServer.family().orElseThrow();
         boolean isTheSameFamily = newFamily.equals(oldFamily);
 
         // Handle an inner-family switch
@@ -163,7 +163,7 @@ public abstract class ProxyAdapter {
 
         Server server = player.server().orElse(null);
         if(server == null) return;
-        Particle.Flux<Family> family = server.family().orElse(null);
+        Particle.Flux<? extends Family> family = server.family().orElse(null);
         if(family == null) return;
 
         RC.P.EventManager().fireEvent(new FamilyLeaveEvent(family, server, player, true));
@@ -193,7 +193,7 @@ public abstract class ProxyAdapter {
 
         try {
             Server oldServer = player.server().orElseThrow();
-            Particle.Flux<Family> family = oldServer.family().orElseThrow();
+            Particle.Flux<? extends Family> family = oldServer.family().orElseThrow();
 
             RC.P.EventManager().fireEvent(new FamilyLeaveEvent(family, oldServer, player, true));
             RC.P.EventManager().fireEvent(new ServerLeaveEvent(oldServer, player, true));

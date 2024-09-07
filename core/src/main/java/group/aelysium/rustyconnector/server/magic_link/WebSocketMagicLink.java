@@ -104,6 +104,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                 @Override
                 public void onOpen(ServerHandshake handshake) {
                     RC.S.Adapter().log(RC.S.Lang().lang().magicLink());
+                    WebSocketMagicLink.this.heartbeat();
                 }
 
                 @Override
@@ -115,6 +116,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                 public void onClose(int code, String reason, boolean remote) {
                     System.out.println("Websocket dropped, attempting to reconnect.");
                     try {
+                        WebSocketMagicLink.this.executor.shutdownNow();
                         WebSocketMagicLink.this.failCapture.trigger("[" + code + "] Websocket connection closed with the following reason: " + reason);
                         this.connect();
                     } catch (Exception e) {
@@ -131,17 +133,6 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
         } catch (Exception e) {
             throw new ExceptionInInitializerError(e);
         }
-    }
-
-    /**
-     * The name of the magic config that should be used on the proxy with this MCLoader.
-     */
-    public String magicConfig() {
-        return this.registrationConfiguration;
-    }
-
-    public void setDelay(int delay) {
-        this.delay.set(delay);
     }
 
     @Override
@@ -162,7 +153,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                 Packet.Builder.PrepareForSending packet = Packet.New()
                         .identification(Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_PING)
                         .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.DISPLAY_NAME, flame.displayName())
-                        .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.SERVER_REGISTRATION, this.magicConfig())
+                        .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.SERVER_REGISTRATION, this.registration())
                         .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.ADDRESS, flame.address().getHostName()+":"+flame.address().getPort())
                         .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.PLAYER_COUNT, new Packet.Parameter(flame.playerCount()));
 

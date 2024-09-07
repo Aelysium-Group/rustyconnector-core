@@ -68,7 +68,7 @@ public class ProxyLang extends Lang {
     public Component families() {
         AtomicReference<Component> families = new AtomicReference<>(text(""));
 
-        for (Particle.Flux<Family> family : RC.P.Families().dump())
+        for (Particle.Flux<? extends Family> family : RC.P.Families().dump())
             family.executeNow(f -> families.set(families.get().append(text("["+f.id()+"*] ").color(BLUE))));
 
         return boxed(

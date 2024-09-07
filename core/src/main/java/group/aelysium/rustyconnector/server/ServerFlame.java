@@ -10,6 +10,7 @@ import group.aelysium.rustyconnector.proxy.ProxyFlame;
 import group.aelysium.rustyconnector.proxy.util.Version;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
 import java.net.InetSocketAddress;
@@ -19,20 +20,20 @@ public class ServerFlame implements Particle {
     private final UUID uuid;
     private final Version version;
     private final ServerAdapter adapter;
-    private final Flux<LangLibrary<ServerLang>> lang;
+    private final Flux<? extends LangLibrary<? extends ServerLang>> lang;
     private final String displayName;
     private final InetSocketAddress address;
-    private final Flux<WebSocketMagicLink> magicLink;
-    private final Flux<EventManager> eventManager;
+    private final Flux<? extends MagicLinkCore.Server> magicLink;
+    private final Flux<? extends EventManager> eventManager;
 
     protected ServerFlame(
             @NotNull UUID uuid,
             @NotNull ServerAdapter adapter,
-            @NotNull Flux<LangLibrary<ServerLang>> lang,
-            @NotNull String displayName,
+            @NotNull Flux<? extends LangLibrary<? extends ServerLang>> lang,
+            @Nullable String displayName,
             @NotNull InetSocketAddress address,
-            @NotNull Flux<WebSocketMagicLink> magicLink,
-            @NotNull Flux<EventManager> eventManager
+            @NotNull Flux<? extends MagicLinkCore.Server> magicLink,
+            @NotNull Flux<? extends EventManager> eventManager
     ) {
         this.uuid = uuid;
         this.adapter = adapter;
@@ -122,12 +123,13 @@ public class ServerFlame implements Particle {
      * Sends a player to a specific family if it exists.
      * @param player The uuid of the player to send.
      * @param familyID The id of the family to send to.
+     * @return The packet which was sent.
      */
-    public void send(UUID player, String familyID) {
-        Packet.New()
+    public Packet.Local send(UUID player, String familyID) {
+        return Packet.New()
                 .identification(Packet.BuiltInIdentifications.SEND_PLAYER)
                 .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.PLAYER_UUID, player.toString())
-                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.TARGET_FAMILY_NAME, familyID)
+                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.TARGET_FAMILY, familyID)
                 .addressedTo(Packet.Target.allAvailableProxies())
                 .send();
     }
@@ -136,12 +138,18 @@ public class ServerFlame implements Particle {
      * Sends a player to a specific Server if it exists.
      * @param player The uuid of the player to send.
      * @param server The uuid of the server to send to.
+     * @return The packet which was sent.
      */
-    public void send(UUID player, UUID server) {
-
+    public Packet.Local send(UUID player, UUID server) {
+        return Packet.New()
+                .identification(Packet.BuiltInIdentifications.SEND_PLAYER)
+                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.PLAYER_UUID, player.toString())
+                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.TARGET_SERVER, server.toString())
+                .addressedTo(Packet.Target.allAvailableProxies())
+                .send();
     }
 
-    public Flux<WebSocketMagicLink> MagicLink() {
+    public Flux<? extends MagicLinkCore.Server> MagicLink() {
         return this.magicLink;
     }
 
@@ -149,11 +157,11 @@ public class ServerFlame implements Particle {
         return this.adapter;
     }
 
-    public Flux<LangLibrary<ServerLang>> Lang() {
+    public Flux<? extends LangLibrary<? extends ServerLang>> Lang() {
         return this.lang;
     }
 
-    public Flux<EventManager> EventManager() {
+    public Flux<? extends EventManager> EventManager() {
         return this.eventManager;
     }
 
@@ -162,57 +170,46 @@ public class ServerFlame implements Particle {
         this.magicLink.close();
     }
 
+    /**
+     * Provides a declarative method by which you can establish a new Server instance on RC.
+     * Parameters listed in the constructor are required, any other parameters are
+     * technically optional because they also have default implementations.
+     */
     public static class Tinder extends Particle.Tinder<ServerFlame> {
-        private UUID uuid = UUID.randomUUID();
-        private ServerAdapter adapter;
-        private LangLibrary.Tinder<ServerLang> lang = LangLibrary.Tinder.DEFAULT_SERVER_CONFIGURATION;
-        private String displayName;
-        private InetSocketAddress address;
-        private WebSocketMagicLink.Tinder magicLink = null;
-        private EventManager.Tinder eventManager = EventManager.Tinder.DEFAULT_CONFIGURATION;
+        private final UUID uuid;
+        private final ServerAdapter adapter;
+        private Particle.Tinder<? extends LangLibrary<? extends ServerLang>> lang = LangLibrary.Tinder.DEFAULT_SERVER_CONFIGURATION;
+        private final String displayName;
+        private final InetSocketAddress address;
+        private final Particle.Tinder<? extends MagicLinkCore.Server> magicLink;
+        private Particle.Tinder<? extends EventManager> eventManager = EventManager.Tinder.DEFAULT_CONFIGURATION;
 
-        public Tinder() {
-        }
-
-        public Tinder uuid(@NotNull UUID uuid) {
+        public Tinder(
+                @NotNull UUID uuid,
+                @NotNull ServerAdapter adapter,
+                @Nullable String displayName,
+                @NotNull InetSocketAddress address,
+                @NotNull Particle.Tinder<? extends MagicLinkCore.Server> magicLink
+                ) {
             this.uuid = uuid;
-            return this;
-        }
-
-        public Tinder adapter(@NotNull ServerAdapter adapter) {
             this.adapter = adapter;
-            return this;
+            this.displayName = displayName;
+            this.address = address;
+            this.magicLink = magicLink;
         }
 
-        public Tinder lang(@NotNull LangLibrary.Tinder<ServerLang> lang) {
+        public Tinder lang(@NotNull Particle.Tinder<? extends LangLibrary<? extends ServerLang>> lang) {
             this.lang = lang;
             return this;
         }
 
-        public Tinder displayName(@NotNull String displayName) {
-            this.displayName = displayName;
-            return this;
-        }
-
-        public Tinder address(@NotNull InetSocketAddress address) {
-            this.address = address;
-            return this;
-        }
-
-        public Tinder magicLink(@NotNull WebSocketMagicLink.Tinder magicLink) {
-            this.magicLink = magicLink;
-            return this;
-        }
-
-        public Tinder eventManager(@NotNull EventManager.Tinder eventManager) {
+        public Tinder eventManager(@NotNull Particle.Tinder<? extends EventManager> eventManager) {
             this.eventManager = eventManager;
             return this;
         }
 
         @Override
         public @NotNull ServerFlame ignite() throws Exception {
-            if(this.magicLink == null) this.magicLink = WebSocketMagicLink.Tinder.DEFAULT_CONFIGURATION(this.uuid);
-
             return new ServerFlame(
                     uuid,
                     adapter,

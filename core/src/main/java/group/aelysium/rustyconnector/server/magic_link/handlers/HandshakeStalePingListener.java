@@ -18,7 +18,7 @@ public class HandshakeStalePingListener {
                 .identification(Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_PING)
                 .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.ADDRESS, flame.address().getHostName() + ":" + flame.address().getPort())
                 .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.DISPLAY_NAME, flame.displayName())
-                .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.SERVER_REGISTRATION, flame.MagicLink().orElseThrow().magicConfig())
+                .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.SERVER_REGISTRATION, flame.MagicLink().orElseThrow().registration())
                 .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.PLAYER_COUNT, new Packet.Parameter(flame.playerCount()))
                 .addressedTo(packet)
                 .send();

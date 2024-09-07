@@ -11,7 +11,7 @@ import java.util.Optional;
  * Represents an Server unregistering from the Proxy.
  */
 public class ServerUnregisterEvent implements Event {
-    protected final Particle.Flux<Family> family;
+    protected final Particle.Flux<? extends Family> family;
     protected final Server server;
 
     public ServerUnregisterEvent(Server server) {
@@ -19,7 +19,7 @@ public class ServerUnregisterEvent implements Event {
         this.server = server;
     }
 
-    public Optional<Particle.Flux<Family>> family() {
+    public Optional<Particle.Flux<? extends Family>> family() {
         return Optional.ofNullable(family);
     }
     public Server server() {

@@ -14,13 +14,13 @@ import org.jetbrains.annotations.NotNull;
  * This event will also fire if a player leaves the family by logging out of the network.
  */
 public class FamilyLeaveEvent implements Event {
-    protected final Particle.Flux<Family> family;
+    protected final Particle.Flux<? extends Family> family;
     protected final Server server;
     protected final Player player;
     protected final boolean disconnected;
 
     public FamilyLeaveEvent(
-            @NotNull Particle.Flux<Family> family,
+            @NotNull Particle.Flux<? extends Family> family,
             @NotNull Server server,
             @NotNull Player player,
             boolean disconnected
@@ -31,7 +31,7 @@ public class FamilyLeaveEvent implements Event {
         this.disconnected = disconnected;
     }
 
-    public Particle.Flux<Family> family() {
+    public Particle.Flux<? extends Family> family() {
         return family;
     }
     public Server server() {

@@ -2,6 +2,7 @@ package group.aelysium.rustyconnector;
 
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.events.EventManager;
+import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.server.ServerAdapter;
 import group.aelysium.rustyconnector.server.ServerFlame;
 import group.aelysium.rustyconnector.server.lang.ServerLang;
@@ -44,13 +45,13 @@ public interface RC {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Players().orElseThrow();
         }
 
-        static Optional<Whitelist> Whitelist() throws NoSuchElementException {
-            Optional<Particle.Flux<Whitelist>> whitelistOptional = RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Whitelist();
+        static Optional<? extends Whitelist> Whitelist() throws NoSuchElementException {
+            Optional<Particle.Flux<? extends Whitelist>> whitelistOptional = RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Whitelist();
             if(whitelistOptional.isEmpty()) return Optional.empty();
             return Optional.of(whitelistOptional.orElseThrow().orElseThrow());
         }
 
-        static WebSocketMagicLink MagicLink() throws NoSuchElementException {
+        static MagicLinkCore.Proxy MagicLink() throws NoSuchElementException {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().MagicLink().orElseThrow();
         }
 
@@ -62,11 +63,11 @@ public interface RC {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Adapter();
         }
 
-        static LangLibrary<ProxyLang> Lang() throws NoSuchElementException {
+        static LangLibrary<? extends ProxyLang> Lang() throws NoSuchElementException {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Lang().orElseThrow();
         }
 
-        static Optional<Family> Family(String id) throws NoSuchElementException {
+        static Optional<? extends Family> Family(String id) throws NoSuchElementException {
             Family family = null;
             try {
                 family = RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Families().orElseThrow().find(id).orElseThrow().orElseThrow();
@@ -77,7 +78,7 @@ public interface RC {
         static Optional<Server> Server(UUID uuid) throws NoSuchElementException {
             Families families = RC.P.Families();
             AtomicReference<Server> server = new AtomicReference<>(null);
-            for (Particle.Flux<Family> family : families.dump()) {
+            for (Particle.Flux<? extends Family> family : families.dump()) {
                 family.executeNow(f -> {
                     f.servers().stream().filter(s -> s.uuid().equals(uuid)).findAny().ifPresent(server::set);
                 });
@@ -107,7 +108,7 @@ public interface RC {
             return RustyConnector.Toolkit.Server().orElseThrow().orElseThrow();
         }
 
-        static group.aelysium.rustyconnector.server.magic_link.WebSocketMagicLink MagicLink() throws NoSuchElementException {
+        static MagicLinkCore.Server MagicLink() throws NoSuchElementException {
             return RustyConnector.Toolkit.Server().orElseThrow().orElseThrow().MagicLink().orElseThrow();
         }
 
@@ -115,7 +116,7 @@ public interface RC {
             return RustyConnector.Toolkit.Server().orElseThrow().orElseThrow().Adapter();
         }
 
-        static LangLibrary<ServerLang> Lang() throws NoSuchElementException {
+        static LangLibrary<? extends ServerLang> Lang() throws NoSuchElementException {
             return RustyConnector.Toolkit.Server().orElseThrow().orElseThrow().Lang().orElseThrow();
         }
 

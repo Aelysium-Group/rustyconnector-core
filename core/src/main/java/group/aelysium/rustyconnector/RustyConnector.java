@@ -6,6 +6,7 @@ import group.aelysium.rustyconnector.proxy.ProxyFlame;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 public class RustyConnector {
     public static class Toolkit {
@@ -28,16 +29,18 @@ public class RustyConnector {
             return Optional.ofNullable(proxyKernel);
         }
 
-        public static void registerServerKernel(@NotNull Particle.Flux<ServerFlame> kernel) throws IllegalAccessError {
+        public static ServerFlame registerAndIgnite(@NotNull ServerFlame.Tinder tinder) throws IllegalAccessError, ExecutionException, InterruptedException {
             if(serverKernel != null) throw new IllegalAccessError("The server kernel has already been established.");
             if(proxyKernel != null) throw new IllegalAccessError("A proxy kernel has already been established.");
-            serverKernel = kernel;
+            serverKernel = tinder.flux();
+            return serverKernel.access().get();
         }
 
-        public static void registerProxyKernel(@NotNull Particle.Flux<ProxyFlame> kernel) throws IllegalAccessError {
+        public static ProxyFlame registerAndIgnite(@NotNull ProxyFlame.Tinder tinder) throws IllegalAccessError, ExecutionException, InterruptedException {
             if(proxyKernel != null) throw new IllegalAccessError("The proxy kernel has already been established.");
             if(serverKernel != null) throw new IllegalAccessError("A server kernel has already been established.");
-            proxyKernel = kernel;
+            proxyKernel = tinder.flux();
+            return proxyKernel.access().get();
         }
 
         public static void unregister() throws Exception {

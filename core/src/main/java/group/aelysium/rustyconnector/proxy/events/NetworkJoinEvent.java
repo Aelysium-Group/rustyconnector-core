@@ -11,17 +11,17 @@ import group.aelysium.rustyconnector.proxy.player.Player;
  * This event fires after {@link FamilyPostJoinEvent}.
  */
 public class NetworkJoinEvent implements Event {
-    protected final Particle.Flux<Family> family;
+    protected final Particle.Flux<? extends Family> family;
     protected final Server server;
     protected final Player player;
 
-    public NetworkJoinEvent(Particle.Flux<Family> family, Server server, Player player) {
+    public NetworkJoinEvent(Particle.Flux<? extends Family> family, Server server, Player player) {
         this.family = family;
         this.server = server;
         this.player = player;
     }
 
-    public Particle.Flux<Family> family() {
+    public Particle.Flux<? extends Family> family() {
         return family;
     }
     public Server server() {

@@ -3,6 +3,7 @@ package group.aelysium.rustyconnector.proxy;
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
+import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.proxy.family.Families;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.*;
 import group.aelysium.rustyconnector.proxy.family.whitelist.Whitelist;
@@ -21,24 +22,24 @@ public class ProxyFlame implements Particle {
     private final UUID uuid;
     private final Version version;
     private final ProxyAdapter adapter;
-    private final Particle.Flux<LangLibrary<ProxyLang>> lang;
-    private final Particle.Flux<Whitelist> whitelist;
-    private final Particle.Flux<Families> families;
-    private final Particle.Flux<WebSocketMagicLink> magicLink;
-    private final Particle.Flux<Players> players;
-    private final Particle.Flux<EventManager> eventManager;
+    private final Particle.Flux<? extends LangLibrary<? extends ProxyLang>> lang;
+    private final Particle.Flux<? extends Whitelist> whitelist;
+    private final Particle.Flux<? extends Families> families;
+    private final Particle.Flux<? extends MagicLinkCore.Proxy> magicLink;
+    private final Particle.Flux<? extends Players> players;
+    private final Particle.Flux<? extends EventManager> eventManager;
     private final List<Component> bootOutput;
 
     protected ProxyFlame(
             @NotNull UUID uuid,
             @NotNull ProxyAdapter adapter,
-            @NotNull Particle.Flux<LangLibrary<ProxyLang>> lang,
-            @Nullable Particle.Flux<Whitelist> whitelist,
+            @NotNull Particle.Flux<? extends LangLibrary<? extends ProxyLang>> lang,
+            @Nullable Particle.Flux<? extends Whitelist> whitelist,
             @NotNull List<Component> bootOutput,
-            @NotNull Particle.Flux<Families> families,
-            @NotNull Particle.Flux<WebSocketMagicLink> magicLink,
-            @NotNull Particle.Flux<Players> players,
-            @NotNull Particle.Flux<EventManager> eventManager
+            @NotNull Particle.Flux<? extends Families> families,
+            @NotNull Particle.Flux<? extends MagicLinkCore.Proxy> magicLink,
+            @NotNull Particle.Flux<? extends Players> players,
+            @NotNull Particle.Flux<? extends EventManager> eventManager
     ) throws RuntimeException {
         this.uuid = uuid;
         this.adapter = adapter;
@@ -98,23 +99,23 @@ public class ProxyFlame implements Particle {
     public ProxyAdapter Adapter() {
         return this.adapter;
     }
-    public Particle.Flux<LangLibrary<ProxyLang>> Lang() {
+    public Particle.Flux<? extends LangLibrary<? extends ProxyLang>> Lang() {
         return this.lang;
     }
-    public Optional<Particle.Flux<Whitelist>> Whitelist() {
+    public Optional<Particle.Flux<? extends Whitelist>> Whitelist() {
         return Optional.ofNullable(this.whitelist);
     }
-    public Particle.Flux<Families> Families() {
+    public Particle.Flux<? extends Families> Families() {
         return this.families;
     }
-    public Particle.Flux<WebSocketMagicLink> MagicLink() {
+    public Particle.Flux<? extends MagicLinkCore.Proxy> MagicLink() {
         return this.magicLink;
     }
-    public Particle.Flux<Players> Players() {
+    public Particle.Flux<? extends Players> Players() {
         return this.players;
     }
 
-    public Particle.Flux<EventManager> EventManager() {
+    public Particle.Flux<? extends EventManager> EventManager() {
         return this.eventManager;
     }
 
@@ -127,64 +128,58 @@ public class ProxyFlame implements Particle {
         this.bootOutput.clear();
     }
 
+    /**
+     * Provides a declarative method by which you can establish a new Proxy instance on RC.
+     * Parameters listed in the constructor are required, any other parameters are
+     * technically optional because they also have default implementations.
+     */
     public static class Tinder extends Particle.Tinder<ProxyFlame> {
-        private UUID uuid = UUID.randomUUID();
-        private ProxyAdapter adapter;
-        private LangLibrary.Tinder<ProxyLang> lang = LangLibrary.Tinder.DEFAULT_PROXY_CONFIGURATION;
-        private Whitelist.Tinder whitelist = null;
-        private Families.Tinder families = Families.Tinder.DEFAULT_CONFIGURATION;
-        private WebSocketMagicLink.Tinder magicLink = null;
-        private Players.Tinder players = Players.Tinder.DEFAULT_CONFIGURATION;
-        private EventManager.Tinder eventManager = EventManager.Tinder.DEFAULT_CONFIGURATION;
+        private final UUID uuid;
+        private final ProxyAdapter adapter;
+        private Particle.Tinder<? extends LangLibrary<? extends ProxyLang>> lang = LangLibrary.Tinder.DEFAULT_PROXY_CONFIGURATION;
+        private Particle.Tinder<? extends Whitelist> whitelist = null;
+        private Particle.Tinder<? extends Families> families = Families.Tinder.DEFAULT_CONFIGURATION;
+        private final Particle.Tinder<? extends MagicLinkCore.Proxy> magicLink;
+        private Particle.Tinder<? extends Players> players = Players.Tinder.DEFAULT_CONFIGURATION;
+        private Particle.Tinder<? extends EventManager> eventManager = EventManager.Tinder.DEFAULT_CONFIGURATION;
 
-        public Tinder() {
+        public Tinder(
+                @NotNull UUID uuid,
+                @NotNull ProxyAdapter adapter,
+                @NotNull Particle.Tinder<? extends MagicLinkCore.Proxy> magicLink
+                ) {
             super();
-        }
-
-        public Tinder uuid(@NotNull UUID uuid) {
             this.uuid = uuid;
-            return this;
-        }
-
-        public Tinder adapter(@NotNull ProxyAdapter adapter) {
             this.adapter = adapter;
-            return this;
+            this.magicLink = magicLink;
         }
 
-        public Tinder lang(@NotNull LangLibrary.Tinder<ProxyLang> lang) {
+        public Tinder lang(@NotNull Particle.Tinder<? extends LangLibrary<? extends ProxyLang>> lang) {
             this.lang = lang;
             return this;
         }
 
-        public Tinder whitelist(@Nullable Whitelist.Tinder whitelist) {
+        public Tinder whitelist(@Nullable Particle.Tinder<? extends Whitelist> whitelist) {
             this.whitelist = whitelist;
             return this;
         }
 
-        public Tinder families(@NotNull Families.Tinder families) {
+        public Tinder families(@NotNull Particle.Tinder<? extends Families> families) {
             this.families = families;
             return this;
         }
 
-        public Tinder magicLink(@NotNull WebSocketMagicLink.Tinder magicLink) {
-            this.magicLink = magicLink;
-            return this;
-        }
-
-        public Tinder players(@NotNull Players.Tinder players) {
+        public Tinder players(@NotNull Particle.Tinder<? extends Players> players) {
             this.players = players;
             return this;
         }
 
-        public Tinder eventManager(@NotNull EventManager.Tinder eventManager) {
+        public Tinder eventManager(@NotNull Particle.Tinder<? extends EventManager> eventManager) {
             this.eventManager = eventManager;
             return this;
         }
 
         public @NotNull ProxyFlame ignite() throws RuntimeException {
-            if(this.adapter == null) throw new IllegalArgumentException("ProxyFlame requires that you set the proxy adapter using ProxyFlame#Tinder#adapter()");
-            if(this.magicLink == null) this.magicLink = WebSocketMagicLink.Tinder.DEFAULT_CONFIGURATION(this.uuid);
-
             return new ProxyFlame(
                     this.uuid,
                     this.adapter,

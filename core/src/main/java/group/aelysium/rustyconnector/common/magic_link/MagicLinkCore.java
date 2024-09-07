@@ -266,13 +266,29 @@ public abstract class MagicLinkCore implements Particle {
             }
         }
 
+        @PacketIdentification("RC-R")
+        class ResponsePacket extends Packet.Wrapper {
+            public ResponsePacket(Packet packet) {
+                super(packet);
+            }
+            public String message() {
+                return this.parameters().get(Parameters.RESPONSE_MESSAGE).getAsString();
+            }
+            public interface Parameters {
+                String RESPONSE_MESSAGE = "r";
+            }
+        }
+
         @PacketIdentification("RC-SP")
         class SendPlayer extends Packet.Wrapper {
             public String targetFamilyName() {
-                return this.parameters().get(Parameters.TARGET_FAMILY_NAME).getAsString();
+                return this.parameters().get(Parameters.TARGET_FAMILY).getAsString();
+            }
+            public UUID targetServer() {
+                return UUID.fromString(this.parameters().get(Parameters.TARGET_SERVER).getAsString());
             }
 
-            public UUID uuid() {
+            public UUID playerUUID() {
                 return UUID.fromString(this.parameters().get(Parameters.PLAYER_UUID).getAsString());
             }
 
@@ -281,7 +297,8 @@ public abstract class MagicLinkCore implements Particle {
             }
 
             public interface Parameters {
-                String TARGET_FAMILY_NAME = "f";
+                String TARGET_FAMILY = "f";
+                String TARGET_SERVER = "s";
                 String PLAYER_UUID = "p";
             }
         }
@@ -303,6 +320,23 @@ public abstract class MagicLinkCore implements Particle {
             super(self, cryptor, cache);
             this.registrationConfiguration = registrationConfiguration;
             this.broadcaster = broadcaster;
+        }
+
+        /**
+         * Updates the delay which is used to determin how frequently the Server
+         * must ping the Proxy.
+         * @param delay The delay to set.
+         */
+        public void setDelay(int delay) {
+            this.delay.set(delay);
+        }
+
+        /**
+         * Returns the registration that this Server will register into.
+         * @return The server's registration.
+         */
+        public String registration() {
+            return this.registrationConfiguration;
         }
     }
 

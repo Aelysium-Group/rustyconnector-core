@@ -24,7 +24,7 @@ public class Server implements ISortable, Player.Connectable {
     private final String displayName;
     private final String podName;
     private final InetSocketAddress address;
-    private AtomicReference<Particle.Flux<Family>> family = new AtomicReference<>();
+    private AtomicReference<Particle.Flux<? extends Family>> family = new AtomicReference<>();
     private Object raw = null;
     private final AtomicLong playerCount = new AtomicLong(0);
     private int weight;
@@ -37,7 +37,7 @@ public class Server implements ISortable, Player.Connectable {
             @NotNull InetSocketAddress address,
             @Nullable String podName,
             @Nullable String displayName,
-            @Nullable Particle.Flux<Family> family,
+            @Nullable Particle.Flux<? extends Family> family,
             int softPlayerCap,
             int hardPlayerCap,
             int weight,
@@ -186,7 +186,7 @@ public class Server implements ISortable, Player.Connectable {
      * Get the family this server is associated with.
      * @return An optional containing the Family in a Flux state if it exists. If this server wasn't assigned a family, this will return an empty optional.
      */
-    public Optional<Particle.Flux<Family>> family() {
+    public Optional<Particle.Flux<? extends Family>> family() {
         return Optional.ofNullable(this.family.get());
     }
 
@@ -204,7 +204,7 @@ public class Server implements ISortable, Player.Connectable {
      * Assigns a family to this Server.
      * @param family The family to store.
      */
-    public void assignFamily(Particle.Flux<Family> family) {
+    public void assignFamily(Particle.Flux<? extends Family> family) {
         this.family.set(family);
     }
 

@@ -7,7 +7,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Families implements Particle {
-    private final Map<String, Flux<Family>> families = new ConcurrentHashMap<>();
+    private final Map<String, Flux<? extends Family>> families = new ConcurrentHashMap<>();
     private String rootFamily;
 
     protected Families() {}
@@ -28,7 +28,7 @@ public class Families implements Particle {
      * this will return `null`.
      * @return The root family or `null`
      */
-    public Flux<Family> rootFamily() {
+    public Flux<? extends Family> rootFamily() {
         return this.families.get(this.rootFamily);
     }
 
@@ -36,7 +36,7 @@ public class Families implements Particle {
      * Finds a family based on an id.
      * @param id The id to search for.
      */
-    public Optional<Particle.Flux<Family>> find(@NotNull String id) {
+    public Optional<Particle.Flux<? extends Family>> find(@NotNull String id) {
         return Optional.ofNullable(this.families.get(id));
     }
 
@@ -45,7 +45,7 @@ public class Families implements Particle {
      * @param id The id of the family to add.
      * @param family The family to add.
      */
-    public void put(@NotNull String id, @NotNull Flux<Family> family) {
+    public void put(@NotNull String id, @NotNull Flux<? extends Family> family) {
         this.families.put(id, family);
     }
 
@@ -60,7 +60,7 @@ public class Families implements Particle {
     /**
      * Gets a list of all families.
      */
-    public List<Flux<Family>> dump() {
+    public List<Flux<? extends Family>> dump() {
         return this.families.values().stream().toList();
     }
 
@@ -78,7 +78,7 @@ public class Families implements Particle {
 
     public void close() {
         // Teardown logic for any families that need it
-        for (Particle.Flux<Family> family : this.families.values()) {
+        for (Particle.Flux<? extends Family> family : this.families.values()) {
             try {
                 family.close();
             } catch (Exception e) {
@@ -90,17 +90,17 @@ public class Families implements Particle {
     }
 
     public static class Tinder extends Particle.Tinder<Families> {
-        protected Map<String, Flux<Family>> initialFamilies = new ConcurrentHashMap<>();
+        protected Map<String, Flux<? extends Family>> initialFamilies = new ConcurrentHashMap<>();
         protected String rootFamily = null;
 
         /**
          * Adds the family to be present on-boot
          */
-        public void addFamily(Flux<Family> family) {
+        public void addFamily(Flux<? extends Family> family) {
             family.executeNow(f -> this.initialFamilies.put(f.id(), family));
         }
 
-        public void setRootFamily(Flux<Family> family) {
+        public void setRootFamily(Flux<? extends Family> family) {
             family.executeNow(f -> {
                 this.initialFamilies.put(f.id(), family);
                 this.rootFamily = f.id();
