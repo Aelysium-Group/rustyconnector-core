@@ -1,12 +1,15 @@
 package group.aelysium.rustyconnector.common.config;
 
+import org.jetbrains.annotations.NotNull;
 import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.ConfigurationOptions;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
 import java.io.*;
 import java.lang.reflect.*;
+import java.nio.file.Files;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 public class ConfigLoader {
@@ -18,7 +21,7 @@ public class ConfigLoader {
      * @return Data with a type matching `type`
      * @throws IllegalStateException If there was an issue while retrieving the data or converting it to `type`.
      */
-    static Object getValue(CommentedConfigurationNode data, String node, Type type) throws IllegalStateException {
+    protected static Object getValue(CommentedConfigurationNode data, String node, Type type) throws IllegalStateException {
         try {
             String[] steps = node.split("\\.");
 
@@ -39,7 +42,7 @@ public class ConfigLoader {
         }
     }
 
-    protected static CommentedConfigurationNode loadOrGenerate(String path, List<ConfigEntry> contents) {
+    protected static CommentedConfigurationNode loadOrGenerate(@NotNull String path, @NotNull List<ConfigEntry> contents) {
         File configPointer = new File(path);
 
         try {
@@ -63,9 +66,18 @@ public class ConfigLoader {
             }
 
             return YamlConfigurationLoader.builder()
-                        .indent(2)
-                        .path(configPointer.toPath())
-                        .build().load();
+                    .indent(2)
+                    .path(configPointer.toPath())
+                    .build().load();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    protected static byte[] loadBytes(@NotNull String path) {
+        File configPointer = new File(path);
+
+        try {
+            return Files.readAllBytes(configPointer.toPath());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -84,7 +96,7 @@ public class ConfigLoader {
      * @param pathReplacements If the {@link Config#value()} has curly braces covered paths (i.e. "some/{dynamic}/path.yml", those will be replaced with the provided replacements in the order they appear.
      * @throws IOException If the config filepath contains invalid characters.
      */
-    public static <T> T loadConfiguration(Class<T> clazz, String... pathReplacements) throws IOException {
+    public static <T> T load(Class<T> clazz, String... pathReplacements) throws IOException {
         if(!clazz.isAnnotationPresent(Config.class)) throw new RuntimeException("Configs must be annotated with @Config");
 
         Config config = clazz.getAnnotation(Config.class);
@@ -108,12 +120,17 @@ public class ConfigLoader {
             enterValue(entries, new ConfigComment(Integer.MIN_VALUE, "", comment.value()));
         } catch (Exception ignore) {}
 
+        List<Field> allContentsFields = new ArrayList<>();
         // Load all Comment and Entry annotations
         Arrays.stream(clazz.getDeclaredFields())
                 .filter(f -> !Modifier.isStatic(f.getModifiers())).toList()
                 .forEach(f -> {
             boolean hasComment = f.isAnnotationPresent(Comment.class);
             boolean hasEntry = f.isAnnotationPresent(Node.class);
+            if(f.isAnnotationPresent(AllContents.class)) {
+                allContentsFields.add(f);
+                return;
+            }
             if(!(hasComment || hasEntry)) return;
 
             if(hasEntry) {
@@ -136,15 +153,24 @@ public class ConfigLoader {
             list.forEach(entry -> sortedEntries.addAll(entry.getValue()));
         }
 
-        // Generates the config if it doesn't exist then loads the contents of the config.
-        CommentedConfigurationNode yaml = loadOrGenerate("", sortedEntries);
-
         // Construct the Java object with all the provided data
         List<ConfigNode> nodes = (List<ConfigNode>) (Object) sortedEntries.stream().filter(v -> v instanceof ConfigNode).toList();
 
         // Populate the object instance with the data.
         try {
             T instance = clazz.getConstructor().newInstance();
+
+            // Generates the config if it doesn't exist then loads the contents of the config.
+            CommentedConfigurationNode yaml = loadOrGenerate(config.value(), sortedEntries);
+            byte[] allContents = loadBytes(config.value());
+            allContentsFields.forEach(f -> {
+                try {
+                    if (!f.getType().equals(byte[].class)) throw new ClassCastException("Fields annotated with @AllContents must be of type byte[]!");
+                    f.set(instance, allContents);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
 
             for (ConfigNode node : nodes) {
                 Type type = node.field.getGenericType();
@@ -173,7 +199,7 @@ public class ConfigLoader {
             super(order);
             this.key = key;
             this.value = Arrays.stream(value).map(s -> {
-                if(s.startsWith("#")) return s;
+                if(s.startsWith("#") || s.isEmpty()) return s;
                 if(s.startsWith(" ")) return "#"+s;
                 return "# "+s;
             }).toList();
@@ -186,13 +212,28 @@ public class ConfigLoader {
         }
     }
     public static class ConfigNode extends ConfigEntry {
+        protected static Object convertValue(String value) {
+            if(value.equals("true") || value.equals("false")) return value.equals("true");
+            if(value.equals("[]")) return new ArrayList<>();
+            try {
+                return Integer.valueOf(value);
+            } catch (Exception ignore) {}
+            try {
+                return Long.valueOf(value);
+            } catch (Exception ignore) {}
+            try {
+                return Float.valueOf(value);
+            } catch (Exception ignore) {}
+            return value;
+        }
+
         private final String key;
         private final Object value;
         private final Field field;
-        public ConfigNode(int order, String key, Object value, Field field) {
+        public ConfigNode(int order, String key, String value, Field field) {
             super(order);
             this.key = key;
-            this.value = value;
+            this.value = convertValue(value);
             this.field = field;
         }
 

@@ -25,8 +25,8 @@ public class HandshakePingListener {
             server.setPlayerCount(packet.playerCount());
         } catch (Exception e) {
             WebSocketMagicLink magicLink = RC.P.MagicLink();
-            WebSocketMagicLink.ServerRegistrationConfiguration config = magicLink.registrationConfig(packet.magicConfigName()).orElseThrow(
-                    () -> new NullPointerException("No Magic Config exists with the name "+packet.magicConfigName()+"!")
+            WebSocketMagicLink.ServerRegistrationConfiguration config = magicLink.registrationConfig(packet.serverRegistration()).orElseThrow(
+                    () -> new NullPointerException("No Server Registration exists with the name "+packet.serverRegistration()+"!")
             );
 
             try {
@@ -54,7 +54,7 @@ public class HandshakePingListener {
 
                 Packet.New()
                         .identification(Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_SUCCESS)
-                        .parameter(WebSocketMagicLink.Packets.Handshake.Success.Parameters.MESSAGE, "Connected to the proxy! Registered as `"+server.uuidOrDisplayName()+"` into the family `"+family.id()+"`. Loaded using the magic config `"+packet.magicConfigName()+"`.")
+                        .parameter(WebSocketMagicLink.Packets.Handshake.Success.Parameters.MESSAGE, "Connected to the proxy! Registered as `"+server.uuidOrDisplayName()+"` into the family `"+family.id()+"`. Loaded using the magic config `"+packet.serverRegistration()+"`.")
                         .parameter(WebSocketMagicLink.Packets.Handshake.Success.Parameters.COLOR, NamedTextColor.GREEN.toString())
                         .parameter(WebSocketMagicLink.Packets.Handshake.Success.Parameters.INTERVAL, new Packet.Parameter(10))
                         .addressedTo(packet)

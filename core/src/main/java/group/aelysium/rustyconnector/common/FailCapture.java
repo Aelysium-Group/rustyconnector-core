@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-public class FailCapture implements Closeable {
+public class FailCapture implements Closure {
     protected final Map<Long, Instant> fails;
     protected int numberOfFails;
     protected LiquidTimestamp period;

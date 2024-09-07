@@ -11,21 +11,15 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.function.Consumer;
 
-public class Packet implements JSONParseable {
-    private static final int protocolVersion = 2;
+public abstract class Packet implements JSONParseable {
+    protected static final int protocolVersion = 2;
 
-    private UUID uuid = UUID.randomUUID();
-    private final Date date = new Date();
-    private Status status = Status.UNDEFINED;
-    private String reason = "";
-    
-    private final int messageVersion;
-    private final Identification identification;
-    private final Target sender;
-    private final Target target;
-    private final ResponseTarget responseTarget;
-    private final Map<String, Parameter> parameters;
-    private List<Consumer<Packet>> replyListeners = null; // Intentionally left null, if no responses are saved here, we don't want to bother instantiating a list here.
+    protected final int messageVersion;
+    protected final Identification identification;
+    protected final Target sender;
+    protected final Target target;
+    protected final ResponseTarget replyTarget;
+    protected final Map<String, Parameter> parameters;
 
     /**
      * The protocol version used by this packet.
@@ -43,9 +37,9 @@ public class Packet implements JSONParseable {
     public Target target() { return this.target; }
 
     /**
-     * The target that any responses should be made to.
+     * The target packet that any reply's should be addressed to.
      */
-    public ResponseTarget responseTarget() { return this.responseTarget; }
+    public ResponseTarget replyTarget() { return this.replyTarget; }
 
     /**
      * The identification of this packet.
@@ -61,32 +55,16 @@ public class Packet implements JSONParseable {
      * Checks whether this packet is a response to a previous packet.
      * @return `true` if this packet is a response to another packet. `false` otherwise.
      */
-    public List<Consumer<Packet>> replyListeners() {
-        return this.replyListeners;
-    }
-
-    /**
-     * Checks whether this packet is a response to a previous packet.
-     * @return `true` if this packet is a response to another packet. `false` otherwise.
-     */
     public boolean replying() {
-        return this.responseTarget.remoteTarget().isPresent();
-    }
-
-    /**
-     * Returns the packet which was sent as a reply to this one.
-     */
-    public void handleReply(Consumer<Packet> response) {
-        if(this.replyListeners == null) this.replyListeners = new ArrayList<>();
-        this.replyListeners.add(response);
+        return this.replyTarget.remoteTarget().isPresent();
     }
     
-    protected Packet(@NotNull Integer version, @NotNull Identification identification, @NotNull Packet.Target sender, @NotNull Packet.Target target, @NotNull Packet.ResponseTarget responseTarget, @NotNull Map<String, Parameter> parameters) {
+    protected Packet(@NotNull Integer version, @NotNull Identification identification, @NotNull Packet.Target sender, @NotNull Packet.Target target, @NotNull Packet.ResponseTarget replyTarget, @NotNull Map<String, Parameter> parameters) {
         this.messageVersion = version;
         this.identification = identification;
         this.sender = sender;
         this.target = target;
-        this.responseTarget = responseTarget;
+        this.replyTarget = replyTarget;
         this.parameters = parameters;
     }
 
@@ -107,7 +85,7 @@ public class Packet implements JSONParseable {
         object.add(Parameters.IDENTIFICATION, new JsonPrimitive(this.identification.toString()));
         object.add(Parameters.SENDER, this.sender.toJSON());
         object.add(Parameters.TARGET, this.target.toJSON());
-        object.add(Parameters.RESPONSE, this.responseTarget.toJSON());
+        object.add(Parameters.RESPONSE, this.replyTarget.toJSON());
 
         JsonObject parameters = new JsonObject();
         this.parameters.forEach((key, value) -> parameters.add(key, value.toJSON()));
@@ -162,8 +140,11 @@ public class Packet implements JSONParseable {
             return this;
         }
 
-        public Packet build() {
-            return new Packet(this.protocolVersion, this.id, this.sender, this.target, this.responseTarget, this.parameters);
+        public Packet.Remote buildRemote() {
+            return new Packet.Remote(this.protocolVersion, this.id, this.sender, this.target, this.responseTarget, this.parameters);
+        }
+        public Packet.Local buildLocal() {
+            return new Packet.Local(this.protocolVersion, this.id, this.sender, this.target, this.responseTarget, this.parameters);
         }
     }
 
@@ -225,7 +206,7 @@ public class Packet implements JSONParseable {
              */
             public ReadyForSending addressedTo(Packet targetPacket) {
                 assignTargetAndSender(targetPacket.target(), targetPacket.sender());
-                this.builder.response(ResponseTarget.respondTo(targetPacket.responseTarget().ownTarget()));
+                this.builder.response(ResponseTarget.respondTo(targetPacket.replyTarget().ownTarget()));
 
                 return new ReadyForSending(this.builder);
             }
@@ -237,25 +218,25 @@ public class Packet implements JSONParseable {
                 this.builder = builder;
             }
 
-            private MagicLinkCore fetchMagicLink() {
-                try {
-                    return RC.P.MagicLink();
-                } catch (Exception ignore) {}
-                try {
-                    return RC.S.MagicLink();
-                } catch (Exception ignore) {}
-                throw new RuntimeException("No available flames existed in order to send the packet!");
-            }
-
             /**
              * Sends the packet.
-             * This method resolves the currently active MagicLink provider and calls {@link MagicLinkCore#publish(Packet)}.
+             * This method resolves the currently active MagicLink provider and calls {@link MagicLinkCore#publish(Packet.Local)}.
              * @throws RuntimeException If there was an issue sending the packet.
              */
-            public void send() throws RuntimeException {
-                Packet packet = this.builder.build();
+            public Packet.Local send() throws RuntimeException {
+                Packet.Local packet = this.builder.buildLocal();
 
-                fetchMagicLink().publish(packet);
+                MagicLinkCore magicLink = null;
+                try {
+                    magicLink = RC.P.MagicLink();
+                } catch (Exception ignore) {}
+                try {
+                    magicLink = RC.S.MagicLink();
+                } catch (Exception ignore) {}
+                if(magicLink == null) throw new RuntimeException("No available flames existed in order to send the packet!");
+                magicLink.publish(packet);
+
+                return packet;
             }
         }
 
@@ -268,7 +249,7 @@ public class Packet implements JSONParseable {
         }
     }
 
-    public static Packet parseReceived(String rawMessage) {
+    public static Packet.Remote parseReceived(String rawMessage) {
         Gson gson = new Gson();
         JsonObject messageObject = gson.fromJson(rawMessage, JsonObject.class);
 
@@ -284,18 +265,16 @@ public class Packet implements JSONParseable {
                 case Parameters.SENDER -> builder.sender(Target.fromJSON(value.getAsJsonObject()));
                 case Parameters.TARGET -> builder.target(Target.fromJSON(value.getAsJsonObject()));
                 case Parameters.RESPONSE -> builder.response(ResponseTarget.fromJSON(value.getAsJsonObject()));
-                case Parameters.PARAMETERS -> {
-                    value.getAsJsonObject().entrySet().forEach(entry2 -> {
-                        String key2 = entry.getKey();
-                        Parameter value2 = new Parameter(entry2.getValue().getAsJsonPrimitive());
+                case Parameters.PARAMETERS -> value.getAsJsonObject().entrySet().forEach(entry2 -> {
+                    String key2 = entry.getKey();
+                    Parameter value2 = new Parameter(entry2.getValue().getAsJsonPrimitive());
 
-                        builder.parameter(key2, value2);
-                    });
-                }
+                    builder.parameter(key2, value2);
+                });
             }
         });
 
-        return builder.build();
+        return builder.buildRemote();
     }
 
     public static class Target implements JSONParseable {
@@ -339,23 +318,29 @@ public class Packet implements JSONParseable {
         public static Target allAvailableProxies() {
             return new Target(null, Origin.ANY_PROXY);
         }
+        public static Target allAvailableServers() {
+            return new Target(null, Origin.ANY_SERVER);
+        }
 
         /**
-         * Checks if the passed node can be considered the same as `this`.
-         * For example, if `this` is of type {@link Origin#PROXY} and `node` is of type {@link Origin#ANY_PROXY} this will return `true`
+         * Checks if the passed target can be considered the same as `this`.
+         * For example, if `this` is of type {@link Origin#PROXY} and `target` is of type {@link Origin#ANY_PROXY} this will return `true`
          * because `this` would be considered a part of `ANY_PROXY`.
-         * @param target Some other node.
-         * @return `true` if the other node is a valid way of identifying `this` node. `false` otherwise.
+         * @param target Some other target.
+         * @return `true` if the other target is a valid way of identifying `this` target. `false` otherwise.
          */
-        public boolean isNodeEquivalentToMe(Target target) {
+        public boolean isEquivalent(Target target) {
             // If the two match as defined by default expected behaviour, return true.
-            if(Objects.equals(uuid, target.uuid) && origin == target.origin) return true;
+            if(Objects.equals(this, target)) return true;
 
             // If one of the two is of type "ANY_PROXY" and the other is of type "PROXY", return true.
             if(
                     (this.origin == Origin.ANY_PROXY && target.origin == Origin.PROXY) ||
-                    (this.origin == Origin.PROXY && target.origin == Origin.ANY_PROXY) ||
-                    (this.origin == Origin.ANY_PROXY && target.origin == Origin.ANY_PROXY)
+                    (this.origin == Origin.PROXY     && target.origin == Origin.ANY_PROXY) ||
+                    (this.origin == Origin.ANY_PROXY && target.origin == Origin.ANY_PROXY) ||
+                    (this.origin == Origin.ANY_SERVER && target.origin == Origin.SERVER) ||
+                    (this.origin == Origin.SERVER     && target.origin == Origin.ANY_SERVER) ||
+                    (this.origin == Origin.ANY_SERVER && target.origin == Origin.ANY_SERVER)
             ) return true;
 
             return false;
@@ -368,7 +353,7 @@ public class Packet implements JSONParseable {
             Target target = (Target) o;
 
             // If the two match as defined by default expected behaviour, return true.
-            return Objects.equals(uuid, target.uuid) && origin == target.origin;
+            return Objects.equals(uuid, target.uuid) && Objects.equals(origin, target.origin);
         }
 
         @Override
@@ -452,6 +437,11 @@ public class Packet implements JSONParseable {
         }
     }
 
+    /**
+     * A convenience wrapper which allows the caller to pass just one, Packet,
+     * parameter to the constructor instead of all the individual parameters.
+     * Callers are free to use this, or to extend {@link Packet} directly.
+     */
     public static class Wrapper extends Packet {
         public Wrapper(Packet packet) {
             super(
@@ -459,9 +449,83 @@ public class Packet implements JSONParseable {
                     packet.identification(),
                     packet.sender(),
                     packet.target(),
-                    packet.responseTarget(),
+                    packet.replyTarget(),
                     packet.parameters()
             );
+        }
+    }
+
+    /**
+     * A Packet which has been created by the system it's currently on.
+     */
+    public static class Local extends Packet {
+        private List<Consumer<Packet.Remote>> replyListeners = null; // Intentionally left null, if no responses are saved here, we don't want to bother instantiating a list here.
+
+        public Local(@NotNull Integer version, @NotNull Identification identification, @NotNull Packet.Target sender, @NotNull Packet.Target target, @NotNull Packet.ResponseTarget responseTarget, @NotNull Map<String, Parameter> parameters) {
+            super(
+                    version,
+                    identification,
+                    sender,
+                    target,
+                    responseTarget,
+                    parameters
+            );
+        }
+
+        public void handleReply(Packet.Remote packet) throws IllegalCallerException {
+            if(!packet.replyTarget().remoteTarget.equals(this.replyTarget.ownTarget))
+                throw new IllegalCallerException("Only packets which are addressed to this one can be handled!");
+            if(this.replyListeners == null) return;
+            this.replyListeners.forEach(l -> {
+                try {
+                    l.accept(packet);
+                } catch (Exception ignore) {}
+            });
+        }
+
+        /**
+         * Returns the packet which was sent as a reply to this one.
+         */
+        public void onReply(Consumer<Packet.Remote> response) {
+            if(this.replyListeners == null) this.replyListeners = new Vector<>();
+            this.replyListeners.add(response);
+        }
+    }
+
+    /**
+     * A packet which has been created by some other system.
+     */
+    public static class Remote extends Packet {
+        public Remote(@NotNull Integer version, @NotNull Identification identification, @NotNull Packet.Target sender, @NotNull Packet.Target target, @NotNull Packet.ResponseTarget responseTarget, @NotNull Map<String, Parameter> parameters) {
+            super(
+                    version,
+                    identification,
+                    sender,
+                    target,
+                    responseTarget,
+                    parameters
+            );
+        }
+
+        /**
+         * Sends a packet as a reply to this one.
+         * @param packetReadyToSend The packet to reply with.
+         */
+        public void reply(Packet.Builder.ReadyForSending packetReadyToSend) {
+            NakedBuilder builder = packetReadyToSend.builder;
+            builder.response(ResponseTarget.respondTo(this.target.uuid));
+            Packet.Local packet = builder.buildLocal();
+
+
+            MagicLinkCore magicLink = null;
+            try {
+                magicLink = RC.P.MagicLink();
+            } catch (Exception ignore) {}
+            try {
+                magicLink = RC.S.MagicLink();
+            } catch (Exception ignore) {}
+            if(magicLink == null) throw new RuntimeException("No available flames existed in order to send the packet!");
+            magicLink.publish(packet);
         }
     }
 

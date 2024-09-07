@@ -25,6 +25,14 @@ public @interface Node {
 
     /**
      * The default value if the entry doesn't exist.
+     * The value will attempt to be parsed to other data types if it's supported.<br/>
+     * Supported values are:<br/>
+     * - 'boolean' = "true", "false"
+     * - 'int' = "1", "-230", etc.<br/>
+     * - 'long' = "1L", "-230L", etc.<br/>
+     * - `float` = "1.2", "-230.5", etc.<br/>
+     * - `empty array` = "[]"<br/>
+     * - `string` = If none of the above converts work, string is the default.
      */
     String defaultValue();
 }

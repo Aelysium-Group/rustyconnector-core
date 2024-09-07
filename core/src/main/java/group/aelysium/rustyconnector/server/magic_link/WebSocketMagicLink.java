@@ -5,24 +5,21 @@ import com.google.gson.JsonObject;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.RustyConnector;
 import group.aelysium.rustyconnector.common.FailCapture;
+import group.aelysium.rustyconnector.common.IPV6Broadcaster;
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.cache.MessageCache;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
-import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
-import group.aelysium.rustyconnector.proxy.util.AddressUtil;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
+import group.aelysium.rustyconnector.server.Environment;
 import group.aelysium.rustyconnector.server.ServerFlame;
 import group.aelysium.rustyconnector.server.events.DisconnectedEvent;
-import group.aelysium.rustyconnector.common.crypt.AESCryptor;
+import group.aelysium.rustyconnector.common.crypt.AES;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
-import group.aelysium.rustyconnector.server.magic_link.handlers.HandshakeFailureListener;
-import group.aelysium.rustyconnector.server.magic_link.handlers.HandshakeStalePingListener;
-import group.aelysium.rustyconnector.server.magic_link.handlers.HandshakeSuccessListener;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -33,21 +30,41 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class WebSocketMagicLink extends MagicLinkCore.Server {
-    private final InetSocketAddress address;
+    private String address;
     private WebSocketClient client = null;
     private final FailCapture failCapture = new FailCapture(5, LiquidTimestamp.from(15, TimeUnit.SECONDS));
 
     protected WebSocketMagicLink(
-            @NotNull AESCryptor cryptor,
-            @NotNull MessageCache cache,
+            @NotNull String address,
             @NotNull Packet.Target self,
-            @NotNull InetSocketAddress address,
-            @NotNull String registrationConfiguration
+            @NotNull AES cryptor,
+            @NotNull MessageCache cache,
+            @NotNull String registrationConfiguration,
+            @Nullable IPV6Broadcaster broadcaster
     ) {
-        super(cryptor, cache, self, registrationConfiguration);
-        this.address = address;
+        super(self, cryptor, cache, registrationConfiguration, broadcaster);
+        if(address.endsWith("/")) this.address = address.substring(0, address.length() - 1);
+        else this.address = address;
 
-        this.heartbeat();
+        if(this.broadcaster == null) {
+            this.connect();
+            return;
+        }
+
+        this.broadcaster.onMessage(message -> {
+            if(this.client != null) if(!this.client.isClosed()) return;
+
+            try {
+                String broadcastedAddress = this.cryptor.decrypt(message);
+                if (broadcastedAddress.endsWith("/"))
+                    this.address = broadcastedAddress.substring(0, broadcastedAddress.length() - 1);
+                else this.address = broadcastedAddress;
+
+                this.connect();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     /**
@@ -56,15 +73,13 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
     public void connect() throws ExceptionInInitializerError {
         if(this.failCapture.willFail()) return;
 
-        String apiAddress = AddressUtil.addressToString(this.address);
         HttpClient client = HttpClient.newHttpClient();
 
         String endpoint;
-        String token;
-        String signature;
+        String[] bearer = new String[3];
         try {
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://"+apiAddress+"/bDaBMkmYdZ6r4iFExwW6UzJyNMDseWoS3HDa6FcyM7xNeCmtK98S3Mhp4o7g7oW6VB9CA6GuyH2pNhpQk3QvSmBUeCoUDZ6FXUsFCuVQC59CB2y22SBnGkMf9NMB9UWk"))
+                    .uri(URI.create(this.address+"/bDaBMkmYdZ6r4iFExwW6UzJyNMDseWoS3HDa6FcyM7xNeCmtK98S3Mhp4o7g7oW6VB9CA6GuyH2pNhpQk3QvSmBUeCoUDZ6FXUsFCuVQC59CB2y22SBnGkMf9NMB9UWk"))
                     .header("Authorization", "Bearer "+cryptor.encrypt(String.valueOf(Instant.now().getEpochSecond())))
                     .GET()
                     .build();
@@ -73,17 +88,19 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
             Gson gson = new Gson();
             JsonObject object = gson.fromJson(response.body(), JsonObject.class);
             endpoint    = cryptor.decrypt(object.get("endpoint").getAsString());
-            token       = cryptor.decrypt(object.get("token").getAsString());
-            signature   = object.get("signature").getAsString();
+            bearer[0]   = cryptor.decrypt(object.get("token").getAsString());
+            bearer[1]   = object.get("signature").getAsString();
+            bearer[2]   = this.self.uuid().toString(); // Including the uuid in the bearer as well as "X-Server-Identification" is intentional.
         } catch (Exception e) {
             throw new ExceptionInInitializerError(e);
         }
 
         try {
             Map<String, String> headers = Map.of(
-                    "Authorization", "Bearer "+token+"-"+signature
+                    "Authorization", "Bearer "+Base64.getEncoder().encodeToString(cryptor.encrypt(String.join("-", bearer).getBytes(StandardCharsets.UTF_8))),
+                    "X-Server-Identification", this.self.toJSON().toString()
             );
-            this.client = new WebSocketClient(new URI("ws://"+apiAddress+"/"+endpoint), headers) {
+            this.client = new WebSocketClient(new URI(address.replace("http","ws").replace("https", "wss")+"/"+endpoint), headers) {
                 @Override
                 public void onOpen(ServerHandshake handshake) {
                     RC.S.Adapter().log(RC.S.Lang().lang().magicLink());
@@ -128,10 +145,10 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
     }
 
     @Override
-    public void publish(Packet packet) {
+    public void publish(Packet.Local packet) {
         try {
             this.client.send(this.cryptor.encrypt(packet.toString()));
-            super.publish(packet);
+            this.awaitReply(packet);
         } catch (Exception ignore) {}
     }
 
@@ -145,12 +162,12 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                 Packet.Builder.PrepareForSending packet = Packet.New()
                         .identification(Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_PING)
                         .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.DISPLAY_NAME, flame.displayName())
-                        .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.MAGIC_CONFIG_NAME, this.magicConfig())
+                        .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.SERVER_REGISTRATION, this.magicConfig())
                         .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.ADDRESS, flame.address().getHostName()+":"+flame.address().getPort())
                         .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.PLAYER_COUNT, new Packet.Parameter(flame.playerCount()));
 
-                if(podName != null)
-                    packet.parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.POD_NAME, this.podName);
+                if(Environment.podName().isPresent())
+                    packet.parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.POD_NAME, Environment.podName().orElseThrow());
 
                 packet.addressedTo(Packet.Target.allAvailableProxies()).send();
             } catch (Exception e) {
@@ -179,44 +196,48 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
     }
 
     public static class Tinder extends Particle.Tinder<WebSocketMagicLink> {
-        private final AESCryptor cryptor;
+        private final String httpAddress;
         private final Packet.Target self;
+        private final AES cryptor;
         private final MessageCache cache;
-        private final InetSocketAddress address;
-        private final String magicConfig;
+        private final String serverRegistration;
+        private final IPV6Broadcaster broadcaster;
         public Tinder(
-                @NotNull AESCryptor cryptor,
+                @NotNull String httpAddress,
                 @NotNull Packet.Target self,
+                @NotNull AES cryptor,
                 @NotNull MessageCache cache,
-                @NotNull InetSocketAddress address,
-                @NotNull String magicConfig
-        ) {
+                @NotNull String serverRegistration,
+                @Nullable IPV6Broadcaster broadcaster
+                ) {
+            this.httpAddress = httpAddress;
             this.cryptor = cryptor;
             this.self = self;
             this.cache = cache;
-            this.address = address;
-            this.magicConfig = magicConfig;
-
+            this.serverRegistration = serverRegistration;
+            this.broadcaster = broadcaster;
         }
 
         @Override
         public @NotNull WebSocketMagicLink ignite() throws Exception {
             return new WebSocketMagicLink(
+                    this.httpAddress,
+                    this.self,
                     this.cryptor,
                     this.cache,
-                    this.self,
-                    this.address,
-                    this.magicConfig
+                    this.serverRegistration,
+                    this.broadcaster
             );
         }
 
         public static Tinder DEFAULT_CONFIGURATION(UUID serverUUID) {
             return new Tinder(
-                    AESCryptor.DEFAULT_CRYPTOR,
+                    "http://127.0.0.1:8080",
                     Packet.Target.server(serverUUID),
+                    AES.DEFAULT_CRYPTOR,
                     new MessageCache(50),
-                    AddressUtil.parseAddress("localhost:500"),
-                    "default"
+                    "default",
+                    null
             );
         }
     }

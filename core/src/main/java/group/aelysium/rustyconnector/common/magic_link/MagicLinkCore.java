@@ -1,18 +1,19 @@
 package group.aelysium.rustyconnector.common.magic_link;
 
+import group.aelysium.rustyconnector.common.IPV6Broadcaster;
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.cache.CacheableMessage;
 import group.aelysium.rustyconnector.common.cache.TimeoutCache;
-import group.aelysium.rustyconnector.common.events.EventListener;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketIdentification;
 import group.aelysium.rustyconnector.proxy.util.ColorMapper;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 import group.aelysium.rustyconnector.common.cache.MessageCache;
-import group.aelysium.rustyconnector.common.crypt.AESCryptor;
+import group.aelysium.rustyconnector.common.crypt.AES;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
 import org.reflections.util.ClasspathHelper;
@@ -32,20 +33,20 @@ import java.util.function.Consumer;
 
 public abstract class MagicLinkCore implements Particle {
     protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-    private final TimeoutCache<UUID, Packet> packetsAwaitingReply = new TimeoutCache<>(LiquidTimestamp.from(10, TimeUnit.SECONDS));
+    private final TimeoutCache<UUID, Packet.Local> packetsAwaitingReply = new TimeoutCache<>(LiquidTimestamp.from(10, TimeUnit.SECONDS));
     private final Map<String, List<Consumer<Packet>>> listeners = new ConcurrentHashMap<>();
-    protected final AESCryptor cryptor;
+    protected final AES cryptor;
     protected final MessageCache cache;
     protected final Packet.Target self;
 
     protected MagicLinkCore(
-            @NotNull AESCryptor cryptor,
-            @NotNull MessageCache cache,
-            @NotNull Packet.Target self
+            @NotNull Packet.Target self,
+            @NotNull AES cryptor,
+            @NotNull MessageCache cache
     ) {
+        this.self = self;
         this.cryptor = cryptor;
         this.cache = cache;
-        this.self = self;
         
         Reflections reflections = new Reflections(
                 new ConfigurationBuilder()
@@ -79,8 +80,21 @@ public abstract class MagicLinkCore implements Particle {
         });
     }
 
-    public void publish(Packet packet) {
-        packetsAwaitingReply.put(packet.responseTarget().ownTarget(), packet);
+    /**
+     * Handles the publishing of the provided packet.
+     * This method really shouldn't be used directly, instead you should use {@link group.aelysium.rustyconnector.common.magic_link.packet.Packet.Builder} to construct and then publish a packet.
+     * @throws IllegalStateException If the provided packet is from somewhere else and not created by the caller.
+     */
+    public abstract void publish(Packet.Local packet) throws IllegalStateException;
+
+    /**
+     * Queues the packet into the reply queue.
+     * If a reply is received which contains a Reply Target pointing to this packet,
+     * any listeners registered in {@link group.aelysium.rustyconnector.common.magic_link.packet.Packet.Local#onReply(Consumer)} will run.
+     * @param packet The packet to queue.
+     */
+    public void awaitReply(Packet.Local packet) {
+        packetsAwaitingReply.put(packet.replyTarget().ownTarget(), packet);
     }
 
     /**
@@ -108,9 +122,10 @@ public abstract class MagicLinkCore implements Particle {
 
     /**
      * Handles all the MagicLink/RustyConnector internals of handling MagicLink packets.
-     * @param rawMessage A AES-256 encrypted MagicLink packet.
+     *
+     * @param rawMessage An AES-256 encrypted MagicLink packet.
      */
-    protected Packet handleMessage(String rawMessage) {
+    protected void handleMessage(String rawMessage) {
         CacheableMessage cachedMessage = null;
         String decryptedMessage;
         try {
@@ -122,35 +137,35 @@ public abstract class MagicLinkCore implements Particle {
             throw new RuntimeException();
         }
 
-        Packet packet = Packet.parseReceived(decryptedMessage);
+        Packet.Remote packet = Packet.parseReceived(decryptedMessage);
 
         if(this.cache.ignoredType(packet)) this.cache.removeMessage(cachedMessage.getSnowflake());
 
-        if(!this.self.isNodeEquivalentToMe(packet.target())) {
+        if(!this.self.isEquivalent(packet.target())) {
             cachedMessage.sentenceMessage(Packet.Status.TRASHED, "This packet wasn't addressed to me.");
-            return packet;
+            return;
         }
 
         if(packet.replying()) {
-            Packet reply = this.packetsAwaitingReply.get(packet.responseTarget().remoteTarget().orElse(null));
+            Packet.Local replyTarget = this.packetsAwaitingReply.get(packet.replyTarget().remoteTarget().orElse(null));
 
-            if(reply == null) {
+            if(replyTarget == null) {
                 cachedMessage.sentenceMessage(Packet.Status.TRASHED, "The packet that this is replying to doesn't exist.");
-                return packet;
+                return;
             }
 
-            reply.replyListeners().forEach(l -> l.accept(packet));
-            return packet;
+            replyTarget.handleReply(packet);
+            return;
         }
 
-        List<Consumer<Packet>> listeners = this.listeners.get(packet.identification());
+        List<Consumer<Packet>> listeners = this.listeners.get(packet.identification().get());
         if(listeners == null) {
             cachedMessage.sentenceMessage(Packet.Status.TRASHED, "No listeners exist to handle this packet.");
-            return packet;
+            return;
         }
         if(listeners.isEmpty()) {
             cachedMessage.sentenceMessage(Packet.Status.TRASHED, "No listeners exist to handle this packet.");
-            return packet;
+            return;
         }
 
         Consumer<Consumer<Packet>> handler = listener -> {
@@ -159,7 +174,6 @@ public abstract class MagicLinkCore implements Particle {
             } catch (Exception ignore) {}
         };
         listeners.forEach(handler);
-        return packet;
     }
 
     public interface Packets {
@@ -174,8 +188,8 @@ public abstract class MagicLinkCore implements Particle {
                     if(displayName.isEmpty()) return Optional.empty();
                     return Optional.of(displayName);
                 }
-                public String magicConfigName() {
-                    return this.parameters().get(Parameters.MAGIC_CONFIG_NAME).getAsString();
+                public String serverRegistration() {
+                    return this.parameters().get(Parameters.SERVER_REGISTRATION).getAsString();
                 }
                 public Integer playerCount() {
                     return this.parameters().get(Parameters.PLAYER_COUNT).getAsInt();
@@ -193,7 +207,7 @@ public abstract class MagicLinkCore implements Particle {
                 public interface Parameters {
                     String ADDRESS = "a";
                     String DISPLAY_NAME = "n";
-                    String MAGIC_CONFIG_NAME = "c";
+                    String SERVER_REGISTRATION = "sr";
                     String PLAYER_COUNT = "pc";
                     String POD_NAME = "pn";
                 }
@@ -274,33 +288,38 @@ public abstract class MagicLinkCore implements Particle {
     }
 
     public static abstract class Server extends MagicLinkCore {
-        protected String registrationConfiguration;
         protected final AtomicInteger delay = new AtomicInteger(5);
         protected final AtomicBoolean stopPinging = new AtomicBoolean(false);
-        protected final String podName = System.getenv("POD_NAME");
+        protected IPV6Broadcaster broadcaster;
+        protected String registrationConfiguration;
 
         protected Server(
-                @NotNull AESCryptor cryptor,
-                @NotNull MessageCache cache,
                 @NotNull Packet.@NotNull Target self,
-                @NotNull String registrationConfiguration
+                @NotNull AES cryptor,
+                @NotNull MessageCache cache,
+                @NotNull String registrationConfiguration,
+                @Nullable IPV6Broadcaster broadcaster
         ) {
-            super(cryptor, cache, self);
+            super(self, cryptor, cache);
             this.registrationConfiguration = registrationConfiguration;
+            this.broadcaster = broadcaster;
         }
     }
 
     public static abstract class Proxy extends MagicLinkCore {
+        protected IPV6Broadcaster broadcaster;
         protected Map<String, ServerRegistrationConfiguration> registrationConfigurations;
 
         protected Proxy(
-                @NotNull AESCryptor cryptor,
-                @NotNull MessageCache cache,
                 @NotNull Packet.@NotNull Target self,
-                @NotNull Map<String, ServerRegistrationConfiguration> registrationConfigurations
+                @NotNull AES cryptor,
+                @NotNull MessageCache cache,
+                @NotNull Map<String, ServerRegistrationConfiguration> registrationConfigurations,
+                @Nullable IPV6Broadcaster broadcaster
         ) {
-            super(cryptor, cache, self);
+            super(self, cryptor, cache);
             this.registrationConfigurations = registrationConfigurations;
+            this.broadcaster = broadcaster;
         }
 
         /**

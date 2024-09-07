@@ -10,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 
 public class MostConnection extends LeastConnection {
+    public static final String algorithm = "MOST_CONNECTION";
+
     public MostConnection(boolean weighted, boolean persistence, int attempts, @NotNull LiquidTimestamp rebalance) {
         super(weighted, persistence, attempts, rebalance);
     }

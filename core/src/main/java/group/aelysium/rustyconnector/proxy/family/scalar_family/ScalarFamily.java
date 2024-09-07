@@ -160,38 +160,41 @@ public class ScalarFamily extends Family {
         } catch (Exception ignore) {}
     }
 
-    public record Settings(
-            @NotNull String id,
-            @Nullable String displayName,
-            @Nullable String parent,
-            @Nullable Whitelist.Settings whitelist,
-            @NotNull LoadBalancer.Settings loadBalancer
-    ) {}
-
     public static class Tinder extends Particle.Tinder<ScalarFamily> {
-        private final ScalarFamily.Settings settings;
+        private final String id;
+        private final String displayName;
+        private final String parent;
+        private final Whitelist.Tinder whitelist;
+        private final Particle.Tinder<LoadBalancer> loadBalancer;
 
-        public Tinder(@NotNull Settings settings) {
-            this.settings = settings;
+        public Tinder(
+                @NotNull String id,
+                @Nullable String displayName,
+                @Nullable String parent,
+                @Nullable Whitelist.Tinder whitelist,
+                Particle.Tinder<LoadBalancer> loadBalancer
+        ) {
+            this.id = id;
+            this.displayName = displayName;
+            this.parent = parent;
+            this.whitelist = whitelist;
+            this.loadBalancer = loadBalancer;
         }
 
         @Override
         public @NotNull ScalarFamily ignite() throws Exception {
-            Particle.Flux<Whitelist> whitelist = null;
-            if (settings.whitelist() != null)
-                whitelist = (new Whitelist.Tinder(settings.whitelist())).flux();
-
-            Particle.Flux<LoadBalancer> loadBalancer = (switch (settings.loadBalancer().algorithm()) {
-                case "ROUND_ROBIN" -> new RoundRobin.Tinder(settings.loadBalancer());
-                case "LEAST_CONNECTION" -> new LeastConnection.Tinder(settings.loadBalancer());
-                case "MOST_CONNECTION" -> new MostConnection.Tinder(settings.loadBalancer());
-                default -> throw new RuntimeException("The id used for "+settings.id()+"'s load balancer is invalid!");
-            }).flux();
+            Flux<Whitelist> whitelist = null;
+            if(this.whitelist != null) {
+                whitelist = this.whitelist.flux();
+                whitelist.access().get();
+            }
+            Flux<LoadBalancer> loadBalancer = this.loadBalancer.flux();
+            loadBalancer.access().get();
 
             return new ScalarFamily(
-                    this.settings.id(),
-                    this.settings.displayName(),
-                    this.settings.parent(),
+                    this.id,
+                    this.displayName,
+                    this.parent,
                     whitelist,
                     loadBalancer
             );

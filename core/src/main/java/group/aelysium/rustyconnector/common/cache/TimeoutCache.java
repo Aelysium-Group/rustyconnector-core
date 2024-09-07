@@ -13,10 +13,10 @@ import group.aelysium.rustyconnector.common.Closure;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 
 public class TimeoutCache<K, V> implements Closure, Map<K, V> {
-    private final Map<K, TimedValue<V>> map = new ConcurrentHashMap<>();
-    private final LiquidTimestamp expiration;
     private final ScheduledExecutorService clock = Executors.newSingleThreadScheduledExecutor();
-    private final List<Consumer<V>> onTimeout = new ArrayList<>();
+    private final Map<K, TimedValue<V>> map = new ConcurrentHashMap<>();
+    private final List<Consumer<V>> onTimeout = new Vector<>();
+    private final LiquidTimestamp expiration;
     private boolean shutdown = false;
 
     public TimeoutCache(LiquidTimestamp expiration) {
@@ -26,13 +26,7 @@ public class TimeoutCache<K, V> implements Closure, Map<K, V> {
 
     private void evaluateThenRunAgain() {
         long now = Instant.now().getEpochSecond();
-        this.map.entrySet().removeIf(entry -> {
-            boolean remove = entry.getValue().olderThan(now);
-
-            if(remove) this.onTimeout.forEach(consumer -> consumer.accept(entry.getValue().value()));
-
-            return remove;
-        });
+        this.map.entrySet().removeIf(entry -> entry.getValue().olderThan(now));
 
         if(shutdown) return;
         this.clock.schedule(this::evaluateThenRunAgain, this.expiration.value(), this.expiration.unit());

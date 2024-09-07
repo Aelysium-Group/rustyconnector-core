@@ -5,6 +5,8 @@ import group.aelysium.rustyconnector.common.algorithm.WeightOnlyQuickSort;
 import org.jetbrains.annotations.NotNull;
 
 public class RoundRobin extends LoadBalancer {
+    public static final String algorithm = "ROUND_ROBIN";
+
     public RoundRobin(boolean weighted, boolean persistence, int attempts) {
         super(weighted, persistence, attempts, null);
     }

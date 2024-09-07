@@ -4,6 +4,7 @@ import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
 import group.aelysium.rustyconnector.proxy.family.Families;
+import group.aelysium.rustyconnector.proxy.family.load_balancing.*;
 import group.aelysium.rustyconnector.proxy.family.whitelist.Whitelist;
 import group.aelysium.rustyconnector.proxy.lang.ProxyLang;
 import group.aelysium.rustyconnector.proxy.magic_link.WebSocketMagicLink;
@@ -48,6 +49,13 @@ public class ProxyFlame implements Particle {
         this.magicLink = magicLink;
         this.players = players;
         this.eventManager = eventManager;
+        try {
+            LoadBalancerAlgorithmExchange.registerAlgorithm(RoundRobin.algorithm, RoundRobin.Tinder::new);
+            LoadBalancerAlgorithmExchange.registerAlgorithm(MostConnection.algorithm, MostConnection.Tinder::new);
+            LoadBalancerAlgorithmExchange.registerAlgorithm(LeastConnection.algorithm, LeastConnection.Tinder::new);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
         try {
             try (InputStream input = ProxyFlame.class.getClassLoader().getResourceAsStream("version.txt")) {
@@ -61,6 +69,10 @@ public class ProxyFlame implements Particle {
             this.magicLink.access().get();
             this.players.access().get();
             this.eventManager.access().get();
+            try {
+                assert this.whitelist != null;
+                this.whitelist.access().get();
+            } catch (Exception ignore) {}
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

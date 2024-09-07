@@ -115,6 +115,7 @@ public class Whitelist implements Particle {
     public record Settings(
             String name,
             boolean usePlayers,
+            List<Filter> playerFilters,
             boolean usePermission,
             String message,
             boolean strict,
@@ -141,29 +142,7 @@ public class Whitelist implements Particle {
         }
     }
 
-    public static class Filter {
-        private UUID uuid = null;
-        private String username = null;
-        private String ip = null;
-
-        public UUID uuid() {
-            return this.uuid;
-        }
-
-        public String username() {
-            return this.username;
-        }
-
-        public String ip() {
-            return this.ip;
-        }
-
-        public Filter(String username, UUID uuid, String ip) {
-            this.username = username;
-            this.uuid = uuid;
-            this.ip = ip;
-        }
-
+    public record Filter(String username, UUID uuid, String ip) {
         public static boolean validate(Whitelist whitelist, Player playerToValidate) {
             Filter player = whitelist.playerFilters().stream()
                     .filter(whitelistPlayerFilter -> whitelistPlayerFilter.username().equals(playerToValidate.username()))
