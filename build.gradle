@@ -9,55 +9,44 @@ buildscript {
 
 apply plugin: 'java'
 apply plugin: 'java-library'
+apply plugin: 'com.github.johnrengelman.shadow'
 
 group = project.maven_group
 version = project.plugin_version
 
-allprojects {
-    repositories {
-        mavenCentral();
-        maven { url = "https://repo.maven.apache.org/maven2/" }
-        maven { url = "https://repo.papermc.io/repository/maven-public/" }
-        maven { url = "https://hub.spigotmc.org/nexus/content/groups/public/" }
-        maven { url = "https://oss.sonatype.org/content/groups/public/" }
-        maven { url = "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
-        maven { url = "https://maven.mrnavastar.rock/" }
-        maven { url = "https://repo.eclipse.org/content/groups/releases/" }
-    }
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+    withJavadocJar()
+    withSourcesJar()
 }
 
-subprojects {
-    apply plugin: "java"
-    apply plugin: 'com.github.johnrengelman.shadow'
+repositories {
+    mavenCentral()
+    maven { url = "https://repo.maven.apache.org/maven2/" }
+    maven { url = "https://repo.papermc.io/repository/maven-public/" }
+    maven { url = "https://hub.spigotmc.org/nexus/content/groups/public/" }
+    maven { url = "https://oss.sonatype.org/content/groups/public/" }
+    maven { url = "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
+    maven { url = "https://maven.mrnavastar.rock/" }
+    maven { url = "https://repo.eclipse.org/content/groups/releases/" }
 }
 
-configurations {
-    modules
-    compile.extendsFrom(modules)
+dependencies {
+    shadow "net.kyori:adventure-text-minimessage:${project.minimessage_version}"
+    shadow "com.google.code.gson:gson:${project.gson_version}"
+
+    implementation 'org.spongepowered:configurate-yaml:4.0.0'
+    implementation "io.javalin:javalin:6.2.0" // REST API
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.17.0" // API HTTP response code exceptions
+    implementation "org.java-websocket:Java-WebSocket:${project.websocket_version}"
+    implementation 'org.reflections:reflections:0.10.2'
 }
 
-dependencies{
-    modules project(':core')
+compileJava {
+    options.encoding = "UTF-8"
 }
 
-def projects = [":core"]
-jar {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    dependsOn(projects.collect {it + ":shadowJar"} )
-
-    from configurations.modules.collect {
-        it.isDirectory() ? it : zipTree(it)
-    }
-
-    from(files("LICENSE"))
-
-    exclude("META-INF/*.RSA", "META-INF/*.DSA", "META-INF/*.SF")
-}
-
-tasks.register('generatePropertiesFile') {
-    doLast {
-        def propertiesFile = file("${buildDir}/version.txt")
-        propertiesFile.parentFile.mkdirs()
-        propertiesFile.text = "${version}"
-    }
+javadoc {
+    options.encoding = 'UTF-8'
 }
