@@ -1,12 +1,13 @@
-![Aelysium Wordmark Image](https://github.com/Aelysium-Group/rusty-connector/blob/development/blob/images/wordmark.png?raw=true)
+![Aelysium Wordmark Image](https://github.com/Aelysium-Group/rustyconnector-core/blob/main/blob/images/wordmark.png?raw=true)
 
-# 👋 Welcome to RustyConnector
+# 👋 Welcome to RustyConnector Core
 [![Aelysium](https://flat.badgen.net/badge/Discord/Aelysium/5865F2?icon=discord)](https://join.aelysium.group/)
-[![Build](https://flat.badgen.net/github/release/Aelysium-Group/rusty-connector?label=Latest%20Stable%20Release&icon=maven)](https://github.com/Aelysium-Group/rusty-connector/releases)
-[![License](https://flat.badgen.net/badge/License/GPL-V3/5865F2)](https://github.com/Aelysium-Group/rusty-connector/blob/main/LICENSE_rusty-connector)
+[![Build](https://flat.badgen.net/github/release/Aelysium-Group/rustyconnector-core?label=Latest%20Stable%20Release&icon=maven)](https://github.com/Aelysium-Group/rustyconnector-core/releases)
+[![License](https://flat.badgen.net/badge/License/GPL-V3/5865F2)](https://github.com/Aelysium-Group/rustyconnector-core/blob/main/LICENSE)
 
-[RustyConnector] is a robust network proxy backbone framework.
-With it, you can implement auto-scaling, load balancing, and whitelists to your game's netoworking system.
+RustyConnector is a robust network proxy backbone framework.
+With it, you can implement auto-scaling, load balancing, and whitelists to your game's networking system.
+Originally written as a Minecraft specific software, it's now been expanded to comer more general purpose usages.
 
 <!-- Table-1 -->
 <table>
@@ -17,7 +18,7 @@ With it, you can implement auto-scaling, load balancing, and whitelists to your 
 <tr>
   <td width="80" align="center" valign="top">
     <br>
-    <a href="https://wiki.aelysium.group/rusty-connector/"><img src="https://github.com/Aelysium-Group/rusty-connector/blob/development/blob/images/logo.webp?raw=true"></a>
+    <a href="https://wiki.aelysium.group/rusty-connector/"><img src="https://github.com/Aelysium-Group/rustyconnector-core/blob/main/blob/images/logo.webp?raw=true"></a>
   </td>
   <td valign="top">
     <h3>Wiki</h3>
@@ -29,19 +30,19 @@ With it, you can implement auto-scaling, load balancing, and whitelists to your 
 <tr>
   <td width="80" align="center" valign="top">
     <br>
-    <a href="https://github.com/Aelysium-Group/rusty-connector/releases"><img src="https://github.com/Aelysium-Group/rusty-connector/blob/development/blob/images/logo.webp?raw=true"></a>
+    <a href="https://github.com/Aelysium-Group/rustyconnector-core/releases"><img src="https://github.com/Aelysium-Group/rustyconnector-core/blob/main/blob/images/logo.webp?raw=true"></a>
   </td>
   <td valign="top">
     <h3>Download</h3>
     <p>
-      <a href="https://github.com/Aelysium-Group/rusty-connector/releases">Download from GitHub</a>, or check out the plugin release pages.
+      <a href="https://github.com/Aelysium-Group/rustyconnector-core/releases">Download from GitHub</a>, or check out the plugin release pages.
     </p>
   </td>
 </tr>
 <tr>
   <td width="80" align="center" valign="top">
     <br>
-    <a href="https://join.aelysium.group"><img src="https://github.com/Aelysium-Group/rusty-connector/blob/development/blob/images/logo.webp?raw=true"></a>
+    <a href="https://join.aelysium.group"><img src="https://github.com/Aelysium-Group/rustyconnector-core/blob/main/blob/images/logo.webp?raw=true"></a>
   </td>
   <td>
     <h3>Support</h3>
@@ -55,12 +56,12 @@ With it, you can implement auto-scaling, load balancing, and whitelists to your 
 <tr>
   <td width="80" align="center" valign="top">
     <br>
-    <a href="https://github.com/Aelysium-Group/rusty-connector/issues"><img src="https://github.com/Aelysium-Group/rusty-connector/blob/development/blob/images/logo.webp?raw=true"></a>
+    <a href="https://github.com/Aelysium-Group/rustyconnector-core/issues"><img src="https://github.com/Aelysium-Group/rustyconnector-core/blob/main/blob/images/logo.webp?raw=true"></a>
   </td>
   <td>
     <h3>Report Bugs</h3>
     <p>
-    Experiencing annoying bugs while using the plugin? Report them <a href="https://github.com/Aelysium-Group/rusty-connector/issues"> here</a> to help us squash them.
+    Experiencing annoying bugs while using the plugin? Report them <a href="https://github.com/Aelysium-Group/rustyconnector-core/issues"> here</a> to help us squash them.
     </p>
   </td>
 </tr>
@@ -76,7 +77,7 @@ With it, you can implement auto-scaling, load balancing, and whitelists to your 
 <tr>
   <td width="80" align="center" valign="center">
     <br>
-    <a href="https://modrinth.com/plugin/rustyconnector"><img src="https://github.com/Aelysium-Group/rusty-connector/blob/development/blob/images/modrinth.svg?raw=true"></a>
+    <a href="https://modrinth.com/plugin/rustyconnector"><img src="https://github.com/Aelysium-Group/rustyconnector-core/blob/main/blob/images/modrinth.svg?raw=true"></a>
   </td>
   <td valign="top">
     <h3>Modrinth</h3>
@@ -88,7 +89,7 @@ With it, you can implement auto-scaling, load balancing, and whitelists to your 
 <tr>
   <td width="80" align="center" valign="top">
     <br>
-    <a href="https://hangar.papermc.io/nathan-i-martin/RustyConnector"><img src="https://github.com/Aelysium-Group/rusty-connector/blob/development/blob/images/hangar.svg?raw=true"></a>
+    <a href="https://hangar.papermc.io/nathan-i-martin/RustyConnector"><img src="https://github.com/Aelysium-Group/rustyconnector-core/blob/main/blob/images/hangar.svg?raw=true"></a>
   </td>
   <td valign="top">
     <h3>Hangar</h3>
@@ -141,4 +142,4 @@ With it, you can implement auto-scaling, load balancing, and whitelists to your 
 [Folia]:https://github.com/PaperMC/Folia
 [Paper]: https://papermc.io
 [Velocity]: https://velocitypowered.com
-[RustyConnector]: https://github.com/Aelysium-Group/rusty-connector
+[RustyConnector]: https://github.com/Aelysium-Group/rustyconnector-core
