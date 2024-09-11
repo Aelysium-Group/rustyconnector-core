@@ -1,5 +1,6 @@
 package group.aelysium.rustyconnector.common.config;
 
+import io.leangen.geantyref.TypeToken;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.configurate.CommentedConfigurationNode;
 import org.spongepowered.configurate.ConfigurationOptions;
@@ -9,7 +10,7 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.function.Consumer;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 public class ConfigLoader {
@@ -21,7 +22,7 @@ public class ConfigLoader {
      * @return Data with a type matching `type`
      * @throws IllegalStateException If there was an issue while retrieving the data or converting it to `type`.
      */
-    protected static Object getValue(CommentedConfigurationNode data, String node, Type type) throws IllegalStateException {
+    protected static <T> T getValue(CommentedConfigurationNode data, String node, TypeToken<T> type) throws IllegalStateException {
         try {
             String[] steps = node.split("\\.");
 
@@ -38,7 +39,8 @@ public class ConfigLoader {
         } catch (ClassCastException e) {
             throw new IllegalStateException("The node ["+node+"] is of the wrong data type! Make sure you are using the correct type of data!");
         } catch (Exception e) {
-            throw new IllegalStateException("Unable to register the node: "+node);
+            throw new RuntimeException(e);
+            //throw new IllegalStateException("Unable to register the node: "+node);
         }
     }
 
@@ -48,7 +50,7 @@ public class ConfigLoader {
         try {
             if (!configPointer.exists()) {
                 File parent = configPointer.getParentFile();
-                if (!parent.exists()) parent.mkdirs();
+                if(parent != null) if (!parent.exists()) parent.mkdirs();
 
                 YamlConfigurationLoader loader = YamlConfigurationLoader.builder()
                         .file(configPointer)
@@ -95,23 +97,27 @@ public class ConfigLoader {
      * @param clazz The class definition.
      * @param pathReplacements If the {@link Config#value()} has curly braces covered paths (i.e. "some/{dynamic}/path.yml", those will be replaced with the provided replacements in the order they appear.
      * @throws IOException If the config filepath contains invalid characters.
+     * @throws ArrayIndexOutOfBoundsException If you don't provide the same number of pathReplacements as {path_parameters} in the @Config path.
      */
-    public static <T> T load(Class<T> clazz, String... pathReplacements) throws IOException {
+    public static <T> T load(Class<T> clazz, String... pathReplacements) throws IOException, ArrayIndexOutOfBoundsException {
         if(!clazz.isAnnotationPresent(Config.class)) throw new RuntimeException("Configs must be annotated with @Config");
 
         Config config = clazz.getAnnotation(Config.class);
 
-        // Prep config file path
-        Pattern filePathValidation = Pattern.compile("^[a-zA-Z0-9\\_\\-\\.\\/\\\\]+$");
         String path;
         {
+            AtomicInteger index = new AtomicInteger(0);
             List<String> splitPath = Arrays.stream(config.value().split("/")).map(v -> {
-                if (v.startsWith("{") && v.endsWith("}")) return v.substring(1, v.length() - 1);
-                return v;
+                if(!v.startsWith("{")) return v;
+                if(pathReplacements[index.get()] == null) throw new ArrayIndexOutOfBoundsException("You must provide the same number of path replacements as the number of {path_parameters} in the @Config path.");
+
+                String replacement = pathReplacements[index.get()];
+                index.incrementAndGet();
+                return v.replaceAll("^\\{[a-zA-Z0-9\\_\\-\\.\\/\\\\]+\\}(\\.[a-zA-Z0-9\\_\\-]*)?",replacement+"$1");
             }).toList();
             path = String.join("/", splitPath);
         }
-        if(!filePathValidation.matcher(path).matches())
+        if(!Pattern.compile("^[a-zA-Z0-9\\_\\-\\.\\/\\\\]+$").matcher(path).matches())
             throw new IOException("Invalid file path defined for config: "+path);
 
         Map<Integer, List<ConfigEntry>> entries = new HashMap<>();
@@ -161,12 +167,15 @@ public class ConfigLoader {
             T instance = clazz.getConstructor().newInstance();
 
             // Generates the config if it doesn't exist then loads the contents of the config.
-            CommentedConfigurationNode yaml = loadOrGenerate(config.value(), sortedEntries);
-            byte[] allContents = loadBytes(config.value());
+            CommentedConfigurationNode yaml = loadOrGenerate(path, sortedEntries);
+            byte[] allContents = loadBytes(path);
             allContentsFields.forEach(f -> {
                 try {
                     if (!f.getType().equals(byte[].class)) throw new ClassCastException("Fields annotated with @AllContents must be of type byte[]!");
+
+                    f.setAccessible(true);
                     f.set(instance, allContents);
+                    f.setAccessible(false);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -174,7 +183,9 @@ public class ConfigLoader {
 
             for (ConfigNode node : nodes) {
                 Type type = node.field.getGenericType();
-                node.field.set(instance, getValue(yaml, node.key(), type));
+                node.field.setAccessible(true);
+                node.field.set(instance, getValue(yaml, node.key(), TypeToken.get(type)));
+                node.field.setAccessible(false);
             }
             return instance;
         } catch (Exception e) {

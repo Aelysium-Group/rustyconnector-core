@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 public abstract class Family implements Player.Connectable, Server.Factory, Particle {
     protected final String id;
@@ -29,6 +30,14 @@ public abstract class Family implements Player.Connectable, Server.Factory, Part
         this.displayName = displayName;
         this.parent = parent;
         this.whitelist = whitelist;
+
+        try {
+            assert this.whitelist != null;
+            this.whitelist.access().get();
+        } catch (NullPointerException ignore) {
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public @NotNull String id() {

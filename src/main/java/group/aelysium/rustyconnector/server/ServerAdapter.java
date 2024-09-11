@@ -34,7 +34,7 @@ public abstract class ServerAdapter {
      * @param uuid The uuid.
      * @return An optional containing the user's username if there is one, if not, returns an Empty optional.
      */
-    public abstract String playerUsername(@NotNull UUID uuid);
+    public abstract Optional<String> playerUsername(@NotNull UUID uuid);
 
     /**
      * Checks if a player is online.
@@ -46,13 +46,13 @@ public abstract class ServerAdapter {
     /**
      * Sends the component as a message to the specified player.
      * @param uuid The uuid of the player to send the message to.
-     * @param component The component to send.
+     * @param message The component to send.
      */
-    public abstract void sendMessage(UUID uuid, Component component);
+    public abstract void sendMessage(UUID uuid, Component message);
 
     /**
      * Logs the components as a message into the console.
-     * @param component The component to log.
+     * @param message The component to log.
      */
-    public abstract void log(Component component);
+    public abstract void log(Component message);
 }

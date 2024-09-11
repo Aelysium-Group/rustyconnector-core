@@ -7,10 +7,11 @@ import group.aelysium.rustyconnector.proxy.player.Player;
  * Represents a player joining the network.
  * This event fires after {@link FamilyLeaveEvent}.
  */
-public class NetworkLeaveEvent implements Event {
+public class NetworkLeaveEvent extends Event {
     protected final Player player;
 
     public NetworkLeaveEvent(Player player) {
+        super();
         this.player = player;
     }
 

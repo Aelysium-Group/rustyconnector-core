@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * It can be assumed that if this event fires, the player has successfully acquired a new origin.
  * This event will also fire if a player leaves the family by logging out of the network.
  */
-public class FamilyLeaveEvent implements Event {
+public class FamilyLeaveEvent extends Event {
     protected final Particle.Flux<? extends Family> family;
     protected final Server server;
     protected final Player player;
@@ -25,6 +25,7 @@ public class FamilyLeaveEvent implements Event {
             @NotNull Player player,
             boolean disconnected
     ) {
+        super();
         this.family = family;
         this.server = server;
         this.player = player;

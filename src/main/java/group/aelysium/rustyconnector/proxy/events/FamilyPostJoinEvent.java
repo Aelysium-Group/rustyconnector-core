@@ -9,12 +9,13 @@ import group.aelysium.rustyconnector.proxy.player.Player;
 /**
  * Represents a player successfully connecting to a family.
  */
-public class FamilyPostJoinEvent implements Event {
+public class FamilyPostJoinEvent extends Event {
     protected final Particle.Flux<? extends Family> family;
     protected final Server server;
     protected final Player player;
 
     public FamilyPostJoinEvent(Particle.Flux<? extends Family> family, Server server, Player player) {
+        super();
         this.family = family;
         this.server = server;
         this.player = player;

@@ -7,10 +7,11 @@ import group.aelysium.rustyconnector.proxy.family.Family;
 /**
  * Represents a family rebalancing its Servers via it's load balancer.
  */
-public class FamilyRebalanceEvent implements Event {
+public class FamilyRebalanceEvent extends Event {
     protected final Particle.Flux<? extends Family> family;
 
     public FamilyRebalanceEvent(Particle.Flux<? extends Family> family) {
+        super();
         this.family = family;
     }
 

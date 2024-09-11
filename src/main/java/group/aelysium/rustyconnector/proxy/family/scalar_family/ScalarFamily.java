@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -38,9 +39,11 @@ public class ScalarFamily extends Family {
             @Nullable String parent,
             @Nullable Particle.Flux<Whitelist> whitelist,
             @NotNull Particle.Flux<LoadBalancer> loadBalancer
-    ) {
+    ) throws ExecutionException, InterruptedException {
         super(id, displayName, parent, whitelist);
         this.loadBalancer = loadBalancer;
+
+        this.loadBalancer.access().get();
     }
 
     public Particle.Flux<LoadBalancer> loadBalancer() {

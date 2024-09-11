@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * It can be assumed that if this event fires, the player has successfully acquired a new origin.
  * This event will also fire if a player leaves the family by logging out of the network.
  */
-public class ServerLeaveEvent implements Event {
+public class ServerLeaveEvent extends Event {
     protected final Server server;
     protected final Player player;
     protected final boolean disconnected;
@@ -21,6 +21,7 @@ public class ServerLeaveEvent implements Event {
             @NotNull Player player,
             boolean disconnected
     ) {
+        super();
         this.server = server;
         this.player = player;
         this.disconnected = disconnected;

@@ -12,7 +12,7 @@ apply plugin: 'java-library'
 apply plugin: 'com.github.johnrengelman.shadow'
 
 group = project.maven_group
-version = project.plugin_version
+version = project.version
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -33,14 +33,25 @@ repositories {
 }
 
 dependencies {
-    shadow "net.kyori:adventure-text-minimessage:${project.minimessage_version}"
-    shadow "com.google.code.gson:gson:${project.gson_version}"
+    shadow "net.kyori:adventure-text-minimessage:4.14.0"
+    shadow "com.google.code.gson:gson:2.9.0"
+    implementation 'org.reflections:reflections:0.10.2'
 
+    implementation 'org.spongepowered:configurate-core:4.0.0'
     implementation 'org.spongepowered:configurate-yaml:4.0.0'
     implementation "io.javalin:javalin:6.2.0" // REST API
     implementation "com.fasterxml.jackson.core:jackson-databind:2.17.0" // API HTTP response code exceptions
-    implementation "org.java-websocket:Java-WebSocket:${project.websocket_version}"
-    implementation 'org.reflections:reflections:0.10.2'
+    implementation "org.java-websocket:Java-WebSocket:1.5.2"
+}
+
+processResources {
+    def props = ['version': version, 'config_version': config_version, 'magic_link_version': magic_link_version]
+    inputs.properties props
+    filteringCharset "UTF-8"
+
+    filesMatching("metadata.json") {
+        expand props
+    }
 }
 
 compileJava {
@@ -49,4 +60,9 @@ compileJava {
 
 javadoc {
     options.encoding = 'UTF-8'
+}
+
+shadowJar {
+    mergeServiceFiles()
+    relocate 'org.reflections', 'group.aelysium.rustyconnector.shaded.org.reflections'
 }

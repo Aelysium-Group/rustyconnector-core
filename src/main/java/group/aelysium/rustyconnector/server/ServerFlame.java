@@ -1,11 +1,12 @@
 package group.aelysium.rustyconnector.server;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.server.lang.ServerLang;
-import group.aelysium.rustyconnector.server.magic_link.WebSocketMagicLink;
 import group.aelysium.rustyconnector.proxy.ProxyFlame;
 import group.aelysium.rustyconnector.proxy.util.Version;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
@@ -44,10 +45,11 @@ public class ServerFlame implements Particle {
         this.eventManager = eventManager;
 
         try {
-            try (InputStream input = ProxyFlame.class.getClassLoader().getResourceAsStream("version.txt")) {
+            try (InputStream input = ProxyFlame.class.getClassLoader().getResourceAsStream("metadata.json")) {
                 if (input == null) throw new NullPointerException("Unable to initialize version number from jar.");
-                String stringVersion = new String(input.readAllBytes());
-                this.version = new Version(stringVersion);
+                Gson gson = new Gson();
+                JsonObject object = gson.fromJson(new String(input.readAllBytes()), JsonObject.class);
+                this.version = new Version(object.get("version").getAsString());
             }
 
             this.lang.access().get();

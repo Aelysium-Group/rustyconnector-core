@@ -8,11 +8,12 @@ import group.aelysium.rustyconnector.proxy.family.Server;
 /**
  * Represents an Server successfully registering to the Proxy.
  */
-public class ServerRegisterEvent implements Event {
+public class ServerRegisterEvent extends Event {
     protected final Particle.Flux<? extends Family> family;
     protected final Server server;
 
     public ServerRegisterEvent(Particle.Flux<? extends Family> family, Server server) {
+        super();
         this.family = family;
         this.server = server;
     }

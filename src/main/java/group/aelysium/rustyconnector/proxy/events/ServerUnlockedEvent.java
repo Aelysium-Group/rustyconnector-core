@@ -8,11 +8,12 @@ import group.aelysium.rustyconnector.proxy.family.Server;
 /**
  * Represents an Server being unlocked on this family.
  */
-public class ServerUnlockedEvent implements Event {
+public class ServerUnlockedEvent extends Event {
     protected final Particle.Flux<? extends Family> family;
     protected final Server server;
 
     public ServerUnlockedEvent(Particle.Flux<? extends Family> family, Server server) {
+        super();
         this.family = family;
         this.server = server;
     }

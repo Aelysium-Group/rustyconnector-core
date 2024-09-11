@@ -9,13 +9,14 @@ import group.aelysium.rustyconnector.proxy.player.Player;
 /**
  * Represents a player switching from one Server in a family to another Server in that same family.
  */
-public class FamilyInternalSwitchEvent implements Event {
+public class FamilyInternalSwitchEvent extends Event {
     protected final Particle.Flux<? extends Family> family;
     protected final Server previousServer;
     protected final Server newServer;
     protected final Player player;
 
     public FamilyInternalSwitchEvent(Particle.Flux<? extends Family> family, Server previousServer, Server newServer, Player player) {
+        super();
         this.family = family;
         this.previousServer = previousServer;
         this.newServer = newServer;

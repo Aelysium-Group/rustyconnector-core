@@ -8,5 +8,14 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface EventListener {
-    Class<Event> value();
+    /**
+     * The order by which listeners should run.
+     * Listeners will run in order from highest to lowest.
+     */
+    EventPriority order() default EventPriority.NORMAL;
+
+    /**
+     * Should the listener still run even if the event is canceled.
+     */
+    boolean ignoreCanceled() default false;
 }

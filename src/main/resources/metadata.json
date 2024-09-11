@@ -1,0 +1,4 @@
+{
+  "version": "${version}",
+  "magic_link_version": "${magic_link_version}"
+}

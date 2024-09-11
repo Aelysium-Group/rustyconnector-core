@@ -10,11 +10,12 @@ import java.util.Optional;
 /**
  * Represents an Server unregistering from the Proxy.
  */
-public class ServerUnregisterEvent implements Event {
+public class ServerUnregisterEvent extends Event {
     protected final Particle.Flux<? extends Family> family;
     protected final Server server;
 
     public ServerUnregisterEvent(Server server) {
+        super();
         this.family = server.family().orElse(null);
         this.server = server;
     }

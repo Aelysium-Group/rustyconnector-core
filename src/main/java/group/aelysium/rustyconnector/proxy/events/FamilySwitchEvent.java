@@ -10,7 +10,7 @@ import group.aelysium.rustyconnector.proxy.player.Player;
  * Represents a player switching from one family to another family.
  * Specifically, this event will fire after {@link FamilyLeaveEvent} is fired on the previous family, and after {@link FamilyPostJoinEvent} fires on the new family.
  */
-public class FamilySwitchEvent implements Event {
+public class FamilySwitchEvent extends Event {
     protected final Particle.Flux<? extends Family> oldFamily;
     protected final Particle.Flux<? extends Family> newFamily;
     protected final Server oldServer;
@@ -18,6 +18,7 @@ public class FamilySwitchEvent implements Event {
     protected final Player player;
 
     public FamilySwitchEvent(Particle.Flux<? extends Family> oldFamily, Particle.Flux<? extends Family> newFamily, Server oldServer, Server newServer, Player player) {
+        super();
         this.oldFamily = oldFamily;
         this.newFamily = newFamily;
         this.oldServer = oldServer;

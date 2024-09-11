@@ -8,11 +8,12 @@ import group.aelysium.rustyconnector.common.events.Event;
  * Represents a player joining an Server.
  * This event will only fire once {@link FamilyPostJoinEvent} has fired.
  */
-public class ServerJoinEvent implements Event {
+public class ServerJoinEvent extends Event {
     protected final Server server;
     protected final Player player;
 
     public ServerJoinEvent(Server server, Player player) {
+        super();
         this.server = server;
         this.player = player;
     }

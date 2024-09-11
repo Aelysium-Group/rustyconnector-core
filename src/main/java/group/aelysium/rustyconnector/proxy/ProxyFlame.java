@@ -1,5 +1,7 @@
 package group.aelysium.rustyconnector.proxy;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
@@ -8,7 +10,6 @@ import group.aelysium.rustyconnector.proxy.family.Families;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.*;
 import group.aelysium.rustyconnector.proxy.family.whitelist.Whitelist;
 import group.aelysium.rustyconnector.proxy.lang.ProxyLang;
-import group.aelysium.rustyconnector.proxy.magic_link.WebSocketMagicLink;
 import group.aelysium.rustyconnector.proxy.player.Players;
 import group.aelysium.rustyconnector.proxy.util.Version;
 import net.kyori.adventure.text.Component;
@@ -50,27 +51,27 @@ public class ProxyFlame implements Particle {
         this.magicLink = magicLink;
         this.players = players;
         this.eventManager = eventManager;
-        try {
-            LoadBalancerAlgorithmExchange.registerAlgorithm(RoundRobin.algorithm, RoundRobin.Tinder::new);
-            LoadBalancerAlgorithmExchange.registerAlgorithm(MostConnection.algorithm, MostConnection.Tinder::new);
-            LoadBalancerAlgorithmExchange.registerAlgorithm(LeastConnection.algorithm, LeastConnection.Tinder::new);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
 
         try {
-            try (InputStream input = ProxyFlame.class.getClassLoader().getResourceAsStream("version.txt")) {
+            try (InputStream input = ProxyFlame.class.getClassLoader().getResourceAsStream("metadata.json")) {
                 if (input == null) throw new NullPointerException("Unable to initialize version number from jar.");
-                String stringVersion = new String(input.readAllBytes());
-                this.version = new Version(stringVersion);
+                Gson gson = new Gson();
+                JsonObject object = gson.fromJson(new String(input.readAllBytes()), JsonObject.class);
+                this.version = new Version(object.get("version").getAsString());
             }
 
+            this.adapter.log(Component.text("Booting lang service..."));
             this.lang.access().get();
+            this.adapter.log(Component.text("Booting families service..."));
             this.families.access().get();
-            this.magicLink.access().get();
+            this.adapter.log(Component.text("Booting players service..."));
             this.players.access().get();
+            this.adapter.log(Component.text("Booting event manager service..."));
             this.eventManager.access().get();
+            this.adapter.log(Component.text("Booting magic link service..."));
+            this.magicLink.access().get();
             try {
+                this.adapter.log(Component.text("Booting proxy whitelist..."));
                 assert this.whitelist != null;
                 this.whitelist.access().get();
             } catch (Exception ignore) {}
@@ -152,6 +153,14 @@ public class ProxyFlame implements Particle {
             this.uuid = uuid;
             this.adapter = adapter;
             this.magicLink = magicLink;
+
+            try {
+                LoadBalancerAlgorithmExchange.registerAlgorithm(RoundRobin.algorithm, RoundRobin.Tinder::new);
+                LoadBalancerAlgorithmExchange.registerAlgorithm(MostConnection.algorithm, MostConnection.Tinder::new);
+                LoadBalancerAlgorithmExchange.registerAlgorithm(LeastConnection.algorithm, LeastConnection.Tinder::new);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
 
         public Tinder lang(@NotNull Particle.Tinder<? extends LangLibrary<? extends ProxyLang>> lang) {

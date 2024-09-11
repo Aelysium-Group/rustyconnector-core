@@ -8,12 +8,13 @@ import group.aelysium.rustyconnector.proxy.player.Player;
  * Represents a player switching from one server to another.
  * This event doesn't care about what family the servers are a part of.
  */
-public class ServerSwitchEvent implements Event {
+public class ServerSwitchEvent extends Event {
     protected final Server oldServer;
     protected final Server newServer;
     protected final Player player;
 
     public ServerSwitchEvent(Server oldServer, Server newServer, Player player) {
+        super();
         this.oldServer = oldServer;
         this.newServer = newServer;
         this.player = player;
