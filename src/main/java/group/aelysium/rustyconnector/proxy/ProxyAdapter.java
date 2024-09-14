@@ -137,7 +137,7 @@ public abstract class ProxyAdapter {
     }
 
     /**
-     * Handle's the players initial connection to the proxy, before they connect to a server.
+     * Handle's the playerRegistry initial connection to the proxy, before they connect to a server.
      * @param player The player.
      * @throws RuntimeException If there's a fatal error at any point.
      */

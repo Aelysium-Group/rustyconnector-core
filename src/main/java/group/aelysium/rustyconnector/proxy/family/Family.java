@@ -57,7 +57,7 @@ public abstract class Family implements Player.Connectable, Server.Factory, Part
     public @NotNull Optional<Flux<? extends Family>> parent() {
         if(this.parent == null) return Optional.empty();
         try {
-            return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Families().orElseThrow().find(this.parent);
+            return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().FamilyRegistry().orElseThrow().find(this.parent);
         } catch (Exception ignore) {}
         return Optional.empty();
     }
@@ -75,7 +75,7 @@ public abstract class Family implements Player.Connectable, Server.Factory, Part
      * printed to the console or sent to a player.
      * This method can technically return whatever you want, but you should really
      * consider just using {@link group.aelysium.rustyconnector.proxy.lang.ProxyLang#family(String, String, Map, List, Component)} so that the returned component
-     * matches what other families will return.
+     * matches what other familyRegistry will return.
      */
     public abstract @NotNull Component details();
 

@@ -9,7 +9,7 @@ import java.util.function.Function;
 
 /**
  * A centralized location for registering and accessing any active Load Balancer algorithms.
- * This system allows for any families to take advantage of load balancers added by modules.
+ * This system allows for any familyRegistry to take advantage of load balancers added by modules.
  */
 public class LoadBalancerAlgorithmExchange {
     private static final Map<String, Function<LoadBalancer.Settings, Particle.Tinder<LoadBalancer>>> algorithms = new ConcurrentHashMap<>();

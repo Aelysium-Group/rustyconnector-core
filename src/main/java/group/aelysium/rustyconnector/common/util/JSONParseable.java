@@ -1,4 +1,4 @@
-package group.aelysium.rustyconnector.common;
+package group.aelysium.rustyconnector.common.util;
 
 import com.google.gson.JsonObject;
 

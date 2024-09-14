@@ -84,7 +84,7 @@ public class Player {
         Connection.Request connect(Player player);
 
         /**
-         * Gets the number of players connected to this connectable.
+         * Gets the number of playerRegistry connected to this connectable.
          */
         long players();
     }

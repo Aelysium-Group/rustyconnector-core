@@ -40,17 +40,17 @@ public class ProxyLang extends Lang {
         return usageBox(
             join(
                 newlines(),
-                text("/rc family", AQUA),
+                text("family", AQUA),
                 text("View family related information.", DARK_GRAY),
                 space(),
-                text("/rc message", AQUA),
+                text("rc message", AQUA),
                 text("Access recently sent RustyConnector messages.", DARK_GRAY),
                 space(),
-                text("/rc reload", GOLD),
+                text("rc reload", GOLD),
                 text("Reload entire plugin.", DARK_GRAY),
                 space(),
-                text("/rc send", AQUA),
-                text("Send players from families and servers to other families or servers.", DARK_GRAY)
+                text("rc send", AQUA),
+                text("Send a player from families and servers to other families or servers.", DARK_GRAY)
             )
         );
     }
@@ -74,9 +74,9 @@ public class ProxyLang extends Lang {
         return boxed(
             join(
                 newlines(),
-                this.asciiAlphabet.generate("registered"),
+                this.asciiAlphabet.generate("family"),
                 space(),
-                this.asciiAlphabet.generate("families"),
+                this.asciiAlphabet.generate("registry"),
                 space(),
                 border(),
                 space(),

@@ -4,17 +4,20 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.RustyConnector;
-import group.aelysium.rustyconnector.common.FailCapture;
-import group.aelysium.rustyconnector.common.IPV6Broadcaster;
+import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.common.cache.MessageCache;
+import group.aelysium.rustyconnector.common.magic_link.MessageCache;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
-import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
+import group.aelysium.rustyconnector.common.util.URL;
 import group.aelysium.rustyconnector.server.Environment;
-import group.aelysium.rustyconnector.server.ServerFlame;
+import group.aelysium.rustyconnector.server.ServerKernel;
+import group.aelysium.rustyconnector.server.events.ConnectedEvent;
 import group.aelysium.rustyconnector.server.events.DisconnectedEvent;
 import group.aelysium.rustyconnector.common.crypt.AES;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
+import group.aelysium.rustyconnector.server.magic_link.handlers.HandshakeFailureListener;
+import group.aelysium.rustyconnector.server.magic_link.handlers.HandshakeStalePingListener;
+import net.kyori.adventure.text.Component;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.jetbrains.annotations.NotNull;
@@ -25,29 +28,35 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class WebSocketMagicLink extends MagicLinkCore.Server {
-    private String address;
+    private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    private final AtomicBoolean closed = new AtomicBoolean(false);
+    private final AtomicBoolean stopHeartbeat = new AtomicBoolean(true);
     private WebSocketClient client = null;
-    private final FailCapture failCapture = new FailCapture(5, LiquidTimestamp.from(15, TimeUnit.SECONDS));
+    private URL address;
 
     protected WebSocketMagicLink(
-            @NotNull String address,
-            @NotNull Packet.Target self,
+            @NotNull URL address,
+            @NotNull Packet.SourceIdentifier self,
             @NotNull AES cryptor,
             @NotNull MessageCache cache,
             @NotNull String registrationConfiguration,
             @Nullable IPV6Broadcaster broadcaster
     ) {
         super(self, cryptor, cache, registrationConfiguration, broadcaster);
-        if(address.endsWith("/")) this.address = address.substring(0, address.length() - 1);
-        else this.address = address;
+        this.address = address;
 
         if(this.broadcaster == null) {
-            this.connect();
+            this.executor.submit(this::connect);
             return;
         }
 
@@ -55,131 +64,160 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
             if(this.client != null) if(!this.client.isClosed()) return;
 
             try {
-                String broadcastedAddress = this.cryptor.decrypt(message);
+                String broadcastedAddress = this.aes.decrypt(message);
                 if (broadcastedAddress.endsWith("/"))
-                    this.address = broadcastedAddress.substring(0, broadcastedAddress.length() - 1);
-                else this.address = broadcastedAddress;
+                    this.address = URL.parseURL(broadcastedAddress.substring(0, broadcastedAddress.length() - 1));
+                else this.address = URL.parseURL(broadcastedAddress);
 
-                this.connect();
+                this.executor.submit(this::connect);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
+
+        this.listen(HandshakeFailureListener.class);
+        this.listen(HandshakeStalePingListener.class);
     }
 
     /**
      * Attempts to establish a connection to the MagicLink instance running on the proxy.
      */
     public void connect() throws ExceptionInInitializerError {
-        if(this.failCapture.willFail()) return;
-
-        HttpClient client = HttpClient.newHttpClient();
-
-        String endpoint;
-        String[] bearer = new String[3];
+        if(this.closed.get()) return;
+        if(this.client != null) if(this.client.isOpen()) return;
         try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(this.address+"/bDaBMkmYdZ6r4iFExwW6UzJyNMDseWoS3HDa6FcyM7xNeCmtK98S3Mhp4o7g7oW6VB9CA6GuyH2pNhpQk3QvSmBUeCoUDZ6FXUsFCuVQC59CB2y22SBnGkMf9NMB9UWk"))
-                    .header("Authorization", "Bearer "+cryptor.encrypt(String.valueOf(Instant.now().getEpochSecond())))
-                    .GET()
-                    .build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            HttpClient client = HttpClient.newHttpClient();
 
-            Gson gson = new Gson();
-            JsonObject object = gson.fromJson(response.body(), JsonObject.class);
-            endpoint    = cryptor.decrypt(object.get("endpoint").getAsString());
-            bearer[0]   = cryptor.decrypt(object.get("token").getAsString());
-            bearer[1]   = object.get("signature").getAsString();
-            bearer[2]   = this.self.uuid().toString(); // Including the uuid in the bearer as well as "X-Server-Identification" is intentional.
-        } catch (Exception e) {
-            throw new ExceptionInInitializerError(e);
-        }
+            String websocketEndpoint;
+            String[] bearer = new String[3];
+            try {
+                URI uri = this.address
+                                .appendPath("bDaBMkmYdZ6r4iFExwW6UzJyNMDseWoS3HDa6FcyM7xNeCmtK98S3Mhp4o7g7oW6VB9CA6GuyH2pNhpQk3QvSmBUeCoUDZ6FXUsFCuVQC59CB2y22SBnGkMf9NMB9UWk")
+                                .toURI();
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(uri)
+                        .header("Authorization", "Bearer " + aes.encrypt(((Long)Instant.now().getEpochSecond()).toString()))
+                        .timeout(Duration.of(30, ChronoUnit.SECONDS))
+                        .GET()
+                        .build();
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
-        try {
-            Map<String, String> headers = Map.of(
-                    "Authorization", "Bearer "+Base64.getEncoder().encodeToString(cryptor.encrypt(String.join("-", bearer).getBytes(StandardCharsets.UTF_8))),
-                    "X-Server-Identification", this.self.toJSON().toString()
-            );
-            this.client = new WebSocketClient(new URI(address.replace("http","ws").replace("https", "wss")+"/"+endpoint), headers) {
-                @Override
-                public void onOpen(ServerHandshake handshake) {
-                    RC.S.Adapter().log(RC.S.Lang().lang().magicLink());
-                    WebSocketMagicLink.this.heartbeat();
-                }
+                if(response.statusCode() != 200) throw new RuntimeException("Magic Link response: " + response.body());
 
-                @Override
-                public void onMessage(String message) {
-                    WebSocketMagicLink.this.handleMessage(message);
-                }
+                Gson gson = new Gson();
+                JsonObject object = gson.fromJson(response.body(), JsonObject.class);
+                websocketEndpoint = aes.decrypt(object.get("endpoint").getAsString());
+                bearer[0] = aes.decrypt(object.get("token").getAsString());
+                bearer[1] = object.get("signature").getAsString();
+                bearer[2] = this.self.uuid().toString(); // Including the uuid in the bearer as well as "X-Server-Identification" is intentional.
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new ExceptionInInitializerError(e);
+            }
 
-                @Override
-                public void onClose(int code, String reason, boolean remote) {
-                    System.out.println("Websocket dropped, attempting to reconnect.");
-                    try {
-                        WebSocketMagicLink.this.executor.shutdownNow();
-                        WebSocketMagicLink.this.failCapture.trigger("[" + code + "] Websocket connection closed with the following reason: " + reason);
-                        this.connect();
-                    } catch (Exception e) {
+            try {
+                Map<String, String> headers = Map.of(
+                        "Authorization", "Bearer " + aes.encrypt(String.join("$", bearer)),
+                        "X-Server-Identification", this.self.toJSON().toString()
+                );
+
+                URL websocketURL = this.address.copy();
+                if(websocketURL.protocol().equals(URL.Protocol.HTTP)) websocketURL.changeProtocol(URL.Protocol.WS);
+                if(websocketURL.protocol().equals(URL.Protocol.HTTPS)) websocketURL.changeProtocol(URL.Protocol.WSS);
+                websocketURL.clearPath();
+                websocketURL.appendPath(websocketEndpoint);
+
+                this.client = new WebSocketClient(websocketURL.toURI(), headers) {
+                    @Override
+                    public void onOpen(ServerHandshake handshake) {
+                        RC.S.Adapter().log(RC.S.Lang().lang().magicLink());
+                        WebSocketMagicLink.this.stopHeartbeat.set(false);
+                        WebSocketMagicLink.this.heartbeat();
+                    }
+
+                    @Override
+                    public void onMessage(String message) {
+                        WebSocketMagicLink.this.handleMessage(message);
+                    }
+
+                    @Override
+                    public void onClose(int code, String reason, boolean remote) {
+                        try {
+                            WebSocketMagicLink.this.stopHeartbeat.set(true);
+                            WebSocketMagicLink.this.executor.schedule(this::connect, 5, TimeUnit.SECONDS);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
                         e.printStackTrace();
                     }
-                }
-
-                @Override
-                public void onError(Exception e) {
-                    e.printStackTrace();
-                }
-            };
-            this.client.connect();
+                };
+                if(this.client.connectBlocking()) return;
+            } catch (Exception e) {
+                throw new ExceptionInInitializerError(e);
+            }
         } catch (Exception e) {
-            throw new ExceptionInInitializerError(e);
+            e.printStackTrace();
         }
+        RC.S.Adapter().log(Component.text("Unable to establish Magic Link connection to the proxy. Trying again after 10 seconds."));
+        this.executor.schedule(this::connect, 10, TimeUnit.SECONDS);
     }
 
     @Override
     public void publish(Packet.Local packet) {
         try {
-            this.client.send(this.cryptor.encrypt(packet.toString()));
-            this.awaitReply(packet);
-        } catch (Exception ignore) {}
+            this.client.send(this.aes.encrypt(packet.toString()));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void heartbeat() {
-        this.executor.schedule(() -> {
-            if(stopPinging.get()) return;
+        if(this.closed.get()) return;
+        if(this.stopHeartbeat.get()) return;
 
-            ServerFlame flame = RustyConnector.Toolkit.Server().orElseThrow().orElseThrow();
+        ServerKernel flame = RustyConnector.Toolkit.Server().orElseThrow().orElseThrow();
 
-            try {
-                Packet.Builder.PrepareForSending packet = Packet.New()
-                        .identification(Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_PING)
-                        .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.DISPLAY_NAME, flame.displayName())
-                        .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.SERVER_REGISTRATION, this.registration())
-                        .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.ADDRESS, flame.address().getHostName()+":"+flame.address().getPort())
-                        .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.PLAYER_COUNT, new Packet.Parameter(flame.playerCount()));
+        try {
+            Packet.Builder.PrepareForSending packetBuilder = Packet.New()
+                    .identification(Packet.Identification.from("RC","MLH"))
+                    .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.DISPLAY_NAME, flame.displayName())
+                    .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.SERVER_REGISTRATION, this.registration())
+                    .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.ADDRESS, flame.address().getHostName()+":"+flame.address().getPort())
+                    .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.PLAYER_COUNT, new Packet.Parameter(flame.playerCount()));
 
-                if(Environment.podName().isPresent())
-                    packet.parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.POD_NAME, Environment.podName().orElseThrow());
+            if(Environment.podName().isPresent())
+                packetBuilder.parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.POD_NAME, Environment.podName().orElseThrow());
+            Packet.Local packet = packetBuilder.addressTo(Packet.SourceIdentifier.allAvailableProxies()).send();
 
-                packet.addressedTo(Packet.Target.allAvailableProxies()).send();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            packet.onReply(p -> {
+                System.out.println("Response captured!");
+                Packets.Handshake.Success response = new Packets.Handshake.Success(p);
 
-            WebSocketMagicLink.this.heartbeat();
-        }, this.delay.get(), TimeUnit.SECONDS);
+                RC.S.EventManager().fireEvent(new ConnectedEvent());
+                RC.S.Adapter().log(Component.text(response.message(), response.color()));
+                RC.S.MagicLink().setDelay(response.pingInterval());
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        this.executor.schedule(this::heartbeat, this.delay.get(), TimeUnit.SECONDS);
     }
 
     @Override
     public void close() {
-        stopPinging.set(true);
+        closed.set(true);
         try {
             this.executor.shutdownNow();
         } catch (Exception ignore) {}
 
         try {
             Packet.New()
-                    .identification(Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_DISCONNECT)
-                    .addressedTo(Packet.Target.allAvailableProxies())
+                    .identification(Packet.Identification.from("RC","MLHK"))
+                    .addressTo(Packet.SourceIdentifier.allAvailableProxies())
                     .send();
 
             RC.S.EventManager().fireEvent(new DisconnectedEvent());
@@ -187,15 +225,15 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
     }
 
     public static class Tinder extends Particle.Tinder<WebSocketMagicLink> {
-        private final String httpAddress;
-        private final Packet.Target self;
+        private final URL httpAddress;
+        private final Packet.SourceIdentifier self;
         private final AES cryptor;
         private final MessageCache cache;
         private final String serverRegistration;
         private final IPV6Broadcaster broadcaster;
         public Tinder(
-                @NotNull String httpAddress,
-                @NotNull Packet.Target self,
+                @NotNull URL httpAddress,
+                @NotNull Packet.SourceIdentifier self,
                 @NotNull AES cryptor,
                 @NotNull MessageCache cache,
                 @NotNull String serverRegistration,
@@ -218,17 +256,6 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                     this.cache,
                     this.serverRegistration,
                     this.broadcaster
-            );
-        }
-
-        public static Tinder DEFAULT_CONFIGURATION(UUID serverUUID) {
-            return new Tinder(
-                    "http://127.0.0.1:8080",
-                    Packet.Target.server(serverUUID),
-                    AES.DEFAULT_CRYPTOR,
-                    new MessageCache(50),
-                    "default",
-                    null
             );
         }
     }

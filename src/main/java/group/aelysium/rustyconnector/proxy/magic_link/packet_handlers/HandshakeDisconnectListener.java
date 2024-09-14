@@ -9,8 +9,8 @@ import group.aelysium.rustyconnector.proxy.family.Server;
 
 public class HandshakeDisconnectListener {
     @PacketListener(MagicLinkCore.Packets.Disconnect.class)
-    public void execute(MagicLinkCore.Packets.Disconnect packet) throws Exception {
-        Server server = RC.P.Server(packet.sender().uuid()).orElseThrow();
+    public static void execute(MagicLinkCore.Packets.Disconnect packet) throws Exception {
+        Server server = RC.P.Server(packet.local().uuid()).orElseThrow();
 
         RC.P.Adapter().unregisterServer(server);
         try {
@@ -19,8 +19,8 @@ public class HandshakeDisconnectListener {
 
         try {
             Packet.New()
-                    .identification(Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_STALE_PING)
-                    .addressedTo(packet)
+                    .identification(Packet.Identification.from("RC","MLHSP"))
+                    .addressTo(packet)
                     .send();
         } catch (Exception ignore) {}
 

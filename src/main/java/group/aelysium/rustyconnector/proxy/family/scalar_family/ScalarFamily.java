@@ -27,8 +27,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Scalar Families are the built-in stateless Family example.
- * They provide an example for how families should be implemented.
+ * Scalar FamilyRegistry are the built-in stateless Family example.
+ * They provide an example for how familyRegistry should be implemented.
  */
 public class ScalarFamily extends Family {
     protected final Particle.Flux<LoadBalancer> loadBalancer;
@@ -110,7 +110,7 @@ public class ScalarFamily extends Family {
                 this.id(),
                 this.parent,
                 Map.of(
-                        "Players", this.players() + "",
+                        "PlayerRegistry", this.players() + "",
                         "Whitelist", this.whitelist().isPresent() ? this.whitelist().orElseThrow().orElseThrow().name() : "none",
                         "Load Balancer", this.loadBalancer().orElseThrow().getClass().getSimpleName()
                 ),

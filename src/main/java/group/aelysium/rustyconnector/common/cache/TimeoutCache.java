@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import group.aelysium.rustyconnector.common.Closure;
+import group.aelysium.rustyconnector.common.util.Closure;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 
 public class TimeoutCache<K, V> implements Closure, Map<K, V> {

@@ -12,13 +12,13 @@ import java.util.UUID;
  */
 public abstract class ServerAdapter {
     /**
-     * Set the maximum number of players that this server will allow to connect to it.
-     * @param max The max number of players that can join this server.
+     * Set the maximum number of playerRegistry that this server will allow to connect to it.
+     * @param max The max number of playerRegistry that can join this server.
      */
     public abstract void setMaxPlayers(int max);
 
     /**
-     * @return The number of online players.
+     * @return The number of online playerRegistry.
      */
     public abstract int onlinePlayerCount();
 

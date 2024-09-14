@@ -152,7 +152,7 @@ public class Server implements ISortable, Player.Connectable {
 
     /**
      * Set the player count for this server.
-     * This number will directly impact whether new players can join this server based on server soft and hard caps.
+     * This number will directly impact whether new playerRegistry can join this server based on server soft and hard caps.
      * The number set here will be overwritten the next time this server syncs with the proxy.
      * @param playerCount The player count.
      */
@@ -163,7 +163,7 @@ public class Server implements ISortable, Player.Connectable {
     /**
      * The soft player cap of this server.
      * If this value is reached by {@link Server#players()}, {@link Server#full()} will evaluate to true.
-     * The only way for new players to continue to join this server once it's full is by giving them the soft cap bypass permission.
+     * The only way for new playerRegistry to continue to join this server once it's full is by giving them the soft cap bypass permission.
      * @return {@link Integer}
      */
     public int softPlayerCap() {
@@ -173,7 +173,7 @@ public class Server implements ISortable, Player.Connectable {
     /**
      * The hard player cap of this server.
      * If this value is reached by {@link Server#players()}, {@link Server#maxed()} will evaluate to true.
-     * The only way for new players to continue to join this server once it's maxed is by giving them the hard cap bypass permission.
+     * The only way for new playerRegistry to continue to join this server once it's maxed is by giving them the hard cap bypass permission.
      *
      * If this value is reached by {@link Server#players()}, it can be assumed that {@link Server#full()} is also true, because this value cannot be less than {@link Server#softPlayerCap()}.
      * @return {@link Integer}
@@ -192,7 +192,7 @@ public class Server implements ISortable, Player.Connectable {
 
     /**
      * Assigns a family to this Server.
-     * This method only works if the family is registered in {@link Families}.
+     * This method only works if the family is registered in {@link FamilyRegistry}.
      * @param family The family to store.
      * @throws NoSuchElementException If the family can not be resolved to its Flux state.
      */
@@ -209,7 +209,7 @@ public class Server implements ISortable, Player.Connectable {
     }
 
     /**
-     * Locks the specific server in its respective family so that the load balancer won't return it for players to connect to.
+     * Locks the specific server in its respective family so that the load balancer won't return it for playerRegistry to connect to.
      * If the server is already locked, or doesn't exist in the load balancer, nothing will happen.
      * <br/>
      * This is a convenience method that will fetch this server's family and run {@link Family#lockServer(Server)}.
@@ -221,7 +221,7 @@ public class Server implements ISortable, Player.Connectable {
     }
 
     /**
-     * Unlocks the specific server in its respective family so that the load balancer can return it for players to connect to.
+     * Unlocks the specific server in its respective family so that the load balancer can return it for playerRegistry to connect to.
      * If the server is already unlocked, or doesn't exist in the load balancer, nothing will happen.
      * <br/>
      * This is a convenience method that will fetch this server's family and run {@link Family#lockServer(Server)}.

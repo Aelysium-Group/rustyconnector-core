@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Players implements Particle {
+public class PlayerRegistry implements Particle {
     private final Map<UUID, Player> playersUUID = new ConcurrentHashMap<>();
     private final Map<String, Player> playersUsername = new ConcurrentHashMap<>();
 
@@ -45,10 +45,10 @@ public class Players implements Particle {
         this.playersUsername.clear();
     }
 
-    public static class Tinder extends Particle.Tinder<Players> {
+    public static class Tinder extends Particle.Tinder<PlayerRegistry> {
         @Override
-        public @NotNull Players ignite() throws Exception {
-            return new Players();
+        public @NotNull PlayerRegistry ignite() throws Exception {
+            return new PlayerRegistry();
         }
 
         public static Tinder DEFAULT_CONFIGURATION = new Tinder();

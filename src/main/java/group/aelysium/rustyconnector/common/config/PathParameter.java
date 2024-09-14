@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
  */
 public @interface PathParameter {
     /**
-     * The name of the path parameter to target.
+     * The name of the path parameter to remote.
      */
     String value();
 }

@@ -15,7 +15,7 @@ public @interface EventListener {
     EventPriority order() default EventPriority.NORMAL;
 
     /**
-     * Should the listener still run even if the event is canceled.
+     * Should the listen still run even if the event is canceled.
      */
     boolean ignoreCanceled() default false;
 }

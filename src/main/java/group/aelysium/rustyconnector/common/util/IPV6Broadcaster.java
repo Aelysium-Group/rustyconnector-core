@@ -1,4 +1,4 @@
-package group.aelysium.rustyconnector.common;
+package group.aelysium.rustyconnector.common.util;
 
 import group.aelysium.rustyconnector.common.crypt.AES;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +38,7 @@ public class IPV6Broadcaster implements Closure {
             byte[] buffer = new byte[256];
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
             socket.receive(packet);
-            String response = new String(this.cryptor.decrypt(packet.getData()), 0, packet.getLength(), StandardCharsets.UTF_8);
+            String response = this.cryptor.decrypt(new String(packet.getData(), StandardCharsets.UTF_8));
 
             this.listeners.stream().toList().forEach(l -> {
                 try {
@@ -52,14 +52,14 @@ public class IPV6Broadcaster implements Closure {
     }
 
     /**
-     * Takes the provided string, AES 256-bit encrypts it, then sends it.
+     * Takes the provided string, AES 256-bit encrypts it, Base64 encodes it, then sends it.
      * @param message The message to send.
      */
     public void sendEncrypted(String message) {
         try(DatagramSocket socket = new DatagramSocket()) {
             socket.setBroadcast(true);
-            byte[] encryptedData = this.cryptor.encrypt(message.getBytes(StandardCharsets.UTF_8));
-            DatagramPacket packet = new DatagramPacket(encryptedData, encryptedData.length, this.address);
+            String encryptedData = this.cryptor.encrypt(message);
+            DatagramPacket packet = new DatagramPacket(encryptedData.getBytes(StandardCharsets.UTF_8), encryptedData.length(), this.address);
             socket.send(packet);
         } catch (Exception e) {
             throw new RuntimeException(e);

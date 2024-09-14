@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.common.lang;
 
-import group.aelysium.rustyconnector.common.cache.CacheableMessage;
+import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.proxy.util.Version;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
@@ -160,50 +160,34 @@ public class Lang {
     }
 
 
-    public Component message(CacheableMessage message) {
+    public Component message(Packet.Remote message) {
         return headerBox(
                 "Message",
                 join(
                         newlines(),
-                        text("Status: " + message.getSentence().name(), message.getSentence().color()),
-                        text("Reason: " + message.getSentenceReason(), message.getSentence().color()),
+                        text("Status: " + message.status().name(), message.status().color()),
+                        text("Reason: " + message.statusMessage(), message.status().color()),
                         space(),
-                        text("ID: ", message.getSentence().color()).append(text(message.getSnowflake(), GRAY)),
-                        text("Timestamp: ", message.getSentence().color()).append(text(message.getDate().toString(), GRAY)),
-                        text("Contents: ", message.getSentence().color()).append(text(message.getContents(), GRAY))
+                        text("ID: ", message.status().color()).append(text(message.id().toString(), GRAY)),
+                        text("Timestamp: ", message.status().color()).append(text(message.received().toString(), GRAY)),
+                        text("Contents: ", message.status().color()).append(text(message.toString(), GRAY))
                 )
         );
     }
 
-    public Component messagePage(List<CacheableMessage> messages, int pageNumber, int maxPages) {
+    public Component messagePage(List<Packet.Remote> packets, int pageNumber, int maxPages) {
         Component output = text("");
-        for (CacheableMessage message : messages) {
-            if(!(message.getSentenceReason() == null))
-                output = output.append(join(
-                        newlines(),
-                        border(),
-                        space(),
-                        text("Status: " + message.getSentence().name(), message.getSentence().color()),
-                        text("Reason: " + message.getSentenceReason(), message.getSentence().color()),
-                        space(),
-                        text("ID: ", message.getSentence().color()).append(text(message.getSnowflake(), GRAY)),
-                        text("Timestamp: ", message.getSentence().color()).append(text(message.getDate().toString(), GRAY)),
-                        text("Contents: ", message.getSentence().color()).append(text(message.getContents(), GRAY)),
-                        space()
-                ));
-            else
-                output = output.append(join(
-                        newlines(),
-                        border(),
-                        space(),
-                        text("Status: " + message.getSentence().name(), message.getSentence().color()),
-                        space(),
-                        text("ID: ", message.getSentence().color()).append(text(message.getSnowflake(), GRAY)),
-                        text("Timestamp: ", message.getSentence().color()).append(text(message.getDate().toString(), GRAY)),
-                        text("Contents: ", message.getSentence().color()).append(text(message.getContents(), GRAY)),
-                        space()
-                ));
-        }
+        for (Packet.Remote packet : packets)
+            output = output.append(join(
+                    newlines(),
+                    border(),
+                    text("Status: " + packet.status().name(), packet.status().color()),
+                    text("Reason: " + packet.statusMessage(), packet.status().color()),
+                    space(),
+                    text("ID: ", packet.status().color()).append(text(packet.id().toString(), GRAY)),
+                    text("Timestamp: ", packet.status().color()).append(text(packet.received().toString(), GRAY)),
+                    text("Contents: ", packet.status().color()).append(text(packet.toString(), GRAY))
+            ));
 
         Component pageNumbers = text("[ ",DARK_GRAY);
         for (int i = 1; i <= maxPages; i++) {
@@ -218,6 +202,7 @@ public class Lang {
                 boxed(
                         join(
                                 newlines(),
+                                border(),
                                 text("Pages:"),
                                 pageNumbers
                         )
@@ -234,7 +219,7 @@ public class Lang {
                         space(),
                         text("/rc send server <username> <server word_id>", GOLD),
                         text("Forces a player to connect to a specific server on the proxy. This bypasses player caps and family whitelists.", DARK_GRAY),
-                        text("If you have multiple servers with the same name, this feature may send players to a server other than the one you intended.", DARK_GRAY)
+                        text("If you have multiple servers with the same name, this feature may send playerRegistry to a server other than the one you intended.", DARK_GRAY)
                 )
         );
     }

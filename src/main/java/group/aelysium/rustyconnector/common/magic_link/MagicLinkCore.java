@@ -1,27 +1,27 @@
 package group.aelysium.rustyconnector.common.magic_link;
 
-import group.aelysium.rustyconnector.common.IPV6Broadcaster;
+import group.aelysium.rustyconnector.common.crypt.NanoID;
+import group.aelysium.rustyconnector.common.magic_link.exceptions.PacketStatusResponse;
+import group.aelysium.rustyconnector.common.magic_link.exceptions.SuccessPacket;
+import group.aelysium.rustyconnector.common.magic_link.exceptions.TrashedPacket;
+import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.common.cache.CacheableMessage;
 import group.aelysium.rustyconnector.common.cache.TimeoutCache;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketIdentification;
+import group.aelysium.rustyconnector.common.util.ThrowableConsumer;
 import group.aelysium.rustyconnector.proxy.util.ColorMapper;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
-import group.aelysium.rustyconnector.common.cache.MessageCache;
 import group.aelysium.rustyconnector.common.crypt.AES;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.reflections.Reflections;
-import org.reflections.scanners.Scanners;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -33,51 +33,66 @@ import java.util.function.Consumer;
 
 public abstract class MagicLinkCore implements Particle {
     protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-    private final TimeoutCache<UUID, Packet.Local> packetsAwaitingReply = new TimeoutCache<>(LiquidTimestamp.from(10, TimeUnit.SECONDS));
-    private final Map<String, List<Consumer<Packet>>> listeners = new ConcurrentHashMap<>();
-    protected final AES cryptor;
+    private final TimeoutCache<NanoID, Packet.Local> packetsAwaitingReply = new TimeoutCache<>(LiquidTimestamp.from(15, TimeUnit.SECONDS));
+    private final Map<String, List<Consumer<Packet.Remote>>> listeners = new ConcurrentHashMap<>();
+    protected final AES aes;
     protected final MessageCache cache;
-    protected final Packet.Target self;
+    protected final Packet.SourceIdentifier self;
 
     protected MagicLinkCore(
-            @NotNull Packet.Target self,
-            @NotNull AES cryptor,
+            @NotNull Packet.SourceIdentifier self,
+            @NotNull AES aes,
             @NotNull MessageCache cache
     ) {
         this.self = self;
-        this.cryptor = cryptor;
+        this.aes = aes;
         this.cache = cache;
-        
-        Reflections reflections = new Reflections(
-                new ConfigurationBuilder()
-                        .setUrls(ClasspathHelper.forPackage(""))
-                        .setScanners(Scanners.MethodsAnnotated)
-        );
+    }
 
-        Set<Method> endpoints = reflections.getMethodsAnnotatedWith(PacketListener.class);
-
-        endpoints.forEach(method -> {
+    /**
+     * Registers the provided listen.
+     * If the listen method is static you can set this to be the class of your listen. (Object.class)
+     * Or if you want an instance method, you can pass a listen instance. (new Object())
+     * @param listener The listen to use.
+     */
+    public void listen(Object listener) {
+        boolean isInstance = !(listener instanceof Class<?>);
+        Class<?> objectClass = listener instanceof Class<?> ? (Class<?>) listener : listener.getClass();
+        for (Method method : objectClass.getDeclaredMethods()) {
+            if(isInstance && Modifier.isStatic(method.getModifiers())) continue;
+            if(!isInstance && !Modifier.isStatic(method.getModifiers())) continue;
+            if(!method.isAnnotationPresent(PacketListener.class)) continue;
             PacketListener annotation = method.getAnnotation((PacketListener.class));
+            if(annotation == null) continue;
             try {
-                Class<? extends Packet.Wrapper> packetWrapper = annotation.value();
-                Constructor<? extends Packet.Wrapper> constructor = annotation.value().getConstructor(Packet.class);
-                PacketIdentification packetIdentification = constructor.getAnnotation(PacketIdentification.class);
-                if(packetIdentification == null) throw new NullPointerException("You must provide a @PacketIdentification for Packet Wrappers. Missing on: " + packetWrapper.getSimpleName());
-                this.listeners.computeIfAbsent(packetIdentification.value(), k -> new ArrayList<>()).add(packet -> {
+                Class<? extends Packet.Remote> packetWrapper = annotation.value();
+                Constructor<? extends Packet.Remote> constructor = packetWrapper.getConstructor(Packet.class);
+                PacketIdentification packetIdentification = packetWrapper.getAnnotation(PacketIdentification.class);
+                if(packetIdentification == null) throw new NoSuchMethodException("You must provide a @PacketIdentification for Packet Wrappers. Missing on: " + packetWrapper.getSimpleName());
+                this.listeners.computeIfAbsent(packetIdentification.value(), k -> new Vector<>()).add(packet -> {
                     try {
                         try {
-                            method.invoke(null, constructor.newInstance(packet));
+                            method.invoke(isInstance ? listener : null, constructor.newInstance(packet));
                         } catch (IllegalArgumentException ignore) {
-                            method.invoke(null);
+                            method.invoke(isInstance ? listener : null);
                         }
-                    } catch (IllegalAccessException | InvocationTargetException | InstantiationException e) {
-                        throw new RuntimeException(e);
+                    } catch (IllegalAccessException | InstantiationException e) {
+                        packet.status(Packet.Status.ERROR);
+                        packet.statusMessage(e.getMessage());
+                        e.printStackTrace();
+                    } catch (InvocationTargetException e) {
+                        if(e.getCause() == null) return;
+                        e.getCause().printStackTrace();
+
+                        packet.statusMessage(e.getMessage());
+                        packet.status(Packet.Status.ERROR);
+                        if(e.getCause() instanceof PacketStatusResponse statusResponse) packet.status(statusResponse.status());
                     }
                 });
-            } catch (NoSuchMethodException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
-        });
+        }
     }
 
     /**
@@ -94,7 +109,7 @@ public abstract class MagicLinkCore implements Particle {
      * @param packet The packet to queue.
      */
     public void awaitReply(Packet.Local packet) {
-        packetsAwaitingReply.put(packet.replyTarget().ownTarget(), packet);
+        packetsAwaitingReply.putIfAbsent(packet.local().replyEndpoint().orElseThrow(), packet);
     }
 
     /**
@@ -103,7 +118,7 @@ public abstract class MagicLinkCore implements Particle {
      * @param handler The handler to use for handling the packet.
      *                This handler will be handled asynchronously and will not affect other handlers, even if it throws an exception.
      */
-    public void on(String identification, Consumer<Packet> handler) {
+    public void on(String identification, Consumer<Packet.Remote> handler) {
         this.listeners.computeIfAbsent(identification, k -> new ArrayList<>()).add(handler);
     }
 
@@ -122,64 +137,47 @@ public abstract class MagicLinkCore implements Particle {
 
     /**
      * Handles all the MagicLink/RustyConnector internals of handling MagicLink packets.
-     *
      * @param rawMessage An AES-256 encrypted MagicLink packet.
      */
     protected void handleMessage(String rawMessage) {
-        CacheableMessage cachedMessage = null;
-        String decryptedMessage;
+        Packet.Remote packet = null;
         try {
-            decryptedMessage = this.cryptor.decrypt(rawMessage);
-            cachedMessage = this.cache.cacheMessage(decryptedMessage, Packet.Status.UNDEFINED);
-        } catch (Exception e) {
-            cachedMessage = this.cache.cacheMessage(rawMessage, Packet.Status.UNDEFINED);
-            cachedMessage.sentenceMessage(Packet.Status.AUTH_DENIAL, "This message was encrypted using a different private key from what I have!");
-            throw new RuntimeException();
-        }
+            packet = Packet.parseIncoming(this.aes.decrypt(rawMessage));
+            this.cache.cache(packet);
+        } catch (Exception ignored) {}
+        if(packet == null) return;
 
-        Packet.Remote packet = Packet.parseReceived(decryptedMessage);
+        try {
+            if (!this.self.isEquivalent(packet.remote()))
+                throw new TrashedPacket("The packet isn't addressed to this server.");
 
-        if(this.cache.ignoredType(packet)) this.cache.removeMessage(cachedMessage.getSnowflake());
+            if (packet.replying()) {
+                Packet.Local replyTarget = this.packetsAwaitingReply.get(packet.id());
 
-        if(!this.self.isEquivalent(packet.target())) {
-            cachedMessage.sentenceMessage(Packet.Status.TRASHED, "This packet wasn't addressed to me.");
-            return;
-        }
+                if (replyTarget == null) throw new TrashedPacket("This packet is a response to another packet, which isn't available to receive responses anymore.");
 
-        if(packet.replying()) {
-            Packet.Local replyTarget = this.packetsAwaitingReply.get(packet.replyTarget().remoteTarget().orElse(null));
-
-            if(replyTarget == null) {
-                cachedMessage.sentenceMessage(Packet.Status.TRASHED, "The packet that this is replying to doesn't exist.");
+                replyTarget.handleReply(packet);
                 return;
             }
 
-            replyTarget.handleReply(packet);
-            return;
-        }
+            List<Consumer<Packet.Remote>> listeners = this.listeners.get(packet.identification().toString());
+            if (listeners == null || listeners.isEmpty()) throw new TrashedPacket("No listeners exist to handle this packet.");
 
-        List<Consumer<Packet>> listeners = this.listeners.get(packet.identification().get());
-        if(listeners == null) {
-            cachedMessage.sentenceMessage(Packet.Status.TRASHED, "No listeners exist to handle this packet.");
-            return;
+            Packet.Remote finalPacket = packet;
+            listeners.forEach(l -> l.accept(finalPacket));
+        } catch (PacketStatusResponse e) {
+            packet.status(e.status());
+            packet.statusMessage(e.getMessage());
+        } catch (Exception e) {
+            packet.status(Packet.Status.ERROR);
+            packet.statusMessage(e.getMessage());
         }
-        if(listeners.isEmpty()) {
-            cachedMessage.sentenceMessage(Packet.Status.TRASHED, "No listeners exist to handle this packet.");
-            return;
-        }
-
-        Consumer<Consumer<Packet>> handler = listener -> {
-            try {
-                listener.accept(packet);
-            } catch (Exception ignore) {}
-        };
-        listeners.forEach(handler);
     }
 
     public interface Packets {
         interface Handshake {
             @PacketIdentification("RC-MLH")
-            class Ping extends Packet.Wrapper {
+            class Ping extends Packet.Remote {
                 public String address() {
                     return this.parameters().get(Parameters.ADDRESS).getAsString();
                 }
@@ -214,7 +212,7 @@ public abstract class MagicLinkCore implements Particle {
             }
 
             @PacketIdentification("RC-MLHF")
-            class Failure extends Packet.Wrapper {
+            class Failure extends Packet.Remote {
                 public String reason() {
                     return this.parameters().get(Parameters.REASON).getAsString();
                 }
@@ -229,7 +227,7 @@ public abstract class MagicLinkCore implements Particle {
             }
 
             @PacketIdentification("RC-MLHS")
-            class Success extends Packet.Wrapper {
+            class Success extends Packet.Remote {
                 public String message() {
                     return this.parameters().get(Parameters.MESSAGE).getAsString();
                 }
@@ -253,21 +251,21 @@ public abstract class MagicLinkCore implements Particle {
         }
 
         @PacketIdentification("RC-MLHK")
-        class Disconnect extends Packet.Wrapper {
+        class Disconnect extends Packet.Remote {
             public Disconnect(Packet packet) {
                 super(packet);
             }
         }
 
         @PacketIdentification("RC-MLHSP")
-        class StalePing extends Packet.Wrapper {
+        class StalePing extends Packet.Remote {
             public StalePing(Packet packet) {
                 super(packet);
             }
         }
 
         @PacketIdentification("RC-R")
-        class ResponsePacket extends Packet.Wrapper {
+        class ResponsePacket extends Packet.Remote {
             public ResponsePacket(Packet packet) {
                 super(packet);
             }
@@ -280,7 +278,7 @@ public abstract class MagicLinkCore implements Particle {
         }
 
         @PacketIdentification("RC-SP")
-        class SendPlayer extends Packet.Wrapper {
+        class SendPlayer extends Packet.Remote {
             public String targetFamilyName() {
                 return this.parameters().get(Parameters.TARGET_FAMILY).getAsString();
             }
@@ -306,24 +304,24 @@ public abstract class MagicLinkCore implements Particle {
 
     public static abstract class Server extends MagicLinkCore {
         protected final AtomicInteger delay = new AtomicInteger(5);
-        protected final AtomicBoolean stopPinging = new AtomicBoolean(false);
+        protected final AtomicBoolean closed = new AtomicBoolean(false);
         protected IPV6Broadcaster broadcaster;
         protected String registrationConfiguration;
 
         protected Server(
-                @NotNull Packet.@NotNull Target self,
-                @NotNull AES cryptor,
+                @NotNull Packet.@NotNull SourceIdentifier self,
+                @NotNull AES aes,
                 @NotNull MessageCache cache,
                 @NotNull String registrationConfiguration,
                 @Nullable IPV6Broadcaster broadcaster
         ) {
-            super(self, cryptor, cache);
+            super(self, aes, cache);
             this.registrationConfiguration = registrationConfiguration;
             this.broadcaster = broadcaster;
         }
 
         /**
-         * Updates the delay which is used to determin how frequently the Server
+         * Updates the delay which is used to determine how frequently the Server
          * must ping the Proxy.
          * @param delay The delay to set.
          */
@@ -345,13 +343,13 @@ public abstract class MagicLinkCore implements Particle {
         protected Map<String, ServerRegistrationConfiguration> registrationConfigurations;
 
         protected Proxy(
-                @NotNull Packet.@NotNull Target self,
-                @NotNull AES cryptor,
+                @NotNull Packet.@NotNull SourceIdentifier self,
+                @NotNull AES aes,
                 @NotNull MessageCache cache,
                 @NotNull Map<String, ServerRegistrationConfiguration> registrationConfigurations,
                 @Nullable IPV6Broadcaster broadcaster
         ) {
-            super(self, cryptor, cache);
+            super(self, aes, cache);
             this.registrationConfigurations = registrationConfigurations;
             this.broadcaster = broadcaster;
         }

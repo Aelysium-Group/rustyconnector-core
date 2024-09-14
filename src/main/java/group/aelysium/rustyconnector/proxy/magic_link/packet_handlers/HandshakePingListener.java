@@ -20,7 +20,7 @@ public class HandshakePingListener {
     @PacketListener(WebSocketMagicLink.Packets.Handshake.Ping.class)
     public static void execute(WebSocketMagicLink.Packets.Handshake.Ping packet) throws Exception {
         try {
-            Server server = RC.P.Server(packet.sender().uuid()).orElseThrow();
+            Server server = RC.P.Server(packet.local().uuid()).orElseThrow();
 
             server.setTimeout(15);
             server.setPlayerCount(packet.playerCount());
@@ -31,17 +31,17 @@ public class HandshakePingListener {
             );
 
             try {
-                Particle.Flux<? extends Family> familyFlux = RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Families().orElseThrow().find(config.family()).orElseThrow(() ->
+                Particle.Flux<? extends Family> familyFlux = RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().FamilyRegistry().orElseThrow().find(config.family()).orElseThrow(() ->
                         new InvalidAlgorithmParameterException("A family with the id `"+config.family()+"` doesn't exist!")
                 );
                 Family family = familyFlux.access().get(10, TimeUnit.SECONDS);
 
-                RC.P.Server(packet.sender().uuid()).ifPresent(m -> {
-                    throw new RuntimeException("Server " + packet.sender().uuid() + " can't be registered twice!");
+                RC.P.Server(packet.local().uuid()).ifPresent(m -> {
+                    throw new RuntimeException("Server " + packet.local().uuid() + " can't be registered twice!");
                 });
 
                 Server server = family.generateServer(
-                        packet.sender().uuid(),
+                        packet.local().uuid(),
                         AddressUtil.parseAddress(packet.address()),
                         packet.podName().orElse(null),
                         packet.displayName().orElse(null),
@@ -54,17 +54,17 @@ public class HandshakePingListener {
                 RC.P.EventManager().fireEvent(new ServerRegisterEvent(familyFlux, server));
 
                 Packet.New()
-                        .identification(Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_SUCCESS)
+                        .identification(Packet.Identification.from("RC","MLHS"))
                         .parameter(WebSocketMagicLink.Packets.Handshake.Success.Parameters.MESSAGE, "Connected to the proxy! Registered as `"+server.uuidOrDisplayName()+"` into the family `"+family.id()+"`. Loaded using the magic config `"+packet.serverRegistration()+"`.")
                         .parameter(WebSocketMagicLink.Packets.Handshake.Success.Parameters.COLOR, NamedTextColor.GREEN.toString())
                         .parameter(WebSocketMagicLink.Packets.Handshake.Success.Parameters.INTERVAL, new Packet.Parameter(10))
-                        .addressedTo(packet)
+                        .addressTo(packet)
                         .send();
             } catch(Exception e2) {
                 Packet.New()
-                        .identification(Packet.BuiltInIdentifications.MAGICLINK_HANDSHAKE_FAIL)
+                        .identification(Packet.Identification.from("RC","MLHF"))
                         .parameter(WebSocketMagicLink.Packets.Handshake.Failure.Parameters.REASON, "Attempt to connect to proxy failed! " + e2.getMessage())
-                        .addressedTo(packet)
+                        .addressTo(packet)
                         .send();
             }
         }

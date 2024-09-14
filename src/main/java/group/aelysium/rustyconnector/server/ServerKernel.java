@@ -7,9 +7,11 @@ import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.server.lang.ServerLang;
-import group.aelysium.rustyconnector.proxy.ProxyFlame;
+import group.aelysium.rustyconnector.proxy.ProxyKernel;
 import group.aelysium.rustyconnector.proxy.util.Version;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
+import group.aelysium.rustyconnector.server.magic_link.handlers.HandshakeFailureListener;
+import group.aelysium.rustyconnector.server.magic_link.handlers.HandshakeStalePingListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +19,7 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.*;
 
-public class ServerFlame implements Particle {
+public class ServerKernel implements Particle {
     private final UUID uuid;
     private final Version version;
     private final ServerAdapter adapter;
@@ -27,7 +29,7 @@ public class ServerFlame implements Particle {
     private final Flux<? extends MagicLinkCore.Server> magicLink;
     private final Flux<? extends EventManager> eventManager;
 
-    protected ServerFlame(
+    protected ServerKernel(
             @NotNull UUID uuid,
             @NotNull ServerAdapter adapter,
             @NotNull Flux<? extends LangLibrary<? extends ServerLang>> lang,
@@ -45,7 +47,7 @@ public class ServerFlame implements Particle {
         this.eventManager = eventManager;
 
         try {
-            try (InputStream input = ProxyFlame.class.getClassLoader().getResourceAsStream("metadata.json")) {
+            try (InputStream input = ProxyKernel.class.getClassLoader().getResourceAsStream("metadata.json")) {
                 if (input == null) throw new NullPointerException("Unable to initialize version number from jar.");
                 Gson gson = new Gson();
                 JsonObject object = gson.fromJson(new String(input.readAllBytes()), JsonObject.class);
@@ -94,7 +96,7 @@ public class ServerFlame implements Particle {
     }
 
     /**
-     * The number of players on this server.
+     * The number of playerRegistry on this server.
      * @return {@link Integer}
      */
     public int playerCount() {
@@ -102,22 +104,22 @@ public class ServerFlame implements Particle {
     }
 
     /**
-     * Locks this Server so that players can't join it via the family's load balancer.
+     * Locks this Server so that playerRegistry can't join it via the family's load balancer.
      */
     public void lock() {
         Packet.New()
-                .identification(Packet.BuiltInIdentifications.LOCK_SERVER)
-                .addressedTo(Packet.Target.allAvailableProxies())
+                .identification(Packet.Identification.from("RC","LS"))
+                .addressTo(Packet.SourceIdentifier.allAvailableProxies())
                 .send();
     }
 
     /**
-     * Unlocks this Server so that players can join it via the family's load balancer.
+     * Unlocks this Server so that playerRegistry can join it via the family's load balancer.
      */
     public void unlock() {
         Packet.New()
-                .identification(Packet.BuiltInIdentifications.UNLOCK_SERVER)
-                .addressedTo(Packet.Target.allAvailableProxies())
+                .identification(Packet.Identification.from("RC","US"))
+                .addressTo(Packet.SourceIdentifier.allAvailableProxies())
                 .send();
     }
 
@@ -129,10 +131,10 @@ public class ServerFlame implements Particle {
      */
     public Packet.Local send(UUID player, String familyID) {
         return Packet.New()
-                .identification(Packet.BuiltInIdentifications.SEND_PLAYER)
+                .identification(Packet.Identification.from("RC","SP"))
                 .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.PLAYER_UUID, player.toString())
                 .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.TARGET_FAMILY, familyID)
-                .addressedTo(Packet.Target.allAvailableProxies())
+                .addressTo(Packet.SourceIdentifier.allAvailableProxies())
                 .send();
     }
 
@@ -144,10 +146,10 @@ public class ServerFlame implements Particle {
      */
     public Packet.Local send(UUID player, UUID server) {
         return Packet.New()
-                .identification(Packet.BuiltInIdentifications.SEND_PLAYER)
+                .identification(Packet.Identification.from("RC","SP"))
                 .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.PLAYER_UUID, player.toString())
                 .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.TARGET_SERVER, server.toString())
-                .addressedTo(Packet.Target.allAvailableProxies())
+                .addressTo(Packet.SourceIdentifier.allAvailableProxies())
                 .send();
     }
 
@@ -177,7 +179,7 @@ public class ServerFlame implements Particle {
      * Parameters listed in the constructor are required, any other parameters are
      * technically optional because they also have default implementations.
      */
-    public static class Tinder extends Particle.Tinder<ServerFlame> {
+    public static class Tinder extends Particle.Tinder<ServerKernel> {
         private final UUID uuid;
         private final ServerAdapter adapter;
         private Particle.Tinder<? extends LangLibrary<? extends ServerLang>> lang = LangLibrary.Tinder.DEFAULT_SERVER_CONFIGURATION;
@@ -211,8 +213,8 @@ public class ServerFlame implements Particle {
         }
 
         @Override
-        public @NotNull ServerFlame ignite() throws Exception {
-            return new ServerFlame(
+        public @NotNull ServerKernel ignite() throws Exception {
+            return new ServerKernel(
                     uuid,
                     adapter,
                     lang.flux(),

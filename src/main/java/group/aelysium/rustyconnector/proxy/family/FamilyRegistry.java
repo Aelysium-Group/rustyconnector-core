@@ -6,11 +6,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Families implements Particle {
+public class FamilyRegistry implements Particle {
     private final Map<String, Flux<? extends Family>> families = new ConcurrentHashMap<>();
     private String rootFamily;
 
-    protected Families() {}
+    protected FamilyRegistry() {}
 
     /**
      * Sets the root family.
@@ -58,7 +58,7 @@ public class Families implements Particle {
     }
 
     /**
-     * Gets a list of all families.
+     * Gets a list of all familyRegistry.
      */
     public List<Flux<? extends Family>> dump() {
         return this.families.values().stream().toList();
@@ -69,7 +69,7 @@ public class Families implements Particle {
     }
 
     /**
-     * Get the number of families in this {@link Families}.
+     * Get the number of familyRegistry in this {@link FamilyRegistry}.
      * @return {@link Integer}
      */
     public int size() {
@@ -77,7 +77,7 @@ public class Families implements Particle {
     }
 
     public void close() {
-        // Teardown logic for any families that need it
+        // Teardown logic for any familyRegistry that need it
         for (Particle.Flux<? extends Family> family : this.families.values()) {
             try {
                 family.close();
@@ -89,7 +89,7 @@ public class Families implements Particle {
         this.families.clear();
     }
 
-    public static class Tinder extends Particle.Tinder<Families> {
+    public static class Tinder extends Particle.Tinder<FamilyRegistry> {
         protected Map<String, Flux<? extends Family>> initialFamilies = new ConcurrentHashMap<>();
         protected String rootFamily = null;
 
@@ -108,20 +108,20 @@ public class Families implements Particle {
         }
 
         @Override
-        public @NotNull Families ignite() throws Exception {
-            Families families = new Families();
+        public @NotNull FamilyRegistry ignite() throws Exception {
+            FamilyRegistry familyRegistry = new FamilyRegistry();
 
-            initialFamilies.forEach(families::put);
-            if(this.rootFamily != null) families.setRootFamily(this.rootFamily);
+            initialFamilies.forEach(familyRegistry::put);
+            if(this.rootFamily != null) familyRegistry.setRootFamily(this.rootFamily);
 
-            families.dump().forEach(Flux::access);
+            familyRegistry.dump().forEach(Flux::access);
 
-            return families;
+            return familyRegistry;
         }
 
         /**
-         * Returns the default configuration for a Families manager.
-         * This default configuration has no root family set and no initial families loaded.
+         * Returns the default configuration for a FamilyRegistry manager.
+         * This default configuration has no root family set and no initial familyRegistry loaded.
          */
         public static Tinder DEFAULT_CONFIGURATION = new Tinder();
     }

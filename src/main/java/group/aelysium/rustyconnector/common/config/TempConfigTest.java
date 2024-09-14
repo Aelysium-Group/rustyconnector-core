@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.common.config;
 
-@Config("families/{family_name}.yml") // Want to add support for dynamic filenames
+@Config("familyRegistry/{family_name}.yml") // Want to add support for dynamic filenames
 @Comment({"",""})
 public class TempConfigTest {
         @PathParameter("family_name")
@@ -12,7 +12,7 @@ public class TempConfigTest {
                 "#                       Display Name                       #",
                 "#                                                          #",
                 "#               ---------------------------                #",
-                "# | Display name is the name of your family, as players    #",
+                "# | Display name is the name of your family, as playerRegistry    #",
                 "# | will see it, in-game.                                  #",
                 "#                                                          #",
                 "#               ---------------------------                #",

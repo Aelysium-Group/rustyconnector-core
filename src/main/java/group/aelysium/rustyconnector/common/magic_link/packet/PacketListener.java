@@ -9,8 +9,8 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface PacketListener {
     /**
-     * The packet that this listener is targeting.
+     * The packet that this listen is targeting.
      * It's expected that, when you
      */
-    Class<? extends Packet.Wrapper> value();
+    Class<? extends Packet.Remote> value();
 }

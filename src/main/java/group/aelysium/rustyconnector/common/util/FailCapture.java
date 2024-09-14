@@ -1,9 +1,8 @@
-package group.aelysium.rustyconnector.common;
+package group.aelysium.rustyconnector.common.util;
 
 import group.aelysium.rustyconnector.common.crypt.Snowflake;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 
-import java.io.Closeable;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.Executors;
