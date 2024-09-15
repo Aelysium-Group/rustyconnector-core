@@ -2,15 +2,28 @@ package group.aelysium.rustyconnector.proxy.family;
 
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 
 public class FamilyRegistry implements Particle {
-    private final Map<String, Flux<? extends Family>> families = new ConcurrentHashMap<>();
+    private final Map<String, Flux<? extends Family>> families;
     private String rootFamily;
 
-    protected FamilyRegistry() {}
+    protected FamilyRegistry(@NotNull Map<String, Flux<? extends Family>> families, @Nullable String rootFamily) {
+        this.families = families;
+        this.rootFamily = rootFamily;
+
+        this.families.values().forEach(f -> {
+            try {
+                System.out.println("loaded"+f.access().get().id());
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
 
     /**
      * Sets the root family.
@@ -96,27 +109,18 @@ public class FamilyRegistry implements Particle {
         /**
          * Adds the family to be present on-boot
          */
-        public void addFamily(Flux<? extends Family> family) {
-            family.executeNow(f -> this.initialFamilies.put(f.id(), family));
+        public void addFamily(String id, Flux<? extends Family> family) {
+            this.initialFamilies.put(id, family);
         }
 
-        public void setRootFamily(Flux<? extends Family> family) {
-            family.executeNow(f -> {
-                this.initialFamilies.put(f.id(), family);
-                this.rootFamily = f.id();
-            });
+        public void setRootFamily(String id, Flux<? extends Family> family) {
+            this.initialFamilies.put(id, family);
+            this.rootFamily = id;
         }
 
         @Override
         public @NotNull FamilyRegistry ignite() throws Exception {
-            FamilyRegistry familyRegistry = new FamilyRegistry();
-
-            initialFamilies.forEach(familyRegistry::put);
-            if(this.rootFamily != null) familyRegistry.setRootFamily(this.rootFamily);
-
-            familyRegistry.dump().forEach(Flux::access);
-
-            return familyRegistry;
+            return new FamilyRegistry(this.initialFamilies, this.rootFamily);
         }
 
         /**

@@ -50,6 +50,12 @@ public class NanoID {
     }
 
     public static NanoID randomNanoID() {
-        return new NanoID(NanoIdUtils.randomNanoId(random, ALPHABET.toCharArray(), LENGTH));
+        return randomNanoID(LENGTH, ALPHABET);
+    }
+    public static NanoID randomNanoID(int length) {
+        return randomNanoID(length, ALPHABET);
+    }
+    public static NanoID randomNanoID(int length, String alphabet) {
+        return new NanoID(NanoIdUtils.randomNanoId(random, alphabet.toCharArray(), length));
     }
 }

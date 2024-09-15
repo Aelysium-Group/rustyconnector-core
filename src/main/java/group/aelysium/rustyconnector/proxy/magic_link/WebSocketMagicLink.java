@@ -17,12 +17,14 @@ import group.aelysium.rustyconnector.proxy.magic_link.packet_handlers.HandshakeP
 import group.aelysium.rustyconnector.proxy.util.AddressUtil;
 import io.javalin.Javalin;
 import io.javalin.config.HttpConfig;
+import io.javalin.config.JettyConfig;
 import io.javalin.http.*;
 import io.javalin.websocket.WsContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -38,9 +40,10 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
     private final Javalin server = Javalin.create(c -> {
         c.showJavalinBanner = false;
 
-        HttpConfig httpConfig = new HttpConfig(c);
-        httpConfig.defaultContentType = ContentType.JSON;
-        httpConfig.strictContentTypes = true;
+        c.jetty.modifyWebSocketServletFactory(ws -> ws.setIdleTimeout(Duration.ofMinutes(15)));
+
+        c.http.defaultContentType = ContentType.JSON;
+        c.http.strictContentTypes = true;
     });
 
     protected WebSocketMagicLink(
@@ -62,6 +65,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
         for (int i = 0; i < (new Random()).nextInt((32 - 7) + 1) + 32; i++) server.get("/"+tokenGenerator.nextString(), dummyHandler);
 
         Gson gson = new Gson();
+
         server.get("/bDaBMkmYdZ6r4iFExwW6UzJyNMDseWoS3HDa6FcyM7xNeCmtK98S3Mhp4o7g7oW6VB9CA6GuyH2pNhpQk3QvSmBUeCoUDZ6FXUsFCuVQC59CB2y22SBnGkMf9NMB9UWk", (request) -> {
             String authorization = request.header("Authorization");
             if(authorization == null) throw new UnauthorizedResponse();
@@ -122,8 +126,8 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
                     Packet.SourceIdentifier target = Packet.SourceIdentifier.fromJSON(gson.fromJson(Optional.ofNullable(upgradeRequest.header("X-Server-Identification")).orElse(""), JsonObject.class));
 
                     this.clients.putIfAbsent(target, request);
-                } catch (Exception ignore) {
-                    ignore.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace();
                     request.closeSession(500, "Unable to complete Magic Link connection.");
                 }
             });
@@ -145,7 +149,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
                         return;
                     }
                     this.handleMessage(request.message());
-                } catch (Exception ignore) {ignore.printStackTrace();}
+                } catch (Exception e) {e.printStackTrace();}
             });
         });
 

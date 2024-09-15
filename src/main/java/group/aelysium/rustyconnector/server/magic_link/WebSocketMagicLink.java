@@ -21,6 +21,8 @@ import group.aelysium.rustyconnector.server.magic_link.handlers.HandshakeStalePi
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.drafts.Draft;
+import org.java_websocket.drafts.Draft_6455;
 import org.java_websocket.handshake.ServerHandshake;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -129,7 +131,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                 websocketURL.clearPath();
                 websocketURL.appendPath(websocketEndpoint);
 
-                this.client = new WebSocketClient(websocketURL.toURI(), headers) {
+                this.client = new WebSocketClient(websocketURL.toURI(), new Draft_6455(), headers, 1000 * (60 * 15)) {
                     @Override
                     public void onOpen(ServerHandshake handshake) {
                         RC.S.Adapter().log(RC.S.Lang().lang().magicLink());
@@ -144,12 +146,19 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
 
                     @Override
                     public void onClose(int code, String reason, boolean remote) {
-                        try {
-                            WebSocketMagicLink.this.stopHeartbeat.set(true);
-                            WebSocketMagicLink.this.executor.schedule(this::connect, 5, TimeUnit.SECONDS);
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                        if(code == 401) {
+                            RC.S.Adapter().log(Component.text("Unable to authenticate with Magic Link to the proxy. Trying again after 10 seconds."));
+                            WebSocketMagicLink.this.executor.schedule(this::connect, 10, TimeUnit.SECONDS);
+                            return;
                         }
+
+                        try {
+                            if(this.reconnectBlocking()) return;  // breaks the reconnection logic bc it must be on another thread
+                        } catch (InterruptedException ignore) {}
+                        RC.S.Adapter().log(Component.text("["+code+"] "+reason));
+                        WebSocketMagicLink.this.stopHeartbeat.set(true);
+                        RC.S.Adapter().log(Component.text("Unable to refresh connection with Magic Link on the proxy. Trying again after 10 seconds."));
+                        WebSocketMagicLink.this.executor.schedule(this::connect, 10, TimeUnit.SECONDS);
                     }
 
                     @Override
@@ -157,6 +166,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                         e.printStackTrace();
                     }
                 };
+                this.client.setConnectionLostTimeout(0);
                 if(this.client.connectBlocking()) return;
             } catch (Exception e) {
                 throw new ExceptionInInitializerError(e);

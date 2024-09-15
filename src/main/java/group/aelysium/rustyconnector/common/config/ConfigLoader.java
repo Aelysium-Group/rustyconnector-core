@@ -15,6 +15,140 @@ import java.util.regex.Pattern;
 
 public class ConfigLoader {
     /**
+     * Loads a configuration from a class definition.
+     * Config class must be annotated with the {@link Config} annotation, and members must be marked with {@link Comment} and/or {@link Node} annotations.
+     * If a method has the {@link Node} annotation, the value of the entry will be loaded into the actual method.
+     * If you want to add naked comments, you can add the {@link Comment} annotation to an empty method.
+     * @param clazz The class definition.
+     * @param pathReplacements If the {@link Config#value()} has curly braces covered paths (i.e. "some/{dynamic}/path.yml", those will be replaced with the provided replacements.
+     * @throws IOException If the config filepath contains invalid characters.
+     * @throws ArrayIndexOutOfBoundsException If you don't provide the same number of pathReplacements as {path_parameters} in the @Config path.
+     */
+    public static <T> T load(Class<T> clazz, Map<String, String> pathReplacements) throws IOException, ArrayIndexOutOfBoundsException {
+        if(!clazz.isAnnotationPresent(Config.class)) throw new RuntimeException("Configs must be annotated with @Config");
+
+        Config config = clazz.getAnnotation(Config.class);
+
+        String path;
+        {
+            AtomicInteger index = new AtomicInteger(0);
+            List<String> splitPath = Arrays.stream(config.value().split("/")).map(v -> {
+                if(!v.startsWith("{")) return v;
+                String key = v.replaceAll("^.*\\{([a-zA-Z0-9\\_\\-\\.\\/\\\\]+)\\}.*","$1");
+
+                String replacement = pathReplacements.get(key);
+                if(replacement == null) throw new IllegalArgumentException("No value for the path key '"+key+"' exists!");
+                System.out.println(replacement);
+                index.incrementAndGet();
+                return v.replaceAll("^\\{[a-zA-Z0-9\\_\\-\\.\\/\\\\]+\\}(\\.[a-zA-Z0-9\\_\\-]*)?",replacement+"$1");
+            }).toList();
+            path = String.join("/", splitPath);
+            System.out.println(path);
+        }
+        if(!Pattern.compile("^[a-zA-Z0-9\\_\\-\\.\\/\\\\]+$").matcher(path).matches())
+            throw new IOException("Invalid file path defined for config: "+path);
+
+        Map<Integer, List<ConfigEntry>> entries = new HashMap<>();
+        try {
+            Comment comment = clazz.getAnnotation(Comment.class);
+            enterValue(entries, new ConfigComment(Integer.MIN_VALUE, "", comment.value()));
+        } catch (Exception ignore) {}
+
+        List<Field> allContentsFields = new ArrayList<>();
+        List<ConfigNode> pathParameters = new ArrayList<>();
+        // Load all Comment and Entry annotations
+        Arrays.stream(clazz.getDeclaredFields())
+                .filter(f -> !Modifier.isStatic(f.getModifiers())).toList()
+                .forEach(f -> {
+                    boolean hasComment = f.isAnnotationPresent(Comment.class);
+                    boolean hasEntry = f.isAnnotationPresent(Node.class);
+                    if(f.isAnnotationPresent(PathParameter.class)) {
+                        PathParameter pathParameter = f.getAnnotation(PathParameter.class);
+                        pathParameters.add(new ConfigNode(0, pathParameter.value(), pathReplacements.get(pathParameter.value()), f));
+                        return;
+                    }
+                    if(f.isAnnotationPresent(AllContents.class)) {
+                        allContentsFields.add(f);
+                        return;
+                    }
+                    if(!(hasComment || hasEntry)) return;
+
+                    if(hasEntry) {
+                        Node node = f.getAnnotation(Node.class);
+                        enterValue(entries, new ConfigNode(node.order(), node.key(), node.defaultValue(), f));
+
+                        if(hasComment) {
+                            Comment comment = f.getAnnotation(Comment.class);
+                            enterValue(entries, new ConfigComment(node.order(), node.key(), comment.value()));
+                        }
+                    }
+                });
+
+        // Compile Comment and Entry annotations for file printing.
+        List<ConfigEntry> sortedEntries = new ArrayList<>();
+        {
+            List<Map.Entry<Integer, List<ConfigEntry>>> list = new ArrayList<>(entries.entrySet());
+            list.sort((entry1, entry2) -> entry2.getKey().compareTo(entry1.getKey()));
+
+            list.forEach(entry -> sortedEntries.addAll(entry.getValue()));
+        }
+
+        // Construct the Java object with all the provided data
+        List<ConfigNode> nodes = (List<ConfigNode>) (Object) sortedEntries.stream().filter(v -> v instanceof ConfigNode).toList();
+
+        // Populate the object instance with the data.
+        try {
+            T instance = clazz.getConstructor().newInstance();
+
+            // Generates the config if it doesn't exist then loads the contents of the config.
+            CommentedConfigurationNode yaml = loadOrGenerate(path, sortedEntries);
+            byte[] allContents = loadBytes(path);
+            allContentsFields.forEach(f -> {
+                try {
+                    if (!f.getType().equals(byte[].class)) throw new ClassCastException("Fields annotated with @AllContents must be of type byte[]!");
+
+                    f.setAccessible(true);
+                    f.set(instance, allContents);
+                    f.setAccessible(false);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            pathParameters.forEach(n -> {
+                try {
+                    n.field().setAccessible(true);
+                    n.field().set(instance, n.value());
+                    n.field().setAccessible(false);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
+            for (ConfigNode node : nodes) {
+                Type type = node.field.getGenericType();
+                node.field.setAccessible(true);
+                node.field.set(instance, getValue(yaml, node.key(), TypeToken.get(type)));
+                node.field.setAccessible(false);
+            }
+            return instance;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    /**
+     * Loads a configuration from a class definition.
+     * Config class must be annotated with the {@link Config} annotation, and members must be marked with {@link Comment} and/or {@link Node} annotations.
+     * If a method has the {@link Node} annotation, the value of the entry will be loaded into the actual method.
+     * If you want to add naked comments, you can add the {@link Comment} annotation to an empty method.
+     * @param clazz The class definition.
+     * @throws IOException If the config filepath contains invalid characters.
+     * @throws ArrayIndexOutOfBoundsException If you don't provide the same number of pathReplacements as {path_parameters} in the @Config path.
+     */
+    public static <T> T load(Class<T> clazz) throws IOException, ArrayIndexOutOfBoundsException {
+        return load(clazz, Map.of());
+    }
+
+    /**
      * Retrieve data from a specific configuration node.
      * @param data The configuration data to search for a specific node.
      * @param node The node to search for.
@@ -88,111 +222,6 @@ public class ConfigLoader {
     protected static void enterValue(Map<Integer, List<ConfigEntry>> entries, ConfigEntry entry) {
         entries.computeIfAbsent(entry.order(), k -> new ArrayList<>()).add(entry);
     }
-
-    /**
-     * Loads a configuration from a class definition.
-     * Config class must be annotated with the {@link Config} annotation, and members must be marked with {@link Comment} and/or {@link Node} annotations.
-     * If a method has the {@link Node} annotation, the value of the entry will be loaded into the actual method.
-     * If you want to add naked comments, you can add the {@link Comment} annotation to an empty method.
-     * @param clazz The class definition.
-     * @param pathReplacements If the {@link Config#value()} has curly braces covered paths (i.e. "some/{dynamic}/path.yml", those will be replaced with the provided replacements in the order they appear.
-     * @throws IOException If the config filepath contains invalid characters.
-     * @throws ArrayIndexOutOfBoundsException If you don't provide the same number of pathReplacements as {path_parameters} in the @Config path.
-     */
-    public static <T> T load(Class<T> clazz, String... pathReplacements) throws IOException, ArrayIndexOutOfBoundsException {
-        if(!clazz.isAnnotationPresent(Config.class)) throw new RuntimeException("Configs must be annotated with @Config");
-
-        Config config = clazz.getAnnotation(Config.class);
-
-        String path;
-        {
-            AtomicInteger index = new AtomicInteger(0);
-            List<String> splitPath = Arrays.stream(config.value().split("/")).map(v -> {
-                if(!v.startsWith("{")) return v;
-                if(pathReplacements[index.get()] == null) throw new ArrayIndexOutOfBoundsException("You must provide the same number of path replacements as the number of {path_parameters} in the @Config path.");
-
-                String replacement = pathReplacements[index.get()];
-                index.incrementAndGet();
-                return v.replaceAll("^\\{[a-zA-Z0-9\\_\\-\\.\\/\\\\]+\\}(\\.[a-zA-Z0-9\\_\\-]*)?",replacement+"$1");
-            }).toList();
-            path = String.join("/", splitPath);
-        }
-        if(!Pattern.compile("^[a-zA-Z0-9\\_\\-\\.\\/\\\\]+$").matcher(path).matches())
-            throw new IOException("Invalid file path defined for config: "+path);
-
-        Map<Integer, List<ConfigEntry>> entries = new HashMap<>();
-        try {
-            Comment comment = clazz.getAnnotation(Comment.class);
-            enterValue(entries, new ConfigComment(Integer.MIN_VALUE, "", comment.value()));
-        } catch (Exception ignore) {}
-
-        List<Field> allContentsFields = new ArrayList<>();
-        // Load all Comment and Entry annotations
-        Arrays.stream(clazz.getDeclaredFields())
-                .filter(f -> !Modifier.isStatic(f.getModifiers())).toList()
-                .forEach(f -> {
-            boolean hasComment = f.isAnnotationPresent(Comment.class);
-            boolean hasEntry = f.isAnnotationPresent(Node.class);
-            if(f.isAnnotationPresent(AllContents.class)) {
-                allContentsFields.add(f);
-                return;
-            }
-            if(!(hasComment || hasEntry)) return;
-
-            if(hasEntry) {
-                Node node = f.getAnnotation(Node.class);
-                enterValue(entries, new ConfigNode(node.order(), node.key(), node.defaultValue(), f));
-
-                if(hasComment) {
-                    Comment comment = f.getAnnotation(Comment.class);
-                    enterValue(entries, new ConfigComment(node.order(), node.key(), comment.value()));
-                }
-            }
-        });
-
-        // Compile Comment and Entry annotations for file printing.
-        List<ConfigEntry> sortedEntries = new ArrayList<>();
-        {
-            List<Map.Entry<Integer, List<ConfigEntry>>> list = new ArrayList<>(entries.entrySet());
-            list.sort((entry1, entry2) -> entry2.getKey().compareTo(entry1.getKey()));
-
-            list.forEach(entry -> sortedEntries.addAll(entry.getValue()));
-        }
-
-        // Construct the Java object with all the provided data
-        List<ConfigNode> nodes = (List<ConfigNode>) (Object) sortedEntries.stream().filter(v -> v instanceof ConfigNode).toList();
-
-        // Populate the object instance with the data.
-        try {
-            T instance = clazz.getConstructor().newInstance();
-
-            // Generates the config if it doesn't exist then loads the contents of the config.
-            CommentedConfigurationNode yaml = loadOrGenerate(path, sortedEntries);
-            byte[] allContents = loadBytes(path);
-            allContentsFields.forEach(f -> {
-                try {
-                    if (!f.getType().equals(byte[].class)) throw new ClassCastException("Fields annotated with @AllContents must be of type byte[]!");
-
-                    f.setAccessible(true);
-                    f.set(instance, allContents);
-                    f.setAccessible(false);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            });
-
-            for (ConfigNode node : nodes) {
-                Type type = node.field.getGenericType();
-                node.field.setAccessible(true);
-                node.field.set(instance, getValue(yaml, node.key(), TypeToken.get(type)));
-                node.field.setAccessible(false);
-            }
-            return instance;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static abstract class ConfigEntry {
         private final int order;
         public ConfigEntry(int order) {
