@@ -10,6 +10,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -17,10 +18,9 @@ import java.util.function.Consumer;
 
 public class EventManager implements Particle {
     private final ExecutorService executor = Executors.newCachedThreadPool();
-    private final Map<Class<? extends Event>, Vector<SortableListener>> listeners = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Class<? extends Event>, Vector<SortableListener>> listeners = new ConcurrentHashMap<>();
 
-    protected EventManager() {
-    }
+    protected EventManager() {}
 
     /**
      * Registers the provided listen.
@@ -48,18 +48,11 @@ public class EventManager implements Particle {
                         annotation.ignoreCanceled(),
                         event -> {
                             try {
-                                if(isInstance)
-                                    try {
-                                        method.invoke(listener, event);
-                                    } catch (IllegalArgumentException ignore) {
-                                        method.invoke(listener);
-                                    }
-                                else
-                                    try {
-                                        method.invoke(null, event);
-                                    } catch (IllegalArgumentException ignore) {
-                                        method.invoke(null);
-                                    }
+                                try {
+                                    method.invoke(isInstance ? listener : null, event);
+                                } catch (IllegalArgumentException ignore) {
+                                    method.invoke(isInstance ? listener : null);
+                                }
                             } catch (IllegalAccessException | InvocationTargetException e) {
                                 throw new RuntimeException(e);
                             }
@@ -72,9 +65,16 @@ public class EventManager implements Particle {
         this.listeners.forEach((k, v) -> QuickSort.sort(v));
     }
 
-    public void fireEvent(Event event) {
+    /**
+     * Fires the specified event.
+     * @param event The event to fire.
+     * @return A completable future which resolves to whether or not the event has been canceled.
+     *         If `true` the caller should cancel whatever process the event was intended to signify.
+     *         If `false` the caller can continue with the process.
+     */
+    public CompletableFuture<Boolean> fireEvent(Event event) {
         List<SortableListener> listeners = this.listeners.get(event.getClass());
-        if (listeners == null) return;
+        if (listeners == null) return CompletableFuture.completedFuture(true);
 
         try {
             executor.execute(() -> listeners.forEach(listener -> {
@@ -85,7 +85,9 @@ public class EventManager implements Particle {
                     e.printStackTrace();
                 }
             }));
+            return CompletableFuture.completedFuture(!event.canceled());
         } catch (Exception e) {e.printStackTrace();}
+        return CompletableFuture.completedFuture(true);
     }
 
 

@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.RustyConnector;
+import group.aelysium.rustyconnector.common.magic_link.exceptions.CanceledPacket;
 import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.magic_link.MessageCache;
@@ -18,6 +19,7 @@ import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.server.magic_link.handlers.HandshakeFailureListener;
 import group.aelysium.rustyconnector.server.magic_link.handlers.HandshakeStalePingListener;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.jetbrains.annotations.NotNull;
@@ -193,13 +195,21 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                 packetBuilder.parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.POD_NAME, Environment.podName().orElseThrow());
             Packet.Local packet = packetBuilder.addressTo(Packet.SourceIdentifier.allAvailableProxies()).send();
 
-            packet.onReply(p -> {
-                System.out.println("Response captured!");
+            packet.onReply(Packets.Handshake.Success.class, p -> {
                 Packets.Handshake.Success response = new Packets.Handshake.Success(p);
 
-                RC.S.EventManager().fireEvent(new ConnectedEvent());
+                boolean canceled = RC.S.EventManager().fireEvent(new ConnectedEvent()).get(20, TimeUnit.SECONDS);
+                if(canceled) throw new CanceledPacket();
+
                 RC.S.Adapter().log(Component.text(response.message(), response.color()));
+                RC.S.Adapter().log(Component.text("This server will now ping the proxy every "+response.pingInterval()+" seconds...", NamedTextColor.GRAY));
                 RC.S.MagicLink().setDelay(response.pingInterval());
+            });
+            packet.onReply(Packets.Handshake.Failure.class, p -> {
+                Packets.Handshake.Failure response = new Packets.Handshake.Failure(p);
+                RC.S.Adapter().log(Component.text(response.reason(), NamedTextColor.RED));
+                RC.S.Adapter().log(Component.text("Waiting 1 minute before trying again...", NamedTextColor.GRAY));
+                RC.S.MagicLink().setDelay(60);
             });
         } catch (Exception e) {
             e.printStackTrace();

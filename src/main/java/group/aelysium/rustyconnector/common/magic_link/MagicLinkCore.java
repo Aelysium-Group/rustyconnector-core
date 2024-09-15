@@ -76,17 +76,16 @@ public abstract class MagicLinkCore implements Particle {
                         } catch (IllegalArgumentException ignore) {
                             method.invoke(isInstance ? listener : null);
                         }
-                    } catch (IllegalAccessException | InstantiationException e) {
-                        packet.status(Packet.Status.ERROR);
-                        packet.statusMessage(e.getMessage());
-                        e.printStackTrace();
                     } catch (InvocationTargetException e) {
                         if(e.getCause() == null) return;
-                        e.getCause().printStackTrace();
 
                         packet.statusMessage(e.getMessage());
                         packet.status(Packet.Status.ERROR);
                         if(e.getCause() instanceof PacketStatusResponse statusResponse) packet.status(statusResponse.status());
+                    } catch (Throwable e) {
+                        packet.status(Packet.Status.ERROR);
+                        packet.statusMessage(e.getMessage());
+                        e.printStackTrace();
                     }
                 });
             } catch (Exception e) {
@@ -105,7 +104,7 @@ public abstract class MagicLinkCore implements Particle {
     /**
      * Queues the packet into the reply queue.
      * If a reply is received which contains a Reply Target pointing to this packet,
-     * any listeners registered in {@link group.aelysium.rustyconnector.common.magic_link.packet.Packet.Local#onReply(Consumer)} will run.
+     * any listeners registered in {@link group.aelysium.rustyconnector.common.magic_link.packet.Packet.Local#onReply(ThrowableConsumer)} will run.
      * @param packet The packet to queue.
      */
     public void awaitReply(Packet.Local packet) {
@@ -152,8 +151,7 @@ public abstract class MagicLinkCore implements Particle {
                 throw new TrashedPacket("The packet isn't addressed to this server.");
 
             if (packet.replying()) {
-                Packet.Local replyTarget = this.packetsAwaitingReply.get(packet.id());
-
+                Packet.Local replyTarget = this.packetsAwaitingReply.get(packet.remote().replyEndpoint().orElseThrow());
                 if (replyTarget == null) throw new TrashedPacket("This packet is a response to another packet, which isn't available to receive responses anymore.");
 
                 replyTarget.handleReply(packet);
@@ -323,7 +321,7 @@ public abstract class MagicLinkCore implements Particle {
         /**
          * Updates the delay which is used to determine how frequently the Server
          * must ping the Proxy.
-         * @param delay The delay to set.
+         * @param delay The delay to set in seconds.
          */
         public void setDelay(int delay) {
             this.delay.set(delay);

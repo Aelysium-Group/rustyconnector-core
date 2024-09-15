@@ -2,9 +2,12 @@ package group.aelysium.rustyconnector.common.magic_link.packet;
 
 import com.google.gson.*;
 import group.aelysium.rustyconnector.common.crypt.NanoID;
+import group.aelysium.rustyconnector.common.magic_link.exceptions.PacketStatusResponse;
+import group.aelysium.rustyconnector.common.magic_link.exceptions.SuccessPacket;
 import group.aelysium.rustyconnector.common.util.JSONParseable;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.RC;
+import group.aelysium.rustyconnector.common.util.ThrowableConsumer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.jetbrains.annotations.NotNull;
@@ -12,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.annotation.Target;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 public abstract class Packet implements JSONParseable {
@@ -85,9 +89,6 @@ public abstract class Packet implements JSONParseable {
         JsonObject parameters = new JsonObject();
         this.parameters.forEach((key, value) -> parameters.add(key, value.toJSON()));
         object.add(Parameters.PARAMETERS, parameters);
-
-        this.parameters.forEach((k, v)-> System.out.println(k +" - "+v.toString()));
-        System.out.println(object.toString());
 
         return object;
     }
@@ -440,7 +441,8 @@ public abstract class Packet implements JSONParseable {
      * A Packet which has been created by the system it's currently on.
      */
     public static class Local extends Packet {
-        private List<Consumer<Packet.Remote>> replyListeners = null; // Intentionally left null, if no responses are saved here, we don't want to bother instantiating a list here.
+        private Vector<ThrowableConsumer<Remote, Throwable>> catchAlls = null;
+        private ConcurrentHashMap<Identification, Vector<ThrowableConsumer<Packet.Remote, Throwable>>> replyListeners = null;
 
         public Local(@NotNull Integer version, @NotNull Identification identification, @NotNull Packet.SourceIdentifier sender, @NotNull Packet.SourceIdentifier target, @NotNull Map<String, Parameter> parameters) {
             super(
@@ -462,25 +464,68 @@ public abstract class Packet implements JSONParseable {
         }
 
         public void handleReply(Packet.Remote packet) throws IllegalCallerException {
-            if(packet.remote().replyEndpoint().isEmpty()) return;
-            if(!packet.remote().replyEndpoint().orElseThrow().equals(this.local().replyEndpoint().orElseThrow()))
-                throw new IllegalCallerException("Only packets which are addressed to this one can be handled!");
-            if(this.replyListeners == null) return;
-            this.replyListeners.forEach(l -> {
-                try {
-                    l.accept(packet);
-                } catch (Exception ignore) {}
-            });
+            if(this.replyListeners != null && this.replyListeners.containsKey(packet.identification))
+                this.replyListeners.get(packet.identification).forEach(l -> {
+                    try {
+                        l.accept(packet);
+                        throw new SuccessPacket();
+                    } catch (PacketStatusResponse e) {
+                        packet.status(e.status());
+                        packet.statusMessage(e.getMessage());
+                    } catch (Throwable e) {
+                        packet.status(Status.ERROR);
+                        packet.statusMessage(e.getMessage());
+                    }
+                });
+            if(this.catchAlls != null)
+                this.catchAlls.forEach(l -> {
+                    try {
+                        l.accept(packet);
+                        throw new SuccessPacket();
+                    } catch (PacketStatusResponse e) {
+                        packet.status(e.status());
+                        packet.statusMessage(e.getMessage());
+                    } catch (Throwable e) {
+                        packet.status(Status.ERROR);
+                        packet.statusMessage(e.getMessage());
+                    }
+                });
+        }
+
+        /**
+         * Returns any packets which are sent as a reply to this one.
+         * It should be noted that, unless this method is run at least once,
+         * it will be impossible for packets to be sent as a response to this one.
+         * @param handler The handler for the packet.
+         */
+        public void onReply(@NotNull ThrowableConsumer<Packet.Remote, Throwable> handler) {
+            if(this.catchAlls == null) this.catchAlls = new Vector<>();
+            this.catchAlls.add(handler);
+
+            try {
+                RC.S.MagicLink().awaitReply(this);
+            } catch (Exception ignore) {}
+            try {
+                RC.P.MagicLink().awaitReply(this);
+            } catch (Exception ignore) {}
         }
 
         /**
          * Returns the packet which was sent as a reply to this one.
+         * This method specifically listens for certain packets and will only run if a packet with the specific id is received
          * It should be noted that, unless this method is run at least once,
-         * it will be impossible for packets to be sent as a response to this one.
+         * it will be impossible for packets to be handled as a response to this one.
+         * @param packetClass The class of the packet to listen for. Whatever the class is, it must be annotated with the {@link PacketIdentification} annotation. If it's not, this method will just do nothing.
+         * @param handler The handler for the packet.
          */
-        public void onReply(Consumer<Packet.Remote> response) {
-            if(this.replyListeners == null) this.replyListeners = new Vector<>();
-            this.replyListeners.add(response);
+        public void onReply(@NotNull Class<? extends Remote> packetClass, @NotNull ThrowableConsumer<Packet.Remote, Throwable> handler) {
+            if(!packetClass.isAnnotationPresent(PacketIdentification.class)) return;
+            PacketIdentification annotation = packetClass.getAnnotation(PacketIdentification.class);
+            Identification identification = Identification.parseString(annotation.value());
+
+            if(this.replyListeners == null) this.replyListeners = new ConcurrentHashMap<>();
+            this.replyListeners.putIfAbsent(identification, new Vector<>());
+            this.replyListeners.get(identification).add(handler);
 
             try {
                 RC.S.MagicLink().awaitReply(this);
@@ -577,7 +622,8 @@ public abstract class Packet implements JSONParseable {
         WRONG_SOURCE,
         TRASHED,
         SUCCESS,
-        ERROR;
+        ERROR,
+        CANCELED;
 
         public NamedTextColor color() {
             if(this == BAD_ATTITUDE) return NamedTextColor.DARK_GRAY;
@@ -585,6 +631,7 @@ public abstract class Packet implements JSONParseable {
             if(this == TRASHED) return NamedTextColor.DARK_GRAY;
             if(this == SUCCESS) return NamedTextColor.GREEN;
             if(this == ERROR) return NamedTextColor.DARK_RED;
+            if(this == CANCELED) return NamedTextColor.YELLOW;
             return NamedTextColor.GRAY;
         }
     }
@@ -619,7 +666,7 @@ public abstract class Packet implements JSONParseable {
         }
 
         /**
-         * Create a new Packet Mapping from a pluginID and a packetID.
+         * Create a new Identification from a namespace and packetID.
          * @param namespace
          *        Should be a name representing your plugin.<br>
          *        Should be in the format of UPPER_SNAKE_CASE.<br>
@@ -638,6 +685,18 @@ public abstract class Packet implements JSONParseable {
             if(packetID.isEmpty()) throw new IllegalArgumentException("packetID can't be empty!");
 
             return new Identification(namespace + "-" + packetID);
+        }
+
+        /**
+         * Create a new Identification from the passed string.
+         * @param value Must be in the format `[namespace]-[packetID]`.
+         * @return {@link Identification}
+         * @throws IllegalArgumentException If illegal names are passed.
+         */
+        public static Identification parseString(@NotNull String value) throws IllegalArgumentException {
+            String[] tokens = value.split("-");
+            if(tokens.length > 2) throw new IllegalArgumentException("Invalid identification passed.");
+            return new Identification(value.toUpperCase());
         }
     }
 
