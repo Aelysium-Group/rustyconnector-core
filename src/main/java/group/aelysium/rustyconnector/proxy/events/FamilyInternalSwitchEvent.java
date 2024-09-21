@@ -5,6 +5,7 @@ import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.events.Event;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.player.Player;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a player switching from one Server in a family to another Server in that same family.
@@ -15,7 +16,7 @@ public class FamilyInternalSwitchEvent extends Event {
     protected final Server newServer;
     protected final Player player;
 
-    public FamilyInternalSwitchEvent(Particle.Flux<? extends Family> family, Server previousServer, Server newServer, Player player) {
+    public FamilyInternalSwitchEvent(@NotNull Particle.Flux<? extends Family> family, @NotNull Server previousServer, @NotNull Server newServer, @NotNull Player player) {
         super();
         this.family = family;
         this.previousServer = previousServer;

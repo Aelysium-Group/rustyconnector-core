@@ -4,6 +4,8 @@ import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.RustyConnector;
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
+import group.aelysium.rustyconnector.common.magic_link.exceptions.CanceledPacket;
+import group.aelysium.rustyconnector.common.magic_link.exceptions.PacketStatusResponse;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.proxy.events.ServerRegisterEvent;
@@ -18,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 public class HandshakePingListener {
     @PacketListener(WebSocketMagicLink.Packets.Handshake.Ping.class)
-    public static void execute(WebSocketMagicLink.Packets.Handshake.Ping packet) throws Exception {
+    public static void execute(WebSocketMagicLink.Packets.Handshake.Ping packet) throws PacketStatusResponse {
         try {
             Server server = RC.P.Server(packet.local().uuid()).orElseThrow();
 
@@ -51,7 +53,8 @@ public class HandshakePingListener {
                         15
                 );
 
-                RC.P.EventManager().fireEvent(new ServerRegisterEvent(familyFlux, server));
+                boolean canceled = RC.P.EventManager().fireEvent(new ServerRegisterEvent(familyFlux, server)).get(1, TimeUnit.MINUTES);
+                if(canceled) throw new CanceledPacket();
 
                 Packet.New()
                         .identification(Packet.Identification.from("RC","MLHS"))

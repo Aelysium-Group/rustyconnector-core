@@ -16,6 +16,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public abstract class LoadBalancer implements Server.Factory, Particle {
     protected final ScheduledExecutorService executor;
@@ -212,22 +213,23 @@ public abstract class LoadBalancer implements Server.Factory, Particle {
 
     @Override
     public void lockServer(@NotNull Server server) {
+        try {
+            boolean canceled = RC.P.EventManager().fireEvent(new ServerLockedEvent(server.family().orElseThrow(), server)).get(1, TimeUnit.MINUTES);
+            if(canceled) return;
+        } catch (Exception ignore) {}
+
         if(!this.unlockedServers.remove(server)) return;
         this.lockedServers.add(server);
-
-        try {
-            RC.P.EventManager().fireEvent(new ServerLockedEvent(server.family().orElseThrow(), server));
-        } catch (Exception ignore) {}
     }
 
     @Override
     public void unlockServer(@NotNull Server server) {
+        try {
+            boolean canceled = RC.P.EventManager().fireEvent(new ServerUnlockedEvent(server.family().orElseThrow(), server)).get(1, TimeUnit.MINUTES);
+            if(canceled) return;
+        } catch (Exception ignore) {}
         if(!this.lockedServers.remove(server)) return;
         this.unlockedServers.add(server);
-
-        try {
-            RC.P.EventManager().fireEvent(new ServerUnlockedEvent(server.family().orElseThrow(), server));
-        } catch (Exception ignore) {}
     }
 
     @Override

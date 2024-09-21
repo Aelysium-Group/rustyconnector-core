@@ -1,6 +1,7 @@
 package group.aelysium.rustyconnector.server.magic_link.handlers;
 
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
+import group.aelysium.rustyconnector.common.magic_link.exceptions.PacketStatusResponse;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.server.ServerKernel;

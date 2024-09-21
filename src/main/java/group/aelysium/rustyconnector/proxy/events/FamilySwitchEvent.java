@@ -5,10 +5,10 @@ import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.common.events.Event;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.player.Player;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a player switching from one family to another family.
- * Specifically, this event will fire after {@link FamilyLeaveEvent} is fired on the previous family, and after {@link FamilyPostJoinEvent} fires on the new family.
  */
 public class FamilySwitchEvent extends Event {
     protected final Particle.Flux<? extends Family> oldFamily;
@@ -17,7 +17,7 @@ public class FamilySwitchEvent extends Event {
     protected final Server newServer;
     protected final Player player;
 
-    public FamilySwitchEvent(Particle.Flux<? extends Family> oldFamily, Particle.Flux<? extends Family> newFamily, Server oldServer, Server newServer, Player player) {
+    public FamilySwitchEvent(@NotNull Particle.Flux<? extends Family> oldFamily, @NotNull Particle.Flux<? extends Family> newFamily, @NotNull Server oldServer, @NotNull Server newServer, @NotNull Player player) {
         super();
         this.oldFamily = oldFamily;
         this.newFamily = newFamily;

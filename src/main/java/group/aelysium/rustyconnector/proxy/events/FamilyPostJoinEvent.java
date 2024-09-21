@@ -5,6 +5,7 @@ import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.events.Event;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.player.Player;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a player successfully connecting to a family.
@@ -14,7 +15,7 @@ public class FamilyPostJoinEvent extends Event {
     protected final Server server;
     protected final Player player;
 
-    public FamilyPostJoinEvent(Particle.Flux<? extends Family> family, Server server, Player player) {
+    public FamilyPostJoinEvent(@NotNull Particle.Flux<? extends Family> family, @NotNull Server server, @NotNull Player player) {
         super();
         this.family = family;
         this.server = server;

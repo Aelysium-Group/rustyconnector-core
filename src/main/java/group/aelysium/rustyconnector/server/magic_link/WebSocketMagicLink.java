@@ -208,7 +208,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
             packet.onReply(Packets.Handshake.Success.class, p -> {
                 Packets.Handshake.Success response = new Packets.Handshake.Success(p);
 
-                boolean canceled = RC.S.EventManager().fireEvent(new ConnectedEvent()).get(20, TimeUnit.SECONDS);
+                boolean canceled = RC.S.EventManager().fireEvent(new ConnectedEvent()).get(1, TimeUnit.MINUTES);
                 if(canceled) throw new CanceledPacket();
 
                 RC.S.Adapter().log(Component.text(response.message(), response.color()));

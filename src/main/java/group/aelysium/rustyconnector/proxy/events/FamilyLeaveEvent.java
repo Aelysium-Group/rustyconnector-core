@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a player leaving a family.
- * This event will only fire once {@link FamilyPostJoinEvent} has fired.
  * It can be assumed that if this event fires, the player has successfully acquired a new origin.
  * This event will also fire if a player leaves the family by logging out of the network.
  */

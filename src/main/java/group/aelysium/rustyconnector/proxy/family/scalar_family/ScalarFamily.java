@@ -138,7 +138,9 @@ public class ScalarFamily extends Family {
     @Override
     public Player.Connection.Request connect(Player player) {
         try {
-            RC.P.EventManager().fireEvent(new FamilyPreJoinEvent(RC.P.Families().find(this.id).orElseThrow(), player));
+            FamilyPreJoinEvent event = new FamilyPreJoinEvent(RC.P.Families().find(this.id).orElseThrow(), player);
+            boolean canceled = RC.P.EventManager().fireEvent(event).get(1, TimeUnit.MINUTES);
+            if(canceled) return Player.Connection.Request.failedRequest(player, Component.text(event.canceledMessage()));
         } catch (Exception ignore) {}
         if(this.whitelist != null)
             try {

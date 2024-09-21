@@ -68,13 +68,31 @@ public class EventManager implements Particle {
     /**
      * Fires the specified event.
      * @param event The event to fire.
+     */
+    public void fireEvent(Event event) {
+        List<SortableListener> listeners = this.listeners.get(event.getClass());
+        if (listeners == null) return;
+
+        executor.execute(() -> listeners.forEach(listener -> {
+            try {
+                listener.consumer().accept(event);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }));
+    }
+
+    /**
+     * Fires the specified event.
+     * @param event The event to fire.
      * @return A completable future which resolves to whether or not the event has been canceled.
      *         If `true` the caller should cancel whatever process the event was intended to signify.
      *         If `false` the caller can continue with the process.
      */
-    public CompletableFuture<Boolean> fireEvent(Event event) {
+    public CompletableFuture<Boolean> fireEvent(Event.Cancelable event) {
         List<SortableListener> listeners = this.listeners.get(event.getClass());
-        if (listeners == null) return CompletableFuture.completedFuture(true);
+        if (listeners == null) return CompletableFuture.completedFuture(false);
+        if (listeners.isEmpty()) return CompletableFuture.completedFuture(false);
 
         try {
             executor.execute(() -> listeners.forEach(listener -> {
@@ -85,9 +103,9 @@ public class EventManager implements Particle {
                     e.printStackTrace();
                 }
             }));
-            return CompletableFuture.completedFuture(!event.canceled());
+            return CompletableFuture.completedFuture(event.canceled());
         } catch (Exception e) {e.printStackTrace();}
-        return CompletableFuture.completedFuture(true);
+        return CompletableFuture.completedFuture(false);
     }
 
 

@@ -6,9 +6,9 @@ import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
 
 /**
- * Represents an Server being locked on this family.
+ * Represents an Server being locked on its family.
  */
-public class ServerLockedEvent extends Event {
+public class ServerLockedEvent extends Event.Cancelable {
     protected final Particle.Flux<? extends Family> family;
     protected final Server server;
 

@@ -4,6 +4,7 @@ import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.proxy.Permission;
+import group.aelysium.rustyconnector.proxy.events.ServerPreJoinEvent;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.ISortable;
 import group.aelysium.rustyconnector.proxy.player.Player;
 import net.kyori.adventure.text.Component;
@@ -276,6 +277,13 @@ public class Server implements ISortable, Player.Connectable {
 
     @Override
     public Player.Connection.Request connect(Player player) {
+        try {
+            ServerPreJoinEvent event = new ServerPreJoinEvent(this, player);
+            boolean canceled = RC.P.EventManager().fireEvent(event).get(1, TimeUnit.MINUTES);
+            if(canceled) return Player.Connection.Request.failedRequest(player, Component.text(event.canceledMessage()));
+        } catch (Exception ignore) {
+            return Player.Connection.Request.failedRequest(player, Component.text("Connection attempt timed out."));
+        }
         try {
             if (!player.online())
                 return Player.Connection.Request.failedRequest(player, Component.text(player.username() + " isn't online."));

@@ -8,7 +8,7 @@ import group.aelysium.rustyconnector.proxy.player.Player;
 /**
  * Represents a player attempting to connect to a family.
  */
-public class FamilyPreJoinEvent extends Event {
+public class FamilyPreJoinEvent extends Event.Cancelable {
     protected Particle.Flux<? extends Family> family;
     protected Player player;
 

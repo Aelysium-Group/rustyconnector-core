@@ -163,6 +163,7 @@ public abstract class MagicLinkCore implements Particle {
 
             Packet.Remote finalPacket = packet;
             listeners.forEach(l -> l.accept(finalPacket));
+            throw new SuccessPacket();
         } catch (PacketStatusResponse e) {
             packet.status(e.status());
             packet.statusMessage(e.getMessage());
@@ -180,9 +181,9 @@ public abstract class MagicLinkCore implements Particle {
                     return this.parameters().get(Parameters.ADDRESS).getAsString();
                 }
                 public Optional<String> displayName() {
-                    String displayName = this.parameters().get(Parameters.DISPLAY_NAME).getAsString();
-                    if(displayName.isEmpty()) return Optional.empty();
-                    return Optional.of(displayName);
+                    Packet.Parameter displayName = this.parameters().get(Parameters.DISPLAY_NAME);
+                    if(displayName == null) return Optional.empty();
+                    return Optional.of(displayName.getAsString());
                 }
                 public String serverRegistration() {
                     return this.parameters().get(Parameters.SERVER_REGISTRATION).getAsString();
@@ -191,9 +192,9 @@ public abstract class MagicLinkCore implements Particle {
                     return this.parameters().get(Parameters.PLAYER_COUNT).getAsInt();
                 }
                 public Optional<String> podName() {
-                    String podName = this.parameters().get(Parameters.POD_NAME).getAsString();
-                    if(podName.isEmpty()) return Optional.empty();
-                    return Optional.of(podName);
+                    Packet.Parameter podName = this.parameters().get(Parameters.POD_NAME);
+                    if(podName == null) return Optional.empty();
+                    return Optional.of(podName.getAsString());
                 }
 
                 public Ping(Packet packet) {

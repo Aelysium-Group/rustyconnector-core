@@ -6,7 +6,7 @@ import group.aelysium.rustyconnector.proxy.player.Player;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents a player leaving an Server.
+ * Represents a player leaving a Server.
  * This event will only fire once {@link FamilyLeaveEvent} has fired.
  * It can be assumed that if this event fires, the player has successfully acquired a new origin.
  * This event will also fire if a player leaves the family by logging out of the network.

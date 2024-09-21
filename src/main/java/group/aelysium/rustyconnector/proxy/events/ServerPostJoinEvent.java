@@ -3,16 +3,16 @@ package group.aelysium.rustyconnector.proxy.events;
 import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.player.Player;
 import group.aelysium.rustyconnector.common.events.Event;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents a player joining an Server.
- * This event will only fire once {@link FamilyPostJoinEvent} has fired.
+ * Represents a player joining a Server.
  */
-public class ServerJoinEvent extends Event {
+public class ServerPostJoinEvent extends Event {
     protected final Server server;
     protected final Player player;
 
-    public ServerJoinEvent(Server server, Player player) {
+    public ServerPostJoinEvent(@NotNull Server server, @NotNull Player player) {
         super();
         this.server = server;
         this.player = player;

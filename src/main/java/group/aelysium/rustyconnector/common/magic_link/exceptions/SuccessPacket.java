@@ -7,6 +7,6 @@ public class SuccessPacket extends PacketStatusResponse {
         super(Packet.Status.SUCCESS, reason);
     }
     public SuccessPacket() {
-        this("The packet was handled successfully.");
+        this("The packet was handled successfully. This status doesn't necessarily mean that the handlers themselves succeeded. Just that there were no issue during the handling.");
     }
 }
