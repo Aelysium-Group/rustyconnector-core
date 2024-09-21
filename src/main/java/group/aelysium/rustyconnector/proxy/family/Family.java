@@ -8,13 +8,10 @@ import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
-public abstract class Family implements Player.Connectable, Server.Factory, Particle {
+public abstract class Family implements Player.Connectable, Server.Container, Particle {
     protected final String id;
     protected final String displayName;
     protected final String parent;
@@ -26,6 +23,7 @@ public abstract class Family implements Player.Connectable, Server.Factory, Part
             @Nullable String parent,
             @Nullable Flux<Whitelist> whitelist
     ) {
+        if(id.length() > 24) throw new IllegalArgumentException("Family ID must be no longer than 24 characters. If you want a longer name for the family, use display name.");
         this.id = id;
         this.displayName = displayName;
         this.parent = parent;
@@ -69,6 +67,10 @@ public abstract class Family implements Player.Connectable, Server.Factory, Part
     public @NotNull Optional<Flux<Whitelist>> whitelist() {
         return Optional.ofNullable(this.whitelist);
     }
+
+    public abstract @NotNull Server generateServer(@NotNull Server.Configuration configuration);
+
+    public abstract void removeServer(@NotNull Server server);
 
     /**
      * Returns the details of this family in a component which can be

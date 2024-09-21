@@ -2,9 +2,7 @@ package group.aelysium.rustyconnector.proxy.family.load_balancing;
 
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
-import group.aelysium.rustyconnector.proxy.events.FamilyRebalanceEvent;
-import group.aelysium.rustyconnector.proxy.events.ServerLockedEvent;
-import group.aelysium.rustyconnector.proxy.events.ServerUnlockedEvent;
+import group.aelysium.rustyconnector.proxy.events.*;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
@@ -13,10 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.InetSocketAddress;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public abstract class LoadBalancer implements Server.Factory, Particle {
     protected final ScheduledExecutorService executor;
@@ -164,21 +159,24 @@ public abstract class LoadBalancer implements Server.Factory, Particle {
     }
 
     @Override
-    public @NotNull Server generateServer(@NotNull UUID uuid, @NotNull InetSocketAddress address, @Nullable String podName, @Nullable String displayName, int softPlayerCap, int hardPlayerCap, int weight, int timeout) {
+    public @NotNull Server generateServer(
+        @NotNull Flux<? extends Family> family,
+        @NotNull Server.Configuration configuration
+    ) {
         Server server = new Server(
-                uuid,
-                address,
-                podName,
-                displayName,
-                null,
-                softPlayerCap,
-                hardPlayerCap,
-                weight,
-                timeout
+            configuration.uuid(),
+            configuration.address(),
+            configuration.podName(),
+            configuration.displayName(),
+            family,
+            configuration.softPlayerCap(),
+            configuration.hardPlayerCap(),
+            configuration.weight(),
+            configuration.timeout()
         );
         this.unlockedServers.add(server);
 
-        RC.P.Adapter().registerServer(server);
+        RC.P.ServerRegistry().register(server);
 
         return server;
     }

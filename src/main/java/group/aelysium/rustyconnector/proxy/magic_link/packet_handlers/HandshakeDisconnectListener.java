@@ -5,7 +5,6 @@ import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.exceptions.PacketStatusResponse;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
-import group.aelysium.rustyconnector.proxy.events.ServerUnregisterEvent;
 import group.aelysium.rustyconnector.proxy.family.Server;
 
 public class HandshakeDisconnectListener {
@@ -13,10 +12,7 @@ public class HandshakeDisconnectListener {
     public static void execute(MagicLinkCore.Packets.Disconnect packet) throws PacketStatusResponse {
         Server server = RC.P.Server(packet.local().uuid()).orElseThrow();
 
-        RC.P.Adapter().unregisterServer(server);
-        try {
-            server.family().orElseThrow().executeNow(f -> f.deleteServer(server));
-        } catch (Exception ignore) {}
+        RC.P.Kernel().unregister(server);
 
         try {
             Packet.New()
@@ -24,7 +20,5 @@ public class HandshakeDisconnectListener {
                     .addressTo(packet)
                     .send();
         } catch (Exception ignore) {}
-
-        RC.P.EventManager().fireEvent(new ServerUnregisterEvent(server));
     }
 }

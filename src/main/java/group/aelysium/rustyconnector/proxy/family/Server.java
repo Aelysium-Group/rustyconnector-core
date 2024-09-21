@@ -2,6 +2,7 @@ package group.aelysium.rustyconnector.proxy.family;
 
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
+import group.aelysium.rustyconnector.common.crypt.NanoID;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.proxy.Permission;
 import group.aelysium.rustyconnector.proxy.events.ServerPreJoinEvent;
@@ -18,14 +19,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class Server implements ISortable, Player.Connectable {
     private final UUID uuid;
+    private final String registration;
     private final String displayName;
     private final String podName;
     private final InetSocketAddress address;
-    private AtomicReference<Particle.Flux<? extends Family>> family = new AtomicReference<>();
     private Object raw = null;
     private final AtomicLong playerCount = new AtomicLong(0);
     private int weight;
@@ -48,7 +48,6 @@ public class Server implements ISortable, Player.Connectable {
         this.address = address;
         this.podName = podName;
         this.displayName = displayName;
-        this.family.set(family);
 
         this.weight = Math.max(weight, 0);
 
@@ -57,6 +56,8 @@ public class Server implements ISortable, Player.Connectable {
 
         // Soft player cap MUST be at most the same value as hard player cap.
         if(this.softPlayerCap > this.hardPlayerCap) this.softPlayerCap = this.hardPlayerCap;
+
+        this.registration = family.orElseThrow().id()+"-"+ NanoID.randomNanoID(6, "0123456789");
 
         this.timeout = new AtomicInteger(timeout);
     }
@@ -86,6 +87,20 @@ public class Server implements ISortable, Player.Connectable {
      */
     public @NotNull UUID uuid() {
         return this.uuid;
+    }
+
+    /**
+     * The registration of the server.
+     * This is a unique combination of the server's family's name and a NanoID.<br/>
+     * Ex. `familyName-nf3nFX3965`.<br/><br/>
+     * While the server uuid exists for the lifetime of the server, the registration name will change
+     * any time the server unregisters and re-registers.
+     * This is also the value used by certain proxy pieces of software for referencing the server as it's
+     * more user-friendly than using an uuid.
+     * @return The server registration.
+     */
+    public @NotNull String registration() {
+        return this.registration;
     }
 
     /**
@@ -188,25 +203,7 @@ public class Server implements ISortable, Player.Connectable {
      * @return An optional containing the Family in a Flux state if it exists. If this server wasn't assigned a family, this will return an empty optional.
      */
     public Optional<Particle.Flux<? extends Family>> family() {
-        return Optional.ofNullable(this.family.get());
-    }
-
-    /**
-     * Assigns a family to this Server.
-     * This method only works if the family is registered in {@link FamilyRegistry}.
-     * @param family The family to store.
-     * @throws NoSuchElementException If the family can not be resolved to its Flux state.
-     */
-    public void assignFamily(Family family) throws NoSuchElementException {
-        this.assignFamily(RC.P.Families().find(family.id()).orElseThrow());
-    }
-
-    /**
-     * Assigns a family to this Server.
-     * @param family The family to store.
-     */
-    public void assignFamily(Particle.Flux<? extends Family> family) {
-        this.family.set(family);
+        return RC.P.Family(this);
     }
 
     /**
@@ -236,11 +233,11 @@ public class Server implements ISortable, Player.Connectable {
     /**
      * Unregisters the server from the proxy.
      * <br/>
-     * This is a convenience method that will fetch this server's family and run {@link Family#deleteServer(Server)}.
+     * This is a convenience method that will fetch this server's family and run {@link Family#removeServer(Server)}.
      */
     void unregister() {
         try {
-            this.family().orElseThrow().executeNow(f -> f.deleteServer(this));
+            this.family().orElseThrow().executeNow(f -> f.removeServer(this));
         } catch(Exception ignore) {}
     }
 
@@ -320,32 +317,12 @@ public class Server implements ISortable, Player.Connectable {
         return Objects.equals(uuid, server.uuid());
     }
 
-    public interface Factory {
-        /**
-         * Generates a server with the provided parameters.
-         * It is expected that he caller assigns the server's Family using {@link Server#assignFamily(Family)}.
-         * @param uuid
-         * @param address
-         * @param podName
-         * @param displayName
-         * @param softPlayerCap
-         * @param hardPlayerCap
-         * @param weight
-         * @param timeout
-         * @return
-         */
-        @NotNull Server generateServer(
-                @NotNull UUID uuid,
-                @NotNull InetSocketAddress address,
-                @Nullable String podName,
-                @Nullable String displayName,
-                int softPlayerCap,
-                int hardPlayerCap,
-                int weight,
-                int timeout
-        );
-
-        void deleteServer(@NotNull Server server);
+    /**
+     * Responsible for holding multiple servers.
+     * Generally speaking, a server holder should contain a {@link Factory} which
+     * is actually responsible for adding and removing the servers.
+     */
+    public interface Container {
         boolean containsServer(@NotNull Server server);
 
         List<Server> servers();
@@ -374,6 +351,24 @@ public class Server implements ISortable, Player.Connectable {
         boolean isLocked(@NotNull Server server);
     }
 
+    public interface Factory extends Container {
+        /**
+         * Generates a server with the provided parameters.
+         * The server is stored inside of this Factory.
+         * This method handles a very specific task, you should only use it if you know what you're doing.
+         * If you're just trying to create and register a new server to RustyConnector, you should use {@link group.aelysium.rustyconnector.proxy.ProxyKernel#registerServer(Particle.Flux, Configuration)}
+         * @param family The family that this server belongs to.
+         * @param configuration The configuration used to generate a new server.
+         * @return A newly generated Server.
+         */
+        @NotNull Server generateServer(
+                @NotNull Particle.Flux<? extends Family> family,
+                @NotNull Configuration configuration
+        );
+
+        void deleteServer(@NotNull Server server);
+    }
+
     public interface Packets {
         class Lock extends Packet.Wrapper {
             public Lock(Packet packet) {
@@ -386,4 +381,15 @@ public class Server implements ISortable, Player.Connectable {
             }
         }
     }
+
+    public record Configuration(
+            @NotNull UUID uuid,
+            @NotNull InetSocketAddress address,
+            @Nullable String podName,
+            @Nullable String displayName,
+            int softPlayerCap,
+            int hardPlayerCap,
+            int weight,
+            int timeout
+    ) {}
 }

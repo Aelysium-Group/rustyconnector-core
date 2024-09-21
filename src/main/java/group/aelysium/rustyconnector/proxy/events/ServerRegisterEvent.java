@@ -6,13 +6,13 @@ import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
 
 /**
- * Represents an Server successfully registering to the Proxy.
+ * Represents an attempt to register a server to the proxy.
  */
 public class ServerRegisterEvent extends Event.Cancelable {
     protected final Particle.Flux<? extends Family> family;
-    protected final Server server;
+    protected final Server.Configuration server;
 
-    public ServerRegisterEvent(Particle.Flux<? extends Family> family, Server server) {
+    public ServerRegisterEvent(Particle.Flux<? extends Family> family, Server.Configuration server) {
         super();
         this.family = family;
         this.server = server;
@@ -21,7 +21,14 @@ public class ServerRegisterEvent extends Event.Cancelable {
     public Particle.Flux<? extends Family> family() {
         return family;
     }
-    public Server server() {
+
+    /**
+     * The server configuration.
+     * Because the server has not yet actually been registered,
+     * there's no server object.
+     * @return The server configuration being used to register.
+     */
+    public Server.Configuration server() {
         return server;
     }
 }

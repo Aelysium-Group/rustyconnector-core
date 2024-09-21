@@ -16,8 +16,6 @@ import group.aelysium.rustyconnector.proxy.magic_link.packet_handlers.HandshakeD
 import group.aelysium.rustyconnector.proxy.magic_link.packet_handlers.HandshakePingListener;
 import group.aelysium.rustyconnector.proxy.util.AddressUtil;
 import io.javalin.Javalin;
-import io.javalin.config.HttpConfig;
-import io.javalin.config.JettyConfig;
 import io.javalin.http.*;
 import io.javalin.websocket.WsContext;
 import org.jetbrains.annotations.NotNull;
@@ -170,7 +168,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
 
                             try {
                                 if (server.stale()) {
-                                    family.deleteServer(server);
+                                    family.removeServer(server);
                                     WsContext connection = this.clients.get(server.uuid());
                                     connection.closeSession(1013, "Stale connection. Re-register.");
                                 }

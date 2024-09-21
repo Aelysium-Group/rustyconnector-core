@@ -42,19 +42,19 @@ public class HandshakePingListener {
                     throw new RuntimeException("Server " + packet.local().uuid() + " can't be registered twice!");
                 });
 
-                Server server = family.generateServer(
-                        packet.local().uuid(),
-                        AddressUtil.parseAddress(packet.address()),
-                        packet.podName().orElse(null),
-                        packet.displayName().orElse(null),
-                        config.soft_cap(),
-                        config.hard_cap(),
-                        config.weight(),
-                        15
+                Server server = RC.P.Kernel().registerServer(
+                    familyFlux,
+                    new Server.Configuration(
+                            packet.local().uuid(),
+                            AddressUtil.parseAddress(packet.address()),
+                            packet.podName().orElse(null),
+                            packet.displayName().orElse(null),
+                            config.soft_cap(),
+                            config.hard_cap(),
+                            config.weight(),
+                            15
+                    )
                 );
-
-                boolean canceled = RC.P.EventManager().fireEvent(new ServerRegisterEvent(familyFlux, server)).get(1, TimeUnit.MINUTES);
-                if(canceled) throw new CanceledPacket();
 
                 Packet.New()
                         .identification(Packet.Identification.from("RC","MLHS"))
@@ -64,6 +64,7 @@ public class HandshakePingListener {
                         .addressTo(packet)
                         .send();
             } catch(Exception e2) {
+                e2.printStackTrace();
                 Packet.New()
                         .identification(Packet.Identification.from("RC","MLHF"))
                         .parameter(WebSocketMagicLink.Packets.Handshake.Failure.Parameters.REASON, "Attempt to connect to proxy failed! " + e2.getMessage())

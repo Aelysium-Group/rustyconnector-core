@@ -3,6 +3,7 @@ package group.aelysium.rustyconnector;
 import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
+import group.aelysium.rustyconnector.proxy.family.ServerRegistry;
 import group.aelysium.rustyconnector.server.ServerAdapter;
 import group.aelysium.rustyconnector.server.ServerKernel;
 import group.aelysium.rustyconnector.server.lang.ServerLang;
@@ -20,6 +21,10 @@ import group.aelysium.rustyconnector.proxy.player.PlayerRegistry;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -58,6 +63,10 @@ public interface RC {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().EventManager().orElseThrow();
         }
 
+        static ServerRegistry ServerRegistry() throws NoSuchElementException {
+            return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().ServerRegistry().orElseThrow();
+        }
+
         static ProxyAdapter Adapter() throws NoSuchElementException {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Adapter();
         }
@@ -74,16 +83,22 @@ public interface RC {
             return Optional.ofNullable(family);
         }
 
-        static Optional<Server> Server(UUID uuid) throws NoSuchElementException {
-            FamilyRegistry familyRegistry = RC.P.Families();
-            AtomicReference<Server> server = new AtomicReference<>(null);
-            for (Particle.Flux<? extends Family> family : familyRegistry.dump()) {
-                family.executeNow(f -> {
-                    f.servers().stream().filter(s -> s.uuid().equals(uuid)).findAny().ifPresent(server::set);
-                });
-                if(server.get() != null) break;
+        static Optional<Particle.Flux<? extends Family>> Family(Server server) throws NoSuchElementException {
+            for (Particle.Flux<? extends Family> familyFlux : RC.P.Families().dump()) {
+                try {
+                    Family family = familyFlux.access().get(5, TimeUnit.SECONDS);
+                    if (!family.containsServer(server)) continue;
+                    return Optional.of(familyFlux);
+                } catch (InterruptedException | CancellationException | ExecutionException | TimeoutException ignore) {}
             }
-            return Optional.ofNullable(server.get());
+            return Optional.empty();
+        }
+
+        static Optional<Server> Server(UUID uuid) throws NoSuchElementException {
+            return RC.P.ServerRegistry().find(uuid);
+        }
+        static Optional<Server> Server(String registration) throws NoSuchElementException {
+            return RC.P.ServerRegistry().find(registration);
         }
 
         static Optional<Player> Player(UUID uuid) throws NoSuchElementException {

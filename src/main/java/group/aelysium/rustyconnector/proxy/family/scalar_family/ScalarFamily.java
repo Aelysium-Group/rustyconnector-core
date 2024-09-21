@@ -50,15 +50,25 @@ public class ScalarFamily extends Family {
         return this.loadBalancer;
     }
 
-    @Override
-    public @NotNull Server generateServer(@NotNull UUID uuid, @NotNull InetSocketAddress address, @Nullable String podName, @Nullable String displayName, int softPlayerCap, int hardPlayerCap, int weight, int timeout) {
+    public @NotNull Server generateServer(@NotNull Server.Configuration configuration) {
         AtomicReference<Server> server = new AtomicReference<>();
-        this.loadBalancer.executeNow(l -> server.set(l.generateServer(uuid, address, podName, displayName, softPlayerCap, hardPlayerCap, weight, timeout)));
+        this.loadBalancer.executeNow(l -> server.set(l.generateServer(
+                RC.P.Families().find(this.id()).orElseThrow(()->new NullPointerException("Unable to find the requested family: "+this.id())),
+                new Server.Configuration(
+                    configuration.uuid(),
+                    configuration.address(),
+                    configuration.podName(),
+                    configuration.displayName(),
+                    configuration.softPlayerCap(),
+                    configuration.hardPlayerCap(),
+                    configuration.weight(),
+                    configuration.timeout()
+                )
+        )));
         return server.get();
     }
 
-    @Override
-    public void deleteServer(@NotNull Server server) {
+    public void removeServer(@NotNull Server server) {
         this.loadBalancer.executeNow(l -> l.deleteServer(server));
     }
 
