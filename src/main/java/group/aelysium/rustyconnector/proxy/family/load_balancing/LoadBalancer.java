@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.proxy.family.load_balancing;
 
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
+import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.proxy.events.*;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
@@ -9,11 +9,10 @@ import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.*;
 
-public abstract class LoadBalancer implements Server.Factory, Particle {
+public abstract class LoadBalancer extends Family.Plugin implements Server.Container {
     protected final ScheduledExecutorService executor;
     protected boolean weighted;
     protected boolean persistence;
@@ -33,6 +32,7 @@ public abstract class LoadBalancer implements Server.Factory, Particle {
     };
 
     protected LoadBalancer(boolean weighted, boolean persistence, int attempts, @Nullable LiquidTimestamp rebalance) {
+        super("LoadBalancer");
         this.weighted = weighted;
         this.persistence = persistence;
         this.attempts = attempts;
@@ -158,31 +158,21 @@ public abstract class LoadBalancer implements Server.Factory, Particle {
         return this.current();
     }
 
-    @Override
-    public @NotNull Server generateServer(
-        @NotNull Flux<? extends Family> family,
-        @NotNull Server.Configuration configuration
-    ) {
-        Server server = new Server(
-            configuration.uuid(),
-            configuration.address(),
-            configuration.podName(),
-            configuration.displayName(),
-            family,
-            configuration.softPlayerCap(),
-            configuration.hardPlayerCap(),
-            configuration.weight(),
-            configuration.timeout()
-        );
+    /**
+     * Adds the server to this load balancer.
+     * The server will be unlocked.
+     * @param server The server to add.
+     */
+    public void addServer(@NotNull Server server) {
         this.unlockedServers.add(server);
-
-        RC.P.ServerRegistry().register(server);
-
-        return server;
+        this.servers.put(server.uuid(), server);
     }
 
-    @Override
-    public void deleteServer(@NotNull Server server) {
+    /**
+     * Removes the server from this load balancer.
+     * @param server The server to remove.
+     */
+    public void removeServer(@NotNull Server server) {
         if(!this.servers.containsKey(server.uuid())) return;
         if(!this.unlockedServers.remove(server))
             this.lockedServers.remove(server);

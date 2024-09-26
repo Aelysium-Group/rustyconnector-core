@@ -6,7 +6,7 @@ import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.RustyConnector;
 import group.aelysium.rustyconnector.common.magic_link.exceptions.CanceledPacket;
 import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
-import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
+import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.common.magic_link.MessageCache;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.util.URL;
@@ -21,7 +21,6 @@ import group.aelysium.rustyconnector.server.magic_link.handlers.HandshakeStalePi
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.java_websocket.client.WebSocketClient;
-import org.java_websocket.drafts.Draft;
 import org.java_websocket.drafts.Draft_6455;
 import org.java_websocket.handshake.ServerHandshake;
 import org.jetbrains.annotations.NotNull;
@@ -42,9 +41,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class WebSocketMagicLink extends MagicLinkCore.Server {
-    private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private final AtomicBoolean stopHeartbeat = new AtomicBoolean(true);
+    private final AtomicBoolean registered = new AtomicBoolean(false);
     private WebSocketClient client = null;
     private URL address;
 
@@ -146,6 +146,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
 
                     @Override
                     public void onClose(int code, String reason, boolean remote) {
+                        WebSocketMagicLink.this.registered.set(false);
                         if(code == 401) {
                             RC.S.Adapter().log(Component.text("Unable to authenticate with Magic Link to the proxy. Trying again after 10 seconds."));
                             WebSocketMagicLink.this.executor.schedule(this::connect, 10, TimeUnit.SECONDS);
@@ -187,6 +188,14 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
         }
     }
 
+    /**
+     * Whether the server is successfully registered to the Proxy.
+     * @return `true` if the server is registered. `false` otherwise.
+     */
+    public boolean registered() {
+        return this.registered.get();
+    }
+
     private void heartbeat() {
         if(this.closed.get()) return;
         if(this.stopHeartbeat.get()) return;
@@ -211,15 +220,19 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                 boolean canceled = RC.S.EventManager().fireEvent(new ConnectedEvent()).get(1, TimeUnit.MINUTES);
                 if(canceled) throw new CanceledPacket();
 
-                RC.S.Adapter().log(Component.text(response.message(), response.color()));
-                RC.S.Adapter().log(Component.text("This server will now ping the proxy every "+response.pingInterval()+" seconds...", NamedTextColor.GRAY));
-                RC.S.MagicLink().setDelay(response.pingInterval());
+                if(!WebSocketMagicLink.this.registered.get()) {
+                    RC.S.Adapter().log(Component.text(response.message(), response.color()));
+                    RC.S.Adapter().log(Component.text("This server will now ping the proxy every " + response.pingInterval() + " seconds...", NamedTextColor.GRAY));
+                    RC.S.MagicLink().setDelay(response.pingInterval());
+                    WebSocketMagicLink.this.registered.set(true);
+                }
             });
             packet.onReply(Packets.Handshake.Failure.class, p -> {
                 Packets.Handshake.Failure response = new Packets.Handshake.Failure(p);
                 RC.S.Adapter().log(Component.text(response.reason(), NamedTextColor.RED));
                 RC.S.Adapter().log(Component.text("Waiting 1 minute before trying again...", NamedTextColor.GRAY));
                 RC.S.MagicLink().setDelay(60);
+                WebSocketMagicLink.this.registered.set(false);
             });
         } catch (Exception e) {
             e.printStackTrace();

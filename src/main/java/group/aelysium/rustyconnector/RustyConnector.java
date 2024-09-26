@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector;
 
-import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
+import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.server.ServerKernel;
 import group.aelysium.rustyconnector.proxy.ProxyKernel;
 import org.jetbrains.annotations.NotNull;

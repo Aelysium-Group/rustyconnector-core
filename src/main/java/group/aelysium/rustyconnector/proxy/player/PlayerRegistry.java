@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.proxy.player;
 
-import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
+import group.aelysium.ara.Particle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;

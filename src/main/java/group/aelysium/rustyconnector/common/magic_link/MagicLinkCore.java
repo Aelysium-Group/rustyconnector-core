@@ -5,7 +5,7 @@ import group.aelysium.rustyconnector.common.magic_link.exceptions.PacketStatusRe
 import group.aelysium.rustyconnector.common.magic_link.exceptions.SuccessPacket;
 import group.aelysium.rustyconnector.common.magic_link.exceptions.TrashedPacket;
 import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
-import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
+import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.common.cache.TimeoutCache;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketIdentification;
 import group.aelysium.rustyconnector.common.util.ThrowableConsumer;

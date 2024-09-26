@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.common.magic_link;
 
+import group.aelysium.ara.Closure;
 import group.aelysium.rustyconnector.common.crypt.NanoID;
-import group.aelysium.rustyconnector.common.util.Closure;
 import group.aelysium.rustyconnector.common.crypt.Snowflake;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 

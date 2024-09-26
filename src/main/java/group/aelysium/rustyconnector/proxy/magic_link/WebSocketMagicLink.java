@@ -6,7 +6,7 @@ import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
 import group.aelysium.rustyconnector.common.magic_link.MessageCache;
 import group.aelysium.rustyconnector.common.crypt.AES;
-import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
+import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.common.crypt.SHA256;
 import group.aelysium.rustyconnector.common.crypt.Token;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;

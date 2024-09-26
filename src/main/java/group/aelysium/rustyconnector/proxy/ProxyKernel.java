@@ -3,7 +3,7 @@ package group.aelysium.rustyconnector.proxy;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
+import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
@@ -14,14 +14,10 @@ import group.aelysium.rustyconnector.proxy.family.FamilyRegistry;
 import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.family.ServerRegistry;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.*;
-import group.aelysium.rustyconnector.proxy.family.whitelist.Whitelist;
 import group.aelysium.rustyconnector.proxy.lang.ProxyLang;
 import group.aelysium.rustyconnector.proxy.player.PlayerRegistry;
-import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 import group.aelysium.rustyconnector.proxy.util.Version;
-import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
 import java.util.*;
@@ -34,36 +30,30 @@ public class ProxyKernel implements Particle {
     private final Version version;
     private final ProxyAdapter adapter;
     private final Particle.Flux<? extends LangLibrary<? extends ProxyLang>> lang;
-    private final Particle.Flux<? extends Whitelist> whitelist;
     private final Particle.Flux<? extends FamilyRegistry> familyRegistry;
     private final Particle.Flux<? extends MagicLinkCore.Proxy> magicLink;
     private final Particle.Flux<? extends PlayerRegistry> playerRegistry;
     private final Particle.Flux<? extends EventManager> eventManager;
     private final Particle.Flux<? extends ServerRegistry> serverRegistry;
-    private final List<Component> bootOutput;
 
     protected ProxyKernel(
             @NotNull UUID uuid,
             @NotNull ProxyAdapter adapter,
             @NotNull Particle.Flux<? extends LangLibrary<? extends ProxyLang>> lang,
-            @Nullable Particle.Flux<? extends Whitelist> whitelist,
-            @NotNull List<Component> bootOutput,
             @NotNull Particle.Flux<? extends FamilyRegistry> familyRegistry,
             @NotNull Particle.Flux<? extends MagicLinkCore.Proxy> magicLink,
             @NotNull Particle.Flux<? extends PlayerRegistry> playerRegistry,
             @NotNull Particle.Flux<? extends EventManager> eventManager,
             @NotNull Particle.Flux<? extends ServerRegistry> serverRegistry
-    ) throws RuntimeException {
+    ) {
         this.uuid = uuid;
         this.adapter = adapter;
         this.lang = lang;
-        this.whitelist = whitelist;
-        this.bootOutput = bootOutput;
         this.familyRegistry = familyRegistry;
         this.magicLink = magicLink;
         this.playerRegistry = playerRegistry;
-        this.eventManager = eventManager;
         this.serverRegistry = serverRegistry;
+        this.eventManager = eventManager;
 
         try {
             try (InputStream input = ProxyKernel.class.getClassLoader().getResourceAsStream("metadata.json")) {
@@ -73,17 +63,12 @@ public class ProxyKernel implements Particle {
                 this.version = new Version(object.get("version").getAsString());
             }
 
-            this.lang.access().get();
-            this.familyRegistry.access().get();
-            this.playerRegistry.access().get();
-            this.eventManager.access().get();
-            this.magicLink.access().get();
-            this.serverRegistry.access().get();
-            try {
-                this.adapter.log(Component.text("Booting proxy whitelist..."));
-                assert this.whitelist != null;
-                this.whitelist.access().get();
-            } catch (Exception ignore) {}
+            this.lang.observe();
+            this.familyRegistry.observe();
+            this.playerRegistry.observe();
+            this.eventManager.observe();
+            this.magicLink.observe();
+            this.serverRegistry.observe();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -105,15 +90,11 @@ public class ProxyKernel implements Particle {
     public Version version() {
         return this.version;
     }
-
     public ProxyAdapter Adapter() {
         return this.adapter;
     }
     public Particle.Flux<? extends LangLibrary<? extends ProxyLang>> Lang() {
         return this.lang;
-    }
-    public Optional<Particle.Flux<? extends Whitelist>> Whitelist() {
-        return Optional.ofNullable(this.whitelist);
     }
     public Particle.Flux<? extends FamilyRegistry> FamilyRegistry() {
         return this.familyRegistry;
@@ -151,31 +132,27 @@ public class ProxyKernel implements Particle {
             if (canceled) throw new CancellationException(event.canceledMessage());
         } catch (Exception ignore) {}
 
-        if(!RC.P.Adapter().registerServer(configuration))
+        Server server = Server.generateServer(configuration);
+
+        if(!RC.P.Adapter().registerServer(server))
             throw new IllegalStateException("The server failed to register to the proxy software running the RustyConnector kernel.");
 
-
         Family family = null;
-        Server server = null;
         try {
             family = familyFlux.access().get(10, TimeUnit.SECONDS);
-            server = family.generateServer(configuration);
+            family.addServer(server);
 
             RC.P.ServerRegistry().register(server);
         } catch (CancellationException | TimeoutException e) {
-            if(server != null) {
-                family.removeServer(server);
-                RC.P.Adapter().unregisterServer(server);
-                RC.P.ServerRegistry().unregister(server);
-            }
+            if(family != null) family.removeServer(server);
+            RC.P.Adapter().unregisterServer(server);
+            RC.P.ServerRegistry().unregister(server);
 
             throw new CancellationException(e.getMessage());
         } catch (Exception e) {
-            if(server != null) {
-                family.removeServer(server);
-                RC.P.Adapter().unregisterServer(server);
-                RC.P.ServerRegistry().unregister(server);
-            }
+            if(family != null) family.removeServer(server);
+            RC.P.Adapter().unregisterServer(server);
+            RC.P.ServerRegistry().unregister(server);
 
             throw new IllegalStateException(e);
         }
@@ -201,13 +178,11 @@ public class ProxyKernel implements Particle {
         server.family().ifPresent(flux -> flux.executeNow(family -> family.removeServer(server)));
     }
 
-    public List<Component> bootLog() { return this.bootOutput; }
     public void close() {
         this.familyRegistry.close();
         this.magicLink.close();
         this.playerRegistry.close();
         this.eventManager.close();
-        this.bootOutput.clear();
     }
 
     /**
@@ -219,7 +194,6 @@ public class ProxyKernel implements Particle {
         private final UUID uuid;
         private final ProxyAdapter adapter;
         private Particle.Tinder<? extends LangLibrary<? extends ProxyLang>> lang = LangLibrary.Tinder.DEFAULT_PROXY_CONFIGURATION;
-        private Particle.Tinder<? extends Whitelist> whitelist = null;
         private Particle.Tinder<? extends FamilyRegistry> familyRegistry = FamilyRegistry.Tinder.DEFAULT_CONFIGURATION;
         private final Particle.Tinder<? extends MagicLinkCore.Proxy> magicLink;
         private Particle.Tinder<? extends PlayerRegistry> playerRegistry = PlayerRegistry.Tinder.DEFAULT_CONFIGURATION;
@@ -250,11 +224,6 @@ public class ProxyKernel implements Particle {
             return this;
         }
 
-        public Tinder whitelist(@Nullable Particle.Tinder<? extends Whitelist> whitelist) {
-            this.whitelist = whitelist;
-            return this;
-        }
-
         public Tinder familyRegistry(@NotNull Particle.Tinder<? extends FamilyRegistry> familyRegistry) {
             this.familyRegistry = familyRegistry;
             return this;
@@ -275,13 +244,11 @@ public class ProxyKernel implements Particle {
             return this;
         }
 
-        public @NotNull ProxyKernel ignite() throws RuntimeException {
+        public @NotNull ProxyKernel ignite() throws Exception {
             return new ProxyKernel(
                     this.uuid,
                     this.adapter,
                     this.lang.flux(),
-                    this.whitelist == null ? null : this.whitelist.flux(),
-                    new ArrayList<>(),
                     this.familyRegistry.flux(),
                     this.magicLink.flux(),
                     this.playerRegistry.flux(),

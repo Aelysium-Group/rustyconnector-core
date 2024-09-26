@@ -2,13 +2,11 @@ package group.aelysium.rustyconnector.proxy.magic_link.packet_handlers;
 
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.RustyConnector;
-import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
+import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
-import group.aelysium.rustyconnector.common.magic_link.exceptions.CanceledPacket;
 import group.aelysium.rustyconnector.common.magic_link.exceptions.PacketStatusResponse;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
-import group.aelysium.rustyconnector.proxy.events.ServerRegisterEvent;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.magic_link.WebSocketMagicLink;
@@ -42,19 +40,17 @@ public class HandshakePingListener {
                     throw new RuntimeException("Server " + packet.local().uuid() + " can't be registered twice!");
                 });
 
-                Server server = RC.P.Kernel().registerServer(
-                    familyFlux,
-                    new Server.Configuration(
-                            packet.local().uuid(),
-                            AddressUtil.parseAddress(packet.address()),
-                            packet.podName().orElse(null),
-                            packet.displayName().orElse(null),
-                            config.soft_cap(),
-                            config.hard_cap(),
-                            config.weight(),
-                            15
-                    )
+                Server.Configuration configuration = new Server.Configuration(
+                    packet.local().uuid(),
+                    AddressUtil.parseAddress(packet.address()),
+                    packet.podName().orElse(null),
+                    packet.displayName().orElse(null),
+                    config.soft_cap(),
+                    config.hard_cap(),
+                    config.weight(),
+                    15
                 );
+                Server server = RC.P.Kernel().registerServer(familyFlux, configuration);
 
                 Packet.New()
                         .identification(Packet.Identification.from("RC","MLHS"))

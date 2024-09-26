@@ -1,5 +1,6 @@
 package group.aelysium.rustyconnector.common.util;
 
+import group.aelysium.ara.Closure;
 import group.aelysium.rustyconnector.common.crypt.AES;
 import org.jetbrains.annotations.NotNull;
 

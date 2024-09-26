@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.proxy;
 
-import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
+import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.proxy.events.*;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.proxy.family.Family;
@@ -48,10 +48,10 @@ public abstract class ProxyAdapter {
      * This method only exists to ensure the server is registered to the actual proxy software being used.
      * If you're reading this, you probably want to use {@link group.aelysium.rustyconnector.proxy.family.ServerRegistry#register(Server)}.
      * This method only exists for people that know exactly what they're doing.
-     * @param server The server configuration to register.
+     * @param server The server to register.
      * @return `true` if the server successfully registered. `false` otherwise.
      */
-    public abstract boolean registerServer(@NotNull Server.Configuration server);
+    public abstract boolean registerServer(@NotNull Server server);
 
     /**
      * Unregisters the Server from the Proxy.
@@ -61,6 +61,13 @@ public abstract class ProxyAdapter {
      * This method only exists for people that know exactly what they're doing.
      */
     public abstract void unregisterServer(@NotNull Server server);
+
+    /**
+     * Whether the server exists on the actual proxy software itself.
+     * @param server The server to check for.
+     * @return `true` if the server is successfully registered on the actual proxy software. `false` otherwise.
+     */
+    public abstract boolean serverExists(@NotNull Server server);
 
     /**
      * Logs the components as a message into the console.

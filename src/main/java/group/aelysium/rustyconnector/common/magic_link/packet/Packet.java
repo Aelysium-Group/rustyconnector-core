@@ -8,15 +8,12 @@ import group.aelysium.rustyconnector.common.util.JSONParseable;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.util.ThrowableConsumer;
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.annotation.Target;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 
 public abstract class Packet implements JSONParseable {
     protected static final int protocolVersion = 3;

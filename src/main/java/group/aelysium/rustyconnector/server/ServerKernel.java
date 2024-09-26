@@ -2,7 +2,7 @@ package group.aelysium.rustyconnector.server;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
+import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
@@ -10,8 +10,6 @@ import group.aelysium.rustyconnector.server.lang.ServerLang;
 import group.aelysium.rustyconnector.proxy.ProxyKernel;
 import group.aelysium.rustyconnector.proxy.util.Version;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
-import group.aelysium.rustyconnector.server.magic_link.handlers.HandshakeFailureListener;
-import group.aelysium.rustyconnector.server.magic_link.handlers.HandshakeStalePingListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

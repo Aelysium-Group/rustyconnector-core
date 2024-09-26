@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.proxy.family.load_balancing;
 
-import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
+import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.common.algorithm.WeightOnlyQuickSort;
 import org.jetbrains.annotations.NotNull;
 

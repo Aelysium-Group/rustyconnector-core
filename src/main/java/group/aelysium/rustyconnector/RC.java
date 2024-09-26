@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector;
 
-import group.aelysium.rustyconnector.common.absolute_redundancy.Particle;
+import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.proxy.family.ServerRegistry;
@@ -12,7 +12,6 @@ import group.aelysium.rustyconnector.proxy.ProxyKernel;
 import group.aelysium.rustyconnector.proxy.family.FamilyRegistry;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
-import group.aelysium.rustyconnector.proxy.family.whitelist.Whitelist;
 import group.aelysium.rustyconnector.proxy.lang.ProxyLang;
 import group.aelysium.rustyconnector.proxy.player.Player;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
@@ -47,12 +46,6 @@ public interface RC {
 
         static PlayerRegistry Players() throws NoSuchElementException {
             return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().PlayerRegistry().orElseThrow();
-        }
-
-        static Optional<? extends Whitelist> Whitelist() throws NoSuchElementException {
-            Optional<Particle.Flux<? extends Whitelist>> whitelistOptional = RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Whitelist();
-            if(whitelistOptional.isEmpty()) return Optional.empty();
-            return Optional.of(whitelistOptional.orElseThrow().orElseThrow());
         }
 
         static MagicLinkCore.Proxy MagicLink() throws NoSuchElementException {
