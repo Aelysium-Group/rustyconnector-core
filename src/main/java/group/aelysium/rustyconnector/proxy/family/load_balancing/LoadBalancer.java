@@ -233,6 +233,11 @@ public abstract class LoadBalancer extends Family.Plugin implements Server.Conta
         this.executor.shutdownNow();
     }
 
+    @Override
+    public String details() {
+        return "("+this.getClass().getName()+" Algorithm) ("+this.unlockedServers.size()+" Unlocked Servers) ("+this.lockedServers.size()+" Locked Servers)";
+    }
+
     public record Settings(
             String algorithm,
             boolean weighted,
