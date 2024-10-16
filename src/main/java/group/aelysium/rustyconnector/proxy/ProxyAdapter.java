@@ -13,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -46,7 +45,7 @@ public abstract class ProxyAdapter {
      * Registers the Server to the Proxy.
      * RustyConnector will already handle the important registration code.
      * This method only exists to ensure the server is registered to the actual proxy software being used.
-     * If you're reading this, you probably want to use {@link group.aelysium.rustyconnector.proxy.family.ServerRegistry#register(Server)}.
+     * If you're reading this, you probably want to use {@link ProxyKernel#registerServer(Particle.Flux, Server.Configuration)}.
      * This method only exists for people that know exactly what they're doing.
      * @param server The server to register.
      * @return `true` if the server successfully registered. `false` otherwise.
@@ -57,7 +56,7 @@ public abstract class ProxyAdapter {
      * Unregisters the Server from the Proxy.
      * RustyConnector will already handle the important unregistration code.
      * This method only exists to ensure the server is unregistered from the actual proxy software being used.<br/>
-     * If you're reading this, you probably want to use {@link group.aelysium.rustyconnector.proxy.family.ServerRegistry#unregister(Server)}.
+     * If you're reading this, you probably want to use {@link ProxyKernel#unregisterServer(Server)}.
      * This method only exists for people that know exactly what they're doing.
      */
     public abstract void unregisterServer(@NotNull Server server);
@@ -171,7 +170,7 @@ public abstract class ProxyAdapter {
             return RC.P.Families().rootFamily().access().get(10, TimeUnit.SECONDS).connect(player);
         } catch (Exception e) {
             e.printStackTrace();
-            return Player.Connection.Request.failedRequest(player, Component.text(RC.P.Lang().lang().internalError()));
+            return Player.Connection.Request.failedRequest(player, RC.P.Lang().lang("rustyconnector-internalError").generate());
         }
     }
 

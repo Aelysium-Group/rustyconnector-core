@@ -33,7 +33,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
     protected static final Handler dummyHandler = (request) -> {throw new UnauthorizedResponse();};
     protected static final Token tokenGenerator = new Token(128);
     protected final String endpoint;
-    protected final Map<Packet.SourceIdentifier, WsContext> clients =new ConcurrentHashMap<>();
+    protected final Map<Packet.SourceIdentifier, WsContext> clients = new ConcurrentHashMap<>();
     protected final InetSocketAddress address;
     private final Javalin server = Javalin.create(c -> {
         c.showJavalinBanner = false;

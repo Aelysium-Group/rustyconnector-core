@@ -54,12 +54,12 @@ public abstract class Family implements Player.Connectable, Server.Container, Pa
      * Installs the provided tinder as a plugin on this family.
      * This method will immediately create a Flux from the tinder and attempt to ignite it.
      * @param flux The flux to ignite the plugin from.
-     * @throws Exception If there was an issue igniting the plugin's tinder.
+     * @throws Exception If there was an issue igniting the plugin's tinder. Or if a plugin already exists with the defined name.
      */
     public void installPlugin(Particle.Flux<? extends Plugin> flux) throws Exception {
         Plugin plugin = flux.observe(5, TimeUnit.MINUTES);
-        if(this.plugins.containsKey(plugin.name())) throw new RuntimeException("A plugin with the name "+plugin.name()+" already exists on the family "+this.id);
-        this.plugins.put(plugin.name(), flux);
+        if(this.plugins.containsKey(plugin.name().toLowerCase())) throw new RuntimeException("A plugin with the name "+plugin.name()+" already exists on the family "+this.id);
+        this.plugins.put(plugin.name().toLowerCase(), flux);
     }
 
     /**
@@ -68,7 +68,7 @@ public abstract class Family implements Player.Connectable, Server.Container, Pa
      * @return `true` if the plugin exists. `false` otherwise.
      */
     public boolean hasPlugin(String pluginName) {
-        return this.plugins.containsKey(pluginName);
+        return this.plugins.containsKey(pluginName.toLowerCase());
     }
 
     /**
@@ -85,7 +85,7 @@ public abstract class Family implements Player.Connectable, Server.Container, Pa
      * @return An optional containing the flux of the plugin if it exists. Otherwise, an empty optional.
      */
     public <F extends Flux<? extends Plugin>> Optional<F> fetchPlugin(String pluginName) {
-        return Optional.ofNullable((F) this.plugins.get(pluginName));
+        return Optional.ofNullable((F) this.plugins.get(pluginName.toLowerCase()));
     }
 
     /**
@@ -96,23 +96,15 @@ public abstract class Family implements Player.Connectable, Server.Container, Pa
      * @throws Exception If there was an issue uninstalling the plugin.
      */
     public boolean uninstallPlugin(String pluginName) throws Exception {
-        if(!this.plugins.containsKey(pluginName)) return false;
-        Flux<? extends Plugin> flux = this.plugins.get(pluginName);
+        String lowerCase = pluginName.toLowerCase();
+        if(!this.plugins.containsKey(lowerCase)) return false;
+        Flux<? extends Plugin> flux = this.plugins.get(lowerCase);
 
         if(flux.exists()) flux.close();
 
-        this.plugins.remove(pluginName);
+        this.plugins.remove(lowerCase);
         return true;
     }
-
-    /**
-     * Returns the details of this family in a component which can be
-     * printed to the console or sent to a player.
-     * This method can technically return whatever you want, but you should really
-     * consider just using {@link group.aelysium.rustyconnector.proxy.lang.ProxyLang#family(String, String, Map, List, Component)} so that the returned component
-     * matches what other familyRegistry will return.
-     */
-    public abstract @NotNull Component details();
 
     @Override
     public boolean equals(Object o) {
@@ -126,17 +118,22 @@ public abstract class Family implements Player.Connectable, Server.Container, Pa
         protected final String name;
 
         protected Plugin(String name) {
-            this.name = name;
+            this.name = name.toLowerCase();
         }
 
+        /**
+         * The plugin's name. Always lowercase.
+         */
         public final String name() {
             return this.name;
         }
 
         /**
-         * Returns a single-line string sharing the details for this plugin.
+         * Returns a map of strings sharing the details for this plugin.
+         * Each new key-value pair in the map can be assumed will be shown on a separate line from the previous pair.
+         * The all values in the map will be converted to strings using {@link Object#toString()}.
          * @return This plugin's details.
          */
-        public abstract String details();
+        public abstract Map<String, Object> details();
     }
 }

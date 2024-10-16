@@ -198,14 +198,7 @@ public abstract class Packet implements JSONParseable {
             public Packet.Local send() throws RuntimeException {
                 Packet.Local packet = this.builder.buildLocal();
 
-                MagicLinkCore magicLink = null;
-                try {
-                    magicLink = RC.P.MagicLink();
-                } catch (Exception ignore) {}
-                try {
-                    magicLink = RC.S.MagicLink();
-                } catch (Exception ignore) {}
-                if(magicLink == null) throw new RuntimeException("No available flames existed in order to send the packet!");
+                MagicLinkCore magicLink = RC.MagicLink();
                 magicLink.publish(packet);
 
                 return packet;

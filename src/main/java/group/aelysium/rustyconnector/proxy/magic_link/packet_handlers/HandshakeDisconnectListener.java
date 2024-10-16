@@ -12,7 +12,7 @@ public class HandshakeDisconnectListener {
     public static void execute(MagicLinkCore.Packets.Disconnect packet) throws PacketStatusResponse {
         Server server = RC.P.Server(packet.local().uuid()).orElseThrow();
 
-        RC.P.Kernel().unregister(server);
+        RC.P.Kernel().unregisterServer(server);
 
         try {
             Packet.New()

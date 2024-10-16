@@ -2,7 +2,6 @@ package group.aelysium.rustyconnector.proxy.family;
 
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.ara.Particle;
-import group.aelysium.rustyconnector.common.crypt.NanoID;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.proxy.Permission;
 import group.aelysium.rustyconnector.proxy.events.ServerPreJoinEvent;
@@ -96,26 +95,10 @@ public class Server implements ISortable, Player.Connectable {
     }
 
     /**
-     * The registration of the server.
-     * This is a unique combination of the server's family's name and a NanoID.<br/>
-     * Ex. `familyName-nf3nFX3965`.<br/><br/>
-     * While the server uuid exists for the lifetime of the server, the registration name will change
-     * any time the server unregisters and re-registers.
-     * This is also the value used by certain proxy pieces of software for referencing the server as it's
-     * more user-friendly than using an uuid.
-     * @return The server registration.
-     */
-    public @NotNull String registration() {
-        return this.registration;
-    }
-
-    /**
      * Convenience method to return the server's display name if it exists.
-     * If none exists, it will return the server's UUID in string format.
      */
-    public @NotNull String uuidOrDisplayName() {
-        if(displayName == null) return this.uuid.toString();
-        return this.displayName;
+    public Optional<String> displayName() {
+        return Optional.ofNullable(this.displayName);
     }
 
     /**
@@ -211,7 +194,6 @@ public class Server implements ISortable, Player.Connectable {
      */
     public boolean registered() {
         if(!RC.P.Adapter().serverExists(this)) return false;
-        if(RC.P.ServerRegistry().find(this.uuid()).isEmpty()) return false;
         if(RC.P.Family(this).isEmpty()) return false;
         return true;
     }
@@ -314,7 +296,7 @@ public class Server implements ISortable, Player.Connectable {
 
     @Override
     public String toString() {
-        return "["+this.uuidOrDisplayName()+"]("+this.address()+")";
+        return "["+this.displayName()+"]("+this.address()+")";
     }
 
     @Override
@@ -347,13 +329,48 @@ public class Server implements ISortable, Player.Connectable {
      * Responsible for holding multiple servers.
      */
     public interface Container {
-        boolean containsServer(@NotNull Server server);
+        /**
+         * Checks if the container holds the server.
+         * @param uuid The uuid to check for.
+         * @return `true` if the container holds the server. `false` otherwise.
+         */
+        boolean containsServer(@NotNull UUID uuid);
 
+        /**
+         * Adds the server to the server container.
+         * @param server The server to add.
+         */
         void addServer(@NotNull Server server);
+
+        /**
+         * Removes the server from the server container.
+         * @param server The server to remove.
+         */
         void removeServer(@NotNull Server server);
 
+        /**
+         * Fetches the specified server from the container.
+         * @param uuid The uuid to look for.
+         * @return An optional containing the server or nothing if one doesn't exist.
+         */
+        Optional<Server> fetchServer(@NotNull UUID uuid);
+
+        /**
+         * Gets all servers held by this container, regardless of their state within the actual container.
+         * @return All servers in this container. The returned list is immutable.
+         */
         List<Server> servers();
+
+        /**
+         * Gets all locked servers held by this container.
+         * @return All locked servers. The returned list is immutable.
+         */
         List<Server> lockedServers();
+
+        /**
+         * Gets all unlocked servers held by this container.
+         * @return All unlocked servers. The returned list is immutable.
+         */
         List<Server> unlockedServers();
 
         /**

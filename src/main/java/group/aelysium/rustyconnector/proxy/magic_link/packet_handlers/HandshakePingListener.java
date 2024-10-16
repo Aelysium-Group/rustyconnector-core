@@ -54,7 +54,7 @@ public class HandshakePingListener {
 
                 Packet.New()
                         .identification(Packet.Identification.from("RC","MLHS"))
-                        .parameter(WebSocketMagicLink.Packets.Handshake.Success.Parameters.MESSAGE, "Connected to the proxy! Registered as `"+server.uuidOrDisplayName()+"` into the family `"+family.id()+"`. Loaded using the magic config `"+packet.serverRegistration()+"`.")
+                        .parameter(WebSocketMagicLink.Packets.Handshake.Success.Parameters.MESSAGE, "Connected to the proxy! Registered as `"+server.displayName()+"` into the family `"+family.id()+"`. Loaded using the magic config `"+packet.serverRegistration()+"`.")
                         .parameter(WebSocketMagicLink.Packets.Handshake.Success.Parameters.COLOR, NamedTextColor.GREEN.toString())
                         .parameter(WebSocketMagicLink.Packets.Handshake.Success.Parameters.INTERVAL, new Packet.Parameter(10))
                         .addressTo(packet)

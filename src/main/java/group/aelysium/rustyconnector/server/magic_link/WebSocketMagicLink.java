@@ -134,7 +134,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                 this.client = new WebSocketClient(websocketURL.toURI(), new Draft_6455(), headers, 1000 * (60 * 15)) {
                     @Override
                     public void onOpen(ServerHandshake handshake) {
-                        RC.S.Adapter().log(RC.S.Lang().lang().magicLink());
+                        RC.S.Adapter().log(RC.S.Lang().lang("rustyconnector-magicLinkHandshake").generate());
                         WebSocketMagicLink.this.stopHeartbeat.set(false);
                         WebSocketMagicLink.this.heartbeat();
                     }

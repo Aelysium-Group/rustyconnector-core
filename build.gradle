@@ -35,10 +35,9 @@ repositories {
 dependencies {
     compileOnly 'org.jetbrains:annotations:24.1.0'
 
-    implementation "group.aelysium:ara:1.0.1"
+    implementation "group.aelysium:ara:1.1.0"
 
     implementation 'com.aventrix.jnanoid:jnanoid:2.0.0'
-    implementation "net.kyori:adventure-text-minimessage:4.14.0"
     implementation 'net.kyori:adventure-api:4.17.0'
     implementation 'com.google.code.gson:gson:2.11.0'
 

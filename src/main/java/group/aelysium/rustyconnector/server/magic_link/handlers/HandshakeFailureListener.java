@@ -11,7 +11,7 @@ public class HandshakeFailureListener {
     @PacketListener(MagicLinkCore.Packets.Handshake.Failure.class)
     public static void execute(MagicLinkCore.Packets.Handshake.Failure packet) {
         try {
-            RC.S.Adapter().log(RC.S.Lang().lang().magicLinkHandshakeFailure(packet.reason(), 1, TimeUnit.MINUTES));
+            RC.S.Adapter().log(RC.S.Lang().lang("rustyconnector-magicLinkHandshakeFailure").generate(packet.reason(), 1, TimeUnit.MINUTES));
         } catch (Exception ignore) {}
         RC.S.MagicLink().setDelay(60);
     }

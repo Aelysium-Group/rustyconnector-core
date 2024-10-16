@@ -130,7 +130,7 @@ public abstract class LoadBalancer extends Family.Plugin implements Server.Conta
      * @param persistence The persistence.
      * @param attempts The number of attempts that persistence will try to connect a player before quiting. This value doesn't matter if persistence is set to `false`
      */
-    public void setPersistence(boolean persistence, int attempts) {
+    public void persistence(boolean persistence, int attempts) {
         this.persistence = persistence;
         this.attempts = attempts;
     }
@@ -139,7 +139,7 @@ public abstract class LoadBalancer extends Family.Plugin implements Server.Conta
      * Set whether the load balancer is weighted.
      * @param weighted Whether the load balancer is weighted.
      */
-    public void setWeighted(boolean weighted) {
+    public void weighted(boolean weighted) {
         this.weighted = weighted;
     }
 
@@ -158,20 +158,13 @@ public abstract class LoadBalancer extends Family.Plugin implements Server.Conta
         return this.current();
     }
 
-    /**
-     * Adds the server to this load balancer.
-     * The server will be unlocked.
-     * @param server The server to add.
-     */
+    @Override
     public void addServer(@NotNull Server server) {
         this.unlockedServers.add(server);
         this.servers.put(server.uuid(), server);
     }
 
-    /**
-     * Removes the server from this load balancer.
-     * @param server The server to remove.
-     */
+    @Override
     public void removeServer(@NotNull Server server) {
         if(!this.servers.containsKey(server.uuid())) return;
         if(!this.unlockedServers.remove(server))
@@ -180,8 +173,13 @@ public abstract class LoadBalancer extends Family.Plugin implements Server.Conta
     }
 
     @Override
-    public boolean containsServer(@NotNull Server server) {
-        return this.servers.containsKey(server.uuid());
+    public Optional<Server> fetchServer(@NotNull UUID uuid) {
+        return Optional.ofNullable(this.servers.get(uuid));
+    }
+
+    @Override
+    public boolean containsServer(@NotNull UUID uuid) {
+        return this.servers.containsKey(uuid);
     }
 
     @Override
@@ -191,12 +189,12 @@ public abstract class LoadBalancer extends Family.Plugin implements Server.Conta
 
     @Override
     public List<Server> lockedServers() {
-        return this.lockedServers.stream().toList();
+        return Collections.unmodifiableList(this.lockedServers);
     }
 
     @Override
     public List<Server> unlockedServers() {
-        return this.unlockedServers.stream().toList();
+        return Collections.unmodifiableList(this.unlockedServers);
     }
 
     @Override
@@ -234,8 +232,14 @@ public abstract class LoadBalancer extends Family.Plugin implements Server.Conta
     }
 
     @Override
-    public String details() {
-        return "("+this.getClass().getName()+" Algorithm) ("+this.unlockedServers.size()+" Unlocked Servers) ("+this.lockedServers.size()+" Locked Servers)";
+    public Map<String, Object> details() {
+        return Map.of(
+                "Algorithm", this.getClass().getSimpleName(),
+                "Unlocked Servers", this.unlockedServers.size(),
+                "Locked Servers", this.lockedServers.size(),
+                "Weighted", this.weighted,
+                "Persistence", this.persistence ? "Enabled ("+this.attempts+")" : "Disabled"
+        );
     }
 
     public record Settings(

@@ -12,9 +12,7 @@ import group.aelysium.rustyconnector.proxy.events.ServerUnregisterEvent;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.FamilyRegistry;
 import group.aelysium.rustyconnector.proxy.family.Server;
-import group.aelysium.rustyconnector.proxy.family.ServerRegistry;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.*;
-import group.aelysium.rustyconnector.proxy.lang.ProxyLang;
 import group.aelysium.rustyconnector.proxy.player.PlayerRegistry;
 import group.aelysium.rustyconnector.proxy.util.Version;
 import org.jetbrains.annotations.NotNull;
@@ -29,22 +27,20 @@ public class ProxyKernel implements Particle {
     private final UUID uuid;
     private final Version version;
     private final ProxyAdapter adapter;
-    private final Particle.Flux<? extends LangLibrary<? extends ProxyLang>> lang;
+    private final Particle.Flux<? extends LangLibrary> lang;
     private final Particle.Flux<? extends FamilyRegistry> familyRegistry;
     private final Particle.Flux<? extends MagicLinkCore.Proxy> magicLink;
     private final Particle.Flux<? extends PlayerRegistry> playerRegistry;
     private final Particle.Flux<? extends EventManager> eventManager;
-    private final Particle.Flux<? extends ServerRegistry> serverRegistry;
 
     protected ProxyKernel(
             @NotNull UUID uuid,
             @NotNull ProxyAdapter adapter,
-            @NotNull Particle.Flux<? extends LangLibrary<? extends ProxyLang>> lang,
+            @NotNull Particle.Flux<? extends LangLibrary> lang,
             @NotNull Particle.Flux<? extends FamilyRegistry> familyRegistry,
             @NotNull Particle.Flux<? extends MagicLinkCore.Proxy> magicLink,
             @NotNull Particle.Flux<? extends PlayerRegistry> playerRegistry,
-            @NotNull Particle.Flux<? extends EventManager> eventManager,
-            @NotNull Particle.Flux<? extends ServerRegistry> serverRegistry
+            @NotNull Particle.Flux<? extends EventManager> eventManager
     ) {
         this.uuid = uuid;
         this.adapter = adapter;
@@ -52,7 +48,6 @@ public class ProxyKernel implements Particle {
         this.familyRegistry = familyRegistry;
         this.magicLink = magicLink;
         this.playerRegistry = playerRegistry;
-        this.serverRegistry = serverRegistry;
         this.eventManager = eventManager;
 
         try {
@@ -68,7 +63,6 @@ public class ProxyKernel implements Particle {
             this.playerRegistry.observe();
             this.eventManager.observe();
             this.magicLink.observe();
-            this.serverRegistry.observe();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -93,7 +87,7 @@ public class ProxyKernel implements Particle {
     public ProxyAdapter Adapter() {
         return this.adapter;
     }
-    public Particle.Flux<? extends LangLibrary<? extends ProxyLang>> Lang() {
+    public Particle.Flux<? extends LangLibrary> Lang() {
         return this.lang;
     }
     public Particle.Flux<? extends FamilyRegistry> FamilyRegistry() {
@@ -108,12 +102,10 @@ public class ProxyKernel implements Particle {
     public Particle.Flux<? extends EventManager> EventManager() {
         return this.eventManager;
     }
-    public Particle.Flux<? extends ServerRegistry> ServerRegistry() {
-        return this.serverRegistry;
-    }
 
     /**
-     * Registers a server to the Proxy.
+     * Registers a server to the Proxy.<br/>
+     * This method is the central source of truth for registering servers.<br/>
      * Other methods in the codebase have similar names to this one.
      * However, they individually only accomplish a small part of the job.
      * If you're attempting to simply register a server to RustyConnector, this is the method you should use.
@@ -140,19 +132,17 @@ public class ProxyKernel implements Particle {
         Family family = null;
         try {
             family = familyFlux.access().get(10, TimeUnit.SECONDS);
+            server.registration(family.id());
             family.addServer(server);
 
-            RC.P.ServerRegistry().register(server);
         } catch (CancellationException | TimeoutException e) {
             if(family != null) family.removeServer(server);
             RC.P.Adapter().unregisterServer(server);
-            RC.P.ServerRegistry().unregister(server);
 
             throw new CancellationException(e.getMessage());
         } catch (Exception e) {
             if(family != null) family.removeServer(server);
             RC.P.Adapter().unregisterServer(server);
-            RC.P.ServerRegistry().unregister(server);
 
             throw new IllegalStateException(e);
         }
@@ -161,19 +151,18 @@ public class ProxyKernel implements Particle {
     }
 
     /**
-     * Unregisters the server from the proxy.
+     * Unregisters the server from the proxy.<br/>
+     * This method is the central source of truth for registering servers.<br/>
      * Other methods in the codebase have similar names to this one.
      * However, they individually only accomplish a small part of the job.
-     * If you're attempting to simply unregister a server from RustyConnector, this is the method you should use.
-     * Once you use this method, assuming it completes successfully, you can assume that the server is completely unregistered and you don't need to do anything else to unregister the server.
+     * If you're attempting to simply unregisterServer a server from RustyConnector, this is the method you should use.
+     * Once you use this method, assuming it completes successfully, you can assume that the server is completely unregistered and you don't need to do anything else to unregisterServer the server.
      * @param server The server to unregister.
      */
-    public void unregister(@NotNull Server server) {
+    public void unregisterServer(@NotNull Server server) {
         RC.P.EventManager().fireEvent(new ServerUnregisterEvent(server));
 
         RC.P.Adapter().unregisterServer(server);
-
-        RC.P.ServerRegistry().unregister(server);
 
         server.family().ifPresent(flux -> flux.executeNow(family -> family.removeServer(server)));
     }
@@ -193,12 +182,11 @@ public class ProxyKernel implements Particle {
     public static class Tinder extends Particle.Tinder<ProxyKernel> {
         private final UUID uuid;
         private final ProxyAdapter adapter;
-        private Particle.Tinder<? extends LangLibrary<? extends ProxyLang>> lang = LangLibrary.Tinder.DEFAULT_PROXY_CONFIGURATION;
+        private Particle.Tinder<? extends LangLibrary> lang = LangLibrary.Tinder.DEFAULT_LANG_LIBRARY;
         private Particle.Tinder<? extends FamilyRegistry> familyRegistry = FamilyRegistry.Tinder.DEFAULT_CONFIGURATION;
         private final Particle.Tinder<? extends MagicLinkCore.Proxy> magicLink;
         private Particle.Tinder<? extends PlayerRegistry> playerRegistry = PlayerRegistry.Tinder.DEFAULT_CONFIGURATION;
         private Particle.Tinder<? extends EventManager> eventManager = EventManager.Tinder.DEFAULT_CONFIGURATION;
-        private Particle.Tinder<? extends ServerRegistry> serverRegistry = ServerRegistry.Tinder.DEFAULT_CONFIGURATION;
 
         public Tinder(
                 @NotNull UUID uuid,
@@ -219,7 +207,7 @@ public class ProxyKernel implements Particle {
             }
         }
 
-        public Tinder lang(@NotNull Particle.Tinder<? extends LangLibrary<? extends ProxyLang>> lang) {
+        public Tinder lang(@NotNull Particle.Tinder<? extends LangLibrary> lang) {
             this.lang = lang;
             return this;
         }
@@ -239,11 +227,6 @@ public class ProxyKernel implements Particle {
             return this;
         }
 
-        public Tinder serverRegistry(@NotNull Particle.Tinder<? extends ServerRegistry> serverRegistry) {
-            this.serverRegistry = serverRegistry;
-            return this;
-        }
-
         public @NotNull ProxyKernel ignite() throws Exception {
             return new ProxyKernel(
                     this.uuid,
@@ -252,8 +235,7 @@ public class ProxyKernel implements Particle {
                     this.familyRegistry.flux(),
                     this.magicLink.flux(),
                     this.playerRegistry.flux(),
-                    this.eventManager.flux(),
-                    this.serverRegistry.flux()
+                    this.eventManager.flux()
             );
         }
     }

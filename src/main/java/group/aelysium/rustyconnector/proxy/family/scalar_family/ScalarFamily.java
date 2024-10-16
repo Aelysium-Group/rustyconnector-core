@@ -11,10 +11,7 @@ import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -48,9 +45,16 @@ public class ScalarFamily extends Family {
     }
 
     @Override
-    public boolean containsServer(@NotNull Server server) {
+    public Optional<Server> fetchServer(@NotNull UUID uuid) {
+        AtomicReference<Optional<Server>> server = new AtomicReference<>();
+        this.loadBalancer().executeNow(l -> server.set(l.fetchServer(uuid)));
+        return server.get();
+    }
+
+    @Override
+    public boolean containsServer(@NotNull UUID uuid) {
         AtomicBoolean value = new AtomicBoolean(false);
-        this.loadBalancer().executeNow(l -> value.set(l.containsServer(server)));
+        this.loadBalancer().executeNow(l -> value.set(l.containsServer(uuid)));
         return value.get();
     }
 
@@ -87,26 +91,6 @@ public class ScalarFamily extends Family {
         );
 
         return value.get();
-    }
-
-    @Override
-    public @NotNull Component details() {
-        Map<String, String> details = new HashMap<>();
-        details.put("Players", this.players()+"");
-
-        this.plugins.forEach((k, v) -> {
-            if(!v.exists()) return;
-            Plugin p = v.orElseThrow();
-            details.put(p.name(), p.details());
-        });
-
-        return RC.P.Lang().lang().family(
-                this.id(),
-                this.parent,
-                details,
-                this.loadBalancer().orElseThrow().servers(),
-                Component.text("All Servers.")
-        );
     }
 
     @Override

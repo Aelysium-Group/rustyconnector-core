@@ -3,10 +3,10 @@ package group.aelysium.rustyconnector.server;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import group.aelysium.ara.Particle;
+import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
-import group.aelysium.rustyconnector.server.lang.ServerLang;
 import group.aelysium.rustyconnector.proxy.ProxyKernel;
 import group.aelysium.rustyconnector.proxy.util.Version;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
@@ -21,7 +21,7 @@ public class ServerKernel implements Particle {
     private final UUID uuid;
     private final Version version;
     private final ServerAdapter adapter;
-    private final Flux<? extends LangLibrary<? extends ServerLang>> lang;
+    private final Flux<? extends LangLibrary> lang;
     private final String displayName;
     private final InetSocketAddress address;
     private final Flux<? extends MagicLinkCore.Server> magicLink;
@@ -30,7 +30,7 @@ public class ServerKernel implements Particle {
     protected ServerKernel(
             @NotNull UUID uuid,
             @NotNull ServerAdapter adapter,
-            @NotNull Flux<? extends LangLibrary<? extends ServerLang>> lang,
+            @NotNull Flux<? extends LangLibrary> lang,
             @Nullable String displayName,
             @NotNull InetSocketAddress address,
             @NotNull Flux<? extends MagicLinkCore.Server> magicLink,
@@ -52,9 +52,11 @@ public class ServerKernel implements Particle {
                 this.version = new Version(object.get("version").getAsString());
             }
 
-            this.lang.access().get();
-            this.magicLink.access().get();
-            this.eventManager.access().get();
+            this.lang.observe();
+            this.magicLink.observe();
+            this.eventManager.observe();
+
+            RC.P.Adapter().log(RC.P.Lang().lang("rustyconnector-wordmark").generate(this.version));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -159,7 +161,7 @@ public class ServerKernel implements Particle {
         return this.adapter;
     }
 
-    public Flux<? extends LangLibrary<? extends ServerLang>> Lang() {
+    public Flux<? extends LangLibrary> Lang() {
         return this.lang;
     }
 
@@ -180,7 +182,7 @@ public class ServerKernel implements Particle {
     public static class Tinder extends Particle.Tinder<ServerKernel> {
         private final UUID uuid;
         private final ServerAdapter adapter;
-        private Particle.Tinder<? extends LangLibrary<? extends ServerLang>> lang = LangLibrary.Tinder.DEFAULT_SERVER_CONFIGURATION;
+        private Particle.Tinder<? extends LangLibrary> lang = LangLibrary.Tinder.DEFAULT_LANG_LIBRARY;
         private final String displayName;
         private final InetSocketAddress address;
         private final Particle.Tinder<? extends MagicLinkCore.Server> magicLink;
@@ -200,7 +202,7 @@ public class ServerKernel implements Particle {
             this.magicLink = magicLink;
         }
 
-        public Tinder lang(@NotNull Particle.Tinder<? extends LangLibrary<? extends ServerLang>> lang) {
+        public Tinder lang(@NotNull Particle.Tinder<? extends LangLibrary> lang) {
             this.lang = lang;
             return this;
         }
