@@ -228,7 +228,7 @@ public abstract class LoadBalancer extends Family.Plugin implements Server.Conta
         this.servers.clear();
         this.unlockedServers.clear();
         this.lockedServers.clear();
-        this.executor.shutdownNow();
+        if(this.executor != null) this.executor.shutdownNow();
     }
 
     @Override

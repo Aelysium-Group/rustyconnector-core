@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.ara.Particle;
+import group.aelysium.rustyconnector.common.RCKernel;
+import group.aelysium.rustyconnector.common.errors.ErrorRegistry;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
@@ -23,84 +25,14 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class ProxyKernel implements Particle {
-    private final UUID uuid;
-    private final Version version;
-    private final ProxyAdapter adapter;
-    private final Particle.Flux<? extends LangLibrary> lang;
-    private final Particle.Flux<? extends FamilyRegistry> familyRegistry;
-    private final Particle.Flux<? extends MagicLinkCore.Proxy> magicLink;
-    private final Particle.Flux<? extends PlayerRegistry> playerRegistry;
-    private final Particle.Flux<? extends EventManager> eventManager;
-
+public class ProxyKernel extends RCKernel<ProxyAdapter> {
     protected ProxyKernel(
             @NotNull UUID uuid,
+            @NotNull Version version,
             @NotNull ProxyAdapter adapter,
-            @NotNull Particle.Flux<? extends LangLibrary> lang,
-            @NotNull Particle.Flux<? extends FamilyRegistry> familyRegistry,
-            @NotNull Particle.Flux<? extends MagicLinkCore.Proxy> magicLink,
-            @NotNull Particle.Flux<? extends PlayerRegistry> playerRegistry,
-            @NotNull Particle.Flux<? extends EventManager> eventManager
+            List<? extends Flux<?>> plugins
     ) {
-        this.uuid = uuid;
-        this.adapter = adapter;
-        this.lang = lang;
-        this.familyRegistry = familyRegistry;
-        this.magicLink = magicLink;
-        this.playerRegistry = playerRegistry;
-        this.eventManager = eventManager;
-
-        try {
-            try (InputStream input = ProxyKernel.class.getClassLoader().getResourceAsStream("metadata.json")) {
-                if (input == null) throw new NullPointerException("Unable to initialize version number from jar.");
-                Gson gson = new Gson();
-                JsonObject object = gson.fromJson(new String(input.readAllBytes()), JsonObject.class);
-                this.version = new Version(object.get("version").getAsString());
-            }
-
-            this.lang.observe();
-            this.familyRegistry.observe();
-            this.playerRegistry.observe();
-            this.eventManager.observe();
-            this.magicLink.observe();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Gets the uuid of this Proxy.
-     * The Proxy's uuid shouldn't change between re-boots unless you delete the files on the Proxy.
-     * @return {@link UUID}
-     */
-    public UUID uuid() {
-        return this.uuid;
-    }
-
-    /**
-     * Gets the current version of RustyConnector
-     * @return {@link Version}
-     */
-    public Version version() {
-        return this.version;
-    }
-    public ProxyAdapter Adapter() {
-        return this.adapter;
-    }
-    public Particle.Flux<? extends LangLibrary> Lang() {
-        return this.lang;
-    }
-    public Particle.Flux<? extends FamilyRegistry> FamilyRegistry() {
-        return this.familyRegistry;
-    }
-    public Particle.Flux<? extends MagicLinkCore.Proxy> MagicLink() {
-        return this.magicLink;
-    }
-    public Particle.Flux<? extends PlayerRegistry> PlayerRegistry() {
-        return this.playerRegistry;
-    }
-    public Particle.Flux<? extends EventManager> EventManager() {
-        return this.eventManager;
+        super(uuid, version, adapter, plugins);
     }
 
     /**
@@ -167,13 +99,6 @@ public class ProxyKernel implements Particle {
         server.family().ifPresent(flux -> flux.executeNow(family -> family.removeServer(server)));
     }
 
-    public void close() {
-        this.familyRegistry.close();
-        this.magicLink.close();
-        this.playerRegistry.close();
-        this.eventManager.close();
-    }
-
     /**
      * Provides a declarative method by which you can establish a new Proxy instance on RC.
      * Parameters listed in the constructor are required, any other parameters are
@@ -187,6 +112,7 @@ public class ProxyKernel implements Particle {
         private final Particle.Tinder<? extends MagicLinkCore.Proxy> magicLink;
         private Particle.Tinder<? extends PlayerRegistry> playerRegistry = PlayerRegistry.Tinder.DEFAULT_CONFIGURATION;
         private Particle.Tinder<? extends EventManager> eventManager = EventManager.Tinder.DEFAULT_CONFIGURATION;
+        private Particle.Tinder<? extends ErrorRegistry> errors = ErrorRegistry.Tinder.DEFAULT_CONFIGURATION;
 
         public Tinder(
                 @NotNull UUID uuid,
@@ -227,15 +153,31 @@ public class ProxyKernel implements Particle {
             return this;
         }
 
+        public Tinder errorHandler(@NotNull Particle.Tinder<? extends ErrorRegistry> errorHandler) {
+            this.errors = errorHandler;
+            return this;
+        }
+
         public @NotNull ProxyKernel ignite() throws Exception {
+            Version version;
+            try (InputStream input = ProxyKernel.class.getClassLoader().getResourceAsStream("metadata.json")) {
+                if (input == null) throw new NullPointerException("Unable to initialize version number from jar.");
+                Gson gson = new Gson();
+                JsonObject object = gson.fromJson(new String(input.readAllBytes()), JsonObject.class);
+                version = new Version(object.get("version").getAsString());
+            }
             return new ProxyKernel(
                     this.uuid,
+                    version,
                     this.adapter,
-                    this.lang.flux(),
-                    this.familyRegistry.flux(),
-                    this.magicLink.flux(),
-                    this.playerRegistry.flux(),
-                    this.eventManager.flux()
+                    List.of(
+                        this.lang.flux(),
+                        this.familyRegistry.flux(),
+                        this.magicLink.flux(),
+                        this.playerRegistry.flux(),
+                        this.eventManager.flux(),
+                        this.errors.flux()
+                    )
             );
         }
     }

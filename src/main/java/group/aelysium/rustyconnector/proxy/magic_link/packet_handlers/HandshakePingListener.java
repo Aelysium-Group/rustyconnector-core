@@ -3,6 +3,7 @@ package group.aelysium.rustyconnector.proxy.magic_link.packet_handlers;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.RustyConnector;
 import group.aelysium.ara.Particle;
+import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.exceptions.PacketStatusResponse;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
@@ -24,14 +25,17 @@ public class HandshakePingListener {
 
             server.setTimeout(15);
             server.setPlayerCount(packet.playerCount());
-        } catch (Exception e) {
+            return;
+        } catch (Exception ignore) {}
+
+        try {
             MagicLinkCore.Proxy magicLink = RC.P.MagicLink();
             MagicLinkCore.Proxy.ServerRegistrationConfiguration config = magicLink.registrationConfig(packet.serverRegistration()).orElseThrow(
                     () -> new NullPointerException("No Server Registration exists with the name "+packet.serverRegistration()+"!")
             );
 
             try {
-                Particle.Flux<? extends Family> familyFlux = RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().FamilyRegistry().orElseThrow().find(config.family()).orElseThrow(() ->
+                Particle.Flux<? extends Family> familyFlux = RC.P.Families().find(config.family()).orElseThrow(() ->
                         new InvalidAlgorithmParameterException("A family with the id `"+config.family()+"` doesn't exist!")
                 );
                 Family family = familyFlux.access().get(10, TimeUnit.SECONDS);
@@ -59,14 +63,16 @@ public class HandshakePingListener {
                         .parameter(WebSocketMagicLink.Packets.Handshake.Success.Parameters.INTERVAL, new Packet.Parameter(10))
                         .addressTo(packet)
                         .send();
-            } catch(Exception e2) {
-                e2.printStackTrace();
+            } catch(Exception e) {
+                RC.Error(Error.from(e));
                 Packet.New()
                         .identification(Packet.Identification.from("RC","MLHF"))
-                        .parameter(WebSocketMagicLink.Packets.Handshake.Failure.Parameters.REASON, "Attempt to connect to proxy failed! " + e2.getMessage())
+                        .parameter(WebSocketMagicLink.Packets.Handshake.Failure.Parameters.REASON, "Attempt to connect to proxy failed! " + e.getMessage())
                         .addressTo(packet)
                         .send();
             }
+        } catch (Exception e) {
+            RC.Error(Error.from(e));
         }
     }
 }

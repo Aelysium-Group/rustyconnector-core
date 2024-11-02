@@ -1,6 +1,10 @@
 package group.aelysium.rustyconnector;
 
 import group.aelysium.ara.Particle;
+import group.aelysium.rustyconnector.common.RCAdapter;
+import group.aelysium.rustyconnector.common.RCKernel;
+import group.aelysium.rustyconnector.common.errors.Error;
+import group.aelysium.rustyconnector.common.errors.ErrorRegistry;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.lang.LangNode;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
@@ -14,6 +18,7 @@ import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.player.Player;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
 import group.aelysium.rustyconnector.proxy.player.PlayerRegistry;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.CancellationException;
@@ -35,38 +40,49 @@ public interface RC {
      */
     interface P {
         static ProxyKernel Kernel() throws NoSuchElementException {
-            return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow();
+            return RustyConnector.Toolkit.Proxy()
+                    .orElseThrow(()->new NoSuchElementException("No Proxy Kernel has been registered for RustyConnector."))
+                    .orElseThrow(()->new NoSuchElementException("The RustyConnector Proxy Kernel is currently unavailable. It might be rebooting."));
         }
 
         static FamilyRegistry Families() throws NoSuchElementException {
-            return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().FamilyRegistry().orElseThrow();
+            return RC.P.Kernel().fetchPlugin(FamilyRegistry.class)
+                    .orElseThrow(()->new NoSuchElementException("The Family Registry is not currently available. It might be rebooting."));
         }
 
         static PlayerRegistry Players() throws NoSuchElementException {
-            return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().PlayerRegistry().orElseThrow();
+            return RC.P.Kernel().fetchPlugin(PlayerRegistry.class)
+                    .orElseThrow(()->new NoSuchElementException("The Player Registry is not currently available. It might be rebooting."));
         }
 
         static MagicLinkCore.Proxy MagicLink() throws NoSuchElementException {
-            return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().MagicLink().orElseThrow();
+            return RC.P.Kernel().fetchPlugin(MagicLinkCore.Proxy.class)
+                    .orElseThrow(()->new NoSuchElementException("The Magic Link module is not currently available. It might be rebooting."));
         }
 
         static EventManager EventManager() throws NoSuchElementException {
-            return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().EventManager().orElseThrow();
+            return RC.P.Kernel().fetchPlugin(EventManager.class)
+                    .orElseThrow(()->new NoSuchElementException("The Event Manager is not currently available. It might be rebooting."));
         }
 
         static ProxyAdapter Adapter() throws NoSuchElementException {
-            return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Adapter();
+            return RC.P.Kernel().Adapter();
         }
 
         static LangLibrary Lang() throws NoSuchElementException {
-            return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().Lang().orElseThrow();
+            return RC.P.Kernel().fetchPlugin(LangLibrary.class)
+                    .orElseThrow(()->new NoSuchElementException("The Language Registry is not currently available. It might be rebooting."));
+        }
+
+        static ErrorRegistry Errors() {
+            return RC.P.Kernel().fetchPlugin(ErrorRegistry.class)
+                    .orElseThrow(()->new NoSuchElementException("The Error Registry is not currently available. It might be rebooting."));
         }
 
         static Optional<? extends Family> Family(String id) throws NoSuchElementException {
-            Family family = null;
-            try {
-                family = RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().FamilyRegistry().orElseThrow().find(id).orElseThrow().orElseThrow();
-            } catch (Exception ignore) {}
+            Family family = RC.P.Families().find(id)
+                    .orElseThrow(()->new NoSuchElementException("No family with the id "+id+" exists."))
+                    .orElseThrow(()->new NoSuchElementException("The family "+id+" is not currently available. it might be rebooting."));
             return Optional.ofNullable(family);
         }
 
@@ -96,10 +112,10 @@ public interface RC {
         }
 
         static Optional<Player> Player(UUID uuid) throws NoSuchElementException {
-            return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().PlayerRegistry().orElseThrow().fetch(uuid);
+            return RC.P.Players().fetch(uuid);
         }
         static Optional<Player> Player(String username) throws NoSuchElementException {
-            return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().PlayerRegistry().orElseThrow().fetch(username);
+            return RC.P.Players().fetch(username);
         }
     }
 
@@ -108,24 +124,58 @@ public interface RC {
      */
     interface S {
         static ServerKernel Kernel() throws NoSuchElementException {
-            return RustyConnector.Toolkit.Server().orElseThrow().orElseThrow();
+            return RustyConnector.Toolkit.Server()
+                    .orElseThrow(()->new NoSuchElementException("No Server Kernel has been registered for RustyConnector."))
+                    .orElseThrow(()->new NoSuchElementException("The RustyConnector Server Kernel is currently unavailable. It might be rebooting."));
         }
 
         static MagicLinkCore.Server MagicLink() throws NoSuchElementException {
-            return RustyConnector.Toolkit.Server().orElseThrow().orElseThrow().MagicLink().orElseThrow();
+            return RC.S.Kernel().fetchPlugin(MagicLinkCore.Server.class)
+                    .orElseThrow(()->new NoSuchElementException("The Magic Link module is not currently available. It might be rebooting."));
         }
 
         static ServerAdapter Adapter() throws NoSuchElementException {
-            return RustyConnector.Toolkit.Server().orElseThrow().orElseThrow().Adapter();
+            return RC.S.Kernel().Adapter();
         }
 
         static LangLibrary Lang() throws NoSuchElementException {
-            return RustyConnector.Toolkit.Server().orElseThrow().orElseThrow().Lang().orElseThrow();
+            return RC.S.Kernel().fetchPlugin(LangLibrary.class)
+                    .orElseThrow(()->new NoSuchElementException("The Language Registry is not currently available. It might be rebooting."));
         }
 
         static EventManager EventManager() throws NoSuchElementException {
-            return RustyConnector.Toolkit.Server().orElseThrow().orElseThrow().EventManager().orElseThrow();
+            return RC.S.Kernel().fetchPlugin(EventManager.class)
+                    .orElseThrow(()->new NoSuchElementException("The Event Manager is not currently available. It might be rebooting."));
         }
+
+        static ErrorRegistry Errors() {
+            return RC.S.Kernel().fetchPlugin(ErrorRegistry.class)
+                    .orElseThrow(()->new NoSuchElementException("The Error Registry is not currently available. It might be rebooting."));
+        }
+    }
+
+    static RCKernel<? extends RCAdapter> Kernel() throws NoSuchElementException {
+        try {
+            return RC.S.Kernel();
+        } catch (Exception ignore) {}
+        try {
+            return RC.P.Kernel();
+        } catch (Exception ignore) {}
+        throw new NoSuchElementException("No RustyConnector kernels currently exist.");
+    }
+
+    static void Error(@NotNull Error error) throws NoSuchElementException {
+        RC.Errors().register(error);
+    }
+
+    static ErrorRegistry Errors() throws NoSuchElementException {
+        try {
+            return RC.S.Errors();
+        } catch (Exception ignore) {}
+        try {
+            return RC.P.Errors();
+        } catch (Exception ignore) {}
+        throw new NoSuchElementException("No RustyConnector kernels currently exist.");
     }
 
     static LangLibrary Lang() throws NoSuchElementException {
@@ -135,7 +185,7 @@ public interface RC {
         try {
             return RC.P.Lang();
         } catch (Exception ignore) {}
-        throw new NoSuchElementException("No Langs currently exist.");
+        throw new NoSuchElementException("No RustyConnector kernels currently exist.");
     }
 
     static LangNode Lang(String id) throws NoSuchElementException {
@@ -149,7 +199,7 @@ public interface RC {
         try {
             return RC.P.EventManager();
         } catch (Exception ignore) {}
-        throw new NoSuchElementException("No EventManagers currently exist.");
+        throw new NoSuchElementException("No RustyConnector kernels currently exist.");
     }
 
     static MagicLinkCore MagicLink() throws NoSuchElementException {
@@ -159,6 +209,16 @@ public interface RC {
         try {
             return RC.P.MagicLink();
         } catch (Exception ignore) {}
-        throw new NoSuchElementException("No MagicLink providers currently exist.");
+        throw new NoSuchElementException("No RustyConnector kernels currently exist.");
+    }
+
+    static RCAdapter Adapter() throws NoSuchElementException {
+        try {
+            return RC.S.Adapter();
+        } catch (Exception ignore) {}
+        try {
+            return RC.P.Adapter();
+        } catch (Exception ignore) {}
+        throw new NoSuchElementException("No RustyConnector kernels currently exist.");
     }
 }

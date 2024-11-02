@@ -1,6 +1,8 @@
 package group.aelysium.rustyconnector.proxy;
 
 import group.aelysium.ara.Particle;
+import group.aelysium.rustyconnector.common.RCAdapter;
+import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.proxy.events.*;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.proxy.family.Family;
@@ -19,7 +21,7 @@ import java.util.concurrent.TimeUnit;
  * The Proxy adapter exists to take proxy specific actions and adapt them so that RustyConnector
  * can properly execute them regardless of disparate data types between the wrapper and RustyConnector.
  */
-public abstract class ProxyAdapter {
+public abstract class ProxyAdapter extends RCAdapter {
     /**
      * Converts the RustyConnector player object to the Proxy's version.
      * @param player The RustyConnector player.
@@ -67,18 +69,6 @@ public abstract class ProxyAdapter {
      * @return `true` if the server is successfully registered on the actual proxy software. `false` otherwise.
      */
     public abstract boolean serverExists(@NotNull Server server);
-
-    /**
-     * Logs the components as a message into the console.
-     * @param component The component to log.
-     */
-    public abstract void log(@NotNull Component component);
-
-    /**
-     * Logs the specified component into the console.
-     * @param component The component to log.
-     */
-    public abstract void messagePlayer(@NotNull Player player, @NotNull Component component);
 
     /**
      * Fetches the Server for the player.
@@ -169,7 +159,7 @@ public abstract class ProxyAdapter {
         try {
             return RC.P.Families().rootFamily().access().get(10, TimeUnit.SECONDS).connect(player);
         } catch (Exception e) {
-            e.printStackTrace();
+            RC.Error(Error.from(e));
             return Player.Connection.Request.failedRequest(player, RC.P.Lang().lang("rustyconnector-internalError").generate());
         }
     }

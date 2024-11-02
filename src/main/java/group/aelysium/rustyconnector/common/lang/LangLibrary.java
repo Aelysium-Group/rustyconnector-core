@@ -153,7 +153,7 @@ public class LangLibrary implements Particle {
     }
 
     public LangNode lang(String id) {
-        return Optional.ofNullable(this.nodes.get(id)).orElse(createNode(id, a -> Component.text("["+id+"]")));
+        return Optional.ofNullable(this.nodes.get(id)).orElse(createNode(id, a -> Component.text("[Missing: "+id+"]")));
     }
 
     public ASCIIAlphabet asciiAlphabet() {
@@ -180,7 +180,7 @@ public class LangLibrary implements Particle {
                 try {
                     return function.apply(arguments);
                 } catch (Exception e) {
-                    return Component.text("["+this.name+"]");
+                    return Component.text("[Error: "+this.name+"]: "+e.getMessage());
                 }
             }
         };

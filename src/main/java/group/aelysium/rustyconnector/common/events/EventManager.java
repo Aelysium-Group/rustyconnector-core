@@ -1,7 +1,9 @@
 package group.aelysium.rustyconnector.common.events;
 
 import group.aelysium.ara.Particle;
+import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.algorithm.QuickSort;
+import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.ISortable;
 import org.jetbrains.annotations.NotNull;
@@ -51,12 +53,12 @@ public class EventManager implements Particle {
                                     method.invoke(isInstance ? listener : null);
                                 }
                             } catch (IllegalAccessException | InvocationTargetException e) {
-                                throw new RuntimeException(e);
+                                RC.Error(Error.from(e));
                             }
                         }
                 ));
             } catch (Exception e) {
-                e.printStackTrace();
+                RC.Error(Error.from(e));
             }
         }
         this.listeners.forEach((k, v) -> QuickSort.sort(v));
@@ -74,7 +76,7 @@ public class EventManager implements Particle {
             try {
                 listener.consumer().accept(event);
             } catch (Exception e) {
-                e.printStackTrace();
+                RC.Error(Error.from(e));
             }
         }));
     }
@@ -97,11 +99,13 @@ public class EventManager implements Particle {
                 try {
                     listener.consumer().accept(event);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    RC.Error(Error.from(e));
                 }
             }));
             return CompletableFuture.completedFuture(event.canceled());
-        } catch (Exception e) {e.printStackTrace();}
+        } catch (Exception e) {
+            RC.Error(Error.from(e));
+        }
         return CompletableFuture.completedFuture(false);
     }
 

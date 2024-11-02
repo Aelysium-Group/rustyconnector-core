@@ -1,5 +1,6 @@
 package group.aelysium.rustyconnector.server;
 
+import group.aelysium.rustyconnector.common.RCAdapter;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,7 +11,7 @@ import java.util.UUID;
  * The Server adapter exists to take loader specific actions and adapt them so that RustyConnector
  * can properly execute them regardless of disparate data types between the wrapper and RustyConnector.
  */
-public abstract class ServerAdapter {
+public abstract class ServerAdapter extends RCAdapter {
     /**
      * Set the maximum number of playerRegistry that this server will allow to connect to it.
      * @param max The max number of playerRegistry that can join this server.
@@ -42,17 +43,4 @@ public abstract class ServerAdapter {
      * @return `true` of the player is online. `false` otherwise.
      */
     public abstract boolean isOnline(@NotNull UUID uuid);
-
-    /**
-     * Sends the component as a message to the specified player.
-     * @param uuid The uuid of the player to send the message to.
-     * @param message The component to send.
-     */
-    public abstract void sendMessage(UUID uuid, Component message);
-
-    /**
-     * Logs the components as a message into the console.
-     * @param message The component to log.
-     */
-    public abstract void log(Component message);
 }

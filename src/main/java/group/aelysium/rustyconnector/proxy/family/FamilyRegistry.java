@@ -1,6 +1,8 @@
 package group.aelysium.rustyconnector.proxy.family;
 
 import group.aelysium.ara.Particle;
+import group.aelysium.rustyconnector.RC;
+import group.aelysium.rustyconnector.common.errors.Error;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,14 +17,6 @@ public class FamilyRegistry implements Particle {
     protected FamilyRegistry(@NotNull Map<String, Flux<? extends Family>> families, @Nullable String rootFamily) {
         this.families = families;
         this.rootFamily = rootFamily;
-
-        this.families.values().forEach(f -> {
-            try {
-                System.out.println("loaded"+f.access().get().id());
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
-            }
-        });
     }
 
     /**
@@ -95,7 +89,7 @@ public class FamilyRegistry implements Particle {
             try {
                 family.close();
             } catch (Exception e) {
-                e.printStackTrace();
+                RC.Error(Error.from(e));
             }
         }
 

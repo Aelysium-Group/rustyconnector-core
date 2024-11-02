@@ -1,6 +1,8 @@
 package group.aelysium.rustyconnector.common.magic_link;
 
+import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.crypt.NanoID;
+import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.magic_link.exceptions.PacketStatusResponse;
 import group.aelysium.rustyconnector.common.magic_link.exceptions.SuccessPacket;
 import group.aelysium.rustyconnector.common.magic_link.exceptions.TrashedPacket;
@@ -73,7 +75,8 @@ public abstract class MagicLinkCore implements Particle {
                     try {
                         try {
                             method.invoke(isInstance ? listener : null, constructor.newInstance(packet));
-                        } catch (IllegalArgumentException ignore) {
+                        } catch (IllegalArgumentException e) {
+                            RC.Error(Error.from(e));
                             method.invoke(isInstance ? listener : null);
                         }
                     } catch (InvocationTargetException e) {
@@ -85,11 +88,11 @@ public abstract class MagicLinkCore implements Particle {
                     } catch (Throwable e) {
                         packet.status(Packet.Status.ERROR);
                         packet.statusMessage(e.getMessage());
-                        e.printStackTrace();
+                        RC.Error(Error.from(e));
                     }
                 });
             } catch (Exception e) {
-                e.printStackTrace();
+                RC.Error(Error.from(e));
             }
         }
     }

@@ -1,6 +1,7 @@
 package group.aelysium.rustyconnector.proxy.family;
 
 import group.aelysium.ara.Particle;
+import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.RustyConnector;
 import group.aelysium.rustyconnector.proxy.player.Player;
 import net.kyori.adventure.text.Component;
@@ -45,7 +46,7 @@ public abstract class Family implements Player.Connectable, Server.Container, Pa
     public @NotNull Optional<Flux<? extends Family>> parent() {
         if(this.parent == null) return Optional.empty();
         try {
-            return RustyConnector.Toolkit.Proxy().orElseThrow().orElseThrow().FamilyRegistry().orElseThrow().find(this.parent);
+            return RC.P.Families().find(this.parent);
         } catch (Exception ignore) {}
         return Optional.empty();
     }

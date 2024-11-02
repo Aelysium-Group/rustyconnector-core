@@ -1,5 +1,7 @@
 package group.aelysium.rustyconnector.server;
 
+import group.aelysium.rustyconnector.RC;
+import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.proxy.util.AddressUtil;
 
 import java.net.InetSocketAddress;
@@ -18,7 +20,7 @@ public class Environment {
         try {
             return Optional.ofNullable(System.getenv("RC_POD_NAME"));
         } catch (Exception e) {
-            e.printStackTrace();
+            RC.Error(Error.from(e));
             return Optional.empty();
         }
     }
@@ -34,7 +36,7 @@ public class Environment {
             if(address == null) return Optional.empty();
             return Optional.of(AddressUtil.parseAddress(address));
         } catch (Exception e) {
-            e.printStackTrace();
+            RC.Error(Error.from(e));
             return Optional.empty();
         }
     }
@@ -48,7 +50,7 @@ public class Environment {
         try {
             return Optional.ofNullable(System.getenv("RC_DISPLAY_NAME"));
         } catch (Exception e) {
-            e.printStackTrace();
+            RC.Error(Error.from(e));
             return Optional.empty();
         }
     }
@@ -62,7 +64,7 @@ public class Environment {
         try {
             return Optional.ofNullable(System.getenv("RC_SERVER_REGISTRATION"));
         } catch (Exception e) {
-            e.printStackTrace();
+            RC.Error(Error.from(e));
             return Optional.empty();
         }
     }

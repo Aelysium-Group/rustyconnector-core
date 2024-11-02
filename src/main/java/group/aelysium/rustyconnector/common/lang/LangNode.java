@@ -28,9 +28,11 @@ public abstract class LangNode {
     public final void send(Object ...arguments) throws RuntimeException {
         try {
             RC.S.Adapter().log(this.generate(arguments));
+            return;
         } catch (Exception ignore) {}
         try {
             RC.P.Adapter().log(this.generate(arguments));
+            return;
         } catch (Exception ignore) {}
         throw new RuntimeException("No adapter exists to handle this lang node.");
     }

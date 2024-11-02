@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
+import group.aelysium.rustyconnector.common.RCKernel;
+import group.aelysium.rustyconnector.common.errors.ErrorRegistry;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
@@ -17,66 +19,21 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.*;
 
-public class ServerKernel implements Particle {
-    private final UUID uuid;
-    private final Version version;
-    private final ServerAdapter adapter;
-    private final Flux<? extends LangLibrary> lang;
+public class ServerKernel extends RCKernel<ServerAdapter> {
     private final String displayName;
     private final InetSocketAddress address;
-    private final Flux<? extends MagicLinkCore.Server> magicLink;
-    private final Flux<? extends EventManager> eventManager;
 
     protected ServerKernel(
             @NotNull UUID uuid,
+            @NotNull Version version,
             @NotNull ServerAdapter adapter,
-            @NotNull Flux<? extends LangLibrary> lang,
+            @NotNull List<? extends Flux<?>> plugins,
             @Nullable String displayName,
-            @NotNull InetSocketAddress address,
-            @NotNull Flux<? extends MagicLinkCore.Server> magicLink,
-            @NotNull Flux<? extends EventManager> eventManager
+            @NotNull InetSocketAddress address
     ) {
-        this.uuid = uuid;
-        this.adapter = adapter;
-        this.lang = lang;
+        super(uuid, version, adapter, plugins);
         this.displayName = displayName;
         this.address = address;
-        this.magicLink = magicLink;
-        this.eventManager = eventManager;
-
-        try {
-            try (InputStream input = ProxyKernel.class.getClassLoader().getResourceAsStream("metadata.json")) {
-                if (input == null) throw new NullPointerException("Unable to initialize version number from jar.");
-                Gson gson = new Gson();
-                JsonObject object = gson.fromJson(new String(input.readAllBytes()), JsonObject.class);
-                this.version = new Version(object.get("version").getAsString());
-            }
-
-            this.lang.observe();
-            this.magicLink.observe();
-            this.eventManager.observe();
-
-            RC.P.Adapter().log(RC.P.Lang().lang("rustyconnector-wordmark").generate(this.version));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Gets the session uuid of this Server.
-     * The Server's uuid won't change while it's alive, but once it's restarted or reloaded, the session uuid will change.
-     * @return {@link UUID}
-     */
-    public UUID uuid() {
-        return this.uuid;
-    }
-
-    /**
-     * Gets the current version of RustyConnector
-     * @return {@link Version}
-     */
-    public Version version() {
-        return this.version;
     }
 
     /**
@@ -100,7 +57,7 @@ public class ServerKernel implements Particle {
      * @return {@link Integer}
      */
     public int playerCount() {
-        return this.adapter.onlinePlayerCount();
+        return this.Adapter().onlinePlayerCount();
     }
 
     /**
@@ -153,27 +110,6 @@ public class ServerKernel implements Particle {
                 .send();
     }
 
-    public Flux<? extends MagicLinkCore.Server> MagicLink() {
-        return this.magicLink;
-    }
-
-    public ServerAdapter Adapter() {
-        return this.adapter;
-    }
-
-    public Flux<? extends LangLibrary> Lang() {
-        return this.lang;
-    }
-
-    public Flux<? extends EventManager> EventManager() {
-        return this.eventManager;
-    }
-
-    @Override
-    public void close() {
-        this.magicLink.close();
-    }
-
     /**
      * Provides a declarative method by which you can establish a new Server instance on RC.
      * Parameters listed in the constructor are required, any other parameters are
@@ -187,6 +123,7 @@ public class ServerKernel implements Particle {
         private final InetSocketAddress address;
         private final Particle.Tinder<? extends MagicLinkCore.Server> magicLink;
         private Particle.Tinder<? extends EventManager> eventManager = EventManager.Tinder.DEFAULT_CONFIGURATION;
+        private Particle.Tinder<? extends ErrorRegistry> errors = ErrorRegistry.Tinder.DEFAULT_CONFIGURATION;
 
         public Tinder(
                 @NotNull UUID uuid,
@@ -212,16 +149,33 @@ public class ServerKernel implements Particle {
             return this;
         }
 
+        public Tinder errorHandler(@NotNull Particle.Tinder<? extends ErrorRegistry> errorHandler) {
+            this.errors = errorHandler;
+            return this;
+        }
+
         @Override
         public @NotNull ServerKernel ignite() throws Exception {
+            Version version;
+            try (InputStream input = ProxyKernel.class.getClassLoader().getResourceAsStream("metadata.json")) {
+                if (input == null) throw new NullPointerException("Unable to initialize version number from jar.");
+                Gson gson = new Gson();
+                JsonObject object = gson.fromJson(new String(input.readAllBytes()), JsonObject.class);
+                version = new Version(object.get("version").getAsString());
+            }
+
             return new ServerKernel(
                     uuid,
+                    version,
                     adapter,
-                    lang.flux(),
+                    List.of(
+                        lang.flux(),
+                        magicLink.flux(),
+                        eventManager.flux(),
+                        errors.flux()
+                    ),
                     displayName,
-                    address,
-                    magicLink.flux(),
-                    eventManager.flux()
+                    address
             );
         }
     }

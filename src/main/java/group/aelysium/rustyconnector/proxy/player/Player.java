@@ -1,5 +1,6 @@
 package group.aelysium.rustyconnector.proxy.player;
 
+import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.RC;
 import net.kyori.adventure.text.Component;
@@ -39,7 +40,7 @@ public class Player {
      */
     public void message(@NotNull Component message) {
         try {
-            RC.P.Adapter().messagePlayer(this, message);
+            RC.P.Adapter().messagePlayer(this.uuid(), message);
         } catch (Exception ignore) {}
     }
 
@@ -50,7 +51,9 @@ public class Player {
     public void disconnect(@Nullable Component reason) {
         try {
             RC.P.Adapter().disconnect(this, reason == null ? Component.text("Disconnected from server") : reason);
-        } catch (Exception ignore) {}
+        } catch (Exception e) {
+            RC.Error(Error.from(e));
+        }
     }
 
     /**

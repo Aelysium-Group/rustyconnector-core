@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.RustyConnector;
+import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.magic_link.exceptions.CanceledPacket;
 import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
 import group.aelysium.ara.Particle;
@@ -75,7 +76,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
 
                 this.executor.submit(this::connect);
             } catch (Exception e) {
-                e.printStackTrace();
+                RC.Error(Error.from(e));
             }
         });
 
@@ -115,7 +116,6 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                 bearer[1] = object.get("signature").getAsString();
                 bearer[2] = this.self.uuid().toString(); // Including the uuid in the bearer as well as "X-Server-Identification" is intentional.
             } catch (Exception e) {
-                e.printStackTrace();
                 throw new ExceptionInInitializerError(e);
             }
 
@@ -164,7 +164,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
 
                     @Override
                     public void onError(Exception e) {
-                        e.printStackTrace();
+                        RC.Error(Error.from(e));
                     }
                 };
                 this.client.setConnectionLostTimeout(0);
@@ -173,7 +173,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                 throw new ExceptionInInitializerError(e);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            RC.Error(Error.from(e));
         }
         RC.S.Adapter().log(Component.text("Unable to establish Magic Link connection to the proxy. Trying again after 10 seconds."));
         this.executor.schedule(this::connect, 10, TimeUnit.SECONDS);
@@ -184,7 +184,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
         try {
             this.client.send(this.aes.encrypt(packet.toString()));
         } catch (Exception e) {
-            e.printStackTrace();
+            RC.Error(Error.from(e));
         }
     }
 
@@ -235,7 +235,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                 WebSocketMagicLink.this.registered.set(false);
             });
         } catch (Exception e) {
-            e.printStackTrace();
+            RC.Error(Error.from(e));
         }
         this.executor.schedule(this::heartbeat, this.delay.get(), TimeUnit.SECONDS);
     }

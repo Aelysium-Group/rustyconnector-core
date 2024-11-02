@@ -3,6 +3,7 @@ package group.aelysium.rustyconnector.proxy.magic_link;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import group.aelysium.rustyconnector.RC;
+import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
 import group.aelysium.rustyconnector.common.magic_link.MessageCache;
 import group.aelysium.rustyconnector.common.crypt.AES;
@@ -38,7 +39,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
     private final Javalin server = Javalin.create(c -> {
         c.showJavalinBanner = false;
 
-        c.jetty.modifyWebSocketServletFactory(ws -> ws.setIdleTimeout(Duration.ofMinutes(15)));
+        //c.jetty.modifyWebSocketServletFactory(ws -> ws.setIdleTimeout(Duration.ofMinutes(15)));
 
         c.http.defaultContentType = ContentType.JSON;
         c.http.strictContentTypes = true;
@@ -83,8 +84,8 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
                     "token", cryptor.encrypt(now.getEpochSecond()+"-"+randomData),
                     "signature", SHA256.hash(now.getEpochSecond()+"-"+randomData)
                 ));
-            } catch (Exception ignore) {
-                ignore.printStackTrace();
+            } catch (Exception e) {
+                RC.Error(Error.from(e));
                 throw new UnauthorizedResponse();
             }
         });
@@ -111,9 +112,8 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
                     throw new UnauthorizedResponse("Expired request.");
 
                 return;
-            } catch (NullPointerException ignore) {
             } catch (Exception e) {
-                e.printStackTrace();
+                RC.Error(Error.from(e));
             }
             throw new UnauthorizedResponse();
         });
@@ -125,7 +125,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
 
                     this.clients.putIfAbsent(target, request);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    RC.Error(Error.from(e));
                     request.closeSession(500, "Unable to complete Magic Link connection.");
                 }
             });
@@ -135,7 +135,9 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
                     Packet.SourceIdentifier target = Packet.SourceIdentifier.fromJSON(gson.fromJson(Optional.ofNullable(upgradeRequest.header("X-Server-Identification")).orElse(""), JsonObject.class));
 
                     this.clients.remove(target);
-                } catch (Exception ignore) {ignore.printStackTrace();}
+                } catch (Exception e) {
+                    RC.Error(Error.from(e));
+                }
             });
             config.onMessage(request -> {
                 try {
@@ -147,7 +149,9 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
                         return;
                     }
                     this.handleMessage(request.message());
-                } catch (Exception e) {e.printStackTrace();}
+                } catch (Exception e) {
+                    RC.Error(Error.from(e));
+                }
             });
         });
 
@@ -169,18 +173,20 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
                             try {
                                 if (server.stale()) {
                                     family.removeServer(server);
-                                    WsContext connection = this.clients.get(server.uuid());
+                                    WsContext connection = this.clients.get(Packet.SourceIdentifier.server(server.uuid()));
                                     connection.closeSession(1013, "Stale connection. Re-register.");
                                 }
                             } catch (Exception e) {
-                                e.printStackTrace();
+                                RC.Error(Error.from(e).causedBy("WebSocketMagicLink:heartbeat"));
                             }
                         });
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        RC.Error(Error.from(e).causedBy("WebSocketMagicLink:heartbeat"));
                     }
                 });
-            } catch (Exception ignore) {}
+            } catch (Exception e) {
+                RC.Error(Error.from(e).causedBy("WebSocketMagicLink:heartbeat"));
+            }
             try {
                 if(this.broadcaster == null) return;
                 this.broadcaster.sendEncrypted(AddressUtil.addressToString(this.address));
@@ -204,7 +210,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
                 this.clients.get(target).send(encrypted);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            RC.Error(Error.from(e));
         }
     }
 

@@ -1,7 +1,9 @@
 package group.aelysium.rustyconnector.common.util;
 
 import group.aelysium.ara.Closure;
+import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.crypt.AES;
+import group.aelysium.rustyconnector.common.errors.Error;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -47,7 +49,7 @@ public class IPV6Broadcaster implements Closure {
                 } catch (Exception ignore) {}
             });
         } catch (Exception e) {
-            e.printStackTrace();
+            RC.Error(Error.from(e));
         }
         this.executor.schedule(this::handleMessages, 1, TimeUnit.MINUTES);
     }
