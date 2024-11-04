@@ -46,22 +46,22 @@ public interface RC {
         }
 
         static FamilyRegistry Families() throws NoSuchElementException {
-            return RC.P.Kernel().fetchPlugin(FamilyRegistry.class)
+            return P.Kernel().fetchPlugin(FamilyRegistry.class)
                     .orElseThrow(()->new NoSuchElementException("The Family Registry is not currently available. It might be rebooting."));
         }
 
         static PlayerRegistry Players() throws NoSuchElementException {
-            return RC.P.Kernel().fetchPlugin(PlayerRegistry.class)
+            return P.Kernel().fetchPlugin(PlayerRegistry.class)
                     .orElseThrow(()->new NoSuchElementException("The Player Registry is not currently available. It might be rebooting."));
         }
 
         static MagicLinkCore.Proxy MagicLink() throws NoSuchElementException {
-            return RC.P.Kernel().fetchPlugin(MagicLinkCore.Proxy.class)
+            return (MagicLinkCore.Proxy) P.Kernel().fetchPlugin("MagicLink")
                     .orElseThrow(()->new NoSuchElementException("The Magic Link module is not currently available. It might be rebooting."));
         }
 
         static EventManager EventManager() throws NoSuchElementException {
-            return RC.P.Kernel().fetchPlugin(EventManager.class)
+            return P.Kernel().fetchPlugin(EventManager.class)
                     .orElseThrow(()->new NoSuchElementException("The Event Manager is not currently available. It might be rebooting."));
         }
 
@@ -70,12 +70,12 @@ public interface RC {
         }
 
         static LangLibrary Lang() throws NoSuchElementException {
-            return RC.P.Kernel().fetchPlugin(LangLibrary.class)
+            return P.Kernel().fetchPlugin(LangLibrary.class)
                     .orElseThrow(()->new NoSuchElementException("The Language Registry is not currently available. It might be rebooting."));
         }
 
         static ErrorRegistry Errors() {
-            return RC.P.Kernel().fetchPlugin(ErrorRegistry.class)
+            return P.Kernel().fetchPlugin(ErrorRegistry.class)
                     .orElseThrow(()->new NoSuchElementException("The Error Registry is not currently available. It might be rebooting."));
         }
 
@@ -130,7 +130,7 @@ public interface RC {
         }
 
         static MagicLinkCore.Server MagicLink() throws NoSuchElementException {
-            return RC.S.Kernel().fetchPlugin(MagicLinkCore.Server.class)
+            return (MagicLinkCore.Server) S.Kernel().fetchPlugin("MagicLink")
                     .orElseThrow(()->new NoSuchElementException("The Magic Link module is not currently available. It might be rebooting."));
         }
 
@@ -139,17 +139,17 @@ public interface RC {
         }
 
         static LangLibrary Lang() throws NoSuchElementException {
-            return RC.S.Kernel().fetchPlugin(LangLibrary.class)
+            return S.Kernel().fetchPlugin(LangLibrary.class)
                     .orElseThrow(()->new NoSuchElementException("The Language Registry is not currently available. It might be rebooting."));
         }
 
         static EventManager EventManager() throws NoSuchElementException {
-            return RC.S.Kernel().fetchPlugin(EventManager.class)
+            return S.Kernel().fetchPlugin(EventManager.class)
                     .orElseThrow(()->new NoSuchElementException("The Event Manager is not currently available. It might be rebooting."));
         }
 
         static ErrorRegistry Errors() {
-            return RC.S.Kernel().fetchPlugin(ErrorRegistry.class)
+            return S.Kernel().fetchPlugin(ErrorRegistry.class)
                     .orElseThrow(()->new NoSuchElementException("The Error Registry is not currently available. It might be rebooting."));
         }
     }

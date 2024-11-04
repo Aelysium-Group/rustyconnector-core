@@ -2,7 +2,9 @@ package group.aelysium.rustyconnector.proxy.family;
 
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
+import group.aelysium.rustyconnector.common.Plugin;
 import group.aelysium.rustyconnector.common.errors.Error;
+import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,7 +12,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
-public class FamilyRegistry implements Particle {
+public class FamilyRegistry implements Plugin {
     private final Map<String, Flux<? extends Family>> families;
     private String rootFamily;
 
@@ -94,6 +96,31 @@ public class FamilyRegistry implements Particle {
         }
 
         this.families.clear();
+    }
+
+    @Override
+    public @NotNull String name() {
+        return FamilyRegistry.class.getSimpleName();
+    }
+
+    @Override
+    public @NotNull String description() {
+        return "Provides indexed access to families.";
+    }
+
+    @Override
+    public @NotNull Component details() {
+        return RC.Lang("rustyconnector-familyRegistryDetails").generate(this);
+    }
+
+    @Override
+    public boolean hasPlugins() {
+        return true;
+    }
+
+    @Override
+    public @NotNull List<Flux<? extends Plugin>> plugins() {
+        return List.copyOf(this.families.values());
     }
 
     public static class Tinder extends Particle.Tinder<FamilyRegistry> {

@@ -2,11 +2,13 @@ package group.aelysium.rustyconnector.common.errors;
 
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
+import group.aelysium.rustyconnector.common.Plugin;
+import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class ErrorRegistry implements Particle {
+public class ErrorRegistry implements Plugin {
     private final boolean logErrors;
     private final int cacheSize;
     private final Vector<Error> errors = new Vector<>() {
@@ -25,6 +27,9 @@ public class ErrorRegistry implements Particle {
     public boolean logErrors() {
         return this.logErrors;
     }
+    public int cacheSize() {
+        return this.cacheSize;
+    }
 
     public void register(Error error) {
         this.errors.add(error);
@@ -42,6 +47,31 @@ public class ErrorRegistry implements Particle {
     @Override
     public void close() throws Exception {
         this.errors.clear();
+    }
+
+    @Override
+    public @NotNull String name() {
+        return ErrorRegistry.class.getSimpleName();
+    }
+
+    @Override
+    public @NotNull String description() {
+        return "Provides error capture and logging services.";
+    }
+
+    @Override
+    public @NotNull Component details() {
+        return RC.Lang("rustyconnector-errorRegistryDetails").generate(this);
+    }
+
+    @Override
+    public boolean hasPlugins() {
+        return false;
+    }
+
+    @Override
+    public @NotNull List<Flux<? extends Plugin>> plugins() {
+        return List.of();
     }
 
     public static class Tinder extends Particle.Tinder<ErrorRegistry> {

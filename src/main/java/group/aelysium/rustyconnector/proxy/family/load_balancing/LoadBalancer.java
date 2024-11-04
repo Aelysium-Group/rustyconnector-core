@@ -2,17 +2,19 @@ package group.aelysium.rustyconnector.proxy.family.load_balancing;
 
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.ara.Particle;
+import group.aelysium.rustyconnector.common.Plugin;
 import group.aelysium.rustyconnector.proxy.events.*;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
+import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.*;
 
-public abstract class LoadBalancer extends Family.Plugin implements Server.Container {
+public abstract class LoadBalancer implements Server.Container, Plugin {
     protected final ScheduledExecutorService executor;
     protected boolean weighted;
     protected boolean persistence;
@@ -32,7 +34,6 @@ public abstract class LoadBalancer extends Family.Plugin implements Server.Conta
     };
 
     protected LoadBalancer(boolean weighted, boolean persistence, int attempts, @Nullable LiquidTimestamp rebalance) {
-        super("LoadBalancer");
         this.weighted = weighted;
         this.persistence = persistence;
         this.attempts = attempts;
@@ -232,14 +233,28 @@ public abstract class LoadBalancer extends Family.Plugin implements Server.Conta
     }
 
     @Override
-    public Map<String, Object> details() {
-        return Map.of(
-                "Algorithm", this.getClass().getSimpleName(),
-                "Unlocked Servers", this.unlockedServers.size(),
-                "Locked Servers", this.lockedServers.size(),
-                "Weighted", this.weighted,
-                "Persistence", this.persistence ? "Enabled ("+this.attempts+")" : "Disabled"
-        );
+    public @NotNull String name() {
+        return "LoadBalancer";
+    }
+
+    @Override
+    public @NotNull String description() {
+        return "Provides server sorting capabilities.";
+    }
+
+    @Override
+    public @NotNull Component details() {
+        return RC.Lang("rustyconnector-loadBalancerDetails").generate(this);
+    }
+
+    @Override
+    public boolean hasPlugins() {
+        return false;
+    }
+
+    @Override
+    public @NotNull List<Flux<? extends Plugin>> plugins() {
+        return List.of();
     }
 
     public record Settings(

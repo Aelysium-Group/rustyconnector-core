@@ -1,6 +1,7 @@
 package group.aelysium.rustyconnector.common.magic_link;
 
 import group.aelysium.rustyconnector.RC;
+import group.aelysium.rustyconnector.common.Plugin;
 import group.aelysium.rustyconnector.common.crypt.NanoID;
 import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.magic_link.exceptions.PacketStatusResponse;
@@ -16,6 +17,7 @@ import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 import group.aelysium.rustyconnector.common.crypt.AES;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-public abstract class MagicLinkCore implements Particle {
+public abstract class MagicLinkCore implements Plugin {
     protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private final TimeoutCache<NanoID, Packet.Local> packetsAwaitingReply = new TimeoutCache<>(LiquidTimestamp.from(15, TimeUnit.SECONDS));
     private final Map<String, List<Consumer<Packet.Remote>>> listeners = new ConcurrentHashMap<>();
@@ -174,6 +176,31 @@ public abstract class MagicLinkCore implements Particle {
             packet.status(Packet.Status.ERROR);
             packet.statusMessage(e.getMessage());
         }
+    }
+
+    @Override
+    public @NotNull String name() {
+        return "MagicLink";
+    }
+
+    @Override
+    public @NotNull String description() {
+        return "Provides cross-server packet transmission services.";
+    }
+
+    @Override
+    public @NotNull Component details() {
+        return RC.Lang("rustyconnector-magicLinkDetails").generate(this);
+    }
+
+    @Override
+    public boolean hasPlugins() {
+        return false;
+    }
+
+    @Override
+    public @NotNull List<Flux<? extends Plugin>> plugins() {
+        return List.of();
     }
 
     public interface Packets {

@@ -3,6 +3,7 @@ package group.aelysium.rustyconnector.common.lang;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -370,6 +371,11 @@ public class EnglishAlphabet implements ASCIIAlphabet {
                 text("███████╗"),
                 text("╚══════╝")
         );
+    }
+
+    @Override
+    public @NotNull List<Character> supportedCharacters() {
+        return List.of('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',' ','.','-','!','?','_');
     }
 
     /**

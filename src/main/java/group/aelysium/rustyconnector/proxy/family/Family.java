@@ -3,6 +3,7 @@ package group.aelysium.rustyconnector.proxy.family;
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.RustyConnector;
+import group.aelysium.rustyconnector.common.Plugin;
 import group.aelysium.rustyconnector.proxy.player.Player;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +13,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-public abstract class Family implements Player.Connectable, Server.Container, Particle {
+public abstract class Family implements Player.Connectable, Server.Container, Plugin {
     protected final String id;
     protected final String displayName;
     protected final String parent;
@@ -73,14 +74,6 @@ public abstract class Family implements Player.Connectable, Server.Container, Pa
     }
 
     /**
-     * Fetches the list of all plugins in the Family.
-     * @return A list containing the names of all the plugins on this family.
-     */
-    public List<String> plugins() {
-        return new ArrayList<>(this.plugins.keySet());
-    }
-
-    /**
      * Checks if a specific plugin exists on the family.
      * @param pluginName The name of the plugin to check for.
      * @return An optional containing the flux of the plugin if it exists. Otherwise, an empty optional.
@@ -115,26 +108,28 @@ public abstract class Family implements Player.Connectable, Server.Container, Pa
         return Objects.equals(id, that.id);
     }
 
-    public static abstract class Plugin implements Particle {
-        protected final String name;
+    @Override
+    public @NotNull String name() {
+        return this.id();
+    }
 
-        protected Plugin(String name) {
-            this.name = name.toLowerCase();
-        }
+    @Override
+    public @NotNull String description() {
+        return "Provides server categorization services.";
+    }
 
-        /**
-         * The plugin's name. Always lowercase.
-         */
-        public final String name() {
-            return this.name;
-        }
+    @Override
+    public @NotNull Component details() {
+        return RC.Lang("rustyconnector-familyDetails").generate(this);
+    }
 
-        /**
-         * Returns a map of strings sharing the details for this plugin.
-         * Each new key-value pair in the map can be assumed will be shown on a separate line from the previous pair.
-         * The all values in the map will be converted to strings using {@link Object#toString()}.
-         * @return This plugin's details.
-         */
-        public abstract Map<String, Object> details();
+    @Override
+    public boolean hasPlugins() {
+        return true;
+    }
+
+    @Override
+    public @NotNull List<Flux<? extends Plugin>> plugins() {
+        return List.copyOf(this.plugins.values());
     }
 }

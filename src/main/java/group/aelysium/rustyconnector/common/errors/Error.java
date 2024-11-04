@@ -2,15 +2,24 @@ package group.aelysium.rustyconnector.common.errors;
 
 import group.aelysium.rustyconnector.RC;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.event.KeyValuePair;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+
+import static net.kyori.adventure.text.Component.*;
+import static net.kyori.adventure.text.Component.space;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
+import static net.kyori.adventure.text.format.NamedTextColor.BLUE;
 
 public class Error {
     private final UUID uuid = UUID.randomUUID();
@@ -164,7 +173,11 @@ public class Error {
      *         More specifically, this method parses the error using Lang code `rustyconnector-error`.
      */
     public Component toComponent() {
-        return RC.Lang("rustyconnector-error").generate(this);
+        try {
+            return RC.Lang("rustyconnector-error").generate(this);
+        } catch (Exception ignore) {
+            return serializeError(this);
+        }
     }
 
     public static Error from(@NotNull String message) {
@@ -185,5 +198,55 @@ public class Error {
     }
     public static Error withSolution(@NotNull Throwable throwable, @NotNull String solution) {
         return new Error(throwable, null, solution);
+    }
+
+    private static Component serializeError(Error error) {
+        try {
+            List<Component> extras = new ArrayList<>();
+
+            ZonedDateTime zonedDateTime = error.createdAt().atZone(ZoneId.systemDefault());
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            String formattedDateTime = zonedDateTime.format(formatter);
+
+            extras.add(
+                    join(
+                            JoinConfiguration.newlines(),
+                            text("RustyConnector", BLUE).append(text(" [" + formattedDateTime +"]", DARK_GRAY)),
+                            text(error.message(), GRAY)
+                    )
+            );
+
+            Component hintOrSolution = space();
+            if (error.hint() != null)
+                hintOrSolution = hintOrSolution.appendNewline().append(text("Hint: ", BLUE).append(text(error.hint(), GRAY)));
+            if (error.solution() != null)
+                hintOrSolution = hintOrSolution.appendNewline().append(text("Solution: ", BLUE).append(text(error.solution(), GRAY)));
+            extras.add(hintOrSolution);
+
+            if (error.throwable() != null) error.causedBy(error.throwable().getClass().getSimpleName());
+            if (!error.details().isEmpty()) {
+                extras.add(text("Details: ", BLUE));
+                extras.add(join(
+                        JoinConfiguration.newlines(),
+                        error.details().stream().map(e ->
+                                text(" • ", DARK_GRAY).append(text(e.key + ": "+ e.value, BLUE))
+                        ).toList()
+                ));
+            }
+
+            return join(
+                    JoinConfiguration.newlines(),
+                    space(),
+                    space(),
+                    join(
+                            JoinConfiguration.newlines(),
+                            extras
+                    ),
+                    space()
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return Component.space();
     }
 }

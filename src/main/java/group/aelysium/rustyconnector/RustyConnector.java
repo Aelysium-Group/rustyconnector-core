@@ -17,8 +17,20 @@ public class RustyConnector {
         private static Particle.Flux<? extends RCKernel<?>> kernel = null;
 
         /**
-         * Fetches the Server API for RustyConnector.
-         * @return {@link ServerKernel}
+         * @return Either the Server kernel or the Proxy kernel if they exist.
+         */
+        public static Optional<Particle.Flux<? extends RCKernel<?>>> Kernel() {
+            try {
+                return Optional.of(Server().orElseThrow());
+            } catch (Exception ignore) {}
+            try {
+                return Optional.of(Proxy().orElseThrow());
+            } catch (Exception ignore) {}
+            return Optional.empty();
+        }
+
+        /**
+         * @return The RustyConnector Server kernel if it exists.
          */
         public static Optional<Particle.Flux<? extends ServerKernel>> Server() {
             if(kernel == null) return Optional.empty();
@@ -30,8 +42,7 @@ public class RustyConnector {
         }
 
         /**
-         * Fetches the Proxy API for RustyConnector.
-         * @return {@link ProxyKernel}
+         * @return The RustyConnector Proxy kernel if it exists.
          */
         public static Optional<Particle.Flux<? extends ProxyKernel>> Proxy() throws IllegalAccessError {
             if(kernel == null) return Optional.empty();

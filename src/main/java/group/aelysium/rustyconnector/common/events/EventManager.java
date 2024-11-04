@@ -2,10 +2,12 @@ package group.aelysium.rustyconnector.common.events;
 
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
+import group.aelysium.rustyconnector.common.Plugin;
 import group.aelysium.rustyconnector.common.algorithm.QuickSort;
 import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.ISortable;
+import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
@@ -15,7 +17,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 
-public class EventManager implements Particle {
+public class EventManager implements Plugin {
     private final ExecutorService executor = Executors.newCachedThreadPool();
     private final ConcurrentHashMap<Class<? extends Event>, Vector<SortableListener>> listeners = new ConcurrentHashMap<>();
 
@@ -113,6 +115,31 @@ public class EventManager implements Particle {
     public void close() {
         this.listeners.clear();
         this.executor.shutdown();
+    }
+
+    @Override
+    public @NotNull String name() {
+        return EventManager.class.getSimpleName();
+    }
+
+    @Override
+    public @NotNull String description() {
+        return "Provides event bus services.";
+    }
+
+    @Override
+    public @NotNull Component details() {
+        return RC.Lang("rustyconnector-eventManagerDetails").generate(this);
+    }
+
+    @Override
+    public boolean hasPlugins() {
+        return false;
+    }
+
+    @Override
+    public @NotNull List<Flux<? extends Plugin>> plugins() {
+        return List.of();
     }
 
     public static class Tinder extends Particle.Tinder<EventManager> {

@@ -1,6 +1,9 @@
 package group.aelysium.rustyconnector.common.lang;
 
 import group.aelysium.ara.Particle;
+import group.aelysium.rustyconnector.RC;
+import group.aelysium.rustyconnector.common.Plugin;
+import group.aelysium.rustyconnector.common.errors.Error;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +17,7 @@ import java.util.function.Function;
 
 import static net.kyori.adventure.text.Component.newline;
 
-public class LangLibrary implements Particle {
+public class LangLibrary implements Plugin {
     private final Map<String, LangNode> nodes = new ConcurrentHashMap<>();
     private final ASCIIAlphabet asciiAlphabet;
 
@@ -180,10 +183,37 @@ public class LangLibrary implements Particle {
                 try {
                     return function.apply(arguments);
                 } catch (Exception e) {
-                    return Component.text("[Error: "+this.name+"]: "+e.getMessage());
+                    Error error = Error.from(e).whileAttempting("To call the Lang tag: "+this.name);
+                    RC.Error(error);
+                    return Component.text("[Error: "+this.name+"]("+error.uuid()+")");
                 }
             }
         };
+    }
+
+    @Override
+    public @NotNull String name() {
+        return LangLibrary.class.getSimpleName();
+    }
+
+    @Override
+    public @NotNull String description() {
+        return "Provides declarative language services.";
+    }
+
+    @Override
+    public @NotNull Component details() {
+        return RC.Lang("rustyconnector-langLibraryDetails").generate(this);
+    }
+
+    @Override
+    public boolean hasPlugins() {
+        return false;
+    }
+
+    @Override
+    public @NotNull List<Flux<? extends Plugin>> plugins() {
+        return List.of();
     }
 
     public static class Tinder extends Particle.Tinder<LangLibrary> {

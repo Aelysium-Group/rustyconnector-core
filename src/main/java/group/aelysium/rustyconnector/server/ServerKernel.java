@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
+import group.aelysium.rustyconnector.common.Plugin;
 import group.aelysium.rustyconnector.common.RCKernel;
 import group.aelysium.rustyconnector.common.errors.ErrorRegistry;
 import group.aelysium.rustyconnector.common.events.EventManager;
@@ -27,7 +28,7 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
             @NotNull UUID uuid,
             @NotNull Version version,
             @NotNull ServerAdapter adapter,
-            @NotNull List<? extends Flux<?>> plugins,
+            @NotNull List<? extends Flux<? extends Plugin>> plugins,
             @Nullable String displayName,
             @NotNull InetSocketAddress address
     ) {

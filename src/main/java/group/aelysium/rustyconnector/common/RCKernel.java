@@ -1,33 +1,39 @@
 package group.aelysium.rustyconnector.common;
 
 import group.aelysium.ara.Particle;
+import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.proxy.util.Version;
+import net.kyori.adventure.text.Component;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public abstract class RCKernel<A extends RCAdapter> implements Particle {
+public abstract class RCKernel<A extends RCAdapter> implements Plugin {
     protected final UUID uuid;
     protected final Version version;
     protected final A adapter;
-    protected final Map<String, Flux<? extends Particle>> plugins = new ConcurrentHashMap<>();
+    protected final Map<String, Flux<? extends Plugin>> plugins = new ConcurrentHashMap<>();
 
-    protected RCKernel(UUID uuid, Version version, A adapter, List<? extends Flux<?>> plugins) {
+    protected RCKernel(UUID uuid, Version version, A adapter, List<? extends Flux<? extends Plugin>> plugins) {
         this.uuid = uuid;
         this.version = version;
         this.adapter = adapter;
         plugins.forEach(p -> {
             try {
-                Particle particle = p.observe();
-                this.plugins.putIfAbsent(particle.getClass().getSimpleName(), p);
+                Plugin plugin = p.observe();
+                this.plugins.put(plugin.name(), p);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         });
     }
 
-    public <T extends Particle> Flux<? extends T> fetchPlugin(Class<T> key) {
-        return (Flux<? extends T>) this.plugins.get(key.getSimpleName());
+    public <T extends Plugin> Flux<T> fetchPlugin(String name) {
+        return (Flux<T>) this.plugins.get(name);
+    }
+    public <T extends Plugin> Flux<T> fetchPlugin(Class<T> clazz) {
+        return (Flux<T>) this.plugins.get(clazz.getSimpleName());
     }
 
     public Map<String, Flux<? extends Particle>> allPlugins() {
@@ -53,6 +59,26 @@ public abstract class RCKernel<A extends RCAdapter> implements Particle {
 
     public A Adapter() {
         return this.adapter;
+    }
+
+    public @NotNull String name() {
+        return "Kernel";
+    }
+
+    public @NotNull String description() {
+        return "The RustyConnector Kernel";
+    }
+
+    public @NotNull Component details() {
+        return RC.Lang("rustyconnector-kernelDetails").generate();
+    }
+
+    public boolean hasPlugins() {
+        return !this.plugins.isEmpty();
+    }
+
+    public @NotNull List<Flux<? extends Plugin>> plugins() {
+         return List.copyOf(this.plugins.values());
     }
 
     @Override

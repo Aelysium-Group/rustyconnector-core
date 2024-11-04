@@ -129,6 +129,11 @@ public class ScalarFamily extends Family {
         this.plugins.forEach((k, v) -> v.close());
     }
 
+    @Override
+    public @NotNull String description() {
+        return "Provides state-less server collection services.";
+    }
+
     public static class Tinder extends Particle.Tinder<ScalarFamily> {
         private final String id;
         private final String displayName;
