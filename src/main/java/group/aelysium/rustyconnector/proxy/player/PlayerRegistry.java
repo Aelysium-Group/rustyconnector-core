@@ -2,7 +2,7 @@ package group.aelysium.rustyconnector.proxy.player;
 
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.Plugin;
+import group.aelysium.rustyconnector.common.plugins.Plugin;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,8 +69,8 @@ public class PlayerRegistry implements Plugin {
     }
 
     @Override
-    public @NotNull List<Flux<? extends Plugin>> plugins() {
-        return List.of();
+    public @NotNull Map<String, Flux<? extends Plugin>> plugins() {
+        return Map.of();
     }
 
     public static class Tinder extends Particle.Tinder<PlayerRegistry> {

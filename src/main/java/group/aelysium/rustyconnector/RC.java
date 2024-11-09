@@ -87,7 +87,7 @@ public interface RC {
         }
 
         static Optional<Particle.Flux<? extends Family>> Family(Server server) throws NoSuchElementException {
-            for (Particle.Flux<? extends Family> familyFlux : RC.P.Families().dump()) {
+            for (Particle.Flux<? extends Family> familyFlux : RC.P.Families().fetchAll()) {
                 try {
                     Family family = familyFlux.access().get(5, TimeUnit.SECONDS);
                     if (!family.containsServer(server.uuid())) continue;
@@ -99,7 +99,7 @@ public interface RC {
 
         static Optional<Server> Server(UUID uuid) throws NoSuchElementException {
             AtomicReference<Optional<Server>> server = new AtomicReference<>(Optional.empty());
-            Families().dump().forEach(flux -> {
+            Families().fetchAll().forEach(flux -> {
                 flux.executeNow(f->server.set(f.fetchServer(uuid)));
             });
             return server.get();
@@ -107,7 +107,7 @@ public interface RC {
 
         static List<Server> Servers() throws NoSuchElementException {
             List<Server> servers = new ArrayList<>();
-            Families().dump().forEach(flux -> flux.executeNow(f->servers.addAll(f.servers())));
+            Families().fetchAll().forEach(flux -> flux.executeNow(f->servers.addAll(f.servers())));
             return Collections.unmodifiableList(servers);
         }
 

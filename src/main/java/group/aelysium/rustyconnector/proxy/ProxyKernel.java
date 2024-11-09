@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.ara.Particle;
-import group.aelysium.rustyconnector.common.Plugin;
+import group.aelysium.rustyconnector.common.plugins.Plugin;
 import group.aelysium.rustyconnector.common.RCKernel;
 import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.errors.ErrorRegistry;
@@ -19,7 +19,6 @@ import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.*;
 import group.aelysium.rustyconnector.proxy.player.PlayerRegistry;
 import group.aelysium.rustyconnector.proxy.util.Version;
-import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStream;

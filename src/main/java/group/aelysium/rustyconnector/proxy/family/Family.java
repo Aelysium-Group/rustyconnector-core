@@ -2,8 +2,7 @@ package group.aelysium.rustyconnector.proxy.family;
 
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.RustyConnector;
-import group.aelysium.rustyconnector.common.Plugin;
+import group.aelysium.rustyconnector.common.plugins.Plugin;
 import group.aelysium.rustyconnector.proxy.player.Player;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
@@ -129,7 +128,7 @@ public abstract class Family implements Player.Connectable, Server.Container, Pl
     }
 
     @Override
-    public @NotNull List<Flux<? extends Plugin>> plugins() {
-        return List.copyOf(this.plugins.values());
+    public @NotNull Map<String, Flux<? extends Plugin>> plugins() {
+        return Collections.unmodifiableMap(this.plugins);
     }
 }

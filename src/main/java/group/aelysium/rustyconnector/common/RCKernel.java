@@ -2,6 +2,7 @@ package group.aelysium.rustyconnector.common;
 
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
+import group.aelysium.rustyconnector.common.plugins.Plugin;
 import group.aelysium.rustyconnector.proxy.util.Version;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
@@ -77,8 +78,8 @@ public abstract class RCKernel<A extends RCAdapter> implements Plugin {
         return !this.plugins.isEmpty();
     }
 
-    public @NotNull List<Flux<? extends Plugin>> plugins() {
-         return List.copyOf(this.plugins.values());
+    public @NotNull Map<String, Flux<? extends Plugin>> plugins() {
+         return Map.copyOf(this.plugins);
     }
 
     @Override

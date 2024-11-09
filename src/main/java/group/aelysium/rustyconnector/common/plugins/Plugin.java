@@ -1,10 +1,11 @@
-package group.aelysium.rustyconnector.common;
+package group.aelysium.rustyconnector.common.plugins;
 
 import group.aelysium.ara.Particle;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Provides declarative access for tiered plugin structures in RustyConnector.
@@ -35,5 +36,5 @@ public interface Plugin extends Particle {
     /**
      * @return A list of the plugins that reside inside of this one.
      */
-    @NotNull List<Flux<? extends Plugin>> plugins();
+    @NotNull Map<String, Flux<? extends Plugin>> plugins();
 }

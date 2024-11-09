@@ -1,10 +1,8 @@
 package group.aelysium.rustyconnector.proxy.family.load_balancing;
 
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.ara.Particle;
-import group.aelysium.rustyconnector.common.Plugin;
+import group.aelysium.rustyconnector.common.plugins.Plugin;
 import group.aelysium.rustyconnector.proxy.events.*;
-import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 import net.kyori.adventure.text.Component;
@@ -253,8 +251,8 @@ public abstract class LoadBalancer implements Server.Container, Plugin {
     }
 
     @Override
-    public @NotNull List<Flux<? extends Plugin>> plugins() {
-        return List.of();
+    public @NotNull Map<String, Flux<? extends Plugin>> plugins() {
+        return Map.of();
     }
 
     public record Settings(

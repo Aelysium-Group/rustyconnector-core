@@ -164,7 +164,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
     private void heartbeat() {
         this.executor.schedule(() -> {
             try {
-                RC.P.Families().dump().forEach(f -> {
+                RC.P.Families().fetchAll().forEach(f -> {
                     try {
                         Family family = f.orElseThrow();
                         family.servers().forEach(server -> {

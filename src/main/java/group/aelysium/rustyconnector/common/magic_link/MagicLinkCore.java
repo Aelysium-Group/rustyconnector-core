@@ -1,14 +1,13 @@
 package group.aelysium.rustyconnector.common.magic_link;
 
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.Plugin;
+import group.aelysium.rustyconnector.common.plugins.Plugin;
 import group.aelysium.rustyconnector.common.crypt.NanoID;
 import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.magic_link.exceptions.PacketStatusResponse;
 import group.aelysium.rustyconnector.common.magic_link.exceptions.SuccessPacket;
 import group.aelysium.rustyconnector.common.magic_link.exceptions.TrashedPacket;
 import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
-import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.common.cache.TimeoutCache;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketIdentification;
 import group.aelysium.rustyconnector.common.util.ThrowableConsumer;
@@ -199,8 +198,8 @@ public abstract class MagicLinkCore implements Plugin {
     }
 
     @Override
-    public @NotNull List<Flux<? extends Plugin>> plugins() {
-        return List.of();
+    public @NotNull Map<String, Flux<? extends Plugin>> plugins() {
+        return Map.of();
     }
 
     public interface Packets {

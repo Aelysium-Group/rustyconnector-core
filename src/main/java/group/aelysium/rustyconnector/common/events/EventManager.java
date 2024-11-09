@@ -2,7 +2,7 @@ package group.aelysium.rustyconnector.common.events;
 
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.Plugin;
+import group.aelysium.rustyconnector.common.plugins.Plugin;
 import group.aelysium.rustyconnector.common.algorithm.QuickSort;
 import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
@@ -138,8 +138,8 @@ public class EventManager implements Plugin {
     }
 
     @Override
-    public @NotNull List<Flux<? extends Plugin>> plugins() {
-        return List.of();
+    public @NotNull Map<String, Flux<? extends Plugin>> plugins() {
+        return Map.of();
     }
 
     public static class Tinder extends Particle.Tinder<EventManager> {

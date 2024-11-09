@@ -2,7 +2,7 @@ package group.aelysium.rustyconnector.proxy.family;
 
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.Plugin;
+import group.aelysium.rustyconnector.common.plugins.Plugin;
 import group.aelysium.rustyconnector.common.errors.Error;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
@@ -10,16 +10,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 
 public class FamilyRegistry implements Plugin {
-    private final Map<String, Flux<? extends Family>> families;
-    private String rootFamily;
+    private final Map<String, Flux<? extends Family>> families = new ConcurrentHashMap<>();
+    private String rootFamily = null;
 
-    protected FamilyRegistry(@NotNull Map<String, Flux<? extends Family>> families, @Nullable String rootFamily) {
-        this.families = families;
-        this.rootFamily = rootFamily;
-    }
+    protected FamilyRegistry() {}
 
     /**
      * Sets the root family.
@@ -54,7 +50,7 @@ public class FamilyRegistry implements Plugin {
      * @param id The id of the family to add.
      * @param family The family to add.
      */
-    public void put(@NotNull String id, @NotNull Flux<? extends Family> family) {
+    public void register(@NotNull String id, @NotNull Flux<? extends Family> family) {
         this.families.put(id, family);
     }
 
@@ -62,14 +58,14 @@ public class FamilyRegistry implements Plugin {
      * Remove a family from this manager.
      * @param id The id of the family to remove.
      */
-    public void remove(@NotNull String id) {
+    public void unregister(@NotNull String id) {
         this.families.remove(id);
     }
 
     /**
      * Gets a list of all familyRegistry.
      */
-    public List<Flux<? extends Family>> dump() {
+    public List<Flux<? extends Family>> fetchAll() {
         return this.families.values().stream().toList();
     }
 
@@ -119,29 +115,14 @@ public class FamilyRegistry implements Plugin {
     }
 
     @Override
-    public @NotNull List<Flux<? extends Plugin>> plugins() {
-        return List.copyOf(this.families.values());
+    public @NotNull Map<String, Flux<? extends Plugin>> plugins() {
+        return Collections.unmodifiableMap(this.families);
     }
 
     public static class Tinder extends Particle.Tinder<FamilyRegistry> {
-        protected Map<String, Flux<? extends Family>> initialFamilies = new ConcurrentHashMap<>();
-        protected String rootFamily = null;
-
-        /**
-         * Adds the family to be present on-boot
-         */
-        public void addFamily(String id, Flux<? extends Family> family) {
-            this.initialFamilies.put(id, family);
-        }
-
-        public void setRootFamily(String id, Flux<? extends Family> family) {
-            this.initialFamilies.put(id, family);
-            this.rootFamily = id;
-        }
-
         @Override
         public @NotNull FamilyRegistry ignite() throws Exception {
-            return new FamilyRegistry(this.initialFamilies, this.rootFamily);
+            return new FamilyRegistry();
         }
 
         /**
