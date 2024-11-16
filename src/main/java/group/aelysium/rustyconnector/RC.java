@@ -165,7 +165,15 @@ public interface RC {
     }
 
     static void Error(@NotNull Error error) throws NoSuchElementException {
-        RC.Errors().register(error);
+        try {
+            RC.Errors().register(error);
+        } catch (Exception ignore) {
+            if(error.throwable() != null) {
+                error.throwable().printStackTrace();
+                return;
+            }
+            System.out.println(error.message());
+        }
     }
 
     static ErrorRegistry Errors() throws NoSuchElementException {

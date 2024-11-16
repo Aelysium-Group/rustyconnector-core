@@ -62,14 +62,13 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
 
         Server server = Server.generateServer(configuration);
 
-        if(!RC.P.Adapter().registerServer(server))
-            throw new IllegalStateException("The server failed to register to the proxy software running the RustyConnector kernel.");
-
         Family family = null;
         try {
             family = familyFlux.access().get(10, TimeUnit.SECONDS);
-            server.registration(family.id());
             family.addServer(server);
+
+            if(!RC.P.Adapter().registerServer(server))
+                throw new IllegalStateException("The server failed to register to the proxy software running the RustyConnector kernel.");
 
         } catch (CancellationException | TimeoutException e) {
             if(family != null) family.removeServer(server);

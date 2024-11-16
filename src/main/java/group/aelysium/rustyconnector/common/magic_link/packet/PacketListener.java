@@ -1,16 +1,23 @@
 package group.aelysium.rustyconnector.common.magic_link.packet;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface PacketListener {
+public abstract class PacketListener<P extends Packet.Remote> {
     /**
-     * The packet that this listen is targeting.
-     * It's expected that, when you
+     * If enabled, exceptions thrown by the {@link #handle(Packet.Remote)} method will be
      */
-    Class<? extends Packet.Remote> value();
+    protected boolean responseFromExceptions = true;
+    /**
+     * If enabled, overrides {@link Packet.Response#shouldSendPacket()} and will always send a pack when a response is made.<br/>
+     * Note that if {@link #responseFromExceptions} is false, exceptions won't send replies to packets since no response was generated from said exception.
+     */
+    protected boolean responsesAsPacketReplies = false;
+
+    /**
+     * Handles a packet and returns a response.
+     * @param packet The packet to handle.
+     * @return A response indicating either success or failure. Responses may also trigger a reply packet is sent.
+     * @throws Exception If there's an issue handling the packet.
+     *                   Listener exceptions are automatically handled by MagicLink.
+     *                   If you want a packet response to be generated from listener exceptions, look at {@link #responseFromExceptions} and {@link #responsesAsPacketReplies}.
+     */
+    public abstract Packet.Response handle(P packet) throws Exception;
 }

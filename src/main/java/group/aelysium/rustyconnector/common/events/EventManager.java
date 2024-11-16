@@ -24,10 +24,10 @@ public class EventManager implements Plugin {
     protected EventManager() {}
 
     /**
-     * Registers the provided listen.
-     * If the listen method is static you can set this to be the class of your listen. (Object.class)
-     * Or if you want an instance method, you can pass a listen instance. (new Object())
-     * @param listener The listen to use.
+     * Registers the provided listener.
+     * If the listen method is static you can set this to be the class of your listener. (Object.class)
+     * Or if you want an instance method, you can pass a listener instance. (new Object())
+     * @param listener The listener to use.
      */
     public void listen(Object listener) {
         boolean isInstance = !(listener instanceof Class<?>);
@@ -36,7 +36,7 @@ public class EventManager implements Plugin {
         for (Method method : objectClass.getMethods()) {
             if(isInstance && Modifier.isStatic(method.getModifiers())) continue;
             if(!isInstance && !Modifier.isStatic(method.getModifiers())) continue;
-            if(!method.isAnnotationPresent(PacketListener.class)) continue;
+            if(!method.isAnnotationPresent(EventListener.class)) continue;
             EventListener annotation = method.getAnnotation((EventListener.class));
             if(annotation == null) continue;
 

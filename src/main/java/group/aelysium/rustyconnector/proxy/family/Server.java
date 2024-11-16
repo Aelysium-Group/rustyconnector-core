@@ -3,6 +3,7 @@ package group.aelysium.rustyconnector.proxy.family;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
+import group.aelysium.rustyconnector.common.magic_link.packet.PacketIdentification;
 import group.aelysium.rustyconnector.proxy.Permission;
 import group.aelysium.rustyconnector.proxy.events.ServerPreJoinEvent;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.ISortable;
@@ -13,17 +14,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.InetSocketAddress;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class Server implements ISortable, Player.Connectable {
+public final class Server implements ISortable, Player.Connectable {
+    private final Map<String, Object> properties = new ConcurrentHashMap<>();
     private final UUID uuid;
-    private String registration;
     private final String displayName;
-    private final String podName;
     private final InetSocketAddress address;
     private Object raw = null;
     private final AtomicLong playerCount = new AtomicLong(0);
@@ -35,7 +36,6 @@ public class Server implements ISortable, Player.Connectable {
     public Server(
             @NotNull UUID uuid,
             @NotNull InetSocketAddress address,
-            @Nullable String podName,
             @Nullable String displayName,
             int softPlayerCap,
             int hardPlayerCap,
@@ -44,27 +44,54 @@ public class Server implements ISortable, Player.Connectable {
     ) {
         this.uuid = uuid;
         this.address = address;
-        this.podName = podName;
-        this.displayName = displayName;
+        if(displayName == null || displayName.isEmpty() || displayName.isBlank()) this.displayName = null;
+        else this.displayName = displayName;
 
         this.weight = Math.max(weight, 0);
 
         this.softPlayerCap = softPlayerCap;
         this.hardPlayerCap = hardPlayerCap;
 
-        // Soft player cap MUST be at most the same value as hard player cap.
         if(this.softPlayerCap > this.hardPlayerCap) this.softPlayerCap = this.hardPlayerCap;
 
         this.timeout = new AtomicInteger(timeout);
     }
 
     /**
-     * The registration of this server. Can be null if this server isn't registered anymore.
-     * @param registration The registration for this server.
+     * Stores a property in the Server.
+     * @param propertyName The name of the property to store.
+     * @param property The property to store.
+     * @return `true` if the property could be stored. `false` if the name of the property is already in use.
      */
-    public void registration(String registration) {
-        if(registration.length() > 32) throw new IllegalArgumentException("The server registration must not be longer than 32 characters.");
-        this.registration = registration;
+    public boolean property(String propertyName, Object property) {
+        if(this.properties.containsKey(propertyName)) return false;
+        this.properties.put(propertyName, property);
+        return true;
+    }
+
+    /**
+     * Fetches a property from the server.
+     * @param propertyName The name of the property to fetch.
+     * @return An optional containing the property, or an empty property if no property could be found.
+     * @param <T> The type of the property that's being fetched.
+     */
+    public <T> Optional<T> property(String propertyName) {
+        return Optional.ofNullable((T) this.properties.get(propertyName));
+    }
+
+    /**
+     * Removes a property from the server.
+     * @param propertyName The name of the property to remove.
+     */
+    public void dropProperty(String propertyName) {
+        this.properties.remove(propertyName);
+    }
+
+    /**
+     * @return A map containing all of this server's properties.
+     */
+    public Map<String, Object> properties() {
+        return Collections.unmodifiableMap(this.properties);
     }
 
     /**
@@ -85,6 +112,23 @@ public class Server implements ISortable, Player.Connectable {
     }
 
     /**
+     * Decrease this server's timeout by 1.
+     * Once this value equals 0, this server will become stale and player's won't be able to join it anymore.
+     * @param amount The amount to decrease by.
+     * @return The new timeout value.
+     */
+    public int decreaseTimeout(int amount) {
+        if(amount > 0) amount = amount * -1;
+        int newValue = this.timeout.addAndGet(amount);
+        if(this.timeout.get() < 0) {
+            this.timeout.set(0);
+            return 0;
+        }
+
+        return newValue;
+    }
+
+    /**
      * The {@link UUID} of this server.
      * This {@link UUID} will always be different between servers.
      * If this server unregisters and then re-registers into the proxy, this ID will be different.
@@ -99,30 +143,6 @@ public class Server implements ISortable, Player.Connectable {
      */
     public Optional<String> displayName() {
         return Optional.ofNullable(this.displayName);
-    }
-
-    /**
-     * Gets this server's pod name if it exists.
-     * If your RC network isn't a part of a Kubernetes cluster, this will always return an empty optional.
-     * @return {@link Optional<String>}
-     */
-    public @NotNull Optional<String> podName() {
-        if(this.podName == null) return Optional.empty();
-        return Optional.of(this.podName);
-    }
-
-    /**
-     * Decrease this server's timeout by 1.
-     * Once this value equals 0, this server will become stale and player's won't be able to join it anymore.
-     * @param amount The amount to decrease by.
-     * @return The new timeout value.
-     */
-    public int decreaseTimeout(int amount) {
-        if(amount > 0) amount = amount * -1;
-        this.timeout.addAndGet(amount);
-        if(this.timeout.get() < 0) this.timeout.set(0);
-
-        return this.timeout.get();
     }
 
     /**
@@ -316,7 +336,6 @@ public class Server implements ISortable, Player.Connectable {
         return new Server(
                 configuration.uuid,
                 configuration.address,
-                configuration.podName,
                 configuration.displayName,
                 configuration.softPlayerCap,
                 configuration.hardPlayerCap,
@@ -396,12 +415,14 @@ public class Server implements ISortable, Player.Connectable {
     }
 
     public interface Packets {
-        class Lock extends Packet.Wrapper {
+        @PacketIdentification("RC-LS")
+        class Lock extends Packet.Remote {
             public Lock(Packet packet) {
                 super(packet);
             }
         }
-        class Unlock extends Packet.Wrapper {
+        @PacketIdentification("RC-US")
+        class Unlock extends Packet.Remote {
             public Unlock(Packet packet) {
                 super(packet);
             }
@@ -413,7 +434,6 @@ public class Server implements ISortable, Player.Connectable {
      * Used alongside {@link group.aelysium.rustyconnector.proxy.ProxyKernel#registerServer(Particle.Flux, Configuration)} to register new server instances.
      * @param uuid The unique UUID for this server this value must be unique between servers.
      * @param address The connection address for the server.
-     * @param podName The name of the pod that this server resides in.
      * @param displayName The display name of this server.
      * @param softPlayerCap The soft player cap for this server.
      * @param hardPlayerCap The hard player cap for this server.
@@ -423,7 +443,6 @@ public class Server implements ISortable, Player.Connectable {
     public record Configuration(
             @NotNull UUID uuid,
             @NotNull InetSocketAddress address,
-            @Nullable String podName,
             @Nullable String displayName,
             int softPlayerCap,
             int hardPlayerCap,

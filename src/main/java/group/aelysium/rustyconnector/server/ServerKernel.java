@@ -3,6 +3,8 @@ package group.aelysium.rustyconnector.server;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import group.aelysium.ara.Particle;
+import group.aelysium.rustyconnector.RC;
+import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.common.plugins.Plugin;
 import group.aelysium.rustyconnector.common.RCKernel;
 import group.aelysium.rustyconnector.common.errors.ErrorRegistry;
@@ -18,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 public class ServerKernel extends RCKernel<ServerAdapter> {
     private final String displayName;
@@ -63,51 +66,85 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
     /**
      * Locks this Server so that playerRegistry can't join it via the family's load balancer.
      */
-    public void lock() {
+    public CompletableFuture<MagicLinkCore.Packets.Response> lock() {
+        CompletableFuture<MagicLinkCore.Packets.Response> response = new CompletableFuture<>();
         Packet.New()
                 .identification(Packet.Identification.from("RC","LS"))
                 .addressTo(Packet.SourceIdentifier.allAvailableProxies())
-                .send();
+                .send()
+                .onReply(MagicLinkCore.Packets.Response.class, new PacketListener<>() {
+                    @Override
+                    public Packet.Response handle(MagicLinkCore.Packets.Response packet) {
+                        response.complete(packet);
+                        return Packet.Response.success("Successfully indicated the status of the server's lock request");
+                    }
+                });
+        return response;
     }
 
     /**
      * Unlocks this Server so that playerRegistry can join it via the family's load balancer.
      */
-    public void unlock() {
+    public CompletableFuture<MagicLinkCore.Packets.Response> unlock() {
+        CompletableFuture<MagicLinkCore.Packets.Response> response = new CompletableFuture<>();
         Packet.New()
                 .identification(Packet.Identification.from("RC","US"))
                 .addressTo(Packet.SourceIdentifier.allAvailableProxies())
-                .send();
+                .send()
+                .onReply(MagicLinkCore.Packets.Response.class, new PacketListener<>() {
+                    @Override
+                    public Packet.Response handle(MagicLinkCore.Packets.Response packet) {
+                        response.complete(packet);
+                        return Packet.Response.success("Successfully indicated the status of the server's unlock request");
+                    }
+                });
+        return response;
     }
 
     /**
      * Sends a player to a specific family if it exists.
      * @param player The uuid of the player to send.
      * @param familyID The id of the family to send to.
-     * @return The packet which was sent.
      */
-    public Packet.Local send(UUID player, String familyID) {
-        return Packet.New()
+    public CompletableFuture<MagicLinkCore.Packets.Response> send(UUID player, String familyID) {
+        CompletableFuture<MagicLinkCore.Packets.Response> response = new CompletableFuture<>();
+        Packet.New()
                 .identification(Packet.Identification.from("RC","SP"))
                 .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.PLAYER_UUID, player.toString())
                 .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.TARGET_FAMILY, familyID)
                 .addressTo(Packet.SourceIdentifier.allAvailableProxies())
-                .send();
+                .send()
+                .onReply(MagicLinkCore.Packets.Response.class, new PacketListener<>() {
+                    @Override
+                    public Packet.Response handle(MagicLinkCore.Packets.Response packet) {
+                        response.complete(packet);
+                        return Packet.Response.success("Successfully indicated the status of the server's send request.");
+                    }
+                });
+        return response;
     }
 
     /**
      * Sends a player to a specific Server if it exists.
      * @param player The uuid of the player to send.
      * @param server The uuid of the server to send to.
-     * @return The packet which was sent.
      */
-    public Packet.Local send(UUID player, UUID server) {
-        return Packet.New()
+    public CompletableFuture<MagicLinkCore.Packets.Response> send(UUID player, UUID server) {
+        CompletableFuture<MagicLinkCore.Packets.Response> response = new CompletableFuture<>();
+        Packet.New()
                 .identification(Packet.Identification.from("RC","SP"))
                 .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.PLAYER_UUID, player.toString())
                 .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.TARGET_SERVER, server.toString())
                 .addressTo(Packet.SourceIdentifier.allAvailableProxies())
-                .send();
+                .send()
+                .onReply(MagicLinkCore.Packets.Response.class, new PacketListener<>() {
+                    @Override
+                    public Packet.Response handle(MagicLinkCore.Packets.Response packet) {
+                        response.complete(packet);
+                        return Packet.Response.success("Successfully indicated the status of the server's send request.");
+                    }
+                });
+        return response;
     }
 
     /**

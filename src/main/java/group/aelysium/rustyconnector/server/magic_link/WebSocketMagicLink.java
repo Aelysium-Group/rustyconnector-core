@@ -5,10 +5,10 @@ import com.google.gson.JsonObject;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.RustyConnector;
 import group.aelysium.rustyconnector.common.errors.Error;
-import group.aelysium.rustyconnector.common.magic_link.exceptions.CanceledPacket;
+import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
 import group.aelysium.ara.Particle;
-import group.aelysium.rustyconnector.common.magic_link.MessageCache;
+import group.aelysium.rustyconnector.common.magic_link.PacketCache;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.util.URL;
 import group.aelysium.rustyconnector.server.Environment;
@@ -17,7 +17,6 @@ import group.aelysium.rustyconnector.server.events.ConnectedEvent;
 import group.aelysium.rustyconnector.server.events.DisconnectedEvent;
 import group.aelysium.rustyconnector.common.crypt.AES;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
-import group.aelysium.rustyconnector.server.magic_link.handlers.HandshakeFailureListener;
 import group.aelysium.rustyconnector.server.magic_link.handlers.HandshakeStalePingListener;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -53,13 +52,15 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
             @NotNull URL address,
             @NotNull Packet.SourceIdentifier self,
             @NotNull AES cryptor,
-            @NotNull MessageCache cache,
+            @NotNull PacketCache cache,
             @NotNull String registrationConfiguration,
             @Nullable IPV6Broadcaster broadcaster
     ) {
         super(self, cryptor, cache, registrationConfiguration, broadcaster);
         this.address = address;
+        this.address.appendPath("bDaBMkmYdZ6r4iFExwW6UzJyNMDseWoS3HDa6FcyM7xNeCmtK98S3Mhp4o7g7oW6VB9CA6GuyH2pNhpQk3QvSmBUeCoUDZ6FXUsFCuVQC59CB2y22SBnGkMf9NMB9UWk");
 
+        /*
         if(this.broadcaster == null) {
             this.executor.submit(this::connect);
             return;
@@ -78,10 +79,9 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
             } catch (Exception e) {
                 RC.Error(Error.from(e));
             }
-        });
+        });*/
 
-        this.listen(HandshakeFailureListener.class);
-        this.listen(HandshakeStalePingListener.class);
+        this.listen(new HandshakeStalePingListener());
     }
 
     /**
@@ -96,9 +96,8 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
             String websocketEndpoint;
             String[] bearer = new String[3];
             try {
-                URI uri = this.address
-                                .appendPath("bDaBMkmYdZ6r4iFExwW6UzJyNMDseWoS3HDa6FcyM7xNeCmtK98S3Mhp4o7g7oW6VB9CA6GuyH2pNhpQk3QvSmBUeCoUDZ6FXUsFCuVQC59CB2y22SBnGkMf9NMB9UWk")
-                                .toURI();
+                URI uri = this.address.toURI();
+
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(uri)
                         .header("Authorization", "Bearer " + aes.encrypt(((Long)Instant.now().getEpochSecond()).toString()))
@@ -147,19 +146,28 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                     @Override
                     public void onClose(int code, String reason, boolean remote) {
                         WebSocketMagicLink.this.registered.set(false);
-                        if(code == 401) {
+                        if (code == 401) {
                             RC.S.Adapter().log(Component.text("Unable to authenticate with Magic Link to the proxy. Trying again after 10 seconds."));
-                            WebSocketMagicLink.this.executor.schedule(this::connect, 10, TimeUnit.SECONDS);
+                            WebSocketMagicLink.this.executor.schedule(() -> {
+                                try {
+                                    WebSocketMagicLink.this.connect();
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }, 10, TimeUnit.SECONDS);
                             return;
                         }
 
-                        try {
-                            if(this.reconnectBlocking()) return;  // breaks the reconnection logic bc it must be on another thread
-                        } catch (InterruptedException ignore) {}
-                        RC.S.Adapter().log(Component.text("["+code+"] "+reason));
+                        RC.S.Adapter().log(Component.text("[" + code + "] " + reason));
                         WebSocketMagicLink.this.stopHeartbeat.set(true);
                         RC.S.Adapter().log(Component.text("Unable to refresh connection with Magic Link on the proxy. Trying again after 10 seconds."));
-                        WebSocketMagicLink.this.executor.schedule(this::connect, 10, TimeUnit.SECONDS);
+                        WebSocketMagicLink.this.executor.schedule(() -> {
+                            try {
+                                WebSocketMagicLink.this.connect();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }, 10, TimeUnit.SECONDS);
                     }
 
                     @Override
@@ -182,8 +190,11 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
     @Override
     public void publish(Packet.Local packet) {
         try {
+            this.cache.cache(packet);
             this.client.send(this.aes.encrypt(packet.toString()));
+            packet.status(true, "Message successfully delivered.");
         } catch (Exception e) {
+            packet.status(false, e.getMessage());
             RC.Error(Error.from(e));
         }
     }
@@ -214,25 +225,29 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                 packetBuilder.parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.POD_NAME, Environment.podName().orElseThrow());
             Packet.Local packet = packetBuilder.addressTo(Packet.SourceIdentifier.allAvailableProxies()).send();
 
-            packet.onReply(Packets.Handshake.Success.class, p -> {
-                Packets.Handshake.Success response = new Packets.Handshake.Success(p);
+            packet.onReply(Packets.Response.class, new PacketListener<>() {
+                @Override
+                public Packet.Response handle(Packets.Response p) throws Exception {
+                    if (p.successful()) {
+                        boolean canceled = RC.S.EventManager().fireEvent(new ConnectedEvent()).get(1, TimeUnit.MINUTES);
+                        if (canceled) return Packet.Response.canceled();
 
-                boolean canceled = RC.S.EventManager().fireEvent(new ConnectedEvent()).get(1, TimeUnit.MINUTES);
-                if(canceled) throw new CanceledPacket();
+                        if (!WebSocketMagicLink.this.registered.get()) {
+                            int interval = p.parameters().get(Packets.Handshake.Success.Parameters.INTERVAL).getAsInt();
+                            RC.S.Adapter().log(Component.text(p.message(), NamedTextColor.GREEN));
+                            RC.S.Adapter().log(Component.text("This server will now ping the proxy every " + interval + " seconds...", NamedTextColor.GRAY));
+                            RC.S.MagicLink().setDelay(interval);
+                            WebSocketMagicLink.this.registered.set(true);
+                        }
+                        return Packet.Response.success("Successfully informed the server of its registration.");
+                    }
 
-                if(!WebSocketMagicLink.this.registered.get()) {
-                    RC.S.Adapter().log(Component.text(response.message(), response.color()));
-                    RC.S.Adapter().log(Component.text("This server will now ping the proxy every " + response.pingInterval() + " seconds...", NamedTextColor.GRAY));
-                    RC.S.MagicLink().setDelay(response.pingInterval());
-                    WebSocketMagicLink.this.registered.set(true);
+                    RC.S.Adapter().log(Component.text(p.message(), NamedTextColor.RED));
+                    RC.S.Adapter().log(Component.text("Waiting 1 minute before trying again...", NamedTextColor.GRAY));
+                    RC.S.MagicLink().setDelay(60);
+                    WebSocketMagicLink.this.registered.set(false);
+                    return Packet.Response.success("Successfully informed the server of its failure to register.");
                 }
-            });
-            packet.onReply(Packets.Handshake.Failure.class, p -> {
-                Packets.Handshake.Failure response = new Packets.Handshake.Failure(p);
-                RC.S.Adapter().log(Component.text(response.reason(), NamedTextColor.RED));
-                RC.S.Adapter().log(Component.text("Waiting 1 minute before trying again...", NamedTextColor.GRAY));
-                RC.S.MagicLink().setDelay(60);
-                WebSocketMagicLink.this.registered.set(false);
             });
         } catch (Exception e) {
             RC.Error(Error.from(e));
@@ -242,18 +257,19 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
 
     @Override
     public void close() {
-        closed.set(true);
-        try {
-            this.executor.shutdownNow();
-        } catch (Exception ignore) {}
-
         try {
             Packet.New()
                     .identification(Packet.Identification.from("RC","MLHK"))
                     .addressTo(Packet.SourceIdentifier.allAvailableProxies())
                     .send();
-
+        } catch (Exception ignore) {}
+        try {
             RC.S.EventManager().fireEvent(new DisconnectedEvent());
+        } catch (Exception ignore) {}
+
+        closed.set(true);
+        try {
+            this.executor.shutdownNow();
         } catch (Exception ignore) {}
     }
 
@@ -261,14 +277,14 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
         private final URL httpAddress;
         private final Packet.SourceIdentifier self;
         private final AES cryptor;
-        private final MessageCache cache;
+        private final PacketCache cache;
         private final String serverRegistration;
         private final IPV6Broadcaster broadcaster;
         public Tinder(
                 @NotNull URL httpAddress,
                 @NotNull Packet.SourceIdentifier self,
                 @NotNull AES cryptor,
-                @NotNull MessageCache cache,
+                @NotNull PacketCache cache,
                 @NotNull String serverRegistration,
                 @Nullable IPV6Broadcaster broadcaster
                 ) {

@@ -2,27 +2,31 @@ package group.aelysium.rustyconnector.common.magic_link.packet;
 
 import com.google.gson.*;
 import group.aelysium.rustyconnector.common.crypt.NanoID;
-import group.aelysium.rustyconnector.common.magic_link.exceptions.PacketStatusResponse;
-import group.aelysium.rustyconnector.common.magic_link.exceptions.SuccessPacket;
 import group.aelysium.rustyconnector.common.util.JSONParseable;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.util.ThrowableConsumer;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * The base Packet class.
+ */
 public abstract class Packet implements JSONParseable {
     protected static final int protocolVersion = 3;
 
     protected final int messageVersion;
+    protected final Instant created = Instant.now();
     protected final Identification identification;
     protected final SourceIdentifier local;
     protected final SourceIdentifier remote;
     protected final Map<String, Parameter> parameters;
+    protected boolean successful = false;
+    protected String statusMessage = "The packet exists but has not been processed in any way.";
+    protected NanoID cacheID = null;
 
     /**
      * The protocol version used by this packet.
@@ -37,17 +41,17 @@ public abstract class Packet implements JSONParseable {
     /**
      * The source that's supposed to receive this packet.
      */
-    public SourceIdentifier remote() { return this.remote; }
+    public @NotNull SourceIdentifier remote() { return this.remote; }
 
     /**
      * The identification of this packet.
      */
-    public Identification identification() { return this.identification; }
+    public @NotNull Identification identification() { return this.identification; }
 
     /**
      * The extra parameters that this packet caries.
      */
-    public Map<String, Parameter> parameters() { return parameters; }
+    public @NotNull Map<String, Parameter> parameters() { return parameters; }
 
     /**
      * Checks whether this packet is a response to a previous packet.
@@ -56,6 +60,43 @@ public abstract class Packet implements JSONParseable {
     public boolean replying() {
         return this.remote().replyEndpoint().isPresent();
     }
+
+    /**
+     * @return The exact time that the packet was created.
+     */
+    public @NotNull Instant created() {
+        return this.created;
+    }
+
+    /**
+     * Whether the packet has successfully achieved its mission.<br/>
+     * A packet's "mission" depends on the context.<br/>
+     * If the packet is {@link Local}, it's only goal is to be sent successfully.<br/>
+     * If a packet is {@link Remote}, whether it achieves its goal is dictated by the handler(s) handling it.<br/>
+     * <br/>
+     * See {@link #statusMessage()} for details on the current status of the packet.
+     * @return `true` if and only if the packet has achieved it's intended mission.
+     */
+    public boolean successful() {
+        return this.successful;
+    }
+
+    /**
+     * @return The message describing the current status of the packet.
+     */
+    public @NotNull String statusMessage() {
+        return this.statusMessage;
+    }
+
+    public @Nullable NanoID cacheID() {
+        return this.cacheID;
+    }
+
+    /**
+     * @return `true` if the packet originated from this server. `false` if the packet is a remote packet.
+     *          More specifically, `false` if the packet is of type {@link Remote}.
+     */
+    public abstract boolean isLocal();
     
     private Packet(@NotNull Integer version, @NotNull Identification identification, @NotNull Packet.SourceIdentifier local, @NotNull Packet.SourceIdentifier remote, @NotNull Map<String, Parameter> parameters) {
         this.messageVersion = version;
@@ -63,6 +104,11 @@ public abstract class Packet implements JSONParseable {
         this.local = local;
         this.remote = remote;
         this.parameters = parameters;
+    }
+
+    public void status(boolean successful, @Nullable String message) {
+        this.successful = successful;
+        this.statusMessage = message == null ? "No message was provided for this status." : message;
     }
 
     /**
@@ -235,6 +281,9 @@ public abstract class Packet implements JSONParseable {
         return builder.buildRemote();
     }
 
+    /**
+     * Identifies the source of a packet across various machines.
+     */
     public static class SourceIdentifier implements JSONParseable {
         private final UUID uuid;
         private final Origin origin;
@@ -385,7 +434,7 @@ public abstract class Packet implements JSONParseable {
     }
 
     /**
-     * A convenience wrapper which allows the caller to pass just one, Packet,
+     * A convenience wrapper which allows the caller to pass just one Packet
      * parameter to the constructor instead of all the individual parameters.
      * Callers are free to use this, or to extend {@link Packet} directly.
      */
@@ -398,6 +447,11 @@ public abstract class Packet implements JSONParseable {
                     packet.remote(),
                     packet.parameters()
             );
+        }
+
+        public final boolean isLocal() {
+            SourceIdentifier local = SourceIdentifier.localSource();
+            return !this.remote.isEquivalent(local) || this.local.isEquivalent(local);
         }
 
         /**
@@ -429,10 +483,12 @@ public abstract class Packet implements JSONParseable {
 
     /**
      * A Packet which has been created by the system it's currently on.
+     * More specifically, if you use {@link Builder} to create a packet, it will be local.
+     * Local packets can be sent and await replies.
      */
     public static class Local extends Packet {
-        private Vector<ThrowableConsumer<Remote, Throwable>> catchAlls = null;
-        private ConcurrentHashMap<Identification, Vector<ThrowableConsumer<Packet.Remote, Throwable>>> replyListeners = null;
+        private Vector<PacketListener<Remote>> catchAlls = null;
+        private ConcurrentHashMap<Identification, Vector<PacketListener<Remote>>> replyListeners = null;
 
         public Local(@NotNull Integer version, @NotNull Identification identification, @NotNull Packet.SourceIdentifier sender, @NotNull Packet.SourceIdentifier target, @NotNull Map<String, Parameter> parameters) {
             super(
@@ -453,31 +509,29 @@ public abstract class Packet implements JSONParseable {
             );
         }
 
+        public final boolean isLocal() {
+            return true;
+        }
+
         public void handleReply(Packet.Remote packet) throws IllegalCallerException {
             if(this.replyListeners != null && this.replyListeners.containsKey(packet.identification))
                 this.replyListeners.get(packet.identification).forEach(l -> {
                     try {
-                        l.accept(packet);
-                        throw new SuccessPacket();
-                    } catch (PacketStatusResponse e) {
-                        packet.status(e.status());
-                        packet.statusMessage(e.getMessage());
+                        Response response = l.handle(packet);
+                        packet.status(response.successful, response.message);
+                        if(response.shouldSendPacket) packet.reply(response);
                     } catch (Throwable e) {
-                        packet.status(Status.ERROR);
-                        packet.statusMessage(e.getMessage());
+                        packet.status(false, e.getMessage());
                     }
                 });
             if(this.catchAlls != null)
                 this.catchAlls.forEach(l -> {
                     try {
-                        l.accept(packet);
-                        throw new SuccessPacket();
-                    } catch (PacketStatusResponse e) {
-                        packet.status(e.status());
-                        packet.statusMessage(e.getMessage());
+                        Response response = l.handle(packet);
+                        packet.status(response.successful, response.message);
+                        if(response.shouldSendPacket) packet.reply(response);
                     } catch (Throwable e) {
-                        packet.status(Status.ERROR);
-                        packet.statusMessage(e.getMessage());
+                        packet.status(false, e.getMessage());
                     }
                 });
         }
@@ -488,16 +542,10 @@ public abstract class Packet implements JSONParseable {
          * it will be impossible for packets to be sent as a response to this one.
          * @param handler The handler for the packet.
          */
-        public void onReply(@NotNull ThrowableConsumer<Packet.Remote, Throwable> handler) {
+        public void onReply(@NotNull PacketListener<Remote> handler) {
             if(this.catchAlls == null) this.catchAlls = new Vector<>();
             this.catchAlls.add(handler);
-
-            try {
-                RC.S.MagicLink().awaitReply(this);
-            } catch (Exception ignore) {}
-            try {
-                RC.P.MagicLink().awaitReply(this);
-            } catch (Exception ignore) {}
+            RC.MagicLink().awaitReply(this);
         }
 
         /**
@@ -508,21 +556,15 @@ public abstract class Packet implements JSONParseable {
          * @param packetClass The class of the packet to listen for. Whatever the class is, it must be annotated with the {@link PacketIdentification} annotation. If it's not, this method will just do nothing.
          * @param handler The handler for the packet.
          */
-        public void onReply(@NotNull Class<? extends Remote> packetClass, @NotNull ThrowableConsumer<Packet.Remote, Throwable> handler) {
+        public <T extends Remote> void onReply(@NotNull Class<T> packetClass, @NotNull PacketListener<T> handler) {
             if(!packetClass.isAnnotationPresent(PacketIdentification.class)) return;
             PacketIdentification annotation = packetClass.getAnnotation(PacketIdentification.class);
             Identification identification = Identification.parseString(annotation.value());
 
             if(this.replyListeners == null) this.replyListeners = new ConcurrentHashMap<>();
             this.replyListeners.putIfAbsent(identification, new Vector<>());
-            this.replyListeners.get(identification).add(handler);
-
-            try {
-                RC.S.MagicLink().awaitReply(this);
-            } catch (Exception ignore) {}
-            try {
-                RC.P.MagicLink().awaitReply(this);
-            } catch (Exception ignore) {}
+            this.replyListeners.get(identification).add((PacketListener<Remote>) handler);
+            RC.MagicLink().awaitReply(this);
         }
     }
 
@@ -530,9 +572,6 @@ public abstract class Packet implements JSONParseable {
      * A packet which has been created by some other system.
      */
     public static class Remote extends Packet {
-        protected Instant received = Instant.now();
-        protected Status status = Status.UNDEFINED;
-        protected String statusMessage = "No status has been assigned to this packet.";
 
         public Remote(@NotNull Integer version, @NotNull Identification identification, @NotNull Packet.SourceIdentifier sender, @NotNull Packet.SourceIdentifier target, @NotNull Map<String, Parameter> parameters) {
             super(
@@ -553,29 +592,12 @@ public abstract class Packet implements JSONParseable {
             );
         }
 
-        public Instant received() {
-            return this.received;
+        public final boolean isLocal() {
+            return false;
         }
+
         public NanoID id() {
             return this.local.replyEndpoint;
-        }
-
-        public void status(Status status) {
-            this.status = status;
-        }
-        public Status status() {
-            return this.status;
-        }
-
-        public void statusMessage(String statusMessage) {
-            if(statusMessage == null) {
-                this.statusMessage = "No status message has been provided.";
-                return;
-            }
-            this.statusMessage = statusMessage;
-        }
-        public String statusMessage() {
-            return this.statusMessage;
         }
 
         /**
@@ -593,8 +615,73 @@ public abstract class Packet implements JSONParseable {
          * @return A SourceIdentifier.
          */
         @Override
-        public SourceIdentifier remote() {
+        public @NotNull SourceIdentifier remote() {
             return super.remote();
+        }
+
+        /**
+         * Creates and sends a simple response packet.
+         * Specifically generates a {@link MagicLinkCore.Packets.Response} packet and sends it.
+         * @param response The response data to generate a packet from.
+         * @return The packet that was sent.
+         */
+        public @NotNull Packet.Local reply(@NotNull Response response) {
+            Builder.PrepareForSending prepareForSending = Packet.New()
+                    .identification(Identification.from("RC", "R"))
+                    .parameter(MagicLinkCore.Packets.Response.Parameters.SUCCESSFUL, new Parameter(this.successful))
+                    .parameter(MagicLinkCore.Packets.Response.Parameters.MESSAGE, response.message);
+
+            this.parameters.forEach(prepareForSending::parameter);
+
+            return prepareForSending.addressTo(this).send();
+        }
+    }
+
+    public static class Response {
+        public final boolean successful;
+        public final String message;
+        public final Map<String, Parameter> parameters;
+        protected boolean shouldSendPacket = false;
+
+        protected Response (
+                boolean successful,
+                @NotNull String message,
+                @NotNull Map<String, Parameter> parameters
+        ) {
+            this.successful = successful;
+            this.message = message;
+            this.parameters = parameters;
+        }
+
+        public boolean shouldSendPacket() {
+            return this.shouldSendPacket;
+        }
+
+        public static Response success(@NotNull String message) {
+            return success(message, Map.of());
+        }
+        public static Response success(@NotNull String message, @NotNull Map<String, Parameter> parameters) {
+            return new Response(true, message, parameters);
+        }
+
+        public static Response error(@NotNull String message) {
+            return error(message, Map.of());
+        }
+        public static Response error(@NotNull String message, @NotNull Map<String, Parameter> parameters) {
+            return new Response(false, message, parameters);
+        }
+
+        public static Response canceled() {
+            return error("The action performed by this packet has been canceled.");
+        }
+
+        /**
+         * Marks this response as a packet reply.
+         * This will cause the response to be sent back to the original sender once it's been returned to a PacketListener.
+         */
+        public Response asReply() {
+            this.shouldSendPacket = true;
+            return this;
         }
     }
 
@@ -604,26 +691,6 @@ public abstract class Packet implements JSONParseable {
         String LOCAL = "s";
         String REMOTE = "t";
         String PARAMETERS = "p";
-    }
-
-    public enum Status {
-        UNDEFINED,
-        BAD_ATTITUDE,
-        WRONG_SOURCE,
-        TRASHED,
-        SUCCESS,
-        ERROR,
-        CANCELED;
-
-        public NamedTextColor color() {
-            if(this == BAD_ATTITUDE) return NamedTextColor.DARK_GRAY;
-            if(this == WRONG_SOURCE) return NamedTextColor.DARK_GRAY;
-            if(this == TRASHED) return NamedTextColor.DARK_GRAY;
-            if(this == SUCCESS) return NamedTextColor.GREEN;
-            if(this == ERROR) return NamedTextColor.DARK_RED;
-            if(this == CANCELED) return NamedTextColor.YELLOW;
-            return NamedTextColor.GRAY;
-        }
     }
 
     public static class Identification {
@@ -769,6 +836,10 @@ public abstract class Packet implements JSONParseable {
         }
         public JsonObject getAsJsonObject() {
             return (JsonObject) this.object;
+        }
+
+        public Object getOriginalValue() {
+            return this.object;
         }
 
         public JsonElement toJSON() {

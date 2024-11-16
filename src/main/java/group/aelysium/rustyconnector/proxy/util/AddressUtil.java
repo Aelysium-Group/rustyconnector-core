@@ -73,6 +73,6 @@ public final class AddressUtil {
      * @return A string of format {@code 127.0.0.1:25565}.
      */
     public static String addressToString(InetSocketAddress address) {
-        return address.getAddress().getHostAddress() +":"+ address.getPort();
+        return address.getHostString() +":"+ address.getPort();
     }
 }

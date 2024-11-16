@@ -5,16 +5,16 @@ import com.google.gson.JsonObject;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
-import group.aelysium.rustyconnector.common.magic_link.MessageCache;
+import group.aelysium.rustyconnector.common.magic_link.PacketCache;
 import group.aelysium.rustyconnector.common.crypt.AES;
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.common.crypt.SHA256;
 import group.aelysium.rustyconnector.common.crypt.Token;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
+import group.aelysium.rustyconnector.proxy.events.ServerTimeoutEvent;
 import group.aelysium.rustyconnector.proxy.family.Family;
-import group.aelysium.rustyconnector.proxy.magic_link.packet_handlers.HandshakeDisconnectListener;
-import group.aelysium.rustyconnector.proxy.magic_link.packet_handlers.HandshakePingListener;
+import group.aelysium.rustyconnector.proxy.magic_link.packet_handlers.*;
 import group.aelysium.rustyconnector.proxy.util.AddressUtil;
 import io.javalin.Javalin;
 import io.javalin.http.*;
@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.InetSocketAddress;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -49,7 +48,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
             @NotNull InetSocketAddress address,
             @NotNull Packet.SourceIdentifier self,
             @NotNull AES cryptor,
-            @NotNull MessageCache cache,
+            @NotNull PacketCache cache,
             @NotNull Map<String, ServerRegistrationConfiguration> registrationConfigurations,
             @Nullable IPV6Broadcaster broadcaster
     ) {
@@ -126,7 +125,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
                     this.clients.putIfAbsent(target, request);
                 } catch (Exception e) {
                     RC.Error(Error.from(e));
-                    request.closeSession(500, "Unable to complete Magic Link connection.");
+                    request.closeSession(1011, "Unable to complete Magic Link connection.");
                 }
             });
             config.onClose(request -> {
@@ -145,7 +144,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
                     Packet.SourceIdentifier target = Packet.SourceIdentifier.fromJSON(gson.fromJson(Optional.ofNullable(upgradeRequest.header("X-Server-Identification")).orElse(""), JsonObject.class));
 
                     if(!this.clients.containsKey(target)) {
-                        request.closeSession(401, "Unauthorized");
+                        request.closeSession(1008, "Unauthorized");
                         return;
                     }
                     this.handleMessage(request.message());
@@ -157,48 +156,45 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
 
         this.server.start(this.address.getHostName(), this.address.getPort());
 
-        this.listen(HandshakeDisconnectListener.class);
-        this.listen(HandshakePingListener.class);
+        this.listen(new HandshakeDisconnectListener());
+        this.listen(new HandshakePingListener());
+        this.listen(new ServerLockListener());
+        this.listen(new ServerUnlockListener());
+        this.listen(new SendPlayerListener());
     }
 
     private void heartbeat() {
-        this.executor.schedule(() -> {
-            try {
-                RC.P.Families().fetchAll().forEach(f -> {
-                    try {
-                        Family family = f.orElseThrow();
-                        family.servers().forEach(server -> {
-                            server.decreaseTimeout(3);
+        try {
+            RC.P.Families().fetchAll().forEach(flux -> {
+                try {
+                    flux.executeNow(f -> f.servers().forEach(server -> {
+                        try {
+                            int newValue = server.decreaseTimeout(3);
 
-                            try {
-                                if (server.stale()) {
-                                    family.removeServer(server);
-                                    WsContext connection = this.clients.get(Packet.SourceIdentifier.server(server.uuid()));
-                                    connection.closeSession(1013, "Stale connection. Re-register.");
-                                }
-                            } catch (Exception e) {
-                                RC.Error(Error.from(e).causedBy("WebSocketMagicLink:heartbeat"));
-                            }
-                        });
-                    } catch (Exception e) {
-                        RC.Error(Error.from(e).causedBy("WebSocketMagicLink:heartbeat"));
-                    }
-                });
-            } catch (Exception e) {
-                RC.Error(Error.from(e).causedBy("WebSocketMagicLink:heartbeat"));
-            }
-            try {
-                if(this.broadcaster == null) return;
-                this.broadcaster.sendEncrypted(AddressUtil.addressToString(this.address));
-            } catch (Exception ignore) {}
+                            if (newValue > 0) return;
 
-            this.heartbeat();
-        }, 3, TimeUnit.SECONDS);
+                            f.removeServer(server);
+                            RC.EventManager().fireEvent(new ServerTimeoutEvent(server, flux));
+                            WsContext connection = this.clients.get(Packet.SourceIdentifier.server(server.uuid()));
+                            connection.closeSession(1013, "Stale connection. Re-register.");
+                        } catch (Exception e) {
+                            RC.Error(Error.from(e).causedBy("WebSocketMagicLink:heartbeat"));
+                        }
+                    }));
+                } catch (Exception e) {
+                    RC.Error(Error.from(e).causedBy("WebSocketMagicLink:heartbeat"));
+                }
+            });
+        } catch (Exception e) {
+            RC.Error(Error.from(e).causedBy("WebSocketMagicLink:heartbeat"));
+        }
+        this.executor.schedule(this::heartbeat, 3, TimeUnit.SECONDS);
     }
 
     @Override
     public void publish(Packet.Local packet) {
         try {
+            this.cache.cache(packet);
             String encrypted = this.aes.encrypt(packet.toString());
             Packet.SourceIdentifier target = packet.remote();
             if(target.isEquivalent(Packet.SourceIdentifier.allAvailableProxies()) || target.isEquivalent(Packet.SourceIdentifier.allAvailableServers())) {
@@ -209,7 +205,9 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
             } else {
                 this.clients.get(target).send(encrypted);
             }
+            packet.status(true, "Message successfully delivered.");
         } catch (Exception e) {
+            packet.status(false, e.getMessage());
             RC.Error(Error.from(e));
         }
     }
@@ -226,7 +224,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
     public static class Tinder extends Particle.Tinder<WebSocketMagicLink> {
         private final Packet.SourceIdentifier self;
         private final AES cryptor;
-        private final MessageCache cache;
+        private final PacketCache cache;
         private final IPV6Broadcaster broadcaster;
         private final InetSocketAddress address;
         private final Map<String, Proxy.ServerRegistrationConfiguration> registrationConfigurations;
@@ -234,7 +232,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
                 @NotNull InetSocketAddress address,
                 @NotNull Packet.SourceIdentifier self,
                 @NotNull AES cryptor,
-                @NotNull MessageCache cache,
+                @NotNull PacketCache cache,
                 @NotNull Map<String, ServerRegistrationConfiguration> registrationConfigurations,
                 @Nullable IPV6Broadcaster broadcaster
                 ) {

@@ -4,27 +4,18 @@ import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.plugins.Plugin;
 import group.aelysium.rustyconnector.common.crypt.NanoID;
 import group.aelysium.rustyconnector.common.errors.Error;
-import group.aelysium.rustyconnector.common.magic_link.exceptions.PacketStatusResponse;
-import group.aelysium.rustyconnector.common.magic_link.exceptions.SuccessPacket;
-import group.aelysium.rustyconnector.common.magic_link.exceptions.TrashedPacket;
 import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
 import group.aelysium.rustyconnector.common.cache.TimeoutCache;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketIdentification;
-import group.aelysium.rustyconnector.common.util.ThrowableConsumer;
-import group.aelysium.rustyconnector.proxy.util.ColorMapper;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 import group.aelysium.rustyconnector.common.crypt.AES;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -39,56 +30,50 @@ public abstract class MagicLinkCore implements Plugin {
     private final TimeoutCache<NanoID, Packet.Local> packetsAwaitingReply = new TimeoutCache<>(LiquidTimestamp.from(15, TimeUnit.SECONDS));
     private final Map<String, List<Consumer<Packet.Remote>>> listeners = new ConcurrentHashMap<>();
     protected final AES aes;
-    protected final MessageCache cache;
+    protected final PacketCache cache;
     protected final Packet.SourceIdentifier self;
 
     protected MagicLinkCore(
             @NotNull Packet.SourceIdentifier self,
             @NotNull AES aes,
-            @NotNull MessageCache cache
+            @NotNull PacketCache cache
     ) {
         this.self = self;
         this.aes = aes;
         this.cache = cache;
+        packetsAwaitingReply.onTimeout(p -> RC.Adapter().log(Component.text("The packet "+p.identification()+" has expired and isn't waiting for replies anymore.")));
     }
 
     /**
-     * Registers the provided listen.
-     * If the listen method is static you can set this to be the class of your listen. (Object.class)
-     * Or if you want an instance method, you can pass a listen instance. (new Object())
-     * @param listener The listen to use.
+     * Registers a new packet listener to MagicLink.
+     * @param listener The listener to use.
      */
-    public void listen(Object listener) {
-        boolean isInstance = !(listener instanceof Class<?>);
-        Class<?> objectClass = listener instanceof Class<?> ? (Class<?>) listener : listener.getClass();
-        for (Method method : objectClass.getDeclaredMethods()) {
-            if(isInstance && Modifier.isStatic(method.getModifiers())) continue;
-            if(!isInstance && !Modifier.isStatic(method.getModifiers())) continue;
-            if(!method.isAnnotationPresent(PacketListener.class)) continue;
-            PacketListener annotation = method.getAnnotation((PacketListener.class));
-            if(annotation == null) continue;
+    public void listen(PacketListener<? extends Packet.Remote> listener) {
+        for (Method method : listener.getClass().getDeclaredMethods()) {
             try {
-                Class<? extends Packet.Remote> packetWrapper = annotation.value();
+                Parameter firstParameter = method.getParameters()[0];
+                Class<?> firstParameterType = firstParameter.getType();
+
+                Class<? extends Packet.Remote> packetWrapper = (Class<? extends Packet.Remote>) firstParameterType;
                 Constructor<? extends Packet.Remote> constructor = packetWrapper.getConstructor(Packet.class);
                 PacketIdentification packetIdentification = packetWrapper.getAnnotation(PacketIdentification.class);
+
                 if(packetIdentification == null) throw new NoSuchMethodException("You must provide a @PacketIdentification for Packet Wrappers. Missing on: " + packetWrapper.getSimpleName());
+
                 this.listeners.computeIfAbsent(packetIdentification.value(), k -> new Vector<>()).add(packet -> {
                     try {
-                        try {
-                            method.invoke(isInstance ? listener : null, constructor.newInstance(packet));
-                        } catch (IllegalArgumentException e) {
-                            RC.Error(Error.from(e));
-                            method.invoke(isInstance ? listener : null);
-                        }
+                        Packet.Response response = (Packet.Response) method.invoke(listener, constructor.newInstance(packet));
+                        packet.status(response.successful, response.message);
+                        if(response.shouldSendPacket()) packet.reply(response);
                     } catch (InvocationTargetException e) {
-                        if(e.getCause() == null) return;
-
-                        packet.statusMessage(e.getMessage());
-                        packet.status(Packet.Status.ERROR);
-                        if(e.getCause() instanceof PacketStatusResponse statusResponse) packet.status(statusResponse.status());
-                    } catch (Throwable e) {
-                        packet.status(Packet.Status.ERROR);
-                        packet.statusMessage(e.getMessage());
+                        RC.Error(Error.from(e));
+                        if(e.getCause() == null) {
+                            packet.status(false, e.getMessage());
+                            return;
+                        }
+                        packet.status(false, e.getMessage());
+                    } catch (Exception e) {
+                        packet.status(false, e.getMessage());
                         RC.Error(Error.from(e));
                     }
                 });
@@ -107,8 +92,7 @@ public abstract class MagicLinkCore implements Plugin {
 
     /**
      * Queues the packet into the reply queue.
-     * If a reply is received which contains a Reply Target pointing to this packet,
-     * any listeners registered in {@link group.aelysium.rustyconnector.common.magic_link.packet.Packet.Local#onReply(ThrowableConsumer)} will run.
+     * If a reply is received which contains a Reply Target pointing to this packet any listeners registered in {@link group.aelysium.rustyconnector.common.magic_link.packet.Packet.Local#onReply(PacketListener)} will run.
      * @param packet The packet to queue.
      */
     public void awaitReply(Packet.Local packet) {
@@ -128,7 +112,7 @@ public abstract class MagicLinkCore implements Plugin {
     /**
      * Fetches the message cache for this magic link provider.
      */
-    public MessageCache messageCache() {
+    public PacketCache packetCache() {
         return this.cache;
     }
 
@@ -140,40 +124,36 @@ public abstract class MagicLinkCore implements Plugin {
 
     /**
      * Handles all the MagicLink/RustyConnector internals of handling MagicLink packets.
-     * @param rawMessage An AES-256 encrypted MagicLink packet.
+     * @param rawMessage A Base64 encoded, AES-256 encrypted, MagicLink packet.
      */
     protected void handleMessage(String rawMessage) {
-        Packet.Remote packet = null;
+        Packet.Remote packet;
         try {
             packet = Packet.parseIncoming(this.aes.decrypt(rawMessage));
-            this.cache.cache(packet);
-        } catch (Exception ignored) {}
-        if(packet == null) return;
-
+        } catch (Exception e) {
+            RC.Error(Error.from(e));
+            return;
+        }
         try {
-            if (!this.self.isEquivalent(packet.remote()))
-                throw new TrashedPacket("The packet isn't addressed to this server.");
+            // Not addressed to us, completely ignore it.
+            if (!this.self.isEquivalent(packet.remote())) return;
+
+            this.cache.cache(packet);
 
             if (packet.replying()) {
                 Packet.Local replyTarget = this.packetsAwaitingReply.get(packet.remote().replyEndpoint().orElseThrow());
-                if (replyTarget == null) throw new TrashedPacket("This packet is a response to another packet, which isn't available to receive responses anymore.");
+                if (replyTarget == null) throw new Exception("This packet is a response to another packet, which isn't available to receive responses anymore.");
 
                 replyTarget.handleReply(packet);
                 return;
             }
 
             List<Consumer<Packet.Remote>> listeners = this.listeners.get(packet.identification().toString());
-            if (listeners == null || listeners.isEmpty()) throw new TrashedPacket("No listeners exist to handle this packet.");
+            if (listeners == null || listeners.isEmpty()) throw new Exception("No listeners exist to handle this packet.");
 
-            Packet.Remote finalPacket = packet;
-            listeners.forEach(l -> l.accept(finalPacket));
-            throw new SuccessPacket();
-        } catch (PacketStatusResponse e) {
-            packet.status(e.status());
-            packet.statusMessage(e.getMessage());
+            listeners.forEach(l -> l.accept(packet));
         } catch (Exception e) {
-            packet.status(Packet.Status.ERROR);
-            packet.statusMessage(e.getMessage());
+            packet.status(false, e.getMessage());
         }
     }
 
@@ -239,45 +219,19 @@ public abstract class MagicLinkCore implements Plugin {
                 }
             }
 
-            @PacketIdentification("RC-MLHF")
-            class Failure extends Packet.Remote {
-                public String reason() {
-                    return this.parameters().get(Parameters.REASON).getAsString();
-                }
-
-                public Failure(Packet packet) {
-                    super(packet);
-                }
-
-                public interface Parameters {
-                    String REASON = "r";
-                }
-            }
-
-            @PacketIdentification("RC-MLHS")
-            class Success extends Packet.Remote {
-                public String message() {
-                    return this.parameters().get(Parameters.MESSAGE).getAsString();
-                }
-                public NamedTextColor color() {
-                    return ColorMapper.map(this.parameters().get(Parameters.COLOR).getAsString());
-                }
-                public Integer pingInterval() {
-                    return this.parameters().get(Parameters.INTERVAL).getAsInt();
-                }
-
-                public Success(Packet packet) {
-                    super(packet);
-                }
-
-                public interface Parameters {
-                    String MESSAGE = "m";
-                    String COLOR = "c";
+            /**
+             * Contains parameters used in the case of a successful MagicLink handshake.
+             */
+            interface Success {
+                interface Parameters {
                     String INTERVAL = "i";
                 }
             }
         }
 
+        /**
+         * Indicates to the Proxy that a Server wants to disconnect.
+         */
         @PacketIdentification("RC-MLHK")
         class Disconnect extends Packet.Remote {
             public Disconnect(Packet packet) {
@@ -285,6 +239,9 @@ public abstract class MagicLinkCore implements Plugin {
             }
         }
 
+        /**
+         * Indicates to a Server that it's MagicLink connection has gone stale and it needs to re-register.
+         */
         @PacketIdentification("RC-MLHSP")
         class StalePing extends Packet.Remote {
             public StalePing(Packet packet) {
@@ -292,16 +249,23 @@ public abstract class MagicLinkCore implements Plugin {
             }
         }
 
+        /**
+         * A general response packet.
+         */
         @PacketIdentification("RC-R")
-        class ResponsePacket extends Packet.Remote {
-            public ResponsePacket(Packet packet) {
+        class Response extends Packet.Remote {
+            public Response(Packet packet) {
                 super(packet);
             }
+            public boolean successful() {
+                return this.parameters().get(Parameters.SUCCESSFUL).getAsBoolean();
+            }
             public String message() {
-                return this.parameters().get(Parameters.RESPONSE_MESSAGE).getAsString();
+                return this.parameters().get(Parameters.MESSAGE).getAsString();
             }
             public interface Parameters {
-                String RESPONSE_MESSAGE = "r";
+                String SUCCESSFUL = "s";
+                String MESSAGE = "r";
             }
         }
 
@@ -339,7 +303,7 @@ public abstract class MagicLinkCore implements Plugin {
         protected Server(
                 @NotNull Packet.@NotNull SourceIdentifier self,
                 @NotNull AES aes,
-                @NotNull MessageCache cache,
+                @NotNull PacketCache cache,
                 @NotNull String registrationConfiguration,
                 @Nullable IPV6Broadcaster broadcaster
         ) {
@@ -373,7 +337,7 @@ public abstract class MagicLinkCore implements Plugin {
         protected Proxy(
                 @NotNull Packet.@NotNull SourceIdentifier self,
                 @NotNull AES aes,
-                @NotNull MessageCache cache,
+                @NotNull PacketCache cache,
                 @NotNull Map<String, ServerRegistrationConfiguration> registrationConfigurations,
                 @Nullable IPV6Broadcaster broadcaster
         ) {
