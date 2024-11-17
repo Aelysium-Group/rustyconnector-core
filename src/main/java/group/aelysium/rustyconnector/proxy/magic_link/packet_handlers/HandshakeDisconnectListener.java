@@ -8,7 +8,7 @@ import group.aelysium.rustyconnector.proxy.family.Server;
 
 public class HandshakeDisconnectListener extends PacketListener<MagicLinkCore.Packets.Disconnect> {
     public Packet.Response handle(MagicLinkCore.Packets.Disconnect packet) {
-        Server server = RC.P.Server(packet.local().uuid()).orElseThrow();
+        Server server = RC.P.Server(packet.local().id()).orElseThrow();
 
         RC.P.Kernel().unregisterServer(server);
 

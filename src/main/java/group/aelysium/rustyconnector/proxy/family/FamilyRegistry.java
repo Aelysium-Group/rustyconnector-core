@@ -4,6 +4,8 @@ import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.plugins.Plugin;
 import group.aelysium.rustyconnector.common.errors.Error;
+import group.aelysium.rustyconnector.proxy.events.FamilyCreateEvent;
+import group.aelysium.rustyconnector.proxy.events.FamilyDeleteEvent;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +54,7 @@ public class FamilyRegistry implements Plugin {
      */
     public void register(@NotNull String id, @NotNull Flux<? extends Family> family) {
         this.families.put(id, family);
+        RC.EventManager().fireEvent(new FamilyCreateEvent(family));
     }
 
     /**
@@ -59,7 +62,9 @@ public class FamilyRegistry implements Plugin {
      * @param id The id of the family to remove.
      */
     public void unregister(@NotNull String id) {
-        this.families.remove(id);
+        Flux<? extends Family> flux = this.families.remove(id);
+        if(flux == null) return;
+        RC.EventManager().fireEvent(new FamilyDeleteEvent(flux));
     }
 
     /**

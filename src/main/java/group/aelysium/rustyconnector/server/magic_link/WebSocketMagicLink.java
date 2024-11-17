@@ -113,7 +113,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                 websocketEndpoint = aes.decrypt(object.get("endpoint").getAsString());
                 bearer[0] = aes.decrypt(object.get("token").getAsString());
                 bearer[1] = object.get("signature").getAsString();
-                bearer[2] = this.self.uuid().toString(); // Including the uuid in the bearer as well as "X-Server-Identification" is intentional.
+                bearer[2] = this.self.id(); // Including the id in the bearer as well as "X-Server-Identification" is intentional.
             } catch (Exception e) {
                 throw new ExceptionInInitializerError(e);
             }
@@ -215,7 +215,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
 
         try {
             Packet.Builder.PrepareForSending packetBuilder = Packet.New()
-                    .identification(Packet.Identification.from("RC","MLH"))
+                    .identification(Packet.Type.from("RC","P"))
                     .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.DISPLAY_NAME, flame.displayName())
                     .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.SERVER_REGISTRATION, this.registration())
                     .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.ADDRESS, flame.address().getHostName()+":"+flame.address().getPort())
@@ -259,7 +259,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
     public void close() {
         try {
             Packet.New()
-                    .identification(Packet.Identification.from("RC","MLHK"))
+                    .identification(Packet.Type.from("RC","D"))
                     .addressTo(Packet.SourceIdentifier.allAvailableProxies())
                     .send();
         } catch (Exception ignore) {}

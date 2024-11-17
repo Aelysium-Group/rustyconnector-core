@@ -4,6 +4,7 @@ import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.RC;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +13,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+
+import static net.kyori.adventure.text.Component.text;
 
 public class Player {
     protected UUID uuid;
@@ -50,7 +53,7 @@ public class Player {
      */
     public void disconnect(@Nullable Component reason) {
         try {
-            RC.P.Adapter().disconnect(this, reason == null ? Component.text("Disconnected from server") : reason);
+            RC.P.Adapter().disconnect(this, reason == null ? text("Disconnected from server") : reason);
         } catch (Exception e) {
             RC.Error(Error.from(e));
         }
@@ -102,6 +105,14 @@ public class Player {
                         )
                 );
             }
+            public static Request failedRequest(@NotNull Player player, @NotNull String message) {
+                return new Request(
+                        player,
+                        CompletableFuture.completedFuture(
+                                Result.failed(text(message, NamedTextColor.RED))
+                        )
+                );
+            }
             public static Request successfulRequest(@NotNull Player player, @NotNull Component message, @Nullable Server server) {
                 return new Request(
                         player,
@@ -110,34 +121,34 @@ public class Player {
                         )
                 );
             }
+            public static Request successfulRequest(@NotNull Player player, @NotNull String message, @Nullable Server server) {
+                return new Request(
+                        player,
+                        CompletableFuture.completedFuture(
+                                Result.success(text(message, NamedTextColor.GREEN), server)
+                        )
+                );
+            }
         }
 
         /**
          * The result of the connection request.
          * The returned message is always safe to send directly to the player.
-         * @param status The status of this connection result.
+         * @param connected Did the player successfully connect.
          * @param message The player-friendly message of this connection result. This message should always be player friendly.
          * @param server The Server that this result resolved from.
          */
         record Result(
-                Status status,
-                Component message,
-                Optional<Server> server
+                boolean connected,
+                @NotNull Component message,
+                @Nullable Server server
         ) {
-            public boolean connected() {
-                return this.status == Status.SUCCESS;
+            public static Result failed(@NotNull Component message) {
+                return new Result(false, message, null);
             }
-            public static Result failed(Component message) {
-                return new Result(Status.FAILED, message, Optional.empty());
-            }
-            public static Result success(Component message, Server server) {
-                if(server == null) return new Result(Status.SUCCESS, message, Optional.empty());
-                return new Result(Status.SUCCESS, message, Optional.of(server));
-            }
-
-            public enum Status {
-                FAILED,
-                SUCCESS
+            public static Result success(@NotNull Component message, Server server) {
+                if(server == null) return new Result(true, message, null);
+                return new Result(true, message, server);
             }
         }
     }

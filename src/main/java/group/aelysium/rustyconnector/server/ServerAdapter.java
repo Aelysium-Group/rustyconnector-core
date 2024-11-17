@@ -32,14 +32,14 @@ public abstract class ServerAdapter extends RCAdapter {
 
     /**
      * Resolves a player's UUID into that player's corresponding username.
-     * @param uuid The uuid.
+     * @param uuid The id.
      * @return An optional containing the user's username if there is one, if not, returns an Empty optional.
      */
     public abstract Optional<String> playerUsername(@NotNull UUID uuid);
 
     /**
      * Checks if a player is online.
-     * @param uuid The uuid of the player to check for.
+     * @param uuid The id of the player to check for.
      * @return `true` of the player is online. `false` otherwise.
      */
     public abstract boolean isOnline(@NotNull UUID uuid);

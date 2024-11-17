@@ -46,7 +46,7 @@ public class Error {
     }
 
     /**
-     * @return The uuid of the error.
+     * @return The id of the error.
      *         This can be used in the future to reference this error.
      */
     public @NotNull UUID uuid() {

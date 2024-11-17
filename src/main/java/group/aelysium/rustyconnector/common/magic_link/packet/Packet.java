@@ -2,6 +2,7 @@ package group.aelysium.rustyconnector.common.magic_link.packet;
 
 import com.google.gson.*;
 import group.aelysium.rustyconnector.common.crypt.NanoID;
+import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.util.JSONParseable;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.RC;
@@ -20,7 +21,7 @@ public abstract class Packet implements JSONParseable {
 
     protected final int messageVersion;
     protected final Instant created = Instant.now();
-    protected final Identification identification;
+    protected final Type type;
     protected final SourceIdentifier local;
     protected final SourceIdentifier remote;
     protected final Map<String, Parameter> parameters;
@@ -44,9 +45,9 @@ public abstract class Packet implements JSONParseable {
     public @NotNull SourceIdentifier remote() { return this.remote; }
 
     /**
-     * The identification of this packet.
+     * The type of this packet.
      */
-    public @NotNull Identification identification() { return this.identification; }
+    public @NotNull Packet.Type type() { return this.type; }
 
     /**
      * The extra parameters that this packet caries.
@@ -98,9 +99,9 @@ public abstract class Packet implements JSONParseable {
      */
     public abstract boolean isLocal();
     
-    private Packet(@NotNull Integer version, @NotNull Identification identification, @NotNull Packet.SourceIdentifier local, @NotNull Packet.SourceIdentifier remote, @NotNull Map<String, Parameter> parameters) {
+    private Packet(@NotNull Integer version, @NotNull Packet.Type type, @NotNull Packet.SourceIdentifier local, @NotNull Packet.SourceIdentifier remote, @NotNull Map<String, Parameter> parameters) {
         this.messageVersion = version;
-        this.identification = identification;
+        this.type = type;
         this.local = local;
         this.remote = remote;
         this.parameters = parameters;
@@ -125,7 +126,7 @@ public abstract class Packet implements JSONParseable {
         JsonObject object = new JsonObject();
 
         object.add(Parameters.PROTOCOL_VERSION, new JsonPrimitive(this.messageVersion));
-        object.add(Parameters.IDENTIFICATION, new JsonPrimitive(this.identification.toString()));
+        object.add(Parameters.IDENTIFICATION, new JsonPrimitive(this.type.toString()));
         object.add(Parameters.LOCAL, this.local.toJSON());
         object.add(Parameters.REMOTE, this.remote.toJSON());
 
@@ -142,12 +143,12 @@ public abstract class Packet implements JSONParseable {
 
     protected static class NakedBuilder {
         private Integer protocolVersion = Packet.protocolVersion;
-        private Identification id;
+        private Type id;
         private SourceIdentifier local;
         private SourceIdentifier remote;
         private final Map<String, Parameter> parameters = new HashMap<>();
 
-        public NakedBuilder identification(@NotNull Identification id) {
+        public NakedBuilder identification(@NotNull Packet.Type id) {
             this.id = id;
             return this;
         }
@@ -252,10 +253,10 @@ public abstract class Packet implements JSONParseable {
         }
 
         /**
-         * The identification of this packet.
+         * The type of this packet.
          * Identification is what differentiates a "Server ping packet" from a "Teleport player packet"
          */
-        public PrepareForSending identification(Identification id) {
+        public PrepareForSending identification(Type id) {
             return new PrepareForSending(builder.identification(id));
         }
     }
@@ -267,7 +268,7 @@ public abstract class Packet implements JSONParseable {
         NakedBuilder builder = new NakedBuilder();
 
         builder.protocolVersion(messageObject.get(Parameters.PROTOCOL_VERSION).getAsInt());
-        builder.identification(new Identification(messageObject.get(Parameters.IDENTIFICATION).getAsString()));
+        builder.identification(new Type(messageObject.get(Parameters.IDENTIFICATION).getAsString()));
         builder.local(SourceIdentifier.fromJSON(messageObject.get(Parameters.LOCAL).getAsJsonObject()));
         builder.remote(SourceIdentifier.fromJSON(messageObject.get(Parameters.REMOTE).getAsJsonObject()));
 
@@ -285,17 +286,17 @@ public abstract class Packet implements JSONParseable {
      * Identifies the source of a packet across various machines.
      */
     public static class SourceIdentifier implements JSONParseable {
-        private final UUID uuid;
+        private final String id;
         private final Origin origin;
         private NanoID replyEndpoint;
 
-        private SourceIdentifier(UUID uuid, @NotNull Origin origin) {
-            this.uuid = uuid;
+        private SourceIdentifier(String id, @NotNull Origin origin) {
+            this.id = id;
             this.origin = origin;
         }
 
-        public UUID uuid() {
-            return this.uuid;
+        public String id() {
+            return this.id;
         }
         public Origin origin() {
             return this.origin;
@@ -303,8 +304,8 @@ public abstract class Packet implements JSONParseable {
 
         /**
          * Sets the reply endpoint for this source.
-         * If this source represents the local machine, then this value is the uuid which can be used to reply to this specific packet.
-         * If this source represents a remote machine, then this value is the uuid which a packet can be addressed to in order to reply to a packet received.
+         * If this source represents the local machine, then this value is the id which can be used to reply to this specific packet.
+         * If this source represents a remote machine, then this value is the id which a packet can be addressed to in order to reply to a packet received.
          */
         public void replyEndpoint(NanoID replyEndpoint) {
             this.replyEndpoint = replyEndpoint;
@@ -312,8 +313,8 @@ public abstract class Packet implements JSONParseable {
 
         /**
          * The reply endpoint for this source.
-         * If this source represents the local machine, then this value is the uuid which can be used to reply to this specific packet.
-         * If this source represents a remote machine, then this value is the uuid which a packet can be addressed to in order to reply to a packet received.
+         * If this source represents the local machine, then this value is the id which can be used to reply to this specific packet.
+         * If this source represents a remote machine, then this value is the id which a packet can be addressed to in order to reply to a packet received.
          */
         public Optional<NanoID> replyEndpoint() {
             return Optional.ofNullable(this.replyEndpoint);
@@ -322,7 +323,7 @@ public abstract class Packet implements JSONParseable {
         public JsonObject toJSON() {
             JsonObject object = new JsonObject();
 
-            if(this.uuid != null) object.add("u", new JsonPrimitive(this.uuid.toString()));
+            if(this.id != null) object.add("u", new JsonPrimitive(this.id));
             object.add("n", new JsonPrimitive(Origin.toInteger(this.origin)));
             if(this.replyEndpoint != null) object.add("r", new JsonPrimitive(this.replyEndpoint.toString()));
 
@@ -331,7 +332,7 @@ public abstract class Packet implements JSONParseable {
 
         public static SourceIdentifier fromJSON(JsonObject object) {
             SourceIdentifier source = new SourceIdentifier(
-                    object.get("u") == null ? null : UUID.fromString(object.get("u").getAsString()),
+                    object.get("u") == null ? null : object.get("u").getAsString(),
                     Origin.fromInteger(object.get("n").getAsInt())
             );
             if(object.get("r") != null) source.replyEndpoint(NanoID.fromString(object.get("r").getAsString()));
@@ -339,11 +340,11 @@ public abstract class Packet implements JSONParseable {
             return source;
         }
 
-        public static SourceIdentifier server(UUID uuid) {
-            return new SourceIdentifier(uuid, Origin.SERVER);
+        public static SourceIdentifier server(@NotNull String id) {
+            return new SourceIdentifier(id, Origin.SERVER);
         }
-        public static SourceIdentifier proxy(UUID uuid) {
-            return new SourceIdentifier(uuid, Origin.PROXY);
+        public static SourceIdentifier proxy(@NotNull String id) {
+            return new SourceIdentifier(id, Origin.PROXY);
         }
         public static SourceIdentifier allAvailableProxies() {
             return new SourceIdentifier(null, Origin.ANY_PROXY);
@@ -359,12 +360,12 @@ public abstract class Packet implements JSONParseable {
          */
         public static SourceIdentifier localSource() {
             try {
-                SourceIdentifier source = SourceIdentifier.server(RC.S.Kernel().uuid());
+                SourceIdentifier source = SourceIdentifier.server(RC.S.Kernel().id());
                 source.replyEndpoint(NanoID.randomNanoID());
                 return source;
             } catch (Exception ignore) {}
             try {
-                SourceIdentifier source = SourceIdentifier.proxy(RC.P.Kernel().uuid());
+                SourceIdentifier source = SourceIdentifier.proxy(RC.P.Kernel().id());
                 source.replyEndpoint(NanoID.randomNanoID());
                 return source;
             } catch (Exception ignore) {}
@@ -398,12 +399,12 @@ public abstract class Packet implements JSONParseable {
             SourceIdentifier target = (SourceIdentifier) o;
 
             // If the two match as defined by default expected behaviour, return true.
-            return Objects.equals(uuid, target.uuid) && Objects.equals(origin, target.origin);
+            return Objects.equals(id, target.id) && Objects.equals(origin, target.origin);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(uuid, origin);
+            return Objects.hash(id, origin);
         }
 
         public enum Origin {
@@ -434,66 +435,18 @@ public abstract class Packet implements JSONParseable {
     }
 
     /**
-     * A convenience wrapper which allows the caller to pass just one Packet
-     * parameter to the constructor instead of all the individual parameters.
-     * Callers are free to use this, or to extend {@link Packet} directly.
-     */
-    public static class Wrapper extends Packet {
-        public Wrapper(Packet packet) {
-            super(
-                    packet.messageVersion(),
-                    packet.identification(),
-                    packet.local(),
-                    packet.remote(),
-                    packet.parameters()
-            );
-        }
-
-        public final boolean isLocal() {
-            SourceIdentifier local = SourceIdentifier.localSource();
-            return !this.remote.isEquivalent(local) || this.local.isEquivalent(local);
-        }
-
-        /**
-         * Converts the packet to a {@link Local}.
-         * This will fail if said packet WAS NOT created on this machine.
-         * @return A Local packet.
-         * @throws IllegalStateException If the packet is not actually local.
-         */
-        public Local toLocal() throws IllegalStateException {
-            SourceIdentifier local = SourceIdentifier.localSource();
-            if(!this.local.isEquivalent(local)) throw new IllegalStateException("Packet is not fit to be converted to a local packet!");
-            if(this.remote.isEquivalent(local)) throw new IllegalStateException("Packet is not fit to be converted to a local packet!");
-            return new Local(this.messageVersion, this.identification, this.local, this.remote, this.parameters);
-        }
-
-        /**
-         * Converts the packet to a {@link Remote}.
-         * This will fail if said packet WAS created on this machine.
-         * @return A Remote packet.
-         * @throws IllegalStateException If the packet is not actually remote.
-         */
-        public Remote toRemote() throws IllegalStateException {
-            SourceIdentifier local = SourceIdentifier.localSource();
-            if(!this.remote.isEquivalent(local)) throw new IllegalStateException("Packet is not fit to be converted to a remote packet!");
-            if(this.local.isEquivalent(local)) throw new IllegalStateException("Packet is not fit to be converted to a remote packet!");
-            return new Remote(this.messageVersion, this.identification, this.local, this.remote, this.parameters);
-        }
-    }
-
-    /**
      * A Packet which has been created by the system it's currently on.
      * More specifically, if you use {@link Builder} to create a packet, it will be local.
      * Local packets can be sent and await replies.
      */
     public static class Local extends Packet {
         private Vector<PacketListener<Remote>> catchAlls = null;
-        private ConcurrentHashMap<Identification, Vector<PacketListener<Remote>>> replyListeners = null;
+        private ConcurrentHashMap<String, Vector<PacketListener<? extends Remote>>> replyListeners = null;
 
-        public Local(@NotNull Integer version, @NotNull Identification identification, @NotNull Packet.SourceIdentifier sender, @NotNull Packet.SourceIdentifier target, @NotNull Map<String, Parameter> parameters) {
+        public Local(@NotNull Integer version, @NotNull Packet.Type type, @NotNull Packet.SourceIdentifier sender, @NotNull Packet.SourceIdentifier target, @NotNull Map<String, Parameter> parameters) {
             super(
                     version,
-                    identification,
+                    type,
                     sender,
                     target,
                     parameters
@@ -502,7 +455,7 @@ public abstract class Packet implements JSONParseable {
         public Local(@NotNull Packet packet) {
             this(
                     packet.messageVersion,
-                    packet.identification,
+                    packet.type,
                     packet.local,
                     packet.remote,
                     packet.parameters
@@ -513,11 +466,11 @@ public abstract class Packet implements JSONParseable {
             return true;
         }
 
-        public void handleReply(Packet.Remote packet) throws IllegalCallerException {
-            if(this.replyListeners != null && this.replyListeners.containsKey(packet.identification))
-                this.replyListeners.get(packet.identification).forEach(l -> {
+        public <P extends Remote> void handleReply(P packet) throws IllegalCallerException {
+            if(this.replyListeners != null && this.replyListeners.containsKey(packet.type().toString()))
+                this.replyListeners.get(packet.type().toString()).forEach(l -> {
                     try {
-                        Response response = l.handle(packet);
+                        Response response = ((PacketListener<P>) l).handle(packet);
                         packet.status(response.successful, response.message);
                         if(response.shouldSendPacket) packet.reply(response);
                     } catch (Throwable e) {
@@ -553,17 +506,17 @@ public abstract class Packet implements JSONParseable {
          * This method specifically listens for certain packets and will only run if a packet with the specific id is received
          * It should be noted that, unless this method is run at least once,
          * it will be impossible for packets to be handled as a response to this one.
-         * @param packetClass The class of the packet to listen for. Whatever the class is, it must be annotated with the {@link PacketIdentification} annotation. If it's not, this method will just do nothing.
+         * @param clazz The class of the packet to listen for.
          * @param handler The handler for the packet.
          */
-        public <T extends Remote> void onReply(@NotNull Class<T> packetClass, @NotNull PacketListener<T> handler) {
-            if(!packetClass.isAnnotationPresent(PacketIdentification.class)) return;
-            PacketIdentification annotation = packetClass.getAnnotation(PacketIdentification.class);
-            Identification identification = Identification.parseString(annotation.value());
-
+        public <T extends Remote> void onReply(@NotNull Class<T> clazz, @NotNull PacketListener<T> handler) {
+            if(!clazz.isAnnotationPresent(PacketType.class)) {
+                RC.Error(Error.from("Packet classes used for PacketListeners must be annotated with @PacketType.").whileAttempting("To register a new packet listener."));
+                return;
+            }
+            String type = clazz.getAnnotation(PacketType.class).value();
             if(this.replyListeners == null) this.replyListeners = new ConcurrentHashMap<>();
-            this.replyListeners.putIfAbsent(identification, new Vector<>());
-            this.replyListeners.get(identification).add((PacketListener<Remote>) handler);
+            this.replyListeners.computeIfAbsent(type, k->new Vector<>()).add(handler);
             RC.MagicLink().awaitReply(this);
         }
     }
@@ -572,11 +525,10 @@ public abstract class Packet implements JSONParseable {
      * A packet which has been created by some other system.
      */
     public static class Remote extends Packet {
-
-        public Remote(@NotNull Integer version, @NotNull Identification identification, @NotNull Packet.SourceIdentifier sender, @NotNull Packet.SourceIdentifier target, @NotNull Map<String, Parameter> parameters) {
+        public Remote(@NotNull Integer version, @NotNull Packet.Type type, @NotNull Packet.SourceIdentifier sender, @NotNull Packet.SourceIdentifier target, @NotNull Map<String, Parameter> parameters) {
             super(
                     version,
-                    identification,
+                    type,
                     sender,
                     target,
                     parameters
@@ -585,7 +537,7 @@ public abstract class Packet implements JSONParseable {
         public Remote(@NotNull Packet packet) {
             this(
                     packet.messageVersion,
-                    packet.identification,
+                    packet.type,
                     packet.local,
                     packet.remote,
                     packet.parameters
@@ -627,7 +579,7 @@ public abstract class Packet implements JSONParseable {
          */
         public @NotNull Packet.Local reply(@NotNull Response response) {
             Builder.PrepareForSending prepareForSending = Packet.New()
-                    .identification(Identification.from("RC", "R"))
+                    .identification(Type.from("RC", "R"))
                     .parameter(MagicLinkCore.Packets.Response.Parameters.SUCCESSFUL, new Parameter(this.successful))
                     .parameter(MagicLinkCore.Packets.Response.Parameters.MESSAGE, response.message);
 
@@ -693,14 +645,14 @@ public abstract class Packet implements JSONParseable {
         String PARAMETERS = "p";
     }
 
-    public static class Identification {
+    public static class Type {
         protected String id;
 
-        public Identification(String id) {
+        public Type(String id) {
             this.id = id;
         }
 
-        public String get() {
+        public String type() {
             return this.id;
         }
 
@@ -713,13 +665,13 @@ public abstract class Packet implements JSONParseable {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            Identification mapping = (Identification) o;
-            return Objects.equals(this.get(), mapping.get());
+            Type mapping = (Type) o;
+            return Objects.equals(this.id, mapping.id);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(get());
+            return Objects.hash(this.id);
         }
 
         /**
@@ -733,27 +685,27 @@ public abstract class Packet implements JSONParseable {
          *        The ID you want to assign this packet.<br>
          *        Should be in the format of UPPER_SNAKE_CASE.<br>
          *        Can be whatever you want.<br>
-         * @return {@link Identification}
+         * @return {@link Type}
          * @throws IllegalArgumentException If illegal names are passed.
          */
-        public static Identification from(@NotNull String namespace, @NotNull String packetID) throws IllegalArgumentException {
+        public static Type from(@NotNull String namespace, @NotNull String packetID) throws IllegalArgumentException {
             String idToCheck = namespace.toUpperCase();
             if(idToCheck.isEmpty()) throw new IllegalArgumentException("pluginID can't be empty!");
             if(packetID.isEmpty()) throw new IllegalArgumentException("packetID can't be empty!");
 
-            return new Identification(namespace + "-" + packetID);
+            return new Type(namespace + "-" + packetID);
         }
 
         /**
          * Create a new Identification from the passed string.
          * @param value Must be in the format `[namespace]-[packetID]`.
-         * @return {@link Identification}
+         * @return {@link Type}
          * @throws IllegalArgumentException If illegal names are passed.
          */
-        public static Identification parseString(@NotNull String value) throws IllegalArgumentException {
+        public static Type parseString(@NotNull String value) throws IllegalArgumentException {
             String[] tokens = value.split("-");
-            if(tokens.length > 2) throw new IllegalArgumentException("Invalid identification passed.");
-            return new Identification(value.toUpperCase());
+            if(tokens.length > 2) throw new IllegalArgumentException("Invalid type passed.");
+            return new Type(value.toUpperCase());
         }
     }
 

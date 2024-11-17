@@ -17,6 +17,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import static net.kyori.adventure.text.Component.text;
+
 /**
  * The Proxy adapter exists to take proxy specific actions and adapt them so that RustyConnector
  * can properly execute them regardless of disparate data types between the wrapper and RustyConnector.
@@ -153,14 +155,14 @@ public abstract class ProxyAdapter extends RCAdapter {
         try {
             NetworkPreJoinEvent event = new NetworkPreJoinEvent(player);
             boolean canceled = RC.P.EventManager().fireEvent(event).get(1, TimeUnit.MINUTES);
-            if (canceled) return Player.Connection.Request.failedRequest(player, Component.text(event.canceledMessage()));
+            if (canceled) return Player.Connection.Request.failedRequest(player, event.canceledMessage());
         } catch (Exception ignore) {}
 
         try {
             return RC.P.Families().rootFamily().access().get(10, TimeUnit.SECONDS).connect(player);
         } catch (Exception e) {
             RC.Error(Error.from(e));
-            return Player.Connection.Request.failedRequest(player, RC.P.Lang().lang("rustyconnector-internalError").generate());
+            return Player.Connection.Request.failedRequest(player, "There was an internal error preventing this connection");
         }
     }
 
@@ -187,17 +189,6 @@ public abstract class ProxyAdapter extends RCAdapter {
      * @param reason The reason they were kicked.
      * @return A {@link PlayerKickedResponse}. The caller should properly handle the response so that the desired operations are performed.
      */
-    public final @NotNull PlayerKickedResponse onKicked(@NotNull Player player, @Nullable String reason) {
-        return onKicked(player, Component.text(reason));
-    }
-
-    /**
-     * Decides what should happen to the kicked player.
-     * Based on the returned {@link PlayerKickedResponse} you should handle the player's connection appropriately.
-     * @param player The player that was kicked.
-     * @param reason The reason they were kicked.
-     * @return A {@link PlayerKickedResponse}. The caller should properly handle the response so that the desired operations are performed.
-     */
     public final @NotNull PlayerKickedResponse onKicked(@NotNull Player player, @Nullable Component reason) {
         boolean isFromRootFamily = false;
 
@@ -213,17 +204,16 @@ public abstract class ProxyAdapter extends RCAdapter {
 
         // Handle root family catching
         try {
-            // if (!api.services().family().shouldCatchDisconnectingPlayers()) throw new NoOutputException();
-
-            if(isFromRootFamily) return new PlayerKickedResponse(true, Objects.requireNonNullElse(reason, Component.text("Kicked by server.")), null);
+            if(isFromRootFamily) return new PlayerKickedResponse(true, Objects.requireNonNullElse(reason, text("Kicked by server.")), null);
 
             Family family = RC.P.Families().rootFamily().access().get(2, TimeUnit.SECONDS);
 
-            Server server = ((ScalarFamily) family).loadBalancer().orElseThrow().staticFetch().orElseThrow();
+            Server server = family.availableServer().orElseThrow();
 
             return new PlayerKickedResponse(false, reason, server);
         } catch (Exception e) {
-            return new PlayerKickedResponse(false, Objects.requireNonNullElse(reason, Component.text("Kicked by server. "+e.getMessage())), null);
+            RC.Error(Error.from(e).whileAttempting("To catch a player into the root family."));
+            return new PlayerKickedResponse(false, Objects.requireNonNullElse(reason, text("Kicked by server.")), null);
         }
     }
 

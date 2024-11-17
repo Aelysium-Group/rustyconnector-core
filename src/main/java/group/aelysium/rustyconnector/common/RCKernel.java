@@ -11,13 +11,18 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class RCKernel<A extends RCAdapter> implements Plugin {
-    protected final UUID uuid;
+    protected final String id;
     protected final Version version;
     protected final A adapter;
     protected final Map<String, Flux<? extends Plugin>> plugins = new ConcurrentHashMap<>();
 
-    protected RCKernel(UUID uuid, Version version, A adapter, List<? extends Flux<? extends Plugin>> plugins) {
-        this.uuid = uuid;
+    protected RCKernel(
+            @NotNull String id,
+            @NotNull Version version,
+            @NotNull A adapter,
+            @NotNull List<? extends Flux<? extends Plugin>> plugins
+    ) {
+        this.id = id;
         this.version = version;
         this.adapter = adapter;
         plugins.forEach(p -> {
@@ -42,17 +47,15 @@ public abstract class RCKernel<A extends RCAdapter> implements Plugin {
     }
 
     /**
-     * Gets the uuid of this kernel.
-     * The uuid shouldn't change between re-boots.
-     * @return {@link UUID}
+     * @return The id of this kernel.
+     *         The id shouldn't change between re-boots.
      */
-    public UUID uuid() {
-        return this.uuid;
+    public String id() {
+        return this.id;
     }
 
     /**
-     * Gets the current version of RustyConnector
-     * @return {@link Version}
+     * @return The current version of RustyConnector
      */
     public Version version() {
         return this.version;

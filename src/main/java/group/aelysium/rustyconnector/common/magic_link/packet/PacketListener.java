@@ -6,7 +6,7 @@ public abstract class PacketListener<P extends Packet.Remote> {
      */
     protected boolean responseFromExceptions = true;
     /**
-     * If enabled, overrides {@link Packet.Response#shouldSendPacket()} and will always send a pack when a response is made.<br/>
+     * If enabled, overrides {@link Packet.Response#shouldSendPacket()} and will always send a packet when a response is made.<br/>
      * Note that if {@link #responseFromExceptions} is false, exceptions won't send replies to packets since no response was generated from said exception.
      */
     protected boolean responsesAsPacketReplies = false;

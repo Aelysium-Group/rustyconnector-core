@@ -32,8 +32,8 @@ public class ScalarFamily extends Family {
         this.installPlugin(loadBalancer);
     }
 
-    public Particle.Flux<LoadBalancer> loadBalancer() {
-        return (Flux<LoadBalancer>) this.fetchPlugin("LoadBalancer").orElseThrow();
+    public Particle.Flux<? extends LoadBalancer> loadBalancer() {
+        return (Flux<? extends LoadBalancer>) this.fetchPlugin("LoadBalancer").orElseThrow();
     }
 
     public void addServer(@NotNull Server server) {
@@ -45,16 +45,16 @@ public class ScalarFamily extends Family {
     }
 
     @Override
-    public Optional<Server> fetchServer(@NotNull UUID uuid) {
+    public Optional<Server> fetchServer(@NotNull String id) {
         AtomicReference<Optional<Server>> server = new AtomicReference<>();
-        this.loadBalancer().executeNow(l -> server.set(l.fetchServer(uuid)));
+        this.loadBalancer().executeNow(l -> server.set(l.fetchServer(id)));
         return server.get();
     }
 
     @Override
-    public boolean containsServer(@NotNull UUID uuid) {
+    public boolean containsServer(@NotNull String id) {
         AtomicBoolean value = new AtomicBoolean(false);
-        this.loadBalancer().executeNow(l -> value.set(l.containsServer(uuid)));
+        this.loadBalancer().executeNow(l -> value.set(l.containsServer(id)));
         return value.get();
     }
 
@@ -103,6 +103,15 @@ public class ScalarFamily extends Family {
     }
 
     @Override
+    public Optional<Server> availableServer() {
+        AtomicReference<Server> server = new AtomicReference<>(null);
+
+        this.loadBalancer().executeNow(l -> server.set(l.availableServer().orElse(null)));
+
+        return Optional.ofNullable(server.get());
+    }
+
+    @Override
     public boolean isLocked(@NotNull Server server) {
         AtomicBoolean valid = new AtomicBoolean(false);
         this.loadBalancer().executeNow(l -> valid.set(l.isLocked(server)));
@@ -114,13 +123,13 @@ public class ScalarFamily extends Family {
         try {
             FamilyPreJoinEvent event = new FamilyPreJoinEvent(RC.P.Families().find(this.id).orElseThrow(), player);
             boolean canceled = RC.P.EventManager().fireEvent(event).get(1, TimeUnit.MINUTES);
-            if(canceled) return Player.Connection.Request.failedRequest(player, Component.text(event.canceledMessage()));
+            if(canceled) return Player.Connection.Request.failedRequest(player, event.canceledMessage());
         } catch (Exception ignore) {}
 
         try {
             return this.loadBalancer().access().get(20, TimeUnit.SECONDS).current().orElseThrow().connect(player);
         } catch (Exception ignore) {
-            return Player.Connection.Request.failedRequest(player, Component.text("The server you're attempting to access isn't available! Try again later."));
+            return Player.Connection.Request.failedRequest(player, "The server you're attempting to access isn't available! Try again later.");
         }
     }
 

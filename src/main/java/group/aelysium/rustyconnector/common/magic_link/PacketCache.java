@@ -8,12 +8,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class PacketCache implements Closure {
-    private final List<Packet.Identification> ignoredTypes;
+    private final List<Packet.Type> ignoredTypes;
     protected final int max;
     protected final Map<NanoID, Packet> packets;
     protected final List<Packet> packetsOrdered;
 
-    public PacketCache(int max, List<Packet.Identification> ignoredTypes) {
+    public PacketCache(int max, List<Packet.Type> ignoredTypes) {
         if(max <= 0) max = 0;
         if(max > 1000) max = 1000;
 
@@ -46,7 +46,7 @@ public class PacketCache implements Closure {
      * @param packet The packet to cache.
      */
     public void cache(Packet packet) {
-        if(this.ignoredTypes.contains(packet.identification())) return;
+        if(this.ignoredTypes.contains(packet.type())) return;
         this.packets.put(packet.local().replyEndpoint().orElseThrow(), packet); // The local reply endpoint should always be defined.
         this.packetsOrdered.add(packet);
     }
@@ -57,7 +57,7 @@ public class PacketCache implements Closure {
      * @return `true` if the packet will be ignored, `false` otehrwise.
      */
     public boolean ignoredType(@NotNull Packet packet) {
-        return this.ignoredTypes.contains(packet.identification());
+        return this.ignoredTypes.contains(packet.type());
     }
 
     /**

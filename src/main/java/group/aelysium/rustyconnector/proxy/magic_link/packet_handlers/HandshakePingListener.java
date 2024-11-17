@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 public class HandshakePingListener extends PacketListener<MagicLinkCore.Packets.Handshake.Ping> {
     public Packet.Response handle(WebSocketMagicLink.Packets.Handshake.Ping packet) {
         try {
-            Server server = RC.P.Server(packet.local().uuid()).orElseThrow();
+            Server server = RC.P.Server(packet.local().id()).orElseThrow();
 
             server.setTimeout(15);
             server.setPlayerCount(packet.playerCount());
@@ -36,14 +36,14 @@ public class HandshakePingListener extends PacketListener<MagicLinkCore.Packets.
             );
             Family family = familyFlux.access().get(10, TimeUnit.SECONDS);
 
-            RC.P.Server(packet.local().uuid()).ifPresent(m -> {
-                throw new RuntimeException("Server " + packet.local().uuid() + " can't be registered twice!");
+            RC.P.Server(packet.local().id()).ifPresent(m -> {
+                throw new RuntimeException("Server " + packet.local().id() + " can't be registered twice!");
             });
 
             String displayName = packet.displayName().orElse(null);
 
             Server.Configuration configuration = new Server.Configuration(
-                packet.local().uuid(),
+                packet.local().id(),
                 AddressUtil.parseAddress(packet.address()),
                 displayName == null ? null : (displayName.isBlank() || displayName.isEmpty() ? null : displayName),
                 config.soft_cap(),

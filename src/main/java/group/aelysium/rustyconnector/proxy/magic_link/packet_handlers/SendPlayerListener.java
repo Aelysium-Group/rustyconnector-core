@@ -1,5 +1,6 @@
 package group.aelysium.rustyconnector.proxy.magic_link.packet_handlers;
 
+import com.sun.jdi.request.DuplicateRequestException;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
@@ -11,42 +12,61 @@ import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.player.Player;
 
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class SendPlayerListener extends PacketListener<MagicLinkCore.Packets.SendPlayer> {
-    public Packet.Response handle(MagicLinkCore.Packets.SendPlayer packet) {
+    public SendPlayerListener() {
+        this.responsesAsPacketReplies = true;
+    }
+
+    public Packet.Response handle(MagicLinkCore.Packets.SendPlayer packet) throws Exception {
+        if(packet.targetFamily().isEmpty() && packet.targetServer().isEmpty() && packet.genericTarget().isEmpty())
+            throw new IllegalStateException("You must define either a target family or server.");
+        if(packet.playerUUID().isEmpty() && packet.playerUsername().isEmpty())
+            throw new IllegalStateException("You must define a user to send.");
+
+        Player player = null;
         try {
-            if(packet.targetFamilyName() == null && packet.targetServer() == null)
-                throw new IllegalStateException("You must define either a target family or server.");
-            if(packet.playerUUID() == null)
-                throw new IllegalStateException("You must define a user to send.");
+            if(packet.playerUsername().isPresent()) player = RC.P.Player(packet.playerUsername().orElseThrow()).orElseThrow();
+            if(packet.playerUUID().isPresent()) player = RC.P.Player(packet.playerUUID().orElseThrow()).orElseThrow();
+        } catch (NoSuchElementException ignore) {}
+        if(player == null || !player.online()) throw new NoSuchElementException("No player '"+packet.player()+"' is online.");
 
-            Player player = RC.P.Player(packet.playerUUID())
-                    .orElseThrow(()->new NoSuchElementException("No player with the UUID '"+packet.playerUUID()+"' exists."));
-            if(!player.online()) throw new NoSuchElementException("No player with the UUID '"+packet.playerUUID()+"' is online.");
+        boolean sendFamily = packet.targetFamily().isPresent();
+        boolean sendServer = packet.targetServer().isPresent();
+        if(packet.genericTarget().isPresent()) {
+            String target = packet.genericTarget().orElseThrow();
+            Optional<? extends Family> familyOptional = RC.P.Family(target);
+            Optional<Server> serverOptional = RC.P.Server(target);
 
-            if(packet.targetFamilyName() != null) {
-                Family family = RC.P.Family(packet.targetFamilyName())
-                        .orElseThrow(()->new NoSuchElementException("No family with the id '"+packet.targetFamilyName()+"' exists."));
+            if(familyOptional.isPresent() && serverOptional.isPresent())
+                throw new DuplicateRequestException("Both a server and family have the id `"+target+"`. Please clarify if you want to send the player to a family or a server.");
 
-                Player.Connection.Result result = family.connect(player).result().get(10, TimeUnit.SECONDS);
-
-                if(!result.connected()) throw new RuntimeException("Unable to connect the player to that server.");
-            }
-            if(packet.targetServer() != null) {
-                Server server = RC.P.Server(packet.targetServer())
-                        .orElseThrow(()->new NoSuchElementException("No family with the id '"+packet.targetFamilyName()+"' exists."));
-
-                Player.Connection.Result result = server.connect(player).result().get(10, TimeUnit.SECONDS);
-
-                if(!result.connected()) throw new RuntimeException("Unable to connect the player to that server.");
-            }
-
-            return Packet.Response.success("Successfully sent "+player.username()+"!").asReply();
-        } catch (Exception e) {
-            RC.Error(Error.from(e));
-            return Packet.Response.error(e.getMessage()).asReply();
+            sendFamily = familyOptional.isPresent();
+            sendServer = serverOptional.isPresent();
         }
+
+        if(sendFamily) {
+            String familyID = packet.targetFamily().orElseThrow();
+            Family family = RC.P.Family(familyID)
+                    .orElseThrow(()->new NoSuchElementException("No family with the id '"+familyID+"' exists."));
+
+            Player.Connection.Result result = family.connect(player).result().get(10, TimeUnit.SECONDS);
+
+            if(!result.connected()) throw new RuntimeException("Unable to connect the player to that server.");
+        }
+        if(sendServer) {
+            String serverID = packet.targetFamily().orElseThrow();
+            Server server = RC.P.Server(serverID)
+                    .orElseThrow(()->new NoSuchElementException("No family with the id '"+serverID+"' exists."));
+
+            Player.Connection.Result result = server.connect(player).result().get(10, TimeUnit.SECONDS);
+
+            if(!result.connected()) throw new RuntimeException("Unable to connect the player to that server.");
+        }
+
+        return Packet.Response.success("Successfully sent "+player.username()+"!").asReply();
     }
 }

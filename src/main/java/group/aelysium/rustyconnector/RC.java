@@ -90,17 +90,17 @@ public interface RC {
             for (Particle.Flux<? extends Family> familyFlux : RC.P.Families().fetchAll()) {
                 try {
                     Family family = familyFlux.access().get(5, TimeUnit.SECONDS);
-                    if (!family.containsServer(server.uuid())) continue;
+                    if (!family.containsServer(server.id())) continue;
                     return Optional.of(familyFlux);
                 } catch (InterruptedException | CancellationException | ExecutionException | TimeoutException ignore) {}
             }
             return Optional.empty();
         }
 
-        static Optional<Server> Server(UUID uuid) throws NoSuchElementException {
+        static Optional<Server> Server(String id) throws NoSuchElementException {
             AtomicReference<Optional<Server>> server = new AtomicReference<>(Optional.empty());
             Families().fetchAll().forEach(flux -> {
-                flux.executeNow(f->server.set(f.fetchServer(uuid)));
+                flux.executeNow(f->server.set(f.fetchServer(id)));
             });
             return server.get();
         }

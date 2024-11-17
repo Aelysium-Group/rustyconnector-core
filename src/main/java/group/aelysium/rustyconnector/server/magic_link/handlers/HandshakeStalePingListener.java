@@ -1,6 +1,5 @@
 package group.aelysium.rustyconnector.server.magic_link.handlers;
 
-import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
@@ -15,7 +14,7 @@ public class HandshakeStalePingListener extends PacketListener<MagicLinkCore.Pac
 
         RC.S.MagicLink().setDelay(5);
         Packet.New()
-                .identification(Packet.Identification.from("RC", "MLH"))
+                .identification(Packet.Type.from("RC", "SP"))
                 .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.ADDRESS, flame.address().getHostName() + ":" + flame.address().getPort())
                 .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.DISPLAY_NAME, flame.displayName())
                 .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.SERVER_REGISTRATION, RC.S.MagicLink().registration())

@@ -20,7 +20,7 @@ public abstract class LoadBalancer implements Server.Container, Plugin {
     protected int index = 0;
     protected Vector<Server> unlockedServers = new Vector<>();
     protected Vector<Server> lockedServers = new Vector<>();
-    protected Map<UUID, Server> servers = new ConcurrentHashMap<>();
+    protected Map<String, Server> servers = new ConcurrentHashMap<>();
     protected Runnable sorter = () -> {
         try {
             Server p = this.unlockedServers.get(0);
@@ -149,36 +149,33 @@ public abstract class LoadBalancer implements Server.Container, Plugin {
         this.index = 0;
     }
 
-    /**
-     * Attempt to fetch a "good enough" Server for a potential player connection.
-     * @return The Server.
-     */
-    public Optional<Server> staticFetch() {
+    @Override
+    public Optional<Server> availableServer() {
         return this.current();
     }
 
     @Override
     public void addServer(@NotNull Server server) {
         this.unlockedServers.add(server);
-        this.servers.put(server.uuid(), server);
+        this.servers.put(server.id(), server);
     }
 
     @Override
     public void removeServer(@NotNull Server server) {
-        if(!this.servers.containsKey(server.uuid())) return;
+        if(!this.servers.containsKey(server.id())) return;
         if(!this.unlockedServers.remove(server))
             this.lockedServers.remove(server);
-        this.servers.remove(server.uuid());
+        this.servers.remove(server.id());
     }
 
     @Override
-    public Optional<Server> fetchServer(@NotNull UUID uuid) {
-        return Optional.ofNullable(this.servers.get(uuid));
+    public Optional<Server> fetchServer(@NotNull String id) {
+        return Optional.ofNullable(this.servers.get(id));
     }
 
     @Override
-    public boolean containsServer(@NotNull UUID uuid) {
-        return this.servers.containsKey(uuid);
+    public boolean containsServer(@NotNull String id) {
+        return this.servers.containsKey(id);
     }
 
     @Override

@@ -1,12 +1,12 @@
 package group.aelysium.rustyconnector.common.magic_link;
 
 import group.aelysium.rustyconnector.RC;
+import group.aelysium.rustyconnector.common.magic_link.packet.PacketType;
 import group.aelysium.rustyconnector.common.plugins.Plugin;
 import group.aelysium.rustyconnector.common.crypt.NanoID;
 import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
 import group.aelysium.rustyconnector.common.cache.TimeoutCache;
-import group.aelysium.rustyconnector.common.magic_link.packet.PacketIdentification;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 import group.aelysium.rustyconnector.common.crypt.AES;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
@@ -41,7 +41,7 @@ public abstract class MagicLinkCore implements Plugin {
         this.self = self;
         this.aes = aes;
         this.cache = cache;
-        packetsAwaitingReply.onTimeout(p -> RC.Adapter().log(Component.text("The packet "+p.identification()+" has expired and isn't waiting for replies anymore.")));
+        packetsAwaitingReply.onTimeout(p -> RC.Adapter().log(Component.text("The packet "+p.type()+" has expired and isn't waiting for replies anymore.")));
     }
 
     /**
@@ -50,17 +50,22 @@ public abstract class MagicLinkCore implements Plugin {
      */
     public void listen(PacketListener<? extends Packet.Remote> listener) {
         for (Method method : listener.getClass().getDeclaredMethods()) {
+            if(!method.getName().equals("handle")) continue;
             try {
                 Parameter firstParameter = method.getParameters()[0];
-                Class<?> firstParameterType = firstParameter.getType();
 
-                Class<? extends Packet.Remote> packetWrapper = (Class<? extends Packet.Remote>) firstParameterType;
+                if(Packet.Remote.class.equals(firstParameter.getType())) continue;
+                if(!Packet.Remote.class.isAssignableFrom(firstParameter.getType()))
+                    throw new NoSuchMethodException("You can only listen for packets of type Packet.Remote. The requested class is " + firstParameter.getType().getName());
+
+                Class<? extends Packet.Remote> packetWrapper = (Class<? extends Packet.Remote>) firstParameter.getType();
+                if(!packetWrapper.isAnnotationPresent(PacketType.class))
+                    throw new NoSuchMethodException("Packet classes used for PacketListeners must be annotated with @PacketType. Caused by "+firstParameter.getType().getName());
+                String type = packetWrapper.getAnnotation(PacketType.class).value();
+
                 Constructor<? extends Packet.Remote> constructor = packetWrapper.getConstructor(Packet.class);
-                PacketIdentification packetIdentification = packetWrapper.getAnnotation(PacketIdentification.class);
 
-                if(packetIdentification == null) throw new NoSuchMethodException("You must provide a @PacketIdentification for Packet Wrappers. Missing on: " + packetWrapper.getSimpleName());
-
-                this.listeners.computeIfAbsent(packetIdentification.value(), k -> new Vector<>()).add(packet -> {
+                this.listeners.computeIfAbsent(type, k -> new Vector<>()).add(packet -> {
                     try {
                         Packet.Response response = (Packet.Response) method.invoke(listener, constructor.newInstance(packet));
                         packet.status(response.successful, response.message);
@@ -78,7 +83,7 @@ public abstract class MagicLinkCore implements Plugin {
                     }
                 });
             } catch (Exception e) {
-                RC.Error(Error.from(e));
+                RC.Error(Error.from(e).urgent(true));
             }
         }
     }
@@ -101,7 +106,7 @@ public abstract class MagicLinkCore implements Plugin {
 
     /**
      * Registers a new packet handler to the magic link provider.
-     * @param identification The identification of the specific packet.
+     * @param identification The type of the specific packet.
      * @param handler The handler to use for handling the packet.
      *                This handler will be handled asynchronously and will not affect other handlers, even if it throws an exception.
      */
@@ -148,7 +153,7 @@ public abstract class MagicLinkCore implements Plugin {
                 return;
             }
 
-            List<Consumer<Packet.Remote>> listeners = this.listeners.get(packet.identification().toString());
+            List<Consumer<Packet.Remote>> listeners = this.listeners.get(packet.type().toString());
             if (listeners == null || listeners.isEmpty()) throw new Exception("No listeners exist to handle this packet.");
 
             listeners.forEach(l -> l.accept(packet));
@@ -184,7 +189,7 @@ public abstract class MagicLinkCore implements Plugin {
 
     public interface Packets {
         interface Handshake {
-            @PacketIdentification("RC-MLH")
+            @PacketType("RC-P")
             class Ping extends Packet.Remote {
                 public String address() {
                     return this.parameters().get(Parameters.ADDRESS).getAsString();
@@ -232,7 +237,7 @@ public abstract class MagicLinkCore implements Plugin {
         /**
          * Indicates to the Proxy that a Server wants to disconnect.
          */
-        @PacketIdentification("RC-MLHK")
+        @PacketType("RC-D")
         class Disconnect extends Packet.Remote {
             public Disconnect(Packet packet) {
                 super(packet);
@@ -242,7 +247,7 @@ public abstract class MagicLinkCore implements Plugin {
         /**
          * Indicates to a Server that it's MagicLink connection has gone stale and it needs to re-register.
          */
-        @PacketIdentification("RC-MLHSP")
+        @PacketType("RC-SP")
         class StalePing extends Packet.Remote {
             public StalePing(Packet packet) {
                 super(packet);
@@ -252,7 +257,7 @@ public abstract class MagicLinkCore implements Plugin {
         /**
          * A general response packet.
          */
-        @PacketIdentification("RC-R")
+        @PacketType("RC-R")
         class Response extends Packet.Remote {
             public Response(Packet packet) {
                 super(packet);
@@ -269,17 +274,38 @@ public abstract class MagicLinkCore implements Plugin {
             }
         }
 
-        @PacketIdentification("RC-SP")
+        @PacketType("RC-PS")
         class SendPlayer extends Packet.Remote {
-            public String targetFamilyName() {
-                return this.parameters().get(Parameters.TARGET_FAMILY).getAsString();
+            public Optional<String> targetServer() {
+                return Optional.ofNullable(this.parameters().get(Parameters.TARGET_SERVER).getAsString());
             }
-            public UUID targetServer() {
-                return UUID.fromString(this.parameters().get(Parameters.TARGET_SERVER).getAsString());
+            public Optional<String> targetFamily() {
+                return Optional.ofNullable(this.parameters().get(Parameters.TARGET_SERVER).getAsString());
+            }
+            public Optional<String> genericTarget() {
+                return Optional.ofNullable(this.parameters().get(Parameters.GENERIC_TARGET).getAsString());
             }
 
-            public UUID playerUUID() {
-                return UUID.fromString(this.parameters().get(Parameters.PLAYER_UUID).getAsString());
+            public Optional<UUID> playerUUID() {
+                try {
+                    return Optional.of(UUID.fromString(this.parameters().get(Parameters.PLAYER).getAsString()));
+                } catch (Exception ignore) {}
+                return Optional.empty();
+            }
+            public Optional<String> playerUsername() {
+                try {
+                    UUID.fromString(this.parameters().get(Parameters.PLAYER).getAsString());
+                    return Optional.empty();
+                } catch (Exception ignore) {}
+                return Optional.of(this.parameters().get(Parameters.PLAYER).getAsString());
+            }
+
+            /**
+             * @return The player identifier. This can either be a UUID, or the player's username.
+             *         Use either {@link #playerUsername()} or {@link #playerUUID()} to get the specific value.
+             */
+            public String player() {
+                return this.parameters().get(Parameters.PLAYER).getAsString();
             }
 
             public SendPlayer(Packet packet) {
@@ -289,7 +315,8 @@ public abstract class MagicLinkCore implements Plugin {
             public interface Parameters {
                 String TARGET_FAMILY = "f";
                 String TARGET_SERVER = "s";
-                String PLAYER_UUID = "p";
+                String GENERIC_TARGET = "t";
+                String PLAYER = "p";
             }
         }
     }

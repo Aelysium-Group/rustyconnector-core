@@ -13,9 +13,7 @@ import group.aelysium.rustyconnector.common.crypt.Token;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.proxy.events.ServerTimeoutEvent;
-import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.magic_link.packet_handlers.*;
-import group.aelysium.rustyconnector.proxy.util.AddressUtil;
 import io.javalin.Javalin;
 import io.javalin.http.*;
 import io.javalin.websocket.WsContext;
@@ -101,9 +99,8 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
                 long timestamp = Long.parseLong(split[0].split("-")[0]);
                 String token = split[0].split("-")[1];
                 String signature = split[1];
-                UUID uuid = UUID.fromString(split[2]);
 
-                if (!identification.uuid().equals(uuid)) throw new UnauthorizedResponse("Invalid identification.");
+                if (!identification.id().equals(split[2])) throw new UnauthorizedResponse("Invalid identification.");
                 if (!SHA256.hash(timestamp + "-" + token).equals(signature)) throw new UnauthorizedResponse("Invalid token.");
 
                 Instant time = Instant.ofEpochSecond(timestamp);
@@ -175,7 +172,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
 
                             f.removeServer(server);
                             RC.EventManager().fireEvent(new ServerTimeoutEvent(server, flux));
-                            WsContext connection = this.clients.get(Packet.SourceIdentifier.server(server.uuid()));
+                            WsContext connection = this.clients.get(Packet.SourceIdentifier.server(server.id()));
                             connection.closeSession(1013, "Stale connection. Re-register.");
                         } catch (Exception e) {
                             RC.Error(Error.from(e).causedBy("WebSocketMagicLink:heartbeat"));

@@ -3,7 +3,6 @@ package group.aelysium.rustyconnector.server;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import group.aelysium.ara.Particle;
-import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.common.plugins.Plugin;
 import group.aelysium.rustyconnector.common.RCKernel;
@@ -27,14 +26,14 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
     private final InetSocketAddress address;
 
     protected ServerKernel(
-            @NotNull UUID uuid,
+            @NotNull String id,
             @NotNull Version version,
             @NotNull ServerAdapter adapter,
             @NotNull List<? extends Flux<? extends Plugin>> plugins,
             @Nullable String displayName,
             @NotNull InetSocketAddress address
     ) {
-        super(uuid, version, adapter, plugins);
+        super(id, version, adapter, plugins);
         this.displayName = displayName;
         this.address = address;
     }
@@ -69,7 +68,7 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
     public CompletableFuture<MagicLinkCore.Packets.Response> lock() {
         CompletableFuture<MagicLinkCore.Packets.Response> response = new CompletableFuture<>();
         Packet.New()
-                .identification(Packet.Identification.from("RC","LS"))
+                .identification(Packet.Type.from("RC","SL"))
                 .addressTo(Packet.SourceIdentifier.allAvailableProxies())
                 .send()
                 .onReply(MagicLinkCore.Packets.Response.class, new PacketListener<>() {
@@ -88,7 +87,7 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
     public CompletableFuture<MagicLinkCore.Packets.Response> unlock() {
         CompletableFuture<MagicLinkCore.Packets.Response> response = new CompletableFuture<>();
         Packet.New()
-                .identification(Packet.Identification.from("RC","US"))
+                .identification(Packet.Type.from("RC","SU"))
                 .addressTo(Packet.SourceIdentifier.allAvailableProxies())
                 .send()
                 .onReply(MagicLinkCore.Packets.Response.class, new PacketListener<>() {
@@ -102,16 +101,18 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
     }
 
     /**
-     * Sends a player to a specific family if it exists.
-     * @param player The uuid of the player to send.
-     * @param familyID The id of the family to send to.
+     * Sends a player to a family or server if it exists.
+     * If both a family AND server have an id equal to `target`, you'll have to clarify which to send to using
+     * @param player The id of the player to send.
+     * @param target The id of the family or server to send the player to.
+     * @return A future that completes to the response received from the proxy.
      */
-    public CompletableFuture<MagicLinkCore.Packets.Response> send(UUID player, String familyID) {
+    public CompletableFuture<MagicLinkCore.Packets.Response> send(UUID player, String target) {
         CompletableFuture<MagicLinkCore.Packets.Response> response = new CompletableFuture<>();
         Packet.New()
-                .identification(Packet.Identification.from("RC","SP"))
-                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.PLAYER_UUID, player.toString())
-                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.TARGET_FAMILY, familyID)
+                .identification(Packet.Type.from("RC","PS"))
+                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.PLAYER, player.toString())
+                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.GENERIC_TARGET, target)
                 .addressTo(Packet.SourceIdentifier.allAvailableProxies())
                 .send()
                 .onReply(MagicLinkCore.Packets.Response.class, new PacketListener<>() {
@@ -125,16 +126,41 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
     }
 
     /**
-     * Sends a player to a specific Server if it exists.
+     * Sends a player to a server if it exists.
      * @param player The uuid of the player to send.
-     * @param server The uuid of the server to send to.
+     * @param target The id of the server to send the player to.
+     * @return A future that completes to the response received from the proxy.
      */
-    public CompletableFuture<MagicLinkCore.Packets.Response> send(UUID player, UUID server) {
+    public CompletableFuture<MagicLinkCore.Packets.Response> sendServer(UUID player, String target) {
         CompletableFuture<MagicLinkCore.Packets.Response> response = new CompletableFuture<>();
         Packet.New()
-                .identification(Packet.Identification.from("RC","SP"))
-                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.PLAYER_UUID, player.toString())
-                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.TARGET_SERVER, server.toString())
+                .identification(Packet.Type.from("RC","PS"))
+                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.PLAYER, player.toString())
+                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.TARGET_SERVER, target)
+                .addressTo(Packet.SourceIdentifier.allAvailableProxies())
+                .send()
+                .onReply(MagicLinkCore.Packets.Response.class, new PacketListener<>() {
+                    @Override
+                    public Packet.Response handle(MagicLinkCore.Packets.Response packet) {
+                        response.complete(packet);
+                        return Packet.Response.success("Successfully indicated the status of the server's send request.");
+                    }
+                });
+        return response;
+    }
+
+    /**
+     * Sends a player to a family if it exists.
+     * @param player The uuid of the player to send.
+     * @param target The id of the family to send the player to.
+     * @return A future that completes to the response received from the proxy.
+     */
+    public CompletableFuture<MagicLinkCore.Packets.Response> sendFamily(UUID player, String target) {
+        CompletableFuture<MagicLinkCore.Packets.Response> response = new CompletableFuture<>();
+        Packet.New()
+                .identification(Packet.Type.from("RC","PS"))
+                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.PLAYER, player.toString())
+                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.TARGET_FAMILY, target)
                 .addressTo(Packet.SourceIdentifier.allAvailableProxies())
                 .send()
                 .onReply(MagicLinkCore.Packets.Response.class, new PacketListener<>() {
@@ -153,23 +179,23 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
      * technically optional because they also have default implementations.
      */
     public static class Tinder extends Particle.Tinder<ServerKernel> {
-        private final UUID uuid;
-        private final ServerAdapter adapter;
+        private final String id;
+        private ServerAdapter adapter;
         private Particle.Tinder<? extends LangLibrary> lang = LangLibrary.Tinder.DEFAULT_LANG_LIBRARY;
         private final String displayName;
         private final InetSocketAddress address;
-        private final Particle.Tinder<? extends MagicLinkCore.Server> magicLink;
+        private Particle.Tinder<? extends MagicLinkCore.Server> magicLink;
         private Particle.Tinder<? extends EventManager> eventManager = EventManager.Tinder.DEFAULT_CONFIGURATION;
         private Particle.Tinder<? extends ErrorRegistry> errors = ErrorRegistry.Tinder.DEFAULT_CONFIGURATION;
 
         public Tinder(
-                @NotNull UUID uuid,
+                @NotNull String id,
                 @NotNull ServerAdapter adapter,
                 @Nullable String displayName,
                 @NotNull InetSocketAddress address,
                 @NotNull Particle.Tinder<? extends MagicLinkCore.Server> magicLink
                 ) {
-            this.uuid = uuid;
+            this.id = id;
             this.adapter = adapter;
             this.displayName = displayName;
             this.address = address;
@@ -178,6 +204,16 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
 
         public Tinder lang(@NotNull Particle.Tinder<? extends LangLibrary> lang) {
             this.lang = lang;
+            return this;
+        }
+
+        public Tinder magicLink(@NotNull Particle.Tinder<? extends MagicLinkCore.Server> magicLink) {
+            this.magicLink = magicLink;
+            return this;
+        }
+
+        public Tinder adapter(@NotNull ServerAdapter adapter) {
+            this.adapter = adapter;
             return this;
         }
 
@@ -202,7 +238,7 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
             }
 
             return new ServerKernel(
-                    uuid,
+                    id,
                     version,
                     adapter,
                     List.of(

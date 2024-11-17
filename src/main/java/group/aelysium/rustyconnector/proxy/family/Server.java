@@ -3,12 +3,11 @@ package group.aelysium.rustyconnector.proxy.family;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
-import group.aelysium.rustyconnector.common.magic_link.packet.PacketIdentification;
+import group.aelysium.rustyconnector.common.magic_link.packet.PacketType;
 import group.aelysium.rustyconnector.proxy.Permission;
 import group.aelysium.rustyconnector.proxy.events.ServerPreJoinEvent;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.ISortable;
 import group.aelysium.rustyconnector.proxy.player.Player;
-import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +22,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public final class Server implements ISortable, Player.Connectable {
     private final Map<String, Object> properties = new ConcurrentHashMap<>();
-    private final UUID uuid;
+    private final String id;
     private final String displayName;
     private final InetSocketAddress address;
     private Object raw = null;
@@ -34,7 +33,7 @@ public final class Server implements ISortable, Player.Connectable {
     private AtomicInteger timeout;
 
     public Server(
-            @NotNull UUID uuid,
+            @NotNull String id,
             @NotNull InetSocketAddress address,
             @Nullable String displayName,
             int softPlayerCap,
@@ -42,7 +41,7 @@ public final class Server implements ISortable, Player.Connectable {
             int weight,
             int timeout
     ) {
-        this.uuid = uuid;
+        this.id = id;
         this.address = address;
         if(displayName == null || displayName.isEmpty() || displayName.isBlank()) this.displayName = null;
         else this.displayName = displayName;
@@ -129,13 +128,10 @@ public final class Server implements ISortable, Player.Connectable {
     }
 
     /**
-     * The {@link UUID} of this server.
-     * This {@link UUID} will always be different between servers.
-     * If this server unregisters and then re-registers into the proxy, this ID will be different.
-     * @return {@link UUID}
+     * @return The server's unique ID.
      */
-    public @NotNull UUID uuid() {
-        return this.uuid;
+    public @NotNull String id() {
+        return this.id;
     }
 
     /**
@@ -292,21 +288,21 @@ public final class Server implements ISortable, Player.Connectable {
         try {
             ServerPreJoinEvent event = new ServerPreJoinEvent(this, player);
             boolean canceled = RC.P.EventManager().fireEvent(event).get(1, TimeUnit.MINUTES);
-            if(canceled) return Player.Connection.Request.failedRequest(player, Component.text(event.canceledMessage()));
+            if(canceled) return Player.Connection.Request.failedRequest(player, event.canceledMessage());
         } catch (Exception ignore) {
-            return Player.Connection.Request.failedRequest(player, Component.text("Connection attempt timed out."));
+            return Player.Connection.Request.failedRequest(player, "Connection attempt timed out.");
         }
         try {
             if (!player.online())
-                return Player.Connection.Request.failedRequest(player, Component.text(player.username() + " isn't online."));
+                return Player.Connection.Request.failedRequest(player, player.username() + " isn't online.");
 
             if (!this.validatePlayerLimits(player))
-                return Player.Connection.Request.failedRequest(player, Component.text("The server is currently full. Try again later."));
+                return Player.Connection.Request.failedRequest(player, "The server is currently full. Try again later.");
 
             return RC.P.Adapter().connectServer(this, player);
         } catch (Exception ignore) {}
 
-        return Player.Connection.Request.failedRequest(player, Component.text("Unable to connect you to the server!"));
+        return Player.Connection.Request.failedRequest(player, "Unable to connect you to the server!");
     }
 
     @Override
@@ -321,7 +317,7 @@ public final class Server implements ISortable, Player.Connectable {
 
     @Override
     public int hashCode() {
-        return this.uuid.hashCode();
+        return this.id.hashCode();
     }
 
     @Override
@@ -329,12 +325,12 @@ public final class Server implements ISortable, Player.Connectable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Server server = (Server) o;
-        return Objects.equals(uuid, server.uuid());
+        return Objects.equals(id, server.id());
     }
 
     public static @NotNull Server generateServer(Configuration configuration) {
         return new Server(
-                configuration.uuid,
+                configuration.id,
                 configuration.address,
                 configuration.displayName,
                 configuration.softPlayerCap,
@@ -350,10 +346,10 @@ public final class Server implements ISortable, Player.Connectable {
     public interface Container {
         /**
          * Checks if the container holds the server.
-         * @param uuid The uuid to check for.
+         * @param id The id to check for.
          * @return `true` if the container holds the server. `false` otherwise.
          */
-        boolean containsServer(@NotNull UUID uuid);
+        boolean containsServer(@NotNull String id);
 
         /**
          * Adds the server to the server container.
@@ -369,10 +365,10 @@ public final class Server implements ISortable, Player.Connectable {
 
         /**
          * Fetches the specified server from the container.
-         * @param uuid The uuid to look for.
+         * @param id The id to look for.
          * @return An optional containing the server or nothing if one doesn't exist.
          */
-        Optional<Server> fetchServer(@NotNull UUID uuid);
+        Optional<Server> fetchServer(@NotNull String id);
 
         /**
          * Gets all servers held by this container, regardless of their state within the actual container.
@@ -412,16 +408,24 @@ public final class Server implements ISortable, Player.Connectable {
          * @return `true` if the server is locked. `false` if the server is unlocked. This method also returns `false` if the server simply doesn't exist.
          */
         boolean isLocked(@NotNull Server server);
+
+        /**
+         * Finds an available server that the player can reasonably connect to.
+         * This method exists for cases where a caller needs to fetch a server for a potential player connection
+         * without actually connecting the player to it.
+         * @return A Server if one exists which is available.
+         */
+        Optional<Server> availableServer();
     }
 
     public interface Packets {
-        @PacketIdentification("RC-LS")
+        @PacketType("RC-SL")
         class Lock extends Packet.Remote {
             public Lock(Packet packet) {
                 super(packet);
             }
         }
-        @PacketIdentification("RC-US")
+        @PacketType("RC-SU")
         class Unlock extends Packet.Remote {
             public Unlock(Packet packet) {
                 super(packet);
@@ -432,7 +436,7 @@ public final class Server implements ISortable, Player.Connectable {
     /**
      * A Server Configuration.
      * Used alongside {@link group.aelysium.rustyconnector.proxy.ProxyKernel#registerServer(Particle.Flux, Configuration)} to register new server instances.
-     * @param uuid The unique UUID for this server this value must be unique between servers.
+     * @param id The unique id for this server - this value must be unique between servers.
      * @param address The connection address for the server.
      * @param displayName The display name of this server.
      * @param softPlayerCap The soft player cap for this server.
@@ -441,7 +445,7 @@ public final class Server implements ISortable, Player.Connectable {
      * @param timeout The number of seconds that this server needs to refresh or else it'll timeout.
      */
     public record Configuration(
-            @NotNull UUID uuid,
+            @NotNull String id,
             @NotNull InetSocketAddress address,
             @Nullable String displayName,
             int softPlayerCap,

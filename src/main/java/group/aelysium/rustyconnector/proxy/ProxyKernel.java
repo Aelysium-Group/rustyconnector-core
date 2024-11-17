@@ -29,12 +29,12 @@ import java.util.concurrent.TimeoutException;
 
 public class ProxyKernel extends RCKernel<ProxyAdapter> {
     protected ProxyKernel(
-            @NotNull UUID uuid,
+            @NotNull String id,
             @NotNull Version version,
             @NotNull ProxyAdapter adapter,
             List<? extends Flux<? extends Plugin>> plugins
     ) {
-        super(uuid, version, adapter, plugins);
+        super(id, version, adapter, plugins);
     }
 
     /**
@@ -108,22 +108,22 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
      * technically optional because they also have default implementations.
      */
     public static class Tinder extends Particle.Tinder<ProxyKernel> {
-        private final UUID uuid;
-        private final ProxyAdapter adapter;
+        private final String id;
+        private ProxyAdapter adapter;
         private Particle.Tinder<? extends LangLibrary> lang = LangLibrary.Tinder.DEFAULT_LANG_LIBRARY;
         private Particle.Tinder<? extends FamilyRegistry> familyRegistry = FamilyRegistry.Tinder.DEFAULT_CONFIGURATION;
-        private final Particle.Tinder<? extends MagicLinkCore.Proxy> magicLink;
+        private Particle.Tinder<? extends MagicLinkCore.Proxy> magicLink;
         private Particle.Tinder<? extends PlayerRegistry> playerRegistry = PlayerRegistry.Tinder.DEFAULT_CONFIGURATION;
         private Particle.Tinder<? extends EventManager> eventManager = EventManager.Tinder.DEFAULT_CONFIGURATION;
         private Particle.Tinder<? extends ErrorRegistry> errors = ErrorRegistry.Tinder.DEFAULT_CONFIGURATION;
 
         public Tinder(
-                @NotNull UUID uuid,
+                @NotNull String id,
                 @NotNull ProxyAdapter adapter,
                 @NotNull Particle.Tinder<? extends MagicLinkCore.Proxy> magicLink
                 ) {
             super();
-            this.uuid = uuid;
+            this.id = id;
             this.adapter = adapter;
             this.magicLink = magicLink;
 
@@ -138,6 +138,16 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
 
         public Tinder lang(@NotNull Particle.Tinder<? extends LangLibrary> lang) {
             this.lang = lang;
+            return this;
+        }
+
+        public Tinder magicLink(@NotNull Particle.Tinder<? extends MagicLinkCore.Proxy> magicLink) {
+            this.magicLink = magicLink;
+            return this;
+        }
+
+        public Tinder adapter(@NotNull ProxyAdapter adapter) {
+            this.adapter = adapter;
             return this;
         }
 
@@ -170,7 +180,7 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
                 version = new Version(object.get("version").getAsString());
             }
             return new ProxyKernel(
-                    this.uuid,
+                    this.id,
                     version,
                     this.adapter,
                     List.of(
