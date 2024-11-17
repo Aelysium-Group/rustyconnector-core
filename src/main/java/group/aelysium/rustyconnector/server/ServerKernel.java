@@ -103,15 +103,15 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
     /**
      * Sends a player to a family or server if it exists.
      * If both a family AND server have an id equal to `target`, you'll have to clarify which to send to using
-     * @param player The id of the player to send.
+     * @param player The uuid or username of the player to send. RustyConnector will automatically determine if this is a UUID or username.
      * @param target The id of the family or server to send the player to.
      * @return A future that completes to the response received from the proxy.
      */
-    public CompletableFuture<MagicLinkCore.Packets.Response> send(UUID player, String target) {
+    public CompletableFuture<MagicLinkCore.Packets.Response> send(String player, String target) {
         CompletableFuture<MagicLinkCore.Packets.Response> response = new CompletableFuture<>();
         Packet.New()
                 .identification(Packet.Type.from("RC","PS"))
-                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.PLAYER, player.toString())
+                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.PLAYER, player)
                 .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.GENERIC_TARGET, target)
                 .addressTo(Packet.SourceIdentifier.allAvailableProxies())
                 .send()
@@ -127,15 +127,15 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
 
     /**
      * Sends a player to a server if it exists.
-     * @param player The uuid of the player to send.
+     * @param player The uuid or username of the player to send. RustyConnector will automatically determine if this is a UUID or username.
      * @param target The id of the server to send the player to.
      * @return A future that completes to the response received from the proxy.
      */
-    public CompletableFuture<MagicLinkCore.Packets.Response> sendServer(UUID player, String target) {
+    public CompletableFuture<MagicLinkCore.Packets.Response> sendServer(String player, String target) {
         CompletableFuture<MagicLinkCore.Packets.Response> response = new CompletableFuture<>();
         Packet.New()
                 .identification(Packet.Type.from("RC","PS"))
-                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.PLAYER, player.toString())
+                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.PLAYER, player)
                 .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.TARGET_SERVER, target)
                 .addressTo(Packet.SourceIdentifier.allAvailableProxies())
                 .send()
@@ -151,15 +151,15 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
 
     /**
      * Sends a player to a family if it exists.
-     * @param player The uuid of the player to send.
+     * @param player The uuid or username of the player to send. RustyConnector will automatically determine if this is a UUID or username.
      * @param target The id of the family to send the player to.
      * @return A future that completes to the response received from the proxy.
      */
-    public CompletableFuture<MagicLinkCore.Packets.Response> sendFamily(UUID player, String target) {
+    public CompletableFuture<MagicLinkCore.Packets.Response> sendFamily(String player, String target) {
         CompletableFuture<MagicLinkCore.Packets.Response> response = new CompletableFuture<>();
         Packet.New()
                 .identification(Packet.Type.from("RC","PS"))
-                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.PLAYER, player.toString())
+                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.PLAYER, player)
                 .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.TARGET_FAMILY, target)
                 .addressTo(Packet.SourceIdentifier.allAvailableProxies())
                 .send()
