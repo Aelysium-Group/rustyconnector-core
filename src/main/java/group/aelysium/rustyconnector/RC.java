@@ -40,7 +40,7 @@ public interface RC {
      */
     interface P {
         static ProxyKernel Kernel() throws NoSuchElementException {
-            return RustyConnector.Toolkit.Proxy()
+            return RustyConnector.Proxy()
                     .orElseThrow(()->new NoSuchElementException("No Proxy Kernel has been registered for RustyConnector."))
                     .orElseThrow(()->new NoSuchElementException("The RustyConnector Proxy Kernel is currently unavailable. It might be rebooting."));
         }
@@ -98,11 +98,9 @@ public interface RC {
         }
 
         static Optional<Server> Server(String id) throws NoSuchElementException {
-            AtomicReference<Optional<Server>> server = new AtomicReference<>(Optional.empty());
-            Families().fetchAll().forEach(flux -> {
-                flux.executeNow(f->server.set(f.fetchServer(id)));
-            });
-            return server.get();
+            AtomicReference<Server> server = new AtomicReference<>(null);
+            Families().fetchAll().forEach(flux -> flux.executeNow(f->f.fetchServer(id).ifPresent(server::set)));
+            return Optional.ofNullable(server.get());
         }
 
         static List<Server> Servers() throws NoSuchElementException {
@@ -124,7 +122,7 @@ public interface RC {
      */
     interface S {
         static ServerKernel Kernel() throws NoSuchElementException {
-            return RustyConnector.Toolkit.Server()
+            return RustyConnector.Server()
                     .orElseThrow(()->new NoSuchElementException("No Server Kernel has been registered for RustyConnector."))
                     .orElseThrow(()->new NoSuchElementException("The RustyConnector Server Kernel is currently unavailable. It might be rebooting."));
         }

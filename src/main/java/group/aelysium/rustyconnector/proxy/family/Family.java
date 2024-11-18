@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 public abstract class Family implements Player.Connectable, Server.Container, Plugin {
+    private final Map<String, Object> properties = new ConcurrentHashMap<>();
     protected final String id;
     protected final String displayName;
     protected final String parent;
@@ -27,6 +28,43 @@ public abstract class Family implements Player.Connectable, Server.Container, Pl
         this.id = id;
         this.displayName = displayName;
         this.parent = parent;
+    }
+
+    /**
+     * Stores a property in the Server.
+     * @param propertyName The name of the property to store.
+     * @param property The property to store.
+     * @return `true` if the property could be stored. `false` if the name of the property is already in use.
+     */
+    public boolean property(String propertyName, Object property) {
+        if(this.properties.containsKey(propertyName)) return false;
+        this.properties.put(propertyName, property);
+        return true;
+    }
+
+    /**
+     * Fetches a property from the server.
+     * @param propertyName The name of the property to fetch.
+     * @return An optional containing the property, or an empty property if no property could be found.
+     * @param <T> The type of the property that's being fetched.
+     */
+    public <T> Optional<T> property(String propertyName) {
+        return Optional.ofNullable((T) this.properties.get(propertyName));
+    }
+
+    /**
+     * Removes a property from the server.
+     * @param propertyName The name of the property to remove.
+     */
+    public void dropProperty(String propertyName) {
+        this.properties.remove(propertyName);
+    }
+
+    /**
+     * @return A map containing all of this server's properties.
+     */
+    public Map<String, Object> properties() {
+        return Collections.unmodifiableMap(this.properties);
     }
 
     public @NotNull String id() {

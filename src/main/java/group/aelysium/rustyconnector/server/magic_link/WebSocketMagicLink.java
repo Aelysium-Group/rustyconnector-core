@@ -211,7 +211,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
         if(this.closed.get()) return;
         if(this.stopHeartbeat.get()) return;
 
-        ServerKernel flame = RustyConnector.Toolkit.Server().orElseThrow().orElseThrow();
+        ServerKernel flame = RustyConnector.Server().orElseThrow().orElseThrow();
 
         try {
             Packet.Builder.PrepareForSending packetBuilder = Packet.New()

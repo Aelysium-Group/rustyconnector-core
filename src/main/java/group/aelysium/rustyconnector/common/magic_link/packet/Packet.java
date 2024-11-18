@@ -143,13 +143,13 @@ public abstract class Packet implements JSONParseable {
 
     protected static class NakedBuilder {
         private Integer protocolVersion = Packet.protocolVersion;
-        private Type id;
+        private Type type;
         private SourceIdentifier local;
         private SourceIdentifier remote;
         private final Map<String, Parameter> parameters = new HashMap<>();
 
-        public NakedBuilder identification(@NotNull Packet.Type id) {
-            this.id = id;
+        public NakedBuilder type(@NotNull Packet.Type type) {
+            this.type = type;
             return this;
         }
 
@@ -178,10 +178,10 @@ public abstract class Packet implements JSONParseable {
         }
 
         public Packet.Remote buildRemote() {
-            return new Packet.Remote(this.protocolVersion, this.id, this.local, this.remote, this.parameters);
+            return new Packet.Remote(this.protocolVersion, this.type, this.local, this.remote, this.parameters);
         }
         public Packet.Local buildLocal() {
-            return new Packet.Local(this.protocolVersion, this.id, this.local, this.remote, this.parameters);
+            return new Packet.Local(this.protocolVersion, this.type, this.local, this.remote, this.parameters);
         }
     }
 
@@ -257,7 +257,7 @@ public abstract class Packet implements JSONParseable {
          * Identification is what differentiates a "Server ping packet" from a "Teleport player packet"
          */
         public PrepareForSending identification(Type id) {
-            return new PrepareForSending(builder.identification(id));
+            return new PrepareForSending(builder.type(id));
         }
     }
 
@@ -268,7 +268,7 @@ public abstract class Packet implements JSONParseable {
         NakedBuilder builder = new NakedBuilder();
 
         builder.protocolVersion(messageObject.get(Parameters.PROTOCOL_VERSION).getAsInt());
-        builder.identification(new Type(messageObject.get(Parameters.IDENTIFICATION).getAsString()));
+        builder.type(new Type(messageObject.get(Parameters.IDENTIFICATION).getAsString()));
         builder.local(SourceIdentifier.fromJSON(messageObject.get(Parameters.LOCAL).getAsJsonObject()));
         builder.remote(SourceIdentifier.fromJSON(messageObject.get(Parameters.REMOTE).getAsJsonObject()));
 
