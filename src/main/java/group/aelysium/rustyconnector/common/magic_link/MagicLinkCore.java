@@ -285,13 +285,22 @@ public abstract class MagicLinkCore implements Plugin {
         @PacketType("RC-PS")
         class SendPlayer extends Packet.Remote {
             public Optional<String> targetServer() {
-                return Optional.ofNullable(this.parameters().get(Parameters.TARGET_SERVER).getAsString());
+                try {
+                    return Optional.ofNullable(this.parameters().get(Parameters.TARGET_SERVER).getAsString());
+                } catch (NullPointerException ignore) {}
+                return Optional.empty();
             }
             public Optional<String> targetFamily() {
-                return Optional.ofNullable(this.parameters().get(Parameters.TARGET_SERVER).getAsString());
+                try {
+                    return Optional.ofNullable(this.parameters().get(Parameters.TARGET_SERVER).getAsString());
+                } catch (NullPointerException ignore) {}
+                return Optional.empty();
             }
             public Optional<String> genericTarget() {
-                return Optional.ofNullable(this.parameters().get(Parameters.GENERIC_TARGET).getAsString());
+                try {
+                    return Optional.ofNullable(this.parameters().get(Parameters.GENERIC_TARGET).getAsString());
+                } catch (NullPointerException ignore) {}
+                    return Optional.empty();
             }
 
             public Optional<UUID> playerUUID() {

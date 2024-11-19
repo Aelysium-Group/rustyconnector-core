@@ -1,26 +1,25 @@
 package group.aelysium.rustyconnector.common.util;
 
+import com.google.errorprone.annotations.Immutable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class URL {
-    private Protocol protocol;
+@Immutable
+public final class URL {
+    private final Protocol protocol;
     private final String domain;
     private final Integer port;
     private final List<String> path;
     private final Map<String, String> query;
     private final String fragment;
-    protected URL(
+    private URL(
             @NotNull Protocol protocol,
             @NotNull String domainName,
             @Nullable Integer port,
@@ -31,8 +30,8 @@ public class URL {
         this.protocol = protocol;
         this.domain = domainName;
         this.port = port;
-        this.path = (path == null ? new ArrayList<>() : path);
-        this.query = query;
+        this.path = Collections.unmodifiableList(path == null ? new ArrayList<>() : path);
+        this.query = Collections.unmodifiableMap(query == null ? Map.of() : query);
         this.fragment = fragment;
     }
 
@@ -80,52 +79,82 @@ public class URL {
      * Appends the path string to the existing URL path.
      * If slashes are included in the path string they will be handled accordingly.
      * @param path The path to add at the end of the URL.
-     * @return The URL, modified with the new path. The returned object is the same as the one used to make this call.
+     * @return A URL with the updated path.
      */
     public URL prependPath(String path) {
+        List<String> pathList = new ArrayList<>();
         if(path.startsWith("/")) path = path.substring(1);
         if(path.endsWith("/")) path = path.substring(0, path.length() - 1);
+
         List<String> oldPath = new ArrayList<>(this.path);
-        this.path.clear();
-        if(path.contains("/")) this.path.addAll(Arrays.stream(path.split("/")).toList());
-        else this.path.add(path);
-        this.path.addAll(oldPath);
-        return this;
+        if(path.contains("/")) pathList.addAll(Arrays.stream(path.split("/")).toList());
+        else pathList.add(path);
+
+        pathList.addAll(oldPath);
+        return new URL(
+                this.protocol,
+                this.domain,
+                this.port,
+                pathList,
+                this.query,
+                this.fragment
+        );
     }
 
     /**
      * Appends the path string to the existing URL path.
      * If slashes are included in the path string they will be handled accordingly.
      * @param path The path to add at the end of the URL.
-     * @return The URL, modified with the new path. The returned object is the same as the one used to make this call.
+     * @return A URL with the updated path.
      */
     public URL appendPath(String path) {
+        List<String> pathList = new ArrayList<>();
         if(path.startsWith("/")) path = path.substring(1);
         if(path.endsWith("/")) path = path.substring(0, path.length() - 1);
         if(path.contains("/")) {
-            this.path.addAll(Arrays.stream(path.split("/")).toList());
+            pathList.addAll(Arrays.stream(path.split("/")).toList());
             return this;
         }
-        this.path.add(path);
-        return this;
+        pathList.add(path);
+        return new URL(
+                this.protocol,
+                this.domain,
+                this.port,
+                pathList,
+                this.query,
+                this.fragment
+        );
     }
 
     /**
-     * Empties the URL's path.
+     * Empties the URLs path.
+     * @return A URL with the updated path.
      */
     public URL clearPath() {
-        this.path.clear();
-        return this;
+        return new URL(
+                this.protocol,
+                this.domain,
+                this.port,
+                List.of(),
+                this.query,
+                this.fragment
+        );
     }
 
     /**
      * Changes the protocol used by this URL.
      * @param protocol The new protocol to use.
-     * @return The URL, modified with the new path. The returned object is the same as the one used to make this call.
+     * @return A URL with the updated protocol.
      */
     public URL changeProtocol(Protocol protocol) {
-        this.protocol = protocol;
-        return this;
+        return new URL(
+                protocol,
+                this.domain,
+                this.port,
+                this.path,
+                this.query,
+                this.fragment
+        );
     }
 
     public URI toURI() {
@@ -159,7 +188,7 @@ public class URL {
     public static URL parseURL(String url) throws ParseException {
         Map<String, String> parsedURL = Map.of(
                 "protocol",     extractPart("^([a-z]*):\\/\\/", url),
-                "domainName",       extractPart("\\:\\/\\/([^:/]*)", url),
+                "domainName",   extractPart("\\:\\/\\/([^:/]*)", url),
                 "port",         extractPart(":(\\d+)", url),
                 "path",         extractPart(":\\d+(\\/[^?#]*)", url),
                 "query",        extractPart("\\?([^#]*)", url),

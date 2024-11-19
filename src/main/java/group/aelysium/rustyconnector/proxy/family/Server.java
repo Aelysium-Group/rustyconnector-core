@@ -25,7 +25,6 @@ public final class Server implements ISortable, Player.Connectable {
     private final String id;
     private final String displayName;
     private final InetSocketAddress address;
-    private Object raw = null;
     private final AtomicLong playerCount = new AtomicLong(0);
     private int weight;
     private int softPlayerCap;
@@ -146,13 +145,6 @@ public final class Server implements ISortable, Player.Connectable {
      */
     public @NotNull InetSocketAddress address() {
         return this.address;
-    }
-
-    /**
-     * Gets the raw server that backs this server.
-     */
-    public @NotNull Object raw() {
-        return this.raw;
     }
 
     /**

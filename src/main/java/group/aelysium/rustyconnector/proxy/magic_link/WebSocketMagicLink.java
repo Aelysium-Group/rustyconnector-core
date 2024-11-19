@@ -12,8 +12,10 @@ import group.aelysium.rustyconnector.common.crypt.SHA256;
 import group.aelysium.rustyconnector.common.crypt.Token;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
+import group.aelysium.rustyconnector.proxy.ProxyKernel;
 import group.aelysium.rustyconnector.proxy.events.ServerTimeoutEvent;
 import group.aelysium.rustyconnector.proxy.magic_link.packet_handlers.*;
+import group.aelysium.rustyconnector.server.ServerKernel;
 import io.javalin.Javalin;
 import io.javalin.http.*;
 import io.javalin.websocket.WsContext;
@@ -162,6 +164,13 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
 
     private void heartbeat() {
         try {
+            RC.P.Kernel();
+        } catch (Exception ignore) {
+            this.executor.schedule(this::heartbeat, 3, TimeUnit.SECONDS);
+            return;
+        }
+
+        try {
             RC.P.Families().fetchAll().forEach(flux -> {
                 try {
                     flux.executeNow(f -> f.servers().forEach(server -> {
@@ -170,10 +179,14 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
 
                             if (newValue > 0) return;
 
+                            try {
+                                RC.EventManager().fireEvent(new ServerTimeoutEvent(server, flux));
+                            } catch (Exception ignore) {}
+                            try {
+                                WsContext connection = this.clients.get(Packet.SourceIdentifier.server(server.id()));
+                                connection.closeSession(1013, "Stale connection. Re-register.");
+                            } catch (Exception ignore) {}
                             f.removeServer(server);
-                            RC.EventManager().fireEvent(new ServerTimeoutEvent(server, flux));
-                            WsContext connection = this.clients.get(Packet.SourceIdentifier.server(server.id()));
-                            connection.closeSession(1013, "Stale connection. Re-register.");
                         } catch (Exception e) {
                             RC.Error(Error.from(e).causedBy("WebSocketMagicLink:heartbeat"));
                         }

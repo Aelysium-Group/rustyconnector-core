@@ -87,6 +87,9 @@ public abstract class RCKernel<A extends RCAdapter> implements Plugin {
 
     @Override
     public void close() {
-        this.plugins.forEach((k, v)->v.close());
+        this.plugins.forEach((k, v)->{
+            System.out.println(k);
+            v.close();
+        });
     }
 }

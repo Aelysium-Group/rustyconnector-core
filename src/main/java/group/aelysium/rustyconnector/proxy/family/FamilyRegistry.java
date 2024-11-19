@@ -54,7 +54,9 @@ public class FamilyRegistry implements Plugin {
      */
     public void register(@NotNull String id, @NotNull Flux<? extends Family> family) {
         this.families.put(id, family);
-        RC.EventManager().fireEvent(new FamilyCreateEvent(family));
+        try {
+            RC.EventManager().fireEvent(new FamilyCreateEvent(family));
+        } catch (Exception ignore) {}
     }
 
     /**
@@ -64,7 +66,9 @@ public class FamilyRegistry implements Plugin {
     public void unregister(@NotNull String id) {
         Flux<? extends Family> flux = this.families.remove(id);
         if(flux == null) return;
-        RC.EventManager().fireEvent(new FamilyDeleteEvent(flux));
+        try {
+            RC.EventManager().fireEvent(new FamilyDeleteEvent(flux));
+        } catch (Exception ignore) {}
     }
 
     /**

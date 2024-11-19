@@ -13,9 +13,12 @@ import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static net.kyori.adventure.text.Component.text;
 
@@ -97,7 +100,6 @@ public abstract class ProxyAdapter extends RCAdapter {
      * Connects the player to the specified server.
      * By the time this method runs, stuff such as whitelist and player limits have already been addressed.
      * All you need to do is connect to the underlying server that this Server is backed by.
-     * You can use {@link Server#raw()} to fetch the underlying server.
      * @param server The server.
      * @param player The player. Specifically, the object returned by {@link #convertToObject(Player)}.
      * @return A connection request.
@@ -145,9 +147,10 @@ public abstract class ProxyAdapter extends RCAdapter {
     /**
      * Handle's the playerRegistry initial connection to the proxy, before they connect to a server.
      * @param player The player.
+     * @param finalizeConnection A consumer which, assuming previous computations are successful, will take the chosen server and connect the player to it.
      * @throws RuntimeException If there's a fatal error at any point.
      */
-    public final @NotNull Player.Connection.Request onInitialConnect(@NotNull Player player) throws RuntimeException {
+    public final @NotNull Player.Connection.Request onInitialConnect(@NotNull Player player, @NotNull Function<Server, Player.Connection.Request> finalizeConnection) throws RuntimeException {
         try {
             RC.P.Players().add(player);
         } catch (Exception ignore) {}
@@ -159,7 +162,11 @@ public abstract class ProxyAdapter extends RCAdapter {
         } catch (Exception ignore) {}
 
         try {
-            return RC.P.Families().rootFamily().access().get(10, TimeUnit.SECONDS).connect(player);
+            Server server = RC.P.Families().rootFamily()
+                    .orElseThrow(()->new NoSuchElementException("The root family is not currently available. It might be rebooting."))
+                    .availableServer()
+                    .orElseThrow(()->new NoSuchElementException("The root family doesn't currently have any available servers."));
+            return finalizeConnection.apply(server);
         } catch (Exception e) {
             RC.Error(Error.from(e));
             return Player.Connection.Request.failedRequest(player, "There was an internal error preventing this connection");
