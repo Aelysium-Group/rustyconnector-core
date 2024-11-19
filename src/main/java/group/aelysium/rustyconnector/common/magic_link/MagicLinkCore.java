@@ -69,17 +69,25 @@ public abstract class MagicLinkCore implements Plugin {
                     try {
                         Packet.Response response = (Packet.Response) method.invoke(listener, constructor.newInstance(packet));
                         packet.status(response.successful, response.message);
-                        if(response.shouldSendPacket()) packet.reply(response);
+                        if(response.shouldSendPacket() || listener.responsesAsPacketReplies()) packet.reply(response);
                     } catch (InvocationTargetException e) {
                         RC.Error(Error.from(e));
+                        if(!listener.responseFromExceptions()) return;
+
                         if(e.getCause() == null) {
                             packet.status(false, e.getMessage());
                             return;
                         }
                         packet.status(false, e.getMessage());
+
+                        if(listener.responsesAsPacketReplies()) packet.reply(Packet.Response.error(e.getMessage()));
                     } catch (Exception e) {
-                        packet.status(false, e.getMessage());
                         RC.Error(Error.from(e));
+                        if(!listener.responseFromExceptions()) return;
+
+                        packet.status(false, e.getMessage());
+
+                        if(listener.responsesAsPacketReplies()) packet.reply(Packet.Response.error(e.getMessage()));
                     }
                 });
             } catch (Exception e) {

@@ -11,6 +11,13 @@ public abstract class PacketListener<P extends Packet.Remote> {
      */
     protected boolean responsesAsPacketReplies = false;
 
+    public boolean responseFromExceptions() {
+        return this.responseFromExceptions;
+    }
+    public boolean responsesAsPacketReplies() {
+        return this.responsesAsPacketReplies;
+    }
+
     /**
      * Handles a packet and returns a response.
      * @param packet The packet to handle.
