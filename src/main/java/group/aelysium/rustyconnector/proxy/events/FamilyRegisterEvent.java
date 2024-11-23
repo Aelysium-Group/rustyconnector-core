@@ -8,10 +8,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents a new family being created.
  */
-public class FamilyDeleteEvent extends Event {
+public class FamilyRegisterEvent extends Event {
     protected final Particle.Flux<? extends Family> family;
 
-    public FamilyDeleteEvent(@NotNull Particle.Flux<? extends Family> family) {
+    public FamilyRegisterEvent(@NotNull Particle.Flux<? extends Family> family) {
         super();
         this.family = family;
     }

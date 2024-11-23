@@ -85,7 +85,7 @@ public class ScalarFamily extends Family {
     public long players() {
         AtomicLong value = new AtomicLong(0);
         this.loadBalancer().executeNow(l -> {
-                l.unlockedServers().forEach(s -> value.addAndGet(s.players()));
+                l.lockedServers().forEach(s -> value.addAndGet(s.players()));
                 l.unlockedServers().forEach(s -> value.addAndGet(s.players()));
             }
         );

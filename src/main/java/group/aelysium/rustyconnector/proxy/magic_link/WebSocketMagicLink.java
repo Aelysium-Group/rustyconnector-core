@@ -180,7 +180,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
                             if (newValue > 0) return;
 
                             try {
-                                RC.EventManager().fireEvent(new ServerTimeoutEvent(server, flux));
+                                RC.EventManager().fireEvent(new ServerTimeoutEvent(server, f));
                             } catch (Exception ignore) {}
                             try {
                                 WsContext connection = this.clients.get(Packet.SourceIdentifier.server(server.id()));

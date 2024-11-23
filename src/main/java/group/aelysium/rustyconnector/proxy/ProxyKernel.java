@@ -95,11 +95,16 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
      * @param server The server to unregister.
      */
     public void unregisterServer(@NotNull Server server) {
-        RC.P.EventManager().fireEvent(new ServerUnregisterEvent(server));
-
         RC.P.Adapter().unregisterServer(server);
 
-        server.family().ifPresent(flux -> flux.executeNow(family -> family.removeServer(server)));
+        server.family().ifPresent(flux -> flux.executeNow(
+                family -> {
+                    family.removeServer(server);
+                    RC.P.EventManager().fireEvent(new ServerUnregisterEvent(server, family));
+                }, () -> {
+                    RC.P.EventManager().fireEvent(new ServerUnregisterEvent(server, null));
+                }
+                ));
     }
 
     /**

@@ -26,7 +26,7 @@ public abstract class Packet implements JSONParseable {
     protected final SourceIdentifier remote;
     protected final Map<String, Parameter> parameters;
     protected boolean successful = false;
-    protected String statusMessage = "The packet exists but has not been processed in any way.";
+    protected String statusMessage = "The packet was parsed properly but has not been processed in any way.";
     protected NanoID cacheID = null;
 
     /**
@@ -440,8 +440,9 @@ public abstract class Packet implements JSONParseable {
      * Local packets can be sent and await replies.
      */
     public static class Local extends Packet {
-        private Vector<PacketListener<Remote>> catchAlls = null;
-        private ConcurrentHashMap<String, Vector<PacketListener<? extends Remote>>> replyListeners = null;
+        private Vector<PacketListener.Function<Remote, PacketListener.Response>> catchAlls = null;
+        private ConcurrentHashMap<Class<? extends Remote>, Vector<PacketListener.Function<Remote, PacketListener.Response>>> replyListeners = null;
+        private ConcurrentHashMap<Type, Class<? extends Remote>> packetTypeMappings = null;
 
         public Local(@NotNull Integer version, @NotNull Packet.Type type, @NotNull Packet.SourceIdentifier sender, @NotNull Packet.SourceIdentifier target, @NotNull Map<String, Parameter> parameters) {
             super(
@@ -466,27 +467,39 @@ public abstract class Packet implements JSONParseable {
             return true;
         }
 
-        public <P extends Remote> void handleReply(P packet) throws IllegalCallerException {
-            if(this.replyListeners != null && this.replyListeners.containsKey(packet.type().toString()))
-                this.replyListeners.get(packet.type().toString()).forEach(l -> {
-                    try {
-                        Response response = ((PacketListener<P>) l).handle(packet);
-                        packet.status(response.successful, response.message);
-                        if(response.shouldSendPacket) packet.reply(response);
-                    } catch (Throwable e) {
-                        packet.status(false, e.getMessage());
-                    }
-                });
+        public <P extends Remote> void handleReply(P packet) throws Exception {
+            if (this.replyListeners == null && this.catchAlls == null) {
+                packet.status(false, "No listeners exist to handle this packet.");
+                return;
+            }
             if(this.catchAlls != null)
                 this.catchAlls.forEach(l -> {
                     try {
-                        Response response = l.handle(packet);
+                        PacketListener.Response response = l.apply(packet);
                         packet.status(response.successful, response.message);
                         if(response.shouldSendPacket) packet.reply(response);
                     } catch (Throwable e) {
+                        RC.Error(Error.from(e));
                         packet.status(false, e.getMessage());
                     }
                 });
+            if (this.replyListeners != null && this.packetTypeMappings != null) {
+                Class<? extends Remote> wrapperClass = this.packetTypeMappings.get(packet.type());
+                if(wrapperClass == null) return;
+
+                Remote wrapped = wrapperClass.getConstructor(Packet.class).newInstance(packet);
+
+                this.replyListeners.get(wrapperClass).forEach(l -> {
+                    try {
+                        PacketListener.Response response = l.apply(wrapped);
+                        packet.status(response.successful, response.message);
+                        if (response.shouldSendPacket()) packet.reply(response);
+                    } catch (Throwable e) {
+                        RC.Error(Error.from(e));
+                        packet.status(false, e.getMessage());
+                    }
+                });
+            }
         }
 
         /**
@@ -495,9 +508,9 @@ public abstract class Packet implements JSONParseable {
          * it will be impossible for packets to be sent as a response to this one.
          * @param handler The handler for the packet.
          */
-        public void onReply(@NotNull PacketListener<Remote> handler) {
+        public void onReply(@NotNull PacketListener.Function<? extends Remote, PacketListener.Response> handler) {
             if(this.catchAlls == null) this.catchAlls = new Vector<>();
-            this.catchAlls.add(handler);
+            this.catchAlls.add((PacketListener.Function<Remote, PacketListener.Response>) handler);
             RC.MagicLink().awaitReply(this);
         }
 
@@ -509,14 +522,18 @@ public abstract class Packet implements JSONParseable {
          * @param clazz The class of the packet to listen for.
          * @param handler The handler for the packet.
          */
-        public <T extends Remote> void onReply(@NotNull Class<T> clazz, @NotNull PacketListener<T> handler) {
+        public <T extends Remote> void onReply(@NotNull Class<T> clazz, @NotNull PacketListener.Function<T, PacketListener.Response> handler) {
             if(!clazz.isAnnotationPresent(PacketType.class)) {
                 RC.Error(Error.from("Packet classes used for PacketListeners must be annotated with @PacketType.").whileAttempting("To register a new packet listener."));
                 return;
             }
-            String type = clazz.getAnnotation(PacketType.class).value();
+            PacketType annotation = clazz.getAnnotation(PacketType.class);
+            if(this.packetTypeMappings == null) this.packetTypeMappings = new ConcurrentHashMap<>();
+            this.packetTypeMappings.putIfAbsent(Type.parseString(annotation.value()), clazz);
+
             if(this.replyListeners == null) this.replyListeners = new ConcurrentHashMap<>();
-            this.replyListeners.computeIfAbsent(type, k->new Vector<>()).add(handler);
+            this.replyListeners.computeIfAbsent(clazz, k->new Vector<>()).add((PacketListener.Function<Remote, PacketListener.Response>) handler);
+
             RC.MagicLink().awaitReply(this);
         }
     }
@@ -577,63 +594,15 @@ public abstract class Packet implements JSONParseable {
          * @param response The response data to generate a packet from.
          * @return The packet that was sent.
          */
-        public @NotNull Packet.Local reply(@NotNull Response response) {
+        public @NotNull Packet.Local reply(@NotNull PacketListener.Response response) {
             Builder.PrepareForSending prepareForSending = Packet.New()
                     .identification(Type.from("RC", "R"))
                     .parameter(MagicLinkCore.Packets.Response.Parameters.SUCCESSFUL, new Parameter(this.successful))
                     .parameter(MagicLinkCore.Packets.Response.Parameters.MESSAGE, response.message);
 
-            this.parameters.forEach(prepareForSending::parameter);
+            response.parameters.forEach(prepareForSending::parameter);
 
             return prepareForSending.addressTo(this).send();
-        }
-    }
-
-    public static class Response {
-        public final boolean successful;
-        public final String message;
-        public final Map<String, Parameter> parameters;
-        protected boolean shouldSendPacket = false;
-
-        protected Response (
-                boolean successful,
-                @NotNull String message,
-                @NotNull Map<String, Parameter> parameters
-        ) {
-            this.successful = successful;
-            this.message = message;
-            this.parameters = parameters;
-        }
-
-        public boolean shouldSendPacket() {
-            return this.shouldSendPacket;
-        }
-
-        public static Response success(@NotNull String message) {
-            return success(message, Map.of());
-        }
-        public static Response success(@NotNull String message, @NotNull Map<String, Parameter> parameters) {
-            return new Response(true, message, parameters);
-        }
-
-        public static Response error(@NotNull String message) {
-            return error(message, Map.of());
-        }
-        public static Response error(@NotNull String message, @NotNull Map<String, Parameter> parameters) {
-            return new Response(false, message, parameters);
-        }
-
-        public static Response canceled() {
-            return error("The action performed by this packet has been canceled.");
-        }
-
-        /**
-         * Marks this response as a packet reply.
-         * This will cause the response to be sent back to the original sender once it's been returned to a PacketListener.
-         */
-        public Response asReply() {
-            this.shouldSendPacket = true;
-            return this;
         }
     }
 

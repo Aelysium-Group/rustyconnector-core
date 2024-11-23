@@ -2,6 +2,7 @@ package group.aelysium.rustyconnector.proxy.family;
 
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.ara.Particle;
+import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketType;
 import group.aelysium.rustyconnector.proxy.Permission;
@@ -223,9 +224,11 @@ public final class Server implements ISortable, Player.Connectable {
      */
     public boolean lock() {
         try {
-            this.family().orElseThrow().executeNow(f -> f.lockServer(this));
+            this.family().orElseThrow().executeNow(f -> f.lockServer(Server.this));
             return true;
-        } catch(Exception ignore) {}
+        } catch(Exception e) {
+            RC.Error(Error.from(e).whileAttempting("To lock the server "+this.id()));
+        }
         return false;
     }
 
@@ -238,9 +241,11 @@ public final class Server implements ISortable, Player.Connectable {
      */
     public boolean unlock() {
         try {
-            this.family().orElseThrow().executeNow(f -> f.unlockServer(this));
+            this.family().orElseThrow().executeNow(f -> f.unlockServer(Server.this));
             return true;
-        } catch(Exception ignore) {}
+        } catch(Exception e) {
+            RC.Error(Error.from(e).whileAttempting("To unlock the server "+this.id()));
+        }
         return false;
     }
 
@@ -299,7 +304,7 @@ public final class Server implements ISortable, Player.Connectable {
 
     @Override
     public long players() {
-        return 0;
+        return this.playerCount.get();
     }
 
     @Override

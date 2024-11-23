@@ -27,7 +27,7 @@ public class TimeoutCache<K, V> implements Closure, Map<K, V> {
     private void evaluateThenRunAgain() {
         long now = Instant.now().getEpochSecond();
         this.map.entrySet().removeIf(entry -> {
-            boolean shouldRemove = entry.getValue().olderThan(now);
+            boolean shouldRemove = entry.getValue().expiration() < now;
             if(shouldRemove) this.onTimeout.forEach(c -> c.accept(entry.getValue().value()));
             return shouldRemove;
         });
@@ -123,10 +123,6 @@ public class TimeoutCache<K, V> implements Closure, Map<K, V> {
 
         public V value() {
             return value;
-        }
-
-        public boolean olderThan(long epochSeconds) {
-            return this.expiration < epochSeconds;
         }
 
         public long expiration() {

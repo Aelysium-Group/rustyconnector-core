@@ -105,7 +105,8 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                         .build();
                 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
-                if (response.statusCode() != 200) throw new RuntimeException("Magic Link response: " + response.body());
+                if(response.statusCode() == 401) throw new RuntimeException("The your aes.private is invalid. Make sure the server has the same aes.private as the proxy!");
+                if(response.statusCode() != 200) throw new RuntimeException("Magic Link response: " + response.body());
 
                 Gson gson = new Gson();
                 JsonObject object = gson.fromJson(response.body(), JsonObject.class);
@@ -178,7 +179,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
             }
             this.client.set(null);
         } catch (Exception e) {
-            RC.Error(Error.from(e));
+            RC.Error(Error.from(e).urgent(true));
         }
         RC.Adapter().log(Component.text("Unable to establish Magic Link connection to the proxy. Trying again after "+this.retryDelay.value()+" "+this.retryDelay.unit()+"."));
         this.executor.schedule(this::connect, this.retryDelay.value(), this.retryDelay.unit());
@@ -209,43 +210,40 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
         if(this.closed.get()) return;
         if(this.stopHeartbeat.get()) return;
 
-        ServerKernel flame = RustyConnector.Server().orElseThrow().orElseThrow();
+        ServerKernel kernel = RC.S.Kernel();
 
         try {
             Packet.Builder.PrepareForSending packetBuilder = Packet.New()
                     .identification(Packet.Type.from("RC","P"))
-                    .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.DISPLAY_NAME, flame.displayName())
+                    .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.DISPLAY_NAME, kernel.displayName())
                     .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.SERVER_REGISTRATION, this.registration())
-                    .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.ADDRESS, flame.address().getHostName()+":"+flame.address().getPort())
-                    .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.PLAYER_COUNT, new Packet.Parameter(flame.playerCount()));
+                    .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.ADDRESS, kernel.address().getHostName()+":"+kernel.address().getPort())
+                    .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.PLAYER_COUNT, new Packet.Parameter(kernel.playerCount()));
 
             if(Environment.podName().isPresent())
                 packetBuilder.parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.POD_NAME, Environment.podName().orElseThrow());
             Packet.Local packet = packetBuilder.addressTo(Packet.SourceIdentifier.allAvailableProxies()).send();
 
-            packet.onReply(Packets.Response.class, new PacketListener<>() {
-                @Override
-                public Packet.Response handle(Packets.Response p) throws Exception {
-                    if (p.successful()) {
-                        boolean canceled = RC.S.EventManager().fireEvent(new ConnectedEvent()).get(1, TimeUnit.MINUTES);
-                        if (canceled) return Packet.Response.canceled();
+            packet.onReply(Packets.Response.class, p -> {
+                if (p.successful()) {
+                    boolean canceled = RC.S.EventManager().fireEvent(new ConnectedEvent()).get(1, TimeUnit.MINUTES);
+                    if (canceled) return PacketListener.Response.canceled();
 
-                        if (!WebSocketMagicLink.this.registered.get()) {
-                            int interval = p.parameters().get(Packets.Handshake.Success.Parameters.INTERVAL).getAsInt();
-                            RC.S.Adapter().log(Component.text(p.message(), NamedTextColor.GREEN));
-                            RC.S.Adapter().log(Component.text("This server will now ping the proxy every " + interval + " seconds...", NamedTextColor.GRAY));
-                            RC.S.MagicLink().setDelay(interval);
-                            WebSocketMagicLink.this.registered.set(true);
-                        }
-                        return Packet.Response.success("Successfully informed the server of its registration.");
+                    if (!WebSocketMagicLink.this.registered.get()) {
+                        int interval = p.parameters().get(Packets.Handshake.Success.Parameters.INTERVAL).getAsInt();
+                        RC.S.Adapter().log(Component.text(p.message(), NamedTextColor.GREEN));
+                        RC.S.Adapter().log(Component.text("This server will now ping the proxy every " + interval + " seconds...", NamedTextColor.GRAY));
+                        RC.S.MagicLink().setDelay(interval);
+                        WebSocketMagicLink.this.registered.set(true);
                     }
-
-                    RC.S.Adapter().log(Component.text(p.message(), NamedTextColor.RED));
-                    RC.S.Adapter().log(Component.text("Waiting 1 minute before trying again...", NamedTextColor.GRAY));
-                    RC.S.MagicLink().setDelay(60);
-                    WebSocketMagicLink.this.registered.set(false);
-                    return Packet.Response.success("Successfully informed the server of its failure to register.");
+                    return PacketListener.Response.success("Successfully informed the server of its registration.");
                 }
+
+                RC.S.Adapter().log(Component.text(p.message(), NamedTextColor.RED));
+                RC.S.Adapter().log(Component.text("Waiting 1 minute before trying again...", NamedTextColor.GRAY));
+                RC.S.MagicLink().setDelay(60);
+                WebSocketMagicLink.this.registered.set(false);
+                return PacketListener.Response.success("Successfully informed the server of its failure to register.");
             });
         } catch (Exception e) {
             RC.Error(Error.from(e));

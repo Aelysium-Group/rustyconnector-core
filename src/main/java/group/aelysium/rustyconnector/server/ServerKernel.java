@@ -55,7 +55,7 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
     }
 
     /**
-     * The number of playerRegistry on this server.
+     * The number of players on this server.
      * @return {@link Integer}
      */
     public int playerCount() {
@@ -63,7 +63,7 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
     }
 
     /**
-     * Locks this Server so that playerRegistry can't join it via the family's load balancer.
+     * Locks this Server so that players can't join it via the family's load balancer.
      */
     public CompletableFuture<MagicLinkCore.Packets.Response> lock() {
         CompletableFuture<MagicLinkCore.Packets.Response> response = new CompletableFuture<>();
@@ -71,18 +71,15 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
                 .identification(Packet.Type.from("RC","SL"))
                 .addressTo(Packet.SourceIdentifier.allAvailableProxies())
                 .send()
-                .onReply(MagicLinkCore.Packets.Response.class, new PacketListener<>() {
-                    @Override
-                    public Packet.Response handle(MagicLinkCore.Packets.Response packet) {
-                        response.complete(packet);
-                        return Packet.Response.success("Successfully indicated the status of the server's lock request");
-                    }
+                .onReply(MagicLinkCore.Packets.Response.class, packet -> {
+                    response.complete(packet);
+                    return PacketListener.Response.success("Successfully indicated the status of the server's lock request");
                 });
         return response;
     }
 
     /**
-     * Unlocks this Server so that playerRegistry can join it via the family's load balancer.
+     * Unlocks this Server so that players can join it via the family's load balancer.
      */
     public CompletableFuture<MagicLinkCore.Packets.Response> unlock() {
         CompletableFuture<MagicLinkCore.Packets.Response> response = new CompletableFuture<>();
@@ -90,12 +87,9 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
                 .identification(Packet.Type.from("RC","SU"))
                 .addressTo(Packet.SourceIdentifier.allAvailableProxies())
                 .send()
-                .onReply(MagicLinkCore.Packets.Response.class, new PacketListener<>() {
-                    @Override
-                    public Packet.Response handle(MagicLinkCore.Packets.Response packet) {
-                        response.complete(packet);
-                        return Packet.Response.success("Successfully indicated the status of the server's unlock request");
-                    }
+                .onReply(MagicLinkCore.Packets.Response.class, packet -> {
+                    response.complete(packet);
+                    return PacketListener.Response.success("Successfully indicated the status of the server's unlock request");
                 });
         return response;
     }
@@ -115,12 +109,9 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
                 .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.GENERIC_TARGET, target)
                 .addressTo(Packet.SourceIdentifier.allAvailableProxies())
                 .send()
-                .onReply(MagicLinkCore.Packets.Response.class, new PacketListener<>() {
-                    @Override
-                    public Packet.Response handle(MagicLinkCore.Packets.Response packet) {
-                        response.complete(packet);
-                        return Packet.Response.success("Successfully indicated the status of the server's send request.");
-                    }
+                .onReply(MagicLinkCore.Packets.Response.class, packet -> {
+                    response.complete(packet);
+                    return PacketListener.Response.success("Successfully indicated the status of the server's send request.");
                 });
         return response;
     }
@@ -139,12 +130,9 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
                 .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.TARGET_SERVER, target)
                 .addressTo(Packet.SourceIdentifier.allAvailableProxies())
                 .send()
-                .onReply(MagicLinkCore.Packets.Response.class, new PacketListener<>() {
-                    @Override
-                    public Packet.Response handle(MagicLinkCore.Packets.Response packet) {
-                        response.complete(packet);
-                        return Packet.Response.success("Successfully indicated the status of the server's send request.");
-                    }
+                .onReply(MagicLinkCore.Packets.Response.class, packet -> {
+                    response.complete(packet);
+                    return PacketListener.Response.success("Successfully indicated the status of the server's send request.");
                 });
         return response;
     }
@@ -163,12 +151,9 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
                 .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.TARGET_FAMILY, target)
                 .addressTo(Packet.SourceIdentifier.allAvailableProxies())
                 .send()
-                .onReply(MagicLinkCore.Packets.Response.class, new PacketListener<>() {
-                    @Override
-                    public Packet.Response handle(MagicLinkCore.Packets.Response packet) {
-                        response.complete(packet);
-                        return Packet.Response.success("Successfully indicated the status of the server's send request.");
-                    }
+                .onReply(MagicLinkCore.Packets.Response.class, packet -> {
+                    response.complete(packet);
+                    return PacketListener.Response.success("Successfully indicated the status of the server's send request.");
                 });
         return response;
     }

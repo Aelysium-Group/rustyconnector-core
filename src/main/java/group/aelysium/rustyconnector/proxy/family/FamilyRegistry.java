@@ -4,14 +4,14 @@ import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.plugins.Plugin;
 import group.aelysium.rustyconnector.common.errors.Error;
-import group.aelysium.rustyconnector.proxy.events.FamilyCreateEvent;
-import group.aelysium.rustyconnector.proxy.events.FamilyDeleteEvent;
+import group.aelysium.rustyconnector.proxy.events.FamilyRegisterEvent;
+import group.aelysium.rustyconnector.proxy.events.FamilyUnregisterEvent;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class FamilyRegistry implements Plugin {
     private final Map<String, Flux<? extends Family>> families = new ConcurrentHashMap<>();
@@ -55,7 +55,7 @@ public class FamilyRegistry implements Plugin {
     public void register(@NotNull String id, @NotNull Flux<? extends Family> family) {
         this.families.put(id, family);
         try {
-            RC.EventManager().fireEvent(new FamilyCreateEvent(family));
+            RC.EventManager().fireEvent(new FamilyRegisterEvent(family));
         } catch (Exception ignore) {}
     }
 
@@ -64,11 +64,12 @@ public class FamilyRegistry implements Plugin {
      * @param id The id of the family to remove.
      */
     public void unregister(@NotNull String id) {
-        Flux<? extends Family> flux = this.families.remove(id);
-        if(flux == null) return;
         try {
-            RC.EventManager().fireEvent(new FamilyDeleteEvent(flux));
+            RC.EventManager().fireEvent(new FamilyUnregisterEvent(this.families.get(id).observe(3, TimeUnit.SECONDS)));
         } catch (Exception ignore) {}
+
+        Flux<? extends Family> flux = this.families.remove(id);
+        flux.close();
     }
 
     /**

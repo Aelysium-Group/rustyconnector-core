@@ -16,12 +16,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-public class SendPlayerListener extends PacketListener<MagicLinkCore.Packets.SendPlayer> {
-    public SendPlayerListener() {
-        this.responsesAsPacketReplies = true;
-    }
-
-    public Packet.Response handle(MagicLinkCore.Packets.SendPlayer packet) throws Exception {
+public class SendPlayerListener {
+    @PacketListener(MagicLinkCore.Packets.SendPlayer.class)
+    public PacketListener.Response handle(MagicLinkCore.Packets.SendPlayer packet) throws Exception {
         if(packet.targetFamily().isEmpty() && packet.targetServer().isEmpty() && packet.genericTarget().isEmpty())
             throw new IllegalStateException("You must define either a target family or server.");
         if(packet.playerUUID().isEmpty() && packet.playerUsername().isEmpty())
@@ -67,6 +64,6 @@ public class SendPlayerListener extends PacketListener<MagicLinkCore.Packets.Sen
             if(!result.connected()) throw new RuntimeException("Unable to connect the player to that server.");
         }
 
-        return Packet.Response.success("Successfully sent "+player.username()+"!").asReply();
+        return PacketListener.Response.success("Successfully sent "+player.username()+"!").asReply();
     }
 }

@@ -83,7 +83,7 @@ public class LiquidTimestamp implements Comparable<LiquidTimestamp> {
             case SECONDS -> time += ((long) this.value);
         }
 
-        return time * 1000;
+        return time;
     }
 
     /**
@@ -99,7 +99,7 @@ public class LiquidTimestamp implements Comparable<LiquidTimestamp> {
             case SECONDS -> time -= ((long) this.value);
         }
 
-        return time * 1000;
+        return time;
     }
 
     @Override

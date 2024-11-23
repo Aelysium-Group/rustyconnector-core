@@ -9,8 +9,9 @@ import group.aelysium.rustyconnector.proxy.family.Server;
 
 import java.util.NoSuchElementException;
 
-public class ServerLockListener extends PacketListener<Server.Packets.Lock> {
-    public Packet.Response handle(Server.Packets.Lock packet) {
+public class ServerLockListener {
+    @PacketListener(Server.Packets.Lock.class)
+    public PacketListener.Response handle(Server.Packets.Lock packet) {
         try {
             Server server = RC.P.Server(packet.local().id())
                     .orElseThrow(()->new NoSuchElementException("No server with the id "+packet.local().id()+" exists."));
@@ -20,10 +21,10 @@ public class ServerLockListener extends PacketListener<Server.Packets.Lock> {
             if(!success) throw new RuntimeException("An unknown error prevented the locking of the server: "+server.id()+" "+server.property("velocity_registration_name").orElse(""));
 
             RC.EventManager().fireEvent(new ServerLockedEvent(server.family().orElseThrow(), server));
-            return Packet.Response.success("Successfully locked the server.").asReply();
+            return PacketListener.Response.success("Successfully locked the server.").asReply();
         } catch (Exception e) {
             RC.Error(Error.from(e));
-            return Packet.Response.error("There was an issue locking the server. Check the proxy for more details. "+e.getMessage()).asReply();
+            return PacketListener.Response.error("There was an issue locking the server. Check the proxy for more details. "+e.getMessage()).asReply();
         }
     }
 }

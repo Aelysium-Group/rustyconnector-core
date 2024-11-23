@@ -48,15 +48,17 @@ public abstract class MagicLinkCore implements Plugin {
      * Registers a new packet listener to MagicLink.
      * @param listener The listener to use.
      */
-    public void listen(PacketListener<? extends Packet.Remote> listener) {
+    public void listen(Object listener) {
         for (Method method : listener.getClass().getDeclaredMethods()) {
-            if(!method.getName().equals("handle")) continue;
+            if(!method.isAnnotationPresent(PacketListener.class)) continue;
+            PacketListener annotation = method.getAnnotation(PacketListener.class);
             try {
                 Parameter firstParameter = method.getParameters()[0];
 
-                if(Packet.Remote.class.equals(firstParameter.getType())) continue;
-                if(!Packet.Remote.class.isAssignableFrom(firstParameter.getType()))
-                    throw new NoSuchMethodException("You can only listen for packets of type Packet.Remote. The requested class is " + firstParameter.getType().getName());
+                if(!annotation.value().equals(firstParameter.getType()))
+                    throw new NoSuchMethodException("Methods annotated with @PacketListener must contain a single parameter of the same class type as defined on @PacketListener. Expected "+annotation.value().getName()+" but got "+firstParameter.getType().getName());
+                if(!method.getReturnType().equals(PacketListener.Response.class))
+                    throw new NoSuchMethodException("Methods annotated with @PacketListener must have PacketListener.Response as the return type.");
 
                 Class<? extends Packet.Remote> packetWrapper = (Class<? extends Packet.Remote>) firstParameter.getType();
                 if(!packetWrapper.isAnnotationPresent(PacketType.class))
@@ -67,12 +69,12 @@ public abstract class MagicLinkCore implements Plugin {
 
                 this.listeners.computeIfAbsent(type, k -> new Vector<>()).add(packet -> {
                     try {
-                        Packet.Response response = (Packet.Response) method.invoke(listener, constructor.newInstance(packet));
+                        PacketListener.Response response = (PacketListener.Response) method.invoke(listener, constructor.newInstance(packet));
                         packet.status(response.successful, response.message);
-                        if(response.shouldSendPacket() || listener.responsesAsPacketReplies()) packet.reply(response);
+                        if(response.shouldSendPacket() || annotation.responsesAsPacketReplies()) packet.reply(response);
                     } catch (InvocationTargetException e) {
                         RC.Error(Error.from(e));
-                        if(!listener.responseFromExceptions()) return;
+                        if(!annotation.responseFromExceptions()) return;
 
                         if(e.getCause() == null) {
                             packet.status(false, e.getMessage());
@@ -80,14 +82,14 @@ public abstract class MagicLinkCore implements Plugin {
                         }
                         packet.status(false, e.getMessage());
 
-                        if(listener.responsesAsPacketReplies()) packet.reply(Packet.Response.error(e.getMessage()));
+                        if(annotation.responsesAsPacketReplies()) packet.reply(PacketListener.Response.error(e.getMessage()));
                     } catch (Exception e) {
                         RC.Error(Error.from(e));
-                        if(!listener.responseFromExceptions()) return;
+                        if(!annotation.responseFromExceptions()) return;
 
                         packet.status(false, e.getMessage());
 
-                        if(listener.responsesAsPacketReplies()) packet.reply(Packet.Response.error(e.getMessage()));
+                        if(annotation.responsesAsPacketReplies()) packet.reply(PacketListener.Response.error(e.getMessage()));
                     }
                 });
             } catch (Exception e) {
@@ -105,7 +107,7 @@ public abstract class MagicLinkCore implements Plugin {
 
     /**
      * Queues the packet into the reply queue.
-     * If a reply is received which contains a Reply Target pointing to this packet any listeners registered in {@link group.aelysium.rustyconnector.common.magic_link.packet.Packet.Local#onReply(PacketListener)} will run.
+     * If a reply is received which contains a Reply Target pointing to this packet any listeners registered in will run.
      * @param packet The packet to queue.
      */
     public void awaitReply(Packet.Local packet) {

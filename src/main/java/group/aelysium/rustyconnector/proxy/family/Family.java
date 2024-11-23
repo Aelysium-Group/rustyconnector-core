@@ -13,11 +13,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 public abstract class Family implements Player.Connectable, Server.Container, Plugin {
+    protected final Map<String, Flux<? extends Plugin>> plugins = new ConcurrentHashMap<>();
     private final Map<String, Object> properties = new ConcurrentHashMap<>();
     protected final String id;
     protected final String displayName;
     protected final String parent;
-    protected final Map<String, Flux<? extends Plugin>> plugins = new ConcurrentHashMap<>();
 
     protected Family(
             @NotNull String id,

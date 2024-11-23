@@ -7,8 +7,9 @@ import group.aelysium.rustyconnector.server.ServerKernel;
 import group.aelysium.rustyconnector.server.events.TimeoutEvent;
 import group.aelysium.rustyconnector.RC;
 
-public class HandshakeStalePingListener extends PacketListener<MagicLinkCore.Packets.StalePing> {
-    public Packet.Response handle(MagicLinkCore.Packets.StalePing packet) {
+public class HandshakeStalePingListener {
+    @PacketListener(MagicLinkCore.Packets.StalePing.class)
+    public PacketListener.Response handle(MagicLinkCore.Packets.StalePing packet) {
         ServerKernel flame = RC.S.Kernel();
         RC.S.EventManager().fireEvent(new TimeoutEvent());
 
@@ -21,6 +22,6 @@ public class HandshakeStalePingListener extends PacketListener<MagicLinkCore.Pac
                 .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.PLAYER_COUNT, new Packet.Parameter(flame.playerCount()))
                 .addressTo(packet)
                 .send();
-        return Packet.Response.success("Successfully pinged the proxy.");
+        return PacketListener.Response.success("Successfully pinged the proxy.");
     }
 }

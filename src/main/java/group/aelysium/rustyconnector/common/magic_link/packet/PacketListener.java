@@ -1,30 +1,78 @@
 package group.aelysium.rustyconnector.common.magic_link.packet;
 
-public abstract class PacketListener<P extends Packet.Remote> {
+import org.jetbrains.annotations.NotNull;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.util.Map;
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface PacketListener {
+    Class<? extends Packet.Remote> value();
+
     /**
-     * If enabled, exceptions thrown by the {@link #handle(Packet.Remote)} method will be
+     * If enabled, exceptions thrown by the listener method will be turned into an error {@link Response}.
      */
-    protected boolean responseFromExceptions = true;
+    boolean responseFromExceptions() default true;
     /**
-     * If enabled, overrides {@link Packet.Response#shouldSendPacket()} and will always send a packet when a response is made.<br/>
+     * If enabled, overrides {@link Response#shouldSendPacket()} and will always send a packet when a response is made.<br/>
      * Note that if {@link #responseFromExceptions} is false, exceptions won't send replies to packets since no response was generated from said exception.
      */
-    protected boolean responsesAsPacketReplies = false;
+    boolean responsesAsPacketReplies() default false;
 
-    public boolean responseFromExceptions() {
-        return this.responseFromExceptions;
-    }
-    public boolean responsesAsPacketReplies() {
-        return this.responsesAsPacketReplies;
+    @FunctionalInterface
+    interface Function<T, R> {
+        R apply(T t) throws Exception;
     }
 
-    /**
-     * Handles a packet and returns a response.
-     * @param packet The packet to handle.
-     * @return A response indicating either success or failure. Responses may also trigger a reply packet is sent.
-     * @throws Exception If there's an issue handling the packet.
-     *                   Listener exceptions are automatically handled by MagicLink.
-     *                   If you want a packet response to be generated from listener exceptions, look at {@link #responseFromExceptions} and {@link #responsesAsPacketReplies}.
-     */
-    public abstract Packet.Response handle(P packet) throws Exception;
+    class Response {
+        public final boolean successful;
+        public final String message;
+        public final Map<String, Packet.Parameter> parameters;
+        protected boolean shouldSendPacket = false;
+
+        protected Response (
+                boolean successful,
+                @NotNull String message,
+                @NotNull Map<String, Packet.Parameter> parameters
+        ) {
+            this.successful = successful;
+            this.message = message;
+            this.parameters = parameters;
+        }
+
+        public boolean shouldSendPacket() {
+            return this.shouldSendPacket;
+        }
+
+        public static Response success(@NotNull String message) {
+            return success(message, Map.of());
+        }
+        public static Response success(@NotNull String message, @NotNull Map<String, Packet.Parameter> parameters) {
+            return new Response(true, message, parameters);
+        }
+
+        public static Response error(@NotNull String message) {
+            return error(message, Map.of());
+        }
+        public static Response error(@NotNull String message, @NotNull Map<String, Packet.Parameter> parameters) {
+            return new Response(false, message, parameters);
+        }
+
+        public static Response canceled() {
+            return error("The action performed by this packet has been canceled.");
+        }
+
+        /**
+         * Marks this response as a packet reply.
+         * This will cause the response to be sent back to the original sender once it's been returned to a PacketListener.
+         */
+        public Response asReply() {
+            this.shouldSendPacket = true;
+            return this;
+        }
+    }
 }

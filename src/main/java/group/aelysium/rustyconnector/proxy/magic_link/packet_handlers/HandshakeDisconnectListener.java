@@ -6,12 +6,13 @@ import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.proxy.family.Server;
 
-public class HandshakeDisconnectListener extends PacketListener<MagicLinkCore.Packets.Disconnect> {
-    public Packet.Response handle(MagicLinkCore.Packets.Disconnect packet) {
+public class HandshakeDisconnectListener {
+    @PacketListener(MagicLinkCore.Packets.Disconnect.class)
+    public PacketListener.Response handle(MagicLinkCore.Packets.Disconnect packet) {
         Server server = RC.P.Server(packet.local().id()).orElseThrow();
 
         RC.P.Kernel().unregisterServer(server);
 
-        return Packet.Response.success("Successfully disconnected from the proxy.");
+        return PacketListener.Response.success("Successfully disconnected from the proxy.");
     }
 }

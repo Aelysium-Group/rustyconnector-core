@@ -216,7 +216,7 @@ public abstract class LoadBalancer implements Server.Container, Plugin {
 
     @Override
     public boolean isLocked(@NotNull Server server) {
-        return false;
+        return this.lockedServers.contains(server);
     }
 
     @Override

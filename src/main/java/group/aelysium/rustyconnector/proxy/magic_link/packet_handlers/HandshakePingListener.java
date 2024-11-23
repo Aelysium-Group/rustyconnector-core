@@ -15,14 +15,15 @@ import java.security.InvalidAlgorithmParameterException;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-public class HandshakePingListener extends PacketListener<MagicLinkCore.Packets.Handshake.Ping> {
-    public Packet.Response handle(WebSocketMagicLink.Packets.Handshake.Ping packet) {
+public class HandshakePingListener {
+    @PacketListener(MagicLinkCore.Packets.Handshake.Ping.class)
+    public PacketListener.Response handle(WebSocketMagicLink.Packets.Handshake.Ping packet) {
         try {
             Server server = RC.P.Server(packet.local().id()).orElseThrow();
 
             server.setTimeout(15);
             server.setPlayerCount(packet.playerCount());
-            return Packet.Response.success("Refreshed the server's timeout!");
+            return PacketListener.Response.success("Refreshed the server's timeout!");
         } catch (Exception ignore) {}
 
         MagicLinkCore.Proxy magicLink = RC.P.MagicLink();
@@ -53,7 +54,7 @@ public class HandshakePingListener extends PacketListener<MagicLinkCore.Packets.
             );
             RC.P.Kernel().registerServer(familyFlux, configuration);
 
-            return Packet.Response.success(
+            return PacketListener.Response.success(
                     "Connected to the proxy! Registered into the family `"+family.id()+"` using the configuration `"+packet.serverRegistration()+"`.",
                     Map.of(
                             WebSocketMagicLink.Packets.Handshake.Success.Parameters.INTERVAL, new Packet.Parameter(10)
@@ -61,7 +62,7 @@ public class HandshakePingListener extends PacketListener<MagicLinkCore.Packets.
             ).asReply();
         } catch(Exception e) {
             RC.Error(Error.from(e));
-            return Packet.Response.error("Attempt to connect to proxy failed! " + e.getMessage()).asReply();
+            return PacketListener.Response.error("Attempt to connect to proxy failed! " + e.getMessage()).asReply();
         }
     }
 }
