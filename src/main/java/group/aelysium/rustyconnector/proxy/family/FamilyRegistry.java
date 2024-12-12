@@ -2,18 +2,18 @@ package group.aelysium.rustyconnector.proxy.family;
 
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.plugins.Plugin;
 import group.aelysium.rustyconnector.common.errors.Error;
+import group.aelysium.rustyconnector.common.plugins.PluginHolder;
+import group.aelysium.rustyconnector.common.plugins.PluginTinder;
 import group.aelysium.rustyconnector.proxy.events.FamilyRegisterEvent;
 import group.aelysium.rustyconnector.proxy.events.FamilyUnregisterEvent;
-import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-public class FamilyRegistry implements Plugin {
+public class FamilyRegistry implements PluginHolder, Particle {
     private final Map<String, Flux<? extends Family>> families = new ConcurrentHashMap<>();
     private String rootFamily = null;
 
@@ -43,7 +43,7 @@ public class FamilyRegistry implements Plugin {
      * Finds a family based on an id.
      * @param id The id to search for.
      */
-    public Optional<Particle.Flux<? extends Family>> find(@NotNull String id) {
+    public Optional<Flux<? extends Family>> find(@NotNull String id) {
         return Optional.ofNullable(this.families.get(id));
     }
 
@@ -73,7 +73,7 @@ public class FamilyRegistry implements Plugin {
     }
 
     /**
-     * Gets a list of all familyRegistry.
+     * Gets a list of all families.
      */
     public List<Flux<? extends Family>> fetchAll() {
         return this.families.values().stream().toList();
@@ -84,7 +84,7 @@ public class FamilyRegistry implements Plugin {
     }
 
     /**
-     * Get the number of familyRegistry in this {@link FamilyRegistry}.
+     * Get the number of families in this {@link FamilyRegistry}.
      * @return {@link Integer}
      */
     public int size() {
@@ -92,8 +92,8 @@ public class FamilyRegistry implements Plugin {
     }
 
     public void close() {
-        // Teardown logic for any familyRegistry that need it
-        for (Particle.Flux<? extends Family> family : this.families.values()) {
+        // Teardown logic for any families that need it
+        for (Flux<? extends Family> family : this.families.values()) {
             try {
                 family.close();
             } catch (Exception e) {
@@ -105,31 +105,19 @@ public class FamilyRegistry implements Plugin {
     }
 
     @Override
-    public @NotNull String name() {
-        return FamilyRegistry.class.getSimpleName();
-    }
-
-    @Override
-    public @NotNull String description() {
-        return "Provides indexed access to families.";
-    }
-
-    @Override
-    public @NotNull Component details() {
-        return RC.Lang("rustyconnector-familyRegistryDetails").generate(this);
-    }
-
-    @Override
-    public boolean hasPlugins() {
-        return true;
-    }
-
-    @Override
-    public @NotNull Map<String, Flux<? extends Plugin>> plugins() {
+    public Map<String, Flux<? extends Particle>> plugins() {
         return Collections.unmodifiableMap(this.families);
     }
 
-    public static class Tinder extends Particle.Tinder<FamilyRegistry> {
+    public static class Tinder extends PluginTinder<FamilyRegistry> {
+        public Tinder() {
+            super(
+                "FamilyRegistry",
+                "Provides indexed access to families.",
+                "rustyconnector-familyRegistryDetails"
+            );
+        }
+
         @Override
         public @NotNull FamilyRegistry ignite() throws Exception {
             return new FamilyRegistry();
@@ -137,7 +125,7 @@ public class FamilyRegistry implements Plugin {
 
         /**
          * Returns the default configuration for a FamilyRegistry manager.
-         * This default configuration has no root family set and no initial familyRegistry loaded.
+         * This default configuration has no root family set and no initial families loaded.
          */
         public static Tinder DEFAULT_CONFIGURATION = new Tinder();
     }

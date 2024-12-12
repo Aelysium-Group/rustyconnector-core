@@ -4,12 +4,12 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
-import group.aelysium.rustyconnector.common.plugins.Plugin;
 import group.aelysium.rustyconnector.common.RCKernel;
 import group.aelysium.rustyconnector.common.errors.ErrorRegistry;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
+import group.aelysium.rustyconnector.common.plugins.PluginTinder;
 import group.aelysium.rustyconnector.proxy.ProxyKernel;
 import group.aelysium.rustyconnector.proxy.util.Version;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
@@ -29,7 +29,7 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
             @NotNull String id,
             @NotNull Version version,
             @NotNull ServerAdapter adapter,
-            @NotNull List<? extends Flux<? extends Plugin>> plugins,
+            @NotNull List<? extends Flux<? extends Particle>> plugins,
             @Nullable String displayName,
             @NotNull InetSocketAddress address
     ) {
@@ -163,51 +163,40 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
      * Parameters listed in the constructor are required, any other parameters are
      * technically optional because they also have default implementations.
      */
-    public static class Tinder extends Particle.Tinder<ServerKernel> {
-        private final String id;
-        private ServerAdapter adapter;
-        private Particle.Tinder<? extends LangLibrary> lang = LangLibrary.Tinder.DEFAULT_LANG_LIBRARY;
+    public static class Tinder extends RCKernel.Tinder<ServerAdapter, ServerKernel> {
         private final String displayName;
         private final InetSocketAddress address;
-        private Particle.Tinder<? extends MagicLinkCore.Server> magicLink;
-        private Particle.Tinder<? extends EventManager> eventManager = EventManager.Tinder.DEFAULT_CONFIGURATION;
-        private Particle.Tinder<? extends ErrorRegistry> errors = ErrorRegistry.Tinder.DEFAULT_CONFIGURATION;
+        private PluginTinder<? extends MagicLinkCore.Server> magicLink;
 
         public Tinder(
                 @NotNull String id,
                 @NotNull ServerAdapter adapter,
                 @Nullable String displayName,
                 @NotNull InetSocketAddress address,
-                @NotNull Particle.Tinder<? extends MagicLinkCore.Server> magicLink
+                @NotNull PluginTinder<? extends MagicLinkCore.Server> magicLink
                 ) {
-            this.id = id;
-            this.adapter = adapter;
+            super(id, adapter);
             this.displayName = displayName;
             this.address = address;
             this.magicLink = magicLink;
         }
 
-        public Tinder lang(@NotNull Particle.Tinder<? extends LangLibrary> lang) {
+        public Tinder lang(@NotNull PluginTinder<? extends LangLibrary> lang) {
             this.lang = lang;
             return this;
         }
 
-        public Tinder magicLink(@NotNull Particle.Tinder<? extends MagicLinkCore.Server> magicLink) {
+        public Tinder magicLink(@NotNull PluginTinder<? extends MagicLinkCore.Server> magicLink) {
             this.magicLink = magicLink;
             return this;
         }
 
-        public Tinder adapter(@NotNull ServerAdapter adapter) {
-            this.adapter = adapter;
-            return this;
-        }
-
-        public Tinder eventManager(@NotNull Particle.Tinder<? extends EventManager> eventManager) {
+        public Tinder eventManager(@NotNull PluginTinder<? extends EventManager> eventManager) {
             this.eventManager = eventManager;
             return this;
         }
 
-        public Tinder errorHandler(@NotNull Particle.Tinder<? extends ErrorRegistry> errorHandler) {
+        public Tinder errorHandler(@NotNull PluginTinder<? extends ErrorRegistry> errorHandler) {
             this.errors = errorHandler;
             return this;
         }

@@ -215,13 +215,13 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
         try {
             Packet.Builder.PrepareForSending packetBuilder = Packet.New()
                     .identification(Packet.Type.from("RC","P"))
-                    .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.DISPLAY_NAME, kernel.displayName())
-                    .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.SERVER_REGISTRATION, this.registration())
-                    .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.ADDRESS, kernel.address().getHostName()+":"+kernel.address().getPort())
-                    .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.PLAYER_COUNT, new Packet.Parameter(kernel.playerCount()));
+                    .parameter(MagicLinkCore.Packets.Ping.Parameters.DISPLAY_NAME, kernel.displayName())
+                    .parameter(MagicLinkCore.Packets.Ping.Parameters.SERVER_REGISTRATION, this.registration())
+                    .parameter(MagicLinkCore.Packets.Ping.Parameters.ADDRESS, kernel.address().getHostName()+":"+kernel.address().getPort())
+                    .parameter(MagicLinkCore.Packets.Ping.Parameters.PLAYER_COUNT, new Packet.Parameter(kernel.playerCount()));
 
             if(Environment.podName().isPresent())
-                packetBuilder.parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.POD_NAME, Environment.podName().orElseThrow());
+                packetBuilder.parameter(MagicLinkCore.Packets.Ping.Parameters.POD_NAME, Environment.podName().orElseThrow());
             Packet.Local packet = packetBuilder.addressTo(Packet.SourceIdentifier.allAvailableProxies()).send();
 
             packet.onReply(Packets.Response.class, p -> {
@@ -230,7 +230,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                     if (canceled) return PacketListener.Response.canceled();
 
                     if (!WebSocketMagicLink.this.registered.get()) {
-                        int interval = p.parameters().get(Packets.Handshake.Success.Parameters.INTERVAL).getAsInt();
+                        int interval = p.parameters().get("i").getAsInt();
                         RC.S.Adapter().log(Component.text(p.message(), NamedTextColor.GREEN));
                         RC.S.Adapter().log(Component.text("This server will now ping the proxy every " + interval + " seconds...", NamedTextColor.GRAY));
                         RC.S.MagicLink().setDelay(interval);
@@ -275,7 +275,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
         } catch (Exception ignore) {}
     }
 
-    public static class Tinder extends Particle.Tinder<WebSocketMagicLink> {
+    public static class Tinder extends MagicLinkCore.Tinder<WebSocketMagicLink> {
         private final URL httpAddress;
         private final Packet.SourceIdentifier self;
         private final AES cryptor;
@@ -290,6 +290,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                 @NotNull String serverRegistration,
                 @Nullable IPV6Broadcaster broadcaster
                 ) {
+            super();
             this.httpAddress = httpAddress;
             this.cryptor = cryptor;
             this.self = self;

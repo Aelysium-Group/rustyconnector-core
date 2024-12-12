@@ -2,8 +2,8 @@ package group.aelysium.rustyconnector.common.lang;
 
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.plugins.Plugin;
 import group.aelysium.rustyconnector.common.errors.Error;
+import group.aelysium.rustyconnector.common.plugins.PluginTinder;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +15,7 @@ import java.util.function.Function;
 
 import static net.kyori.adventure.text.Component.newline;
 
-public class LangLibrary implements Plugin {
+public class LangLibrary implements Particle {
     private final Map<String, LangNode> nodes = new ConcurrentHashMap<>();
     private final ASCIIAlphabet asciiAlphabet;
 
@@ -189,35 +189,16 @@ public class LangLibrary implements Plugin {
         };
     }
 
-    @Override
-    public @NotNull String name() {
-        return LangLibrary.class.getSimpleName();
-    }
-
-    @Override
-    public @NotNull String description() {
-        return "Provides declarative language services.";
-    }
-
-    @Override
-    public @NotNull Component details() {
-        return RC.Lang("rustyconnector-langLibraryDetails").generate(this);
-    }
-
-    @Override
-    public boolean hasPlugins() {
-        return false;
-    }
-
-    @Override
-    public @NotNull Map<String, Flux<? extends Plugin>> plugins() {
-        return Map.of();
-    }
-
-    public static class Tinder extends Particle.Tinder<LangLibrary> {
+    public static class Tinder extends PluginTinder<LangLibrary> {
         private ASCIIAlphabet asciiAlphabet = DEFAULT_ASCII_ALPHABET;
 
-        public Tinder() {}
+        public Tinder() {
+            super(
+                "LangLibrary",
+                "Provides declarative language services.",
+                "rustyconnector-langLibraryDetails"
+            );
+        }
 
         public Tinder asciiAlphabet(ASCIIAlphabet asciiAlphabet) {
             this.asciiAlphabet = asciiAlphabet;

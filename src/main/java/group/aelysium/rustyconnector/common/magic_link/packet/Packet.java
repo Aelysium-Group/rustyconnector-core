@@ -340,6 +340,9 @@ public abstract class Packet implements JSONParseable {
             return source;
         }
 
+        public static SourceIdentifier from(@NotNull String id, @NotNull Origin origin) {
+            return new SourceIdentifier(id, origin);
+        }
         public static SourceIdentifier server(@NotNull String id) {
             return new SourceIdentifier(id, Origin.SERVER);
         }

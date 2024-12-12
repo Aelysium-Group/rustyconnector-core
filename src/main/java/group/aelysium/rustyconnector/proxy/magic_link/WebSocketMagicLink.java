@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.errors.Error;
+import group.aelysium.rustyconnector.common.plugins.PluginTinder;
 import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
 import group.aelysium.rustyconnector.common.magic_link.PacketCache;
 import group.aelysium.rustyconnector.common.crypt.AES;
@@ -35,14 +36,14 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
     protected final String endpoint;
     protected final Map<Packet.SourceIdentifier, WsContext> clients = new ConcurrentHashMap<>();
     protected final InetSocketAddress address;
-    private final Javalin server = Javalin.create(c -> {
+    private final Javalin server = Javalin.create(/*c -> {
         c.showJavalinBanner = false;
 
         //c.jetty.modifyWebSocketServletFactory(ws -> ws.setIdleTimeout(Duration.ofMinutes(15)));
 
         c.http.defaultContentType = ContentType.JSON;
         c.http.strictContentTypes = true;
-    });
+    }*/);
 
     protected WebSocketMagicLink(
             @NotNull InetSocketAddress address,
@@ -231,7 +232,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
         this.executor.shutdownNow();
     }
 
-    public static class Tinder extends Particle.Tinder<WebSocketMagicLink> {
+    public static class Tinder extends MagicLinkCore.Tinder<WebSocketMagicLink> {
         private final Packet.SourceIdentifier self;
         private final AES cryptor;
         private final PacketCache cache;
@@ -246,6 +247,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
                 @NotNull Map<String, ServerRegistrationConfiguration> registrationConfigurations,
                 @Nullable IPV6Broadcaster broadcaster
                 ) {
+            super();
             this.address = address;
             this.self = self;
             this.cryptor = cryptor;

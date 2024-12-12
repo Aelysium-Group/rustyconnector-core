@@ -16,10 +16,10 @@ public class HandshakeStalePingListener {
         RC.S.MagicLink().setDelay(5);
         Packet.New()
                 .identification(Packet.Type.from("RC", "SP"))
-                .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.ADDRESS, flame.address().getHostName() + ":" + flame.address().getPort())
-                .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.DISPLAY_NAME, flame.displayName())
-                .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.SERVER_REGISTRATION, RC.S.MagicLink().registration())
-                .parameter(MagicLinkCore.Packets.Handshake.Ping.Parameters.PLAYER_COUNT, new Packet.Parameter(flame.playerCount()))
+                .parameter(MagicLinkCore.Packets.Ping.Parameters.ADDRESS, flame.address().getHostName() + ":" + flame.address().getPort())
+                .parameter(MagicLinkCore.Packets.Ping.Parameters.DISPLAY_NAME, flame.displayName())
+                .parameter(MagicLinkCore.Packets.Ping.Parameters.SERVER_REGISTRATION, RC.S.MagicLink().registration())
+                .parameter(MagicLinkCore.Packets.Ping.Parameters.PLAYER_COUNT, new Packet.Parameter(flame.playerCount()))
                 .addressTo(packet)
                 .send();
         return PacketListener.Response.success("Successfully pinged the proxy.");

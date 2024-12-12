@@ -2,12 +2,12 @@ package group.aelysium.rustyconnector.proxy.family.scalar_family;
 
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
+import group.aelysium.rustyconnector.common.plugins.PluginTinder;
 import group.aelysium.rustyconnector.proxy.events.FamilyPreJoinEvent;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.LoadBalancer;
 import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.player.Player;
-import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,14 +26,14 @@ public class ScalarFamily extends Family {
             @NotNull String id,
             @Nullable String displayName,
             @Nullable String parent,
-            @NotNull Particle.Flux<LoadBalancer> loadBalancer
+            @NotNull Particle.Flux<? extends LoadBalancer> loadBalancer
     ) throws Exception {
         super(id, displayName, parent);
         this.installPlugin(loadBalancer);
     }
 
     public Particle.Flux<? extends LoadBalancer> loadBalancer() {
-        return (Flux<? extends LoadBalancer>) this.fetchPlugin("LoadBalancer").orElseThrow();
+        return this.plugins.fetchPlugin("LoadBalancer");
     }
 
     public void addServer(@NotNull Server server) {
@@ -138,23 +138,23 @@ public class ScalarFamily extends Family {
         this.plugins.forEach((k, v) -> v.close());
     }
 
-    @Override
-    public @NotNull String description() {
-        return "Provides state-less server collection services.";
-    }
-
-    public static class Tinder extends Particle.Tinder<ScalarFamily> {
+    public static class Tinder extends PluginTinder<ScalarFamily> {
         private final String id;
         private final String displayName;
         private final String parent;
-        private final Particle.Tinder<LoadBalancer> loadBalancer;
+        private final LoadBalancer.Tinder<?> loadBalancer;
 
         public Tinder(
                 @NotNull String id,
                 @Nullable String displayName,
                 @Nullable String parent,
-                Particle.Tinder<LoadBalancer> loadBalancer
+                LoadBalancer.Tinder<?> loadBalancer
         ) {
+            super(
+                "ScalarFamily",
+                "Provides load balancing services for stateless servers.",
+                "rustyconnector-scalarFamilyDetails"
+            );
             this.id = id;
             this.displayName = displayName;
             this.parent = parent;

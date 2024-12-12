@@ -1,49 +1,64 @@
 package group.aelysium.rustyconnector.common;
 
 import group.aelysium.ara.Particle;
-import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.plugins.Plugin;
+import group.aelysium.rustyconnector.common.errors.ErrorRegistry;
+import group.aelysium.rustyconnector.common.events.EventManager;
+import group.aelysium.rustyconnector.common.lang.LangLibrary;
+import group.aelysium.rustyconnector.common.plugins.PluginCollection;
+import group.aelysium.rustyconnector.common.plugins.PluginHolder;
+import group.aelysium.rustyconnector.common.plugins.PluginTinder;
+import group.aelysium.rustyconnector.proxy.ProxyAdapter;
+import group.aelysium.rustyconnector.proxy.ProxyKernel;
 import group.aelysium.rustyconnector.proxy.util.Version;
-import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
-public abstract class RCKernel<A extends RCAdapter> implements Plugin {
+public abstract class RCKernel<A extends RCAdapter> implements Particle, PluginHolder {
     protected final String id;
     protected final Version version;
     protected final A adapter;
-    protected final Map<String, Flux<? extends Plugin>> plugins = new ConcurrentHashMap<>();
+    protected final PluginCollection plugins = new PluginCollection();
 
     protected RCKernel(
             @NotNull String id,
             @NotNull Version version,
             @NotNull A adapter,
-            @NotNull List<? extends Flux<? extends Plugin>> plugins
+            @NotNull List<? extends Particle.Flux<? extends Particle>> plugins
     ) {
         this.id = id;
         this.version = version;
         this.adapter = adapter;
-        plugins.forEach(p -> {
+        plugins.forEach(f -> {
             try {
-                Plugin plugin = p.observe();
-                this.plugins.put(plugin.name(), p);
+                if(f.metadata("name") == null) throw new IllegalArgumentException("Plugins must have the metadata for `name`, `description`, and `details` added to their flux before they can be registered.");
+                if(f.metadata("description") == null) throw new IllegalArgumentException("Plugins must have the metadata for `name`, `description`, and `details` added to their flux before they can be registered.");
+                if(f.metadata("details") == null) throw new IllegalArgumentException("Plugins must have the metadata for `name`, `description`, and `details` added to their flux before they can be registered.");
+                f.observe();
+                this.plugins.registerPlugin(f);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         });
     }
 
-    public <T extends Plugin> Flux<T> fetchPlugin(String name) {
-        return (Flux<T>) this.plugins.get(name);
+    /**
+     * Registers a new plugin to the RustyConnector Kernel.
+     * This method does not care of the flux provided has been ignited or not, it's the callers job to ignite the flux.
+     * @param pluginName The name of the plugin to register.
+     * @param plugin The plugin flux to register.
+     * @throws IllegalStateException If a plugin already exists with the pluginName provided.
+     */
+    public void registerPlugin(@NotNull String pluginName, Particle.Flux<?> plugin) throws IllegalStateException {
+        this.plugins.registerPlugin(pluginName, plugin);
     }
-    public <T extends Plugin> Flux<T> fetchPlugin(Class<T> clazz) {
-        return (Flux<T>) this.plugins.get(clazz.getSimpleName());
+    public <T extends Particle> Particle.Flux<T> fetchPlugin(@NotNull String name) {
+        return this.plugins.fetchPlugin(name);
     }
 
-    public Map<String, Flux<? extends Particle>> allPlugins() {
-        return Map.copyOf(this.plugins);
+    @Override
+    public Map<String, Flux<? extends Particle>> plugins() {
+        return this.plugins.plugins();
     }
 
     /**
@@ -65,31 +80,30 @@ public abstract class RCKernel<A extends RCAdapter> implements Plugin {
         return this.adapter;
     }
 
-    public @NotNull String name() {
-        return "Kernel";
-    }
-
-    public @NotNull String description() {
-        return "The RustyConnector Kernel";
-    }
-
-    public @NotNull Component details() {
-        return RC.Lang("rustyconnector-kernelDetails").generate();
-    }
-
-    public boolean hasPlugins() {
-        return !this.plugins.isEmpty();
-    }
-
-    public @NotNull Map<String, Flux<? extends Plugin>> plugins() {
-         return Map.copyOf(this.plugins);
-    }
-
     @Override
-    public void close() {
-        this.plugins.forEach((k, v)->{
-            System.out.println(k);
-            v.close();
-        });
+    public void close() throws Exception {
+        this.plugins.close();
+    }
+
+    public static abstract class Tinder<B extends RCAdapter,T extends RCKernel<B>> extends PluginTinder<T> {
+        protected final String id;
+        protected final B adapter;
+        protected PluginTinder<? extends EventManager> eventManager = EventManager.Tinder.DEFAULT_CONFIGURATION;
+        protected PluginTinder<? extends ErrorRegistry> errors = ErrorRegistry.Tinder.DEFAULT_CONFIGURATION;
+        protected PluginTinder<? extends LangLibrary> lang = LangLibrary.Tinder.DEFAULT_LANG_LIBRARY;
+
+        public Tinder(
+                @NotNull String id,
+                @NotNull B adapter
+        ) {
+            super(
+                    "Kernel",
+                    "The RustyConnector Kernel",
+                    "rustyconnector-kernelDetails"
+            );
+
+            this.id = id;
+            this.adapter = adapter;
+        }
     }
 }

@@ -2,6 +2,7 @@ package group.aelysium.rustyconnector.proxy.family.load_balancing;
 
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.common.algorithm.WeightOnlyQuickSort;
+import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 import org.jetbrains.annotations.NotNull;
 
 public class RoundRobin extends LoadBalancer {
@@ -24,19 +25,22 @@ public class RoundRobin extends LoadBalancer {
     @Override
     public void singleSort() {}
 
-    public static class Tinder extends Particle.Tinder<LoadBalancer> {
-        private final LoadBalancer.Settings settings;
-
-        public Tinder(@NotNull LoadBalancer.Settings settings) {
-            this.settings = settings;
+    public static class Tinder extends LoadBalancer.Tinder<RoundRobin> {
+        public Tinder(
+                boolean weighted,
+                boolean persistence,
+                int attempts,
+                @NotNull LiquidTimestamp rebalance
+        ) {
+            super(weighted, persistence, attempts, rebalance);
         }
 
         @Override
         public @NotNull RoundRobin ignite() throws Exception {
             return new RoundRobin(
-                    this.settings.weighted(),
-                    this.settings.persistence(),
-                    this.settings.attempts()
+                    this.weighted,
+                    this.persistence,
+                    this.attempts
             );
         }
     }

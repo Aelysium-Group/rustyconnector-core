@@ -1,18 +1,18 @@
 package group.aelysium.rustyconnector.proxy.family.load_balancing;
 
+import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.plugins.Plugin;
+import group.aelysium.rustyconnector.common.plugins.PluginTinder;
 import group.aelysium.rustyconnector.proxy.events.*;
 import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
-import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.*;
 
-public abstract class LoadBalancer implements Server.Container, Plugin {
+public abstract class LoadBalancer implements Server.Container, Particle {
     protected final ScheduledExecutorService executor;
     protected boolean weighted;
     protected boolean persistence;
@@ -227,36 +227,27 @@ public abstract class LoadBalancer implements Server.Container, Plugin {
         if(this.executor != null) this.executor.shutdownNow();
     }
 
-    @Override
-    public @NotNull String name() {
-        return "LoadBalancer";
-    }
+    public abstract static class Tinder<T extends LoadBalancer> extends PluginTinder<T> {
+        protected final boolean weighted;
+        protected final boolean persistence;
+        protected final int attempts;
+        protected final LiquidTimestamp rebalance;
 
-    @Override
-    public @NotNull String description() {
-        return "Provides server sorting capabilities.";
-    }
-
-    @Override
-    public @NotNull Component details() {
-        return RC.Lang("rustyconnector-loadBalancerDetails").generate(this);
-    }
-
-    @Override
-    public boolean hasPlugins() {
-        return false;
-    }
-
-    @Override
-    public @NotNull Map<String, Flux<? extends Plugin>> plugins() {
-        return Map.of();
-    }
-
-    public record Settings(
-            String algorithm,
+        public Tinder(
             boolean weighted,
             boolean persistence,
             int attempts,
-            LiquidTimestamp rebalance
-    ) {}
+            @NotNull LiquidTimestamp rebalance
+        ) {
+            super(
+                "LoadBalancer",
+                "Provides server sorting capabilities.",
+                "rustyconnector-loadBalancerDetails"
+            );
+            this.weighted = weighted;
+            this.persistence = persistence;
+            this.attempts = attempts;
+            this.rebalance = rebalance;
+        }
+    }
 }

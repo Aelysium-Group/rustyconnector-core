@@ -2,9 +2,9 @@ package group.aelysium.rustyconnector.proxy.family;
 
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.plugins.Plugin;
+import group.aelysium.rustyconnector.common.plugins.PluginCollection;
+import group.aelysium.rustyconnector.common.plugins.PluginHolder;
 import group.aelysium.rustyconnector.proxy.player.Player;
-import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,8 +12,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-public abstract class Family implements Player.Connectable, Server.Container, Plugin {
-    protected final Map<String, Flux<? extends Plugin>> plugins = new ConcurrentHashMap<>();
+public abstract class Family implements Player.Connectable, Server.Container, PluginHolder, Particle {
+    protected final PluginCollection plugins = new PluginCollection();
     private final Map<String, Object> properties = new ConcurrentHashMap<>();
     protected final String id;
     protected final String displayName;
@@ -24,7 +24,7 @@ public abstract class Family implements Player.Connectable, Server.Container, Pl
             @Nullable String displayName,
             @Nullable String parent
     ) {
-        if(id.length() > 24) throw new IllegalArgumentException("Family ID must be no longer than 24 characters. If you want a longer name for the family, use display name.");
+        if(id.length() > 16) throw new IllegalArgumentException("Family ID must be no longer than 16 characters. If you want a longer name for the family, use display name.");
         this.id = id;
         this.displayName = displayName;
         this.parent = parent;
@@ -81,7 +81,7 @@ public abstract class Family implements Player.Connectable, Server.Container, Pl
      * The parent of this family should always be either another family, or the root family.
      * If this family is the root family, this method will always return `null`.
      */
-    public @NotNull Optional<Flux<? extends Family>> parent() {
+    public @NotNull Optional<Particle.Flux<? extends Family>> parent() {
         if(this.parent == null) return Optional.empty();
         try {
             return RC.P.Families().find(this.parent);
@@ -95,10 +95,9 @@ public abstract class Family implements Player.Connectable, Server.Container, Pl
      * @param flux The flux to ignite the plugin from.
      * @throws Exception If there was an issue igniting the plugin's tinder. Or if a plugin already exists with the defined name.
      */
-    public void installPlugin(Particle.Flux<? extends Plugin> flux) throws Exception {
-        Plugin plugin = flux.observe(5, TimeUnit.MINUTES);
-        if(this.plugins.containsKey(plugin.name().toLowerCase())) throw new RuntimeException("A plugin with the name "+plugin.name()+" already exists on the family "+this.id);
-        this.plugins.put(plugin.name().toLowerCase(), flux);
+    public void installPlugin(Particle.Flux<?> flux) throws Exception {
+        flux.observe(10, TimeUnit.MINUTES);
+        this.plugins.registerPlugin(flux);
     }
 
     /**
@@ -107,7 +106,7 @@ public abstract class Family implements Player.Connectable, Server.Container, Pl
      * @return `true` if the plugin exists. `false` otherwise.
      */
     public boolean hasPlugin(String pluginName) {
-        return this.plugins.containsKey(pluginName.toLowerCase());
+        return this.plugins.contains(pluginName);
     }
 
     /**
@@ -115,8 +114,8 @@ public abstract class Family implements Player.Connectable, Server.Container, Pl
      * @param pluginName The name of the plugin to check for.
      * @return An optional containing the flux of the plugin if it exists. Otherwise, an empty optional.
      */
-    public <F extends Flux<? extends Plugin>> Optional<F> fetchPlugin(String pluginName) {
-        return Optional.ofNullable((F) this.plugins.get(pluginName.toLowerCase()));
+    public <F extends Particle> Optional<Particle.Flux<F>> fetchPlugin(String pluginName) {
+        return Optional.ofNullable(this.plugins.fetchPlugin(pluginName));
     }
 
     /**
@@ -127,13 +126,8 @@ public abstract class Family implements Player.Connectable, Server.Container, Pl
      * @throws Exception If there was an issue uninstalling the plugin.
      */
     public boolean uninstallPlugin(String pluginName) throws Exception {
-        String lowerCase = pluginName.toLowerCase();
-        if(!this.plugins.containsKey(lowerCase)) return false;
-        Flux<? extends Plugin> flux = this.plugins.get(lowerCase);
-
-        if(flux.exists()) flux.close();
-
-        this.plugins.remove(lowerCase);
+        if(!this.plugins.contains(pluginName)) return false;
+        this.plugins.unregister(pluginName);
         return true;
     }
 
@@ -146,27 +140,7 @@ public abstract class Family implements Player.Connectable, Server.Container, Pl
     }
 
     @Override
-    public @NotNull String name() {
-        return this.id();
-    }
-
-    @Override
-    public @NotNull String description() {
-        return "Provides server categorization services.";
-    }
-
-    @Override
-    public @NotNull Component details() {
-        return RC.Lang("rustyconnector-familyDetails").generate(this);
-    }
-
-    @Override
-    public boolean hasPlugins() {
-        return true;
-    }
-
-    @Override
-    public @NotNull Map<String, Flux<? extends Plugin>> plugins() {
-        return Collections.unmodifiableMap(this.plugins);
+    public Map<String, Particle.Flux<?>> plugins() {
+        return this.plugins.plugins();
     }
 }

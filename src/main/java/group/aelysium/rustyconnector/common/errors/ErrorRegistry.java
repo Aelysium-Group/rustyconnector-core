@@ -2,13 +2,12 @@ package group.aelysium.rustyconnector.common.errors;
 
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.plugins.Plugin;
-import net.kyori.adventure.text.Component;
+import group.aelysium.rustyconnector.common.plugins.PluginTinder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class ErrorRegistry implements Plugin {
+public class ErrorRegistry implements Particle {
     private final boolean logErrors;
     private final int cacheSize;
     private final Vector<Error> errors = new Vector<>() {
@@ -49,36 +48,17 @@ public class ErrorRegistry implements Plugin {
         this.errors.clear();
     }
 
-    @Override
-    public @NotNull String name() {
-        return ErrorRegistry.class.getSimpleName();
-    }
-
-    @Override
-    public @NotNull String description() {
-        return "Provides error capture and logging services.";
-    }
-
-    @Override
-    public @NotNull Component details() {
-        return RC.Lang("rustyconnector-errorRegistryDetails").generate(this);
-    }
-
-    @Override
-    public boolean hasPlugins() {
-        return false;
-    }
-
-    @Override
-    public @NotNull Map<String, Flux<? extends Plugin>> plugins() {
-        return Map.of();
-    }
-
-    public static class Tinder extends Particle.Tinder<ErrorRegistry> {
+    public static class Tinder extends PluginTinder<ErrorRegistry> {
         private boolean logErrors = false;
         private int cacheSize = 200;
 
-        public Tinder() {}
+        public Tinder() {
+            super(
+                "ErrorRegistry",
+                "Provides error capture and logging services.",
+                "rustyconnector-errorRegistryDetails"
+            );
+        }
 
         public Tinder logErrors(boolean logErrors) {
             this.logErrors = logErrors;
@@ -98,6 +78,6 @@ public class ErrorRegistry implements Plugin {
             );
         }
 
-        public static Particle.Tinder<? extends ErrorRegistry> DEFAULT_CONFIGURATION = new Tinder();
+        public static PluginTinder<? extends ErrorRegistry> DEFAULT_CONFIGURATION = new Tinder();
     }
 }

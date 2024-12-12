@@ -8,61 +8,59 @@ import group.aelysium.rustyconnector.proxy.ProxyKernel;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.ParameterizedType;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Vector;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 public class RustyConnector {
-    private static Particle.Flux<? extends RCKernel<?>> kernel = null;
+    private static final List<Consumer<Particle.Flux<RCKernel<?>>>> onStartHandlers = new Vector<>();
+    protected static final AtomicReference<Particle.Flux<? extends RCKernel<?>>> kernel = new AtomicReference<>(null);
 
     /**
-     * @return Either the Server kernel or the Proxy kernel if they exist.
+     * Registers a consumer which will run whenever the kernel's flux is available.
+     * If the kernel is already available, the consumer will run immediately.
+     * Any exceptions thrown by the consumer will be ignored, make sure you handle exceptions yourself.
+     * @param consumer The consumer to handle the kernel.
      */
-    public static Optional<Particle.Flux<? extends RCKernel<?>>> Kernel() {
+    public static void Kernel(Consumer<Particle.Flux<RCKernel<?>>> consumer) {
+        onStartHandlers.add(consumer);
         try {
-            return Optional.of(Server().orElseThrow());
+            consumer.accept((Particle.Flux<RCKernel<?>>) kernel.get());
         } catch (Exception ignore) {}
-        try {
-            return Optional.of(Proxy().orElseThrow());
-        } catch (Exception ignore) {}
-        return Optional.empty();
     }
 
     /**
-     * @return The RustyConnector Server kernel if it exists.
+     * Attempts to fetch the kernel flux immediately.
+     * @param <K> The type of the flux.
+     * @throws NoSuchElementException If no flux has been registered.
      */
-    public static Optional<Particle.Flux<? extends ServerKernel>> Server() {
-        if(kernel == null) return Optional.empty();
-        try {
-            return Optional.of((Particle.Flux<? extends ServerKernel>) kernel);
-        } catch (ClassCastException e) {
-            throw new NoSuchElementException("There is no registered RustyConnector Server Kernel.");
-        }
-    }
-
-    /**
-     * @return The RustyConnector Proxy kernel if it exists.
-     */
-    public static Optional<Particle.Flux<? extends ProxyKernel>> Proxy() throws IllegalAccessError {
-        if(kernel == null) return Optional.empty();
-        try {
-            return Optional.of((Particle.Flux<? extends ProxyKernel>) kernel);
-        } catch (ClassCastException e) {
-            throw new NoSuchElementException("There is no registered RustyConnector Proxy Kernel.");
-        }
+    public static <K extends RCKernel<?>> Particle.Flux<K> Kernel() throws NoSuchElementException {
+        return (Particle.Flux<K>) Optional.ofNullable(kernel.get()).orElseThrow();
     }
 
     public static RCKernel<? extends RCAdapter> registerAndIgnite(@NotNull Particle.Flux<? extends RCKernel<?>> flux) throws IllegalAccessError, Exception {
-        if (kernel != null) throw new IllegalAccessError("The RustyConnector kernel has already been established.");
-        kernel = flux;
-        return flux.observe();
+        Particle.Flux<? extends RCKernel<?>> kernelInstance = kernel.get();
+        if (kernelInstance != null) throw new IllegalAccessError("The RustyConnector kernel has already been established.");
+        kernel.set(flux);
+        RCKernel<?> kernel = flux.observe();
+        onStartHandlers.forEach(t->{
+            try {
+                t.accept((Particle.Flux<RCKernel<?>>) flux);
+            } catch (Exception ignore) {}
+        });
+        return kernel;
     }
 
     public static void unregister() throws Exception {
-        if(kernel == null) return;
+        Particle.Flux<? extends RCKernel<?>> kernelInstance = kernel.get();
+        if(kernelInstance == null) return;
 
-        kernel.close();
-        kernel = null;
+        kernelInstance.close();
+        kernel.set(null);
     }
 
     public static Class<?> getGenericType(Particle.Flux<? extends Particle> flux) {

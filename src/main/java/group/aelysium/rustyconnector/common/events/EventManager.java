@@ -2,12 +2,10 @@ package group.aelysium.rustyconnector.common.events;
 
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.plugins.Plugin;
 import group.aelysium.rustyconnector.common.algorithm.QuickSort;
 import group.aelysium.rustyconnector.common.errors.Error;
-import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
+import group.aelysium.rustyconnector.common.plugins.PluginTinder;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.ISortable;
-import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
@@ -17,7 +15,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 
-public class EventManager implements Plugin {
+public class EventManager implements Particle {
     private final ExecutorService executor = Executors.newCachedThreadPool();
     private final ConcurrentHashMap<Class<? extends Event>, Vector<SortableListener>> listeners = new ConcurrentHashMap<>();
 
@@ -117,32 +115,15 @@ public class EventManager implements Plugin {
         this.executor.shutdown();
     }
 
-    @Override
-    public @NotNull String name() {
-        return EventManager.class.getSimpleName();
-    }
+    public static class Tinder extends PluginTinder<EventManager> {
+        public Tinder() {
+            super(
+                "EventManager",
+                "Provides event bus services.",
+                "rustyconnector-eventManagerDetails"
+            );
+        }
 
-    @Override
-    public @NotNull String description() {
-        return "Provides event bus services.";
-    }
-
-    @Override
-    public @NotNull Component details() {
-        return RC.Lang("rustyconnector-eventManagerDetails").generate(this);
-    }
-
-    @Override
-    public boolean hasPlugins() {
-        return false;
-    }
-
-    @Override
-    public @NotNull Map<String, Flux<? extends Plugin>> plugins() {
-        return Map.of();
-    }
-
-    public static class Tinder extends Particle.Tinder<EventManager> {
         @Override
         public @NotNull EventManager ignite() throws Exception {
             return new EventManager();

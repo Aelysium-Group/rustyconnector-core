@@ -1,15 +1,13 @@
 package group.aelysium.rustyconnector.proxy.player;
 
 import group.aelysium.ara.Particle;
-import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.plugins.Plugin;
-import net.kyori.adventure.text.Component;
+import group.aelysium.rustyconnector.common.plugins.PluginTinder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class PlayerRegistry implements Plugin {
+public class PlayerRegistry implements Particle {
     private final Map<UUID, Player> playersUUID = new ConcurrentHashMap<>();
     private final Map<String, Player> playersUsername = new ConcurrentHashMap<>();
 
@@ -48,32 +46,15 @@ public class PlayerRegistry implements Plugin {
         this.playersUsername.clear();
     }
 
-    @Override
-    public @NotNull String name() {
-        return PlayerRegistry.class.getSimpleName();
-    }
+    public static class Tinder extends PluginTinder<PlayerRegistry> {
+        public Tinder() {
+            super(
+                "PlayerRegistry",
+                "Provides player access services.",
+                "rustyconnector-playerRegistryDetails"
+            );
+        }
 
-    @Override
-    public @NotNull String description() {
-        return "Provides player access services.";
-    }
-
-    @Override
-    public @NotNull Component details() {
-        return RC.Lang("rustyconnector-playerRegistryDetails").generate(this);
-    }
-
-    @Override
-    public boolean hasPlugins() {
-        return false;
-    }
-
-    @Override
-    public @NotNull Map<String, Flux<? extends Plugin>> plugins() {
-        return Map.of();
-    }
-
-    public static class Tinder extends Particle.Tinder<PlayerRegistry> {
         @Override
         public @NotNull PlayerRegistry ignite() throws Exception {
             return new PlayerRegistry();

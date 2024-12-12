@@ -1,6 +1,7 @@
 package group.aelysium.rustyconnector.proxy.family.load_balancing;
 
 import group.aelysium.ara.Particle;
+import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -12,7 +13,7 @@ import java.util.function.Function;
  * This system allows for any familyRegistry to take advantage of load balancers added by modules.
  */
 public class LoadBalancerAlgorithmExchange {
-    private static final Map<String, Function<LoadBalancer.Settings, Particle.Tinder<LoadBalancer>>> algorithms = new ConcurrentHashMap<>();
+    private static final Map<String, Function<Settings, LoadBalancer.Tinder<?>>> algorithms = new ConcurrentHashMap<>();
 
     /**
      * Register a new algorithm into the exchange.
@@ -20,7 +21,7 @@ public class LoadBalancerAlgorithmExchange {
      * @param initializer The initializer. The provided Object parameter should contain settings pertaining to generating a Tinder for the specified LoadBalancer.
      * @throws IllegalAccessException If you attempt to write using an algorithm that's already been registered.
      */
-    public static void registerAlgorithm(String algorithm, Function<LoadBalancer.Settings, Particle.Tinder<LoadBalancer>> initializer) throws IllegalAccessException {
+    public static void registerAlgorithm(String algorithm, Function<Settings, LoadBalancer.Tinder<?>> initializer) throws IllegalAccessException {
         if(algorithms.containsKey(algorithm.toUpperCase())) throw new IllegalAccessException("Algorithm "+algorithm.toUpperCase()+" already exists!");
         algorithms.putIfAbsent(algorithm, initializer);
     }
@@ -33,7 +34,7 @@ public class LoadBalancerAlgorithmExchange {
      * @throws NoSuchElementException If the provided algorithm doesn't exist.
      * @throws ExceptionInInitializerError If there was an exception while generating the Tinder.
      */
-    public static Particle.Tinder<LoadBalancer> generateTinder(String algorithm, LoadBalancer.Settings initializer) throws NoSuchElementException, ExceptionInInitializerError {
+    public static LoadBalancer.Tinder<?> generateTinder(String algorithm, Settings initializer) throws NoSuchElementException, ExceptionInInitializerError {
         if(!algorithms.containsKey(algorithm.toUpperCase())) throw new NoSuchElementException("Algorithm "+algorithm.toUpperCase()+" doesn't exist!");
         try {
             return algorithms.get(algorithm).apply(initializer);
@@ -41,4 +42,11 @@ public class LoadBalancerAlgorithmExchange {
             throw new ExceptionInInitializerError(e);
         }
     }
+
+    public record Settings (
+        boolean weighted,
+        boolean persistence,
+        int attempts,
+        LiquidTimestamp rebalance
+    ) {}
 }

@@ -16,8 +16,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class HandshakePingListener {
-    @PacketListener(MagicLinkCore.Packets.Handshake.Ping.class)
-    public PacketListener.Response handle(WebSocketMagicLink.Packets.Handshake.Ping packet) {
+    @PacketListener(MagicLinkCore.Packets.Ping.class)
+    public PacketListener.Response handle(WebSocketMagicLink.Packets.Ping packet) {
         try {
             Server server = RC.P.Server(packet.local().id()).orElseThrow();
 
@@ -37,6 +37,8 @@ public class HandshakePingListener {
             );
             Family family = familyFlux.access().get(10, TimeUnit.SECONDS);
 
+            String id = packet.local().id();
+
             RC.P.Server(packet.local().id()).ifPresent(m -> {
                 throw new RuntimeException("Server " + packet.local().id() + " can't be registered twice!");
             });
@@ -44,7 +46,7 @@ public class HandshakePingListener {
             String displayName = packet.displayName().orElse(null);
 
             Server.Configuration configuration = new Server.Configuration(
-                packet.local().id(),
+                id,
                 AddressUtil.parseAddress(packet.address()),
                 displayName == null ? null : (displayName.isBlank() || displayName.isEmpty() ? null : displayName),
                 config.soft_cap(),
@@ -57,7 +59,7 @@ public class HandshakePingListener {
             return PacketListener.Response.success(
                     "Connected to the proxy! Registered into the family `"+family.id()+"` using the configuration `"+packet.serverRegistration()+"`.",
                     Map.of(
-                            WebSocketMagicLink.Packets.Handshake.Success.Parameters.INTERVAL, new Packet.Parameter(10)
+                            "i", new Packet.Parameter(10)
                     )
             ).asReply();
         } catch(Exception e) {

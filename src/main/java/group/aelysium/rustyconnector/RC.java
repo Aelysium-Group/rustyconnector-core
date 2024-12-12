@@ -40,18 +40,19 @@ public interface RC {
      */
     interface P {
         static ProxyKernel Kernel() throws NoSuchElementException {
-            return RustyConnector.Proxy()
-                    .orElseThrow(()->new NoSuchElementException("No Proxy Kernel has been registered for RustyConnector."))
-                    .orElseThrow(()->new NoSuchElementException("The RustyConnector Proxy Kernel is currently unavailable. It might be rebooting."));
+            Particle.Flux<? extends RCKernel<?>> flux = RustyConnector.kernel.get();
+            if(flux == null) throw new NoSuchElementException("No Proxy Kernel has been registered for RustyConnector.");
+            if(!flux.exists()) throw new NoSuchElementException("The RustyConnector Proxy Kernel is currently unavailable. It might be rebooting.");
+            return (ProxyKernel) flux.orElseThrow();
         }
 
         static FamilyRegistry Families() throws NoSuchElementException {
-            return P.Kernel().fetchPlugin(FamilyRegistry.class)
+            return (FamilyRegistry) P.Kernel().fetchPlugin("FamilyRegistry")
                     .orElseThrow(()->new NoSuchElementException("The Family Registry is not currently available. It might be rebooting."));
         }
 
         static PlayerRegistry Players() throws NoSuchElementException {
-            return P.Kernel().fetchPlugin(PlayerRegistry.class)
+            return (PlayerRegistry) P.Kernel().fetchPlugin("PlayerRegistry")
                     .orElseThrow(()->new NoSuchElementException("The Player Registry is not currently available. It might be rebooting."));
         }
 
@@ -61,7 +62,7 @@ public interface RC {
         }
 
         static EventManager EventManager() throws NoSuchElementException {
-            return P.Kernel().fetchPlugin(EventManager.class)
+            return (EventManager) P.Kernel().fetchPlugin("EventManager")
                     .orElseThrow(()->new NoSuchElementException("The Event Manager is not currently available. It might be rebooting."));
         }
 
@@ -70,12 +71,12 @@ public interface RC {
         }
 
         static LangLibrary Lang() throws NoSuchElementException {
-            return P.Kernel().fetchPlugin(LangLibrary.class)
+            return (LangLibrary) P.Kernel().fetchPlugin("LangLibrary")
                     .orElseThrow(()->new NoSuchElementException("The Language Registry is not currently available. It might be rebooting."));
         }
 
         static ErrorRegistry Errors() {
-            return P.Kernel().fetchPlugin(ErrorRegistry.class)
+            return (ErrorRegistry) P.Kernel().fetchPlugin("ErrorRegistry")
                     .orElseThrow(()->new NoSuchElementException("The Error Registry is not currently available. It might be rebooting."));
         }
 
@@ -122,9 +123,10 @@ public interface RC {
      */
     interface S {
         static ServerKernel Kernel() throws NoSuchElementException {
-            return RustyConnector.Server()
-                    .orElseThrow(()->new NoSuchElementException("No Server Kernel has been registered for RustyConnector."))
-                    .orElseThrow(()->new NoSuchElementException("The RustyConnector Server Kernel is currently unavailable. It might be rebooting."));
+            Particle.Flux<? extends RCKernel<?>> flux = RustyConnector.kernel.get();
+            if(flux == null) throw new NoSuchElementException("No Server Kernel has been registered for RustyConnector.");
+            if(!flux.exists()) throw new NoSuchElementException("The RustyConnector Server Kernel is currently unavailable. It might be rebooting.");
+            return (ServerKernel) flux.orElseThrow();
         }
 
         static MagicLinkCore.Server MagicLink() throws NoSuchElementException {
@@ -137,17 +139,17 @@ public interface RC {
         }
 
         static LangLibrary Lang() throws NoSuchElementException {
-            return S.Kernel().fetchPlugin(LangLibrary.class)
+            return (LangLibrary) S.Kernel().fetchPlugin("LangLibrary")
                     .orElseThrow(()->new NoSuchElementException("The Language Registry is not currently available. It might be rebooting."));
         }
 
         static EventManager EventManager() throws NoSuchElementException {
-            return S.Kernel().fetchPlugin(EventManager.class)
+            return (EventManager) S.Kernel().fetchPlugin("EventManager")
                     .orElseThrow(()->new NoSuchElementException("The Event Manager is not currently available. It might be rebooting."));
         }
 
         static ErrorRegistry Errors() {
-            return S.Kernel().fetchPlugin(ErrorRegistry.class)
+            return (ErrorRegistry) S.Kernel().fetchPlugin("ErrorRegistry")
                     .orElseThrow(()->new NoSuchElementException("The Error Registry is not currently available. It might be rebooting."));
         }
     }

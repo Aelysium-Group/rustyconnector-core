@@ -1,10 +1,11 @@
 package group.aelysium.rustyconnector.common.magic_link;
 
+import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketType;
-import group.aelysium.rustyconnector.common.plugins.Plugin;
 import group.aelysium.rustyconnector.common.crypt.NanoID;
 import group.aelysium.rustyconnector.common.errors.Error;
+import group.aelysium.rustyconnector.common.plugins.PluginTinder;
 import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
 import group.aelysium.rustyconnector.common.cache.TimeoutCache;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
@@ -25,7 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-public abstract class MagicLinkCore implements Plugin {
+public abstract class MagicLinkCore implements Particle {
     protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private final TimeoutCache<NanoID, Packet.Local> packetsAwaitingReply = new TimeoutCache<>(LiquidTimestamp.from(15, TimeUnit.SECONDS));
     private final Map<String, List<Consumer<Packet.Remote>>> listeners = new ConcurrentHashMap<>();
@@ -172,75 +173,49 @@ public abstract class MagicLinkCore implements Plugin {
         }
     }
 
-    @Override
-    public @NotNull String name() {
-        return "MagicLink";
-    }
-
-    @Override
-    public @NotNull String description() {
-        return "Provides cross-server packet transmission services.";
-    }
-
-    @Override
-    public @NotNull Component details() {
-        return RC.Lang("rustyconnector-magicLinkDetails").generate(this);
-    }
-
-    @Override
-    public boolean hasPlugins() {
-        return false;
-    }
-
-    @Override
-    public @NotNull Map<String, Flux<? extends Plugin>> plugins() {
-        return Map.of();
+    public static abstract class Tinder<T extends MagicLinkCore> extends PluginTinder<T> {
+        public Tinder() {
+            super(
+                    "MagicLink",
+                    "Provides packet communication services for the proxy.",
+                    "rustyconnector-magicLinkDetails"
+            );
+        }
     }
 
     public interface Packets {
-        interface Handshake {
-            @PacketType("RC-P")
-            class Ping extends Packet.Remote {
-                public String address() {
-                    return this.parameters().get(Parameters.ADDRESS).getAsString();
-                }
-                public Optional<String> displayName() {
-                    Packet.Parameter displayName = this.parameters().get(Parameters.DISPLAY_NAME);
-                    if(displayName == null) return Optional.empty();
-                    return Optional.of(displayName.getAsString());
-                }
-                public String serverRegistration() {
-                    return this.parameters().get(Parameters.SERVER_REGISTRATION).getAsString();
-                }
-                public Integer playerCount() {
-                    return this.parameters().get(Parameters.PLAYER_COUNT).getAsInt();
-                }
-                public Optional<String> podName() {
-                    Packet.Parameter podName = this.parameters().get(Parameters.POD_NAME);
-                    if(podName == null) return Optional.empty();
-                    return Optional.of(podName.getAsString());
-                }
-
-                public Ping(Packet packet) {
-                    super(packet);
-                }
-
-                public interface Parameters {
-                    String ADDRESS = "a";
-                    String DISPLAY_NAME = "n";
-                    String SERVER_REGISTRATION = "sr";
-                    String PLAYER_COUNT = "pc";
-                    String POD_NAME = "pn";
-                }
+        @PacketType("RC-P")
+        class Ping extends Packet.Remote {
+            public String address() {
+                return this.parameters().get(Parameters.ADDRESS).getAsString();
+            }
+            public Optional<String> displayName() {
+                Packet.Parameter displayName = this.parameters().get(Parameters.DISPLAY_NAME);
+                if(displayName == null) return Optional.empty();
+                return Optional.of(displayName.getAsString());
+            }
+            public String serverRegistration() {
+                return this.parameters().get(Parameters.SERVER_REGISTRATION).getAsString();
+            }
+            public Integer playerCount() {
+                return this.parameters().get(Parameters.PLAYER_COUNT).getAsInt();
+            }
+            public Optional<String> podName() {
+                Packet.Parameter podName = this.parameters().get(Parameters.POD_NAME);
+                if(podName == null) return Optional.empty();
+                return Optional.of(podName.getAsString());
             }
 
-            /**
-             * Contains parameters used in the case of a successful MagicLink handshake.
-             */
-            interface Success {
-                interface Parameters {
-                    String INTERVAL = "i";
-                }
+            public Ping(Packet packet) {
+                super(packet);
+            }
+
+            public interface Parameters {
+                String ADDRESS = "a";
+                String DISPLAY_NAME = "n";
+                String SERVER_REGISTRATION = "sr";
+                String PLAYER_COUNT = "pc";
+                String POD_NAME = "pn";
             }
         }
 
@@ -294,7 +269,7 @@ public abstract class MagicLinkCore implements Plugin {
             }
             public Optional<String> targetFamily() {
                 try {
-                    return Optional.ofNullable(this.parameters().get(Parameters.TARGET_SERVER).getAsString());
+                    return Optional.ofNullable(this.parameters().get(Parameters.TARGET_FAMILY).getAsString());
                 } catch (NullPointerException ignore) {}
                 return Optional.empty();
             }

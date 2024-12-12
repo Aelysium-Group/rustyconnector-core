@@ -42,20 +42,23 @@ public class MostConnection extends LeastConnection {
         return "LoadBalancer (MostConnection): "+this.servers.size()+" items";
     }
 
-    public static class Tinder extends Particle.Tinder<LoadBalancer> {
-        private final LoadBalancer.Settings settings;
-
-        public Tinder(@NotNull LoadBalancer.Settings settings) {
-            this.settings = settings;
+    public static class Tinder extends LoadBalancer.Tinder<MostConnection> {
+        public Tinder(
+                boolean weighted,
+                boolean persistence,
+                int attempts,
+                @NotNull LiquidTimestamp rebalance
+        ) {
+            super(weighted, persistence, attempts, rebalance);
         }
 
         @Override
-        public @NotNull LoadBalancer ignite() throws Exception {
+        public @NotNull MostConnection ignite() throws Exception {
             return new MostConnection(
-                    this.settings.weighted(),
-                    this.settings.persistence(),
-                    this.settings.attempts(),
-                    this.settings.rebalance()
+                    this.weighted,
+                    this.persistence,
+                    this.attempts,
+                    this.rebalance
             );
         }
     }
