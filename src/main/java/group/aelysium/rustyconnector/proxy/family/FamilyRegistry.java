@@ -8,6 +8,7 @@ import group.aelysium.rustyconnector.common.plugins.PluginTinder;
 import group.aelysium.rustyconnector.proxy.events.FamilyRegisterEvent;
 import group.aelysium.rustyconnector.proxy.events.FamilyUnregisterEvent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,7 +36,8 @@ public class FamilyRegistry implements PluginHolder, Particle {
      * this will return `null`.
      * @return The root family or `null`
      */
-    public Flux<? extends Family> rootFamily() {
+    public @Nullable Flux<? extends Family> rootFamily() {
+        if(this.rootFamily == null) return null;
         return this.families.get(this.rootFamily);
     }
 

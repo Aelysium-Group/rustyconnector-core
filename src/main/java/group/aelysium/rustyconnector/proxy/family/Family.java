@@ -14,7 +14,10 @@ import java.util.concurrent.TimeUnit;
 
 public abstract class Family implements Player.Connectable, Server.Container, PluginHolder, Particle {
     protected final PluginCollection plugins = new PluginCollection();
-    private final Map<String, Object> properties = new ConcurrentHashMap<>();
+    private final Map<String, Object> metadata = new ConcurrentHashMap<>(Map.of(
+            "serverSoftCap", 30,
+            "serverHardCap", 40
+    ));
     protected final String id;
     protected final String displayName;
     protected final String parent;
@@ -22,49 +25,51 @@ public abstract class Family implements Player.Connectable, Server.Container, Pl
     protected Family(
             @NotNull String id,
             @Nullable String displayName,
-            @Nullable String parent
+            @Nullable String parent,
+            @NotNull Map<String, Object> metadata
     ) {
-        if(id.length() > 16) throw new IllegalArgumentException("Family ID must be no longer than 16 characters. If you want a longer name for the family, use display name.");
+        if(id.length() > 16) throw new IllegalArgumentException("Family names must be no longer than 16 characters. If you want a longer name for the family, use display name.");
+        if(id.isBlank()) throw new IllegalArgumentException("Please provide a valid family name.");
         this.id = id;
         this.displayName = displayName;
         this.parent = parent;
     }
 
     /**
-     * Stores a property in the Server.
-     * @param propertyName The name of the property to store.
-     * @param property The property to store.
-     * @return `true` if the property could be stored. `false` if the name of the property is already in use.
+     * Stores metadata in the family.
+     * @param propertyName The name of the metadata to store.
+     * @param property The metadata to store.
+     * @return `true` if the metadata could be stored. `false` if the name of the metadata is already in use.
      */
-    public boolean property(String propertyName, Object property) {
-        if(this.properties.containsKey(propertyName)) return false;
-        this.properties.put(propertyName, property);
+    public boolean metadata(String propertyName, Object property) {
+        if(this.metadata.containsKey(propertyName)) return false;
+        this.metadata.put(propertyName, property);
         return true;
     }
 
     /**
-     * Fetches a property from the server.
-     * @param propertyName The name of the property to fetch.
-     * @return An optional containing the property, or an empty property if no property could be found.
-     * @param <T> The type of the property that's being fetched.
+     * Fetches metadata from the family.
+     * @param propertyName The name of the metadata to fetch.
+     * @return An optional containing the metadata, or an empty metadata if no metadata could be found.
+     * @param <T> The type of the metadata that's being fetched.
      */
-    public <T> Optional<T> property(String propertyName) {
-        return Optional.ofNullable((T) this.properties.get(propertyName));
+    public <T> Optional<T> metadata(String propertyName) {
+        return Optional.ofNullable((T) this.metadata.get(propertyName));
     }
 
     /**
-     * Removes a property from the server.
-     * @param propertyName The name of the property to remove.
+     * Removes a metadata from the family.
+     * @param propertyName The name of the metadata to remove.
      */
-    public void dropProperty(String propertyName) {
-        this.properties.remove(propertyName);
+    public void dropMetadata(String propertyName) {
+        this.metadata.remove(propertyName);
     }
 
     /**
-     * @return A map containing all of this server's properties.
+     * @return A map containing all of this family's metadata.
      */
-    public Map<String, Object> properties() {
-        return Collections.unmodifiableMap(this.properties);
+    public Map<String, Object> metadata() {
+        return Collections.unmodifiableMap(this.metadata);
     }
 
     public @NotNull String id() {

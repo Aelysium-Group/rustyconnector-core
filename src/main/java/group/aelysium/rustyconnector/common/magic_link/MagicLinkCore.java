@@ -22,7 +22,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -42,7 +41,6 @@ public abstract class MagicLinkCore implements Particle {
         this.self = self;
         this.aes = aes;
         this.cache = cache;
-        packetsAwaitingReply.onTimeout(p -> RC.Adapter().log(Component.text("The packet "+p.type()+" has expired and isn't waiting for replies anymore.")));
     }
 
     /**
@@ -189,21 +187,26 @@ public abstract class MagicLinkCore implements Particle {
             public String address() {
                 return this.parameters().get(Parameters.ADDRESS).getAsString();
             }
-            public Optional<String> displayName() {
-                Packet.Parameter displayName = this.parameters().get(Parameters.DISPLAY_NAME);
-                if(displayName == null) return Optional.empty();
-                return Optional.of(displayName.getAsString());
-            }
-            public String serverRegistration() {
-                return this.parameters().get(Parameters.SERVER_REGISTRATION).getAsString();
+            public String targetFamily() {
+                return this.parameters().get(Parameters.TARGET_FAMILY).getAsString();
             }
             public Integer playerCount() {
                 return this.parameters().get(Parameters.PLAYER_COUNT).getAsInt();
             }
-            public Optional<String> podName() {
-                Packet.Parameter podName = this.parameters().get(Parameters.POD_NAME);
-                if(podName == null) return Optional.empty();
-                return Optional.of(podName.getAsString());
+
+            /**
+             * A list of all metadata carried by this packet.
+             * The Map should contain the exact same key-value pairs that were originally passed to it.
+             */
+            public @NotNull Map<String, Object> metadata() {
+                try {
+                    Map<String, Object> metadata = new HashMap<>();
+                    this.parameters().get(Parameters.METADATA).getAsJsonObject().entrySet().forEach(e->{
+                        metadata.put(e.getKey(), Parameter.fromJSON(e.getValue()).getOriginalValue());
+                    });
+                    return Collections.unmodifiableMap(metadata);
+                } catch (Exception ignore) {}
+                return Map.of();
             }
 
             public Ping(Packet packet) {
@@ -212,10 +215,9 @@ public abstract class MagicLinkCore implements Particle {
 
             public interface Parameters {
                 String ADDRESS = "a";
-                String DISPLAY_NAME = "n";
-                String SERVER_REGISTRATION = "sr";
+                String TARGET_FAMILY = "tf";
                 String PLAYER_COUNT = "pc";
-                String POD_NAME = "pn";
+                String METADATA = "m";
             }
         }
 
@@ -263,13 +265,15 @@ public abstract class MagicLinkCore implements Particle {
         class SendPlayer extends Packet.Remote {
             public Optional<String> targetServer() {
                 try {
-                    return Optional.ofNullable(this.parameters().get(Parameters.TARGET_SERVER).getAsString());
+                    if(!this.flags().contains(Flag.SERVER)) return Optional.empty();
+                    return genericTarget();
                 } catch (NullPointerException ignore) {}
                 return Optional.empty();
             }
             public Optional<String> targetFamily() {
                 try {
-                    return Optional.ofNullable(this.parameters().get(Parameters.TARGET_FAMILY).getAsString());
+                    if(!this.flags().contains(Flag.FAMILY)) return Optional.empty();
+                    return genericTarget();
                 } catch (NullPointerException ignore) {}
                 return Optional.empty();
             }
@@ -278,6 +282,27 @@ public abstract class MagicLinkCore implements Particle {
                     return Optional.ofNullable(this.parameters().get(Parameters.GENERIC_TARGET).getAsString());
                 } catch (NullPointerException ignore) {}
                     return Optional.empty();
+            }
+
+            public List<Flag> flags() {
+                try {
+                    String flagString = this.parameters().get(Parameters.FLAGS).getAsString();
+                    String[] flagArray = flagString.split("");
+                    List<Flag> flags = new ArrayList<>();
+
+                    for(String f : flagArray) {
+                        switch (f) {
+                            case "f" -> flags.add(Flag.FAMILY);
+                            case "s" -> flags.add(Flag.SERVER);
+                            case "i" -> flags.add(Flag.MINIMAL);  // i because mIninmal
+                            case "o" -> flags.add(Flag.MODERATE); // o because mOderate
+                            case "a" -> flags.add(Flag.AGGRESSIVE);
+                        }
+                    }
+
+                    return Collections.unmodifiableList(flags);
+                } catch (Exception ignore) {}
+                return List.of();
             }
 
             public Optional<UUID> playerUUID() {
@@ -307,29 +332,32 @@ public abstract class MagicLinkCore implements Particle {
             }
 
             public interface Parameters {
-                String TARGET_FAMILY = "f";
-                String TARGET_SERVER = "s";
                 String GENERIC_TARGET = "t";
                 String PLAYER = "p";
+                String FLAGS = "f";
+            }
+
+            public enum Flag {
+                FAMILY,
+                SERVER,
+                MINIMAL,
+                MODERATE,
+                AGGRESSIVE
             }
         }
     }
 
     public static abstract class Server extends MagicLinkCore {
         protected final AtomicInteger delay = new AtomicInteger(5);
-        protected final AtomicBoolean closed = new AtomicBoolean(false);
         protected IPV6Broadcaster broadcaster;
-        protected String registrationConfiguration;
 
         protected Server(
                 @NotNull Packet.@NotNull SourceIdentifier self,
                 @NotNull AES aes,
                 @NotNull PacketCache cache,
-                @NotNull String registrationConfiguration,
                 @Nullable IPV6Broadcaster broadcaster
         ) {
             super(self, aes, cache);
-            this.registrationConfiguration = registrationConfiguration;
             this.broadcaster = broadcaster;
         }
 
@@ -341,50 +369,18 @@ public abstract class MagicLinkCore implements Particle {
         public void setDelay(int delay) {
             this.delay.set(delay);
         }
-
-        /**
-         * Returns the registration that this Server will register into.
-         * @return The server's registration.
-         */
-        public String registration() {
-            return this.registrationConfiguration;
-        }
     }
 
     public static abstract class Proxy extends MagicLinkCore {
         protected IPV6Broadcaster broadcaster;
-        protected Map<String, ServerRegistrationConfiguration> registrationConfigurations;
-
         protected Proxy(
                 @NotNull Packet.@NotNull SourceIdentifier self,
                 @NotNull AES aes,
                 @NotNull PacketCache cache,
-                @NotNull Map<String, ServerRegistrationConfiguration> registrationConfigurations,
                 @Nullable IPV6Broadcaster broadcaster
         ) {
             super(self, aes, cache);
-            this.registrationConfigurations = registrationConfigurations;
             this.broadcaster = broadcaster;
         }
-
-        /**
-         * Fetches a Magic Link Server Config based on a name.
-         * `name` is considered to be the name of the file found in `magic_configs` on the Proxy, minus the file extension.
-         * @param name The name to look for.
-         */
-        public Optional<ServerRegistrationConfiguration> registrationConfig(String name) {
-            ServerRegistrationConfiguration settings = this.registrationConfigurations.get(name);
-            if(settings == null) return Optional.empty();
-            return Optional.of(settings);
-        }
-
-        public record ServerRegistrationConfiguration(
-                String family,
-                int weight,
-                int soft_cap,
-                int hard_cap
-        ) {
-            public static ServerRegistrationConfiguration DEFAULT_CONFIGURATION = new ServerRegistrationConfiguration("lobby", 0, 20, 30);
-        };
     }
 }

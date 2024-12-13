@@ -53,10 +53,9 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
             @NotNull Packet.SourceIdentifier self,
             @NotNull AES cryptor,
             @NotNull PacketCache cache,
-            @NotNull String registrationConfiguration,
             @Nullable IPV6Broadcaster broadcaster
     ) {
-        super(self, cryptor, cache, registrationConfiguration, broadcaster);
+        super(self, cryptor, cache, broadcaster);
         this.address = address;
         this.address = this.address.appendPath("bDaBMkmYdZ6r4iFExwW6UzJyNMDseWoS3HDa6FcyM7xNeCmtK98S3Mhp4o7g7oW6VB9CA6GuyH2pNhpQk3QvSmBUeCoUDZ6FXUsFCuVQC59CB2y22SBnGkMf9NMB9UWk");
         /*
@@ -213,15 +212,17 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
         ServerKernel kernel = RC.S.Kernel();
 
         try {
-            Packet.Builder.PrepareForSending packetBuilder = Packet.New()
-                    .identification(Packet.Type.from("RC","P"))
-                    .parameter(MagicLinkCore.Packets.Ping.Parameters.DISPLAY_NAME, kernel.displayName())
-                    .parameter(MagicLinkCore.Packets.Ping.Parameters.SERVER_REGISTRATION, this.registration())
-                    .parameter(MagicLinkCore.Packets.Ping.Parameters.ADDRESS, kernel.address().getHostName()+":"+kernel.address().getPort())
-                    .parameter(MagicLinkCore.Packets.Ping.Parameters.PLAYER_COUNT, new Packet.Parameter(kernel.playerCount()));
+            JsonObject metadata = new JsonObject();
+            kernel.parameterizedMetadata().forEach((k, v)->metadata.add(k, v.toJSON()));
 
-            if(Environment.podName().isPresent())
-                packetBuilder.parameter(MagicLinkCore.Packets.Ping.Parameters.POD_NAME, Environment.podName().orElseThrow());
+            Packet.Builder.PrepareForSending packetBuilder = Packet.New()
+                .identification(Packet.Type.from("RC","P"))
+                .parameter(MagicLinkCore.Packets.Ping.Parameters.TARGET_FAMILY, kernel.targetFamily())
+                .parameter(MagicLinkCore.Packets.Ping.Parameters.ADDRESS, kernel.address().getHostName()+":"+kernel.address().getPort())
+                .parameter(MagicLinkCore.Packets.Ping.Parameters.METADATA, new Packet.Parameter(metadata))
+                .parameter(MagicLinkCore.Packets.Ping.Parameters.PLAYER_COUNT, new Packet.Parameter(kernel.playerCount())
+            );
+
             Packet.Local packet = packetBuilder.addressTo(Packet.SourceIdentifier.allAvailableProxies()).send();
 
             packet.onReply(Packets.Response.class, p -> {
@@ -280,14 +281,12 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
         private final Packet.SourceIdentifier self;
         private final AES cryptor;
         private final PacketCache cache;
-        private final String serverRegistration;
         private final IPV6Broadcaster broadcaster;
         public Tinder(
                 @NotNull URL httpAddress,
                 @NotNull Packet.SourceIdentifier self,
                 @NotNull AES cryptor,
                 @NotNull PacketCache cache,
-                @NotNull String serverRegistration,
                 @Nullable IPV6Broadcaster broadcaster
                 ) {
             super();
@@ -295,7 +294,6 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
             this.cryptor = cryptor;
             this.self = self;
             this.cache = cache;
-            this.serverRegistration = serverRegistration;
             this.broadcaster = broadcaster;
         }
 
@@ -306,7 +304,6 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                     this.self,
                     this.cryptor,
                     this.cache,
-                    this.serverRegistration,
                     this.broadcaster
             );
         }

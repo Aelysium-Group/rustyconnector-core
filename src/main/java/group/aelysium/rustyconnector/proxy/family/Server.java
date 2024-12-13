@@ -22,75 +22,62 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class Server implements ISortable, Player.Connectable {
-    private final Map<String, Object> properties = new ConcurrentHashMap<>();
+    private final Map<String, Object> metadata = new ConcurrentHashMap<>(Map.of(
+            "softCap", 30,
+            "hardCap", 40
+    ));
     private final String id;
-    private final String displayName;
     private final InetSocketAddress address;
     private final AtomicLong playerCount = new AtomicLong(0);
-    private int weight;
-    private int softPlayerCap;
-    private int hardPlayerCap;
-    private AtomicInteger timeout;
+    private final AtomicInteger timeout = new AtomicInteger(15);
 
     public Server(
             @NotNull String id,
             @NotNull InetSocketAddress address,
-            @Nullable String displayName,
-            int softPlayerCap,
-            int hardPlayerCap,
-            int weight,
+            @NotNull Map<String, Object> metadata,
             int timeout
     ) {
         this.id = id;
         this.address = address;
-        if(displayName == null || displayName.isEmpty() || displayName.isBlank()) this.displayName = null;
-        else this.displayName = displayName;
-
-        this.weight = Math.max(weight, 0);
-
-        this.softPlayerCap = softPlayerCap;
-        this.hardPlayerCap = hardPlayerCap;
-
-        if(this.softPlayerCap > this.hardPlayerCap) this.softPlayerCap = this.hardPlayerCap;
-
-        this.timeout = new AtomicInteger(timeout);
+        this.timeout.set(timeout);
+        this.metadata.putAll(metadata);
     }
 
     /**
-     * Stores a property in the Server.
-     * @param propertyName The name of the property to store.
-     * @param property The property to store.
-     * @return `true` if the property could be stored. `false` if the name of the property is already in use.
+     * Stores metadata in the Server.
+     * @param propertyName The name of the metadata to store.
+     * @param property The metadata to store.
+     * @return `true` if the metadata could be stored. `false` if the name of the metadata is already in use.
      */
-    public boolean property(String propertyName, Object property) {
-        if(this.properties.containsKey(propertyName)) return false;
-        this.properties.put(propertyName, property);
+    public boolean metadata(String propertyName, Object property) {
+        if(this.metadata.containsKey(propertyName)) return false;
+        this.metadata.put(propertyName, property);
         return true;
     }
 
     /**
-     * Fetches a property from the server.
-     * @param propertyName The name of the property to fetch.
-     * @return An optional containing the property, or an empty property if no property could be found.
-     * @param <T> The type of the property that's being fetched.
+     * Fetches metadata from the server.
+     * @param propertyName The name of the metadata to fetch.
+     * @return An optional containing the metadata, or an empty metadata if no metadata could be found.
+     * @param <T> The type of the metadata that's being fetched.
      */
-    public <T> Optional<T> property(String propertyName) {
-        return Optional.ofNullable((T) this.properties.get(propertyName));
+    public <T> Optional<T> metadata(String propertyName) {
+        return Optional.ofNullable((T) this.metadata.get(propertyName));
     }
 
     /**
-     * Removes a property from the server.
-     * @param propertyName The name of the property to remove.
+     * Removes metadata from the server.
+     * @param propertyName The name of the metadata to remove.
      */
-    public void dropProperty(String propertyName) {
-        this.properties.remove(propertyName);
+    public void dropMetadata(String propertyName) {
+        this.metadata.remove(propertyName);
     }
 
     /**
-     * @return A map containing all of this server's properties.
+     * @return A map containing all of this server's metadata.
      */
-    public Map<String, Object> properties() {
-        return Collections.unmodifiableMap(this.properties);
+    public Map<String, Object> metadata() {
+        return Collections.unmodifiableMap(this.metadata);
     }
 
     /**
@@ -137,8 +124,11 @@ public final class Server implements ISortable, Player.Connectable {
     /**
      * Convenience method to return the server's display name if it exists.
      */
-    public Optional<String> displayName() {
-        return Optional.ofNullable(this.displayName);
+    public @Nullable String displayName() {
+        try {
+            return (String) this.metadata.get("displayName");
+        } catch (Exception ignore) {}
+        return null;
     }
 
     /**
@@ -153,7 +143,7 @@ public final class Server implements ISortable, Player.Connectable {
      * @return `true` if the server is full. `false` otherwise.
      */
     public boolean full() {
-        return this.playerCount.get() >= softPlayerCap;
+        return this.playerCount.get() >= this.softPlayerCap();
     }
 
     /**
@@ -161,7 +151,7 @@ public final class Server implements ISortable, Player.Connectable {
      * @return `true` if the server is maxed out. `false` otherwise.
      */
     public boolean maxed() {
-        return this.playerCount.get() >= hardPlayerCap;
+        return this.playerCount.get() >= this.hardPlayerCap();
     }
 
     /**
@@ -181,19 +171,18 @@ public final class Server implements ISortable, Player.Connectable {
      * @return {@link Integer}
      */
     public int softPlayerCap() {
-        return this.softPlayerCap;
+        return (int) Optional.ofNullable(this.metadata.get("softCap")).orElse(30);
     }
 
     /**
      * The hard player cap of this server.
      * If this value is reached by {@link Server#players()}, {@link Server#maxed()} will evaluate to true.
      * The only way for new playerRegistry to continue to join this server once it's maxed is by giving them the hard cap bypass permission.
-     *
      * If this value is reached by {@link Server#players()}, it can be assumed that {@link Server#full()} is also true, because this value cannot be less than {@link Server#softPlayerCap()}.
      * @return {@link Integer}
      */
     public int hardPlayerCap() {
-        return this.hardPlayerCap;
+        return (int) Optional.ofNullable(this.metadata.get("hardCap")).orElse(this.softPlayerCap() + 10);
     }
 
     /**
@@ -256,7 +245,10 @@ public final class Server implements ISortable, Player.Connectable {
 
     @Override
     public int weight() {
-        return this.weight;
+        try {
+            return (int) this.metadata("loadBalancer-weight").orElse(0);
+        } catch (Exception ignore) {}
+        return 0;
     }
 
 
@@ -327,13 +319,10 @@ public final class Server implements ISortable, Player.Connectable {
 
     public static @NotNull Server generateServer(Configuration configuration) {
         return new Server(
-                configuration.id,
-                configuration.address,
-                configuration.displayName,
-                configuration.softPlayerCap,
-                configuration.hardPlayerCap,
-                configuration.weight,
-                configuration.timeout
+            configuration.id,
+            configuration.address,
+            configuration.metadata,
+            configuration.timeout
         );
     }
 
@@ -435,19 +424,12 @@ public final class Server implements ISortable, Player.Connectable {
      * Used alongside {@link group.aelysium.rustyconnector.proxy.ProxyKernel#registerServer(Particle.Flux, Configuration)} to register new server instances.
      * @param id The unique id for this server - this value must be unique between servers.
      * @param address The connection address for the server.
-     * @param displayName The display name of this server.
-     * @param softPlayerCap The soft player cap for this server.
-     * @param hardPlayerCap The hard player cap for this server.
-     * @param weight The weight of this server in load balancing.
      * @param timeout The number of seconds that this server needs to refresh or else it'll timeout.
      */
     public record Configuration(
             @NotNull String id,
             @NotNull InetSocketAddress address,
-            @Nullable String displayName,
-            int softPlayerCap,
-            int hardPlayerCap,
-            int weight,
+            @NotNull Map<String, Object> metadata,
             int timeout
     ) {}
 }

@@ -274,7 +274,7 @@ public abstract class Packet implements JSONParseable {
 
         messageObject.get(Parameters.PARAMETERS).getAsJsonObject().entrySet().forEach(entry -> {
             String key = entry.getKey();
-            Parameter value = new Parameter(entry.getValue().getAsJsonPrimitive());
+            Parameter value = Parameter.fromUnknown(entry.getValue());
 
             builder.parameter(key, value);
         });
@@ -704,33 +704,54 @@ public abstract class Packet implements JSONParseable {
         public Parameter(@NotNull JsonObject object) {
             this(object, 'j');
         }
-        public Parameter(@NotNull JsonPrimitive object) {
-            if(object.isNumber()) {
-                this.object = object.getAsNumber();
-                this.type = 'n';
-                return;
+        public static Parameter fromJSON(@NotNull JsonElement object) {
+            if(object.isJsonPrimitive()) {
+                JsonPrimitive primitive = object.getAsJsonPrimitive();
+                if(primitive.isNumber()) {
+                    try {
+                        return new Parameter(primitive.getAsInt());
+                    } catch (Exception ignore) {}
+                    try {
+                        return new Parameter(primitive.getAsLong());
+                    } catch (Exception ignore) {}
+                    try {
+                        return new Parameter(primitive.getAsDouble());
+                    } catch (Exception ignore) {}
+                    try {
+                        return new Parameter(primitive.getAsShort());
+                    } catch (Exception ignore) {}
+                    try {
+                        return new Parameter(primitive.getAsFloat());
+                    } catch (Exception ignore) {}
+                }
+                if(primitive.isBoolean()) return new Parameter(primitive.getAsBoolean());
+                if(primitive.isString()) return new Parameter(primitive.getAsString());
             }
-            if(object.isBoolean()) {
-                this.object = object.getAsBoolean();
-                this.type = 'b';
-                return;
+            if(object.isJsonArray()) return new Parameter(object.getAsJsonArray());
+            if(object.isJsonObject()) return new Parameter(object.getAsJsonObject());
+            throw new IllegalStateException("Unexpected value: " + object.getClass().getName());
+        }
+        public static Parameter fromUnknown(@NotNull Object object) {
+            if(object.getClass().isPrimitive()) {
+                if(Number.class.isAssignableFrom(object.getClass()))
+                    return new Parameter((Number) object);
+                if(int.class.isAssignableFrom(object.getClass()))
+                    return new Parameter((int) object);
+                if(long.class.isAssignableFrom(object.getClass()))
+                    return new Parameter((long) object);
+                if(double.class.isAssignableFrom(object.getClass()))
+                    return new Parameter((double) object);
+                if(float.class.isAssignableFrom(object.getClass()))
+                    return new Parameter((float) object);
+                if(short.class.isAssignableFrom(object.getClass()))
+                    return new Parameter((short) object);
+                if(Boolean.class.isAssignableFrom(object.getClass()) || boolean.class.isAssignableFrom(object.getClass()))
+                    return new Parameter((boolean) object);
+                if(String.class.isAssignableFrom(object.getClass()))
+                    return new Parameter(String.valueOf(object));
             }
-            if(object.isString()) {
-                this.object = object.getAsString();
-                this.type = 's';
-                return;
-            }
-            if(object.isJsonArray()) {
-                this.object = object.getAsJsonArray();
-                this.type = 'a';
-                return;
-            }
-            if(object.isJsonObject()) {
-                this.object = object.getAsJsonObject();
-                this.type = 'j';
-                return;
-            }
-            throw new IllegalStateException("Unexpected value: " + type);
+            if(JsonElement.class.isAssignableFrom(object.getClass())) return fromJSON((JsonElement) object);
+            throw new IllegalStateException("Unexpected value: " + object.getClass().getName());
         }
 
         public char type() {

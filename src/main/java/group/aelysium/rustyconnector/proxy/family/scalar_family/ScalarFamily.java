@@ -26,9 +26,10 @@ public class ScalarFamily extends Family {
             @NotNull String id,
             @Nullable String displayName,
             @Nullable String parent,
+            @NotNull Map<String, Object> metadata,
             @NotNull Particle.Flux<? extends LoadBalancer> loadBalancer
     ) throws Exception {
-        super(id, displayName, parent);
+        super(id, displayName, parent, metadata);
         this.installPlugin(loadBalancer);
     }
 
@@ -142,6 +143,7 @@ public class ScalarFamily extends Family {
         private final String id;
         private final String displayName;
         private final String parent;
+        private final Map<String, Object> metadata = new HashMap<>();
         private final LoadBalancer.Tinder<?> loadBalancer;
 
         public Tinder(
@@ -161,12 +163,18 @@ public class ScalarFamily extends Family {
             this.loadBalancer = loadBalancer;
         }
 
+        public Tinder metadata(@NotNull String key, @NotNull Object value) {
+            this.metadata.put(key, value);
+            return this;
+        }
+
         @Override
         public @NotNull ScalarFamily ignite() throws Exception {
             return new ScalarFamily(
                     this.id,
                     this.displayName,
                     this.parent,
+                    this.metadata,
                     this.loadBalancer.flux()
             );
         }

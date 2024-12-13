@@ -3,6 +3,7 @@ package group.aelysium.rustyconnector.server;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import group.aelysium.ara.Particle;
+import group.aelysium.rustyconnector.common.crypt.NanoID;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.common.RCKernel;
 import group.aelysium.rustyconnector.common.errors.ErrorRegistry;
@@ -20,29 +21,85 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ServerKernel extends RCKernel<ServerAdapter> {
-    private final String displayName;
+    private final String targetFamily;
     private final InetSocketAddress address;
+    private final Map<String, Packet.Parameter> metadata = new ConcurrentHashMap<>(Map.of(
+            "softCap", new Packet.Parameter(30),
+            "hardCap", new Packet.Parameter(40)
+    ));
 
     protected ServerKernel(
             @NotNull String id,
             @NotNull Version version,
             @NotNull ServerAdapter adapter,
             @NotNull List<? extends Flux<? extends Particle>> plugins,
-            @Nullable String displayName,
-            @NotNull InetSocketAddress address
+            @NotNull InetSocketAddress address,
+            @NotNull String targetFamily,
+            @NotNull Map<String, Packet.Parameter> metadata
     ) {
         super(id, version, adapter, plugins);
-        this.displayName = displayName;
         this.address = address;
+        this.targetFamily = targetFamily;
+        this.metadata.putAll(metadata);
+    }
+
+    /**
+     * Stores metadata in the Server.
+     * @param propertyName The name of the metadata to store.
+     * @param property The metadata to store.
+     * @return `true` if the metadata could be stored. `false` if the name of the metadata is already in use.
+     */
+    public boolean metadata(String propertyName, Packet.Parameter property) {
+        if(this.metadata.containsKey(propertyName)) return false;
+        this.metadata.put(propertyName, property);
+        return true;
+    }
+
+    /**
+     * Fetches metadata from the server.
+     * @param propertyName The name of the metadata to fetch.
+     * @return An optional containing the metadata, or an empty metadata if no metadata could be found.
+     * @param <T> The type of the metadata that's being fetched.
+     */
+    public <T> Optional<T> metadata(String propertyName) {
+        return Optional.ofNullable((T) this.metadata.get(propertyName));
+    }
+
+    /**
+     * Removes metadata from the server.
+     * @param propertyName The name of the metadata to remove.
+     */
+    public void dropMetadata(String propertyName) {
+        this.metadata.remove(propertyName);
+    }
+
+    /**
+     * @return A map containing all of this server's metadata.
+     */
+    public Map<String, Object> metadata() {
+        Map<String, Object> reduced = new HashMap<>();
+        this.metadata.forEach((k, v)->reduced.put(k, v.getOriginalValue()));
+        return Collections.unmodifiableMap(reduced);
+    }
+
+    /**
+     * @return A map containing all of this server's metadata.
+     */
+    public Map<String, Packet.Parameter> parameterizedMetadata() {
+        return Collections.unmodifiableMap(this.metadata);
     }
 
     /**
      * The display name of this Server.
      */
-    public String displayName() {
-        return this.displayName;
+    public @Nullable String displayName() {
+        try {
+            return this.metadata.get("displayName").getAsString();
+        } catch(Exception ignore) {}
+        return null;
     }
 
     /**
@@ -60,6 +117,13 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
      */
     public int playerCount() {
         return this.Adapter().onlinePlayerCount();
+    }
+
+    /**
+     * @return The name of the family that this server is wanting to be connected to.
+     */
+    public @NotNull String targetFamily() {
+        return this.targetFamily;
     }
 
     /**
@@ -96,59 +160,18 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
 
     /**
      * Sends a player to a family or server if it exists.
-     * If both a family AND server have an id equal to `target`, you'll have to clarify which to send to using
+     * If both a family AND server have an id equal to `target`, you'll have to clarify which to send to use.
      * @param player The uuid or username of the player to send. RustyConnector will automatically determine if this is a UUID or username.
      * @param target The id of the family or server to send the player to.
      * @return A future that completes to the response received from the proxy.
      */
-    public CompletableFuture<MagicLinkCore.Packets.Response> send(String player, String target) {
+    public CompletableFuture<MagicLinkCore.Packets.Response> send(String player, String target, String flags) {
         CompletableFuture<MagicLinkCore.Packets.Response> response = new CompletableFuture<>();
         Packet.New()
                 .identification(Packet.Type.from("RC","PS"))
                 .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.PLAYER, player)
                 .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.GENERIC_TARGET, target)
-                .addressTo(Packet.SourceIdentifier.allAvailableProxies())
-                .send()
-                .onReply(MagicLinkCore.Packets.Response.class, packet -> {
-                    response.complete(packet);
-                    return PacketListener.Response.success("Successfully indicated the status of the server's send request.");
-                });
-        return response;
-    }
-
-    /**
-     * Sends a player to a server if it exists.
-     * @param player The uuid or username of the player to send. RustyConnector will automatically determine if this is a UUID or username.
-     * @param target The id of the server to send the player to.
-     * @return A future that completes to the response received from the proxy.
-     */
-    public CompletableFuture<MagicLinkCore.Packets.Response> sendServer(String player, String target) {
-        CompletableFuture<MagicLinkCore.Packets.Response> response = new CompletableFuture<>();
-        Packet.New()
-                .identification(Packet.Type.from("RC","PS"))
-                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.PLAYER, player)
-                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.TARGET_SERVER, target)
-                .addressTo(Packet.SourceIdentifier.allAvailableProxies())
-                .send()
-                .onReply(MagicLinkCore.Packets.Response.class, packet -> {
-                    response.complete(packet);
-                    return PacketListener.Response.success("Successfully indicated the status of the server's send request.");
-                });
-        return response;
-    }
-
-    /**
-     * Sends a player to a family if it exists.
-     * @param player The uuid or username of the player to send. RustyConnector will automatically determine if this is a UUID or username.
-     * @param target The id of the family to send the player to.
-     * @return A future that completes to the response received from the proxy.
-     */
-    public CompletableFuture<MagicLinkCore.Packets.Response> sendFamily(String player, String target) {
-        CompletableFuture<MagicLinkCore.Packets.Response> response = new CompletableFuture<>();
-        Packet.New()
-                .identification(Packet.Type.from("RC","PS"))
-                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.PLAYER, player)
-                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.TARGET_FAMILY, target)
+                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.FLAGS, flags)
                 .addressTo(Packet.SourceIdentifier.allAvailableProxies())
                 .send()
                 .onReply(MagicLinkCore.Packets.Response.class, packet -> {
@@ -164,21 +187,22 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
      * technically optional because they also have default implementations.
      */
     public static class Tinder extends RCKernel.Tinder<ServerAdapter, ServerKernel> {
-        private final String displayName;
+        private final String targetFamily;
         private final InetSocketAddress address;
         private PluginTinder<? extends MagicLinkCore.Server> magicLink;
+        private final Map<String, Packet.Parameter> metadata = new HashMap<>();
 
         public Tinder(
                 @NotNull String id,
                 @NotNull ServerAdapter adapter,
-                @Nullable String displayName,
                 @NotNull InetSocketAddress address,
-                @NotNull PluginTinder<? extends MagicLinkCore.Server> magicLink
+                @NotNull PluginTinder<? extends MagicLinkCore.Server> magicLink,
+                @NotNull String targetFamily
                 ) {
             super(id, adapter);
-            this.displayName = displayName;
             this.address = address;
             this.magicLink = magicLink;
+            this.targetFamily = targetFamily;
         }
 
         public Tinder lang(@NotNull PluginTinder<? extends LangLibrary> lang) {
@@ -201,6 +225,11 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
             return this;
         }
 
+        public Tinder metadata(@NotNull String key, @NotNull Packet.Parameter value) {
+            this.metadata.put(key, value);
+            return this;
+        }
+
         @Override
         public @NotNull ServerKernel ignite() throws Exception {
             Version version;
@@ -212,7 +241,7 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
             }
 
             return new ServerKernel(
-                    id,
+                    this.id,
                     version,
                     adapter,
                     List.of(
@@ -221,8 +250,9 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
                         eventManager.flux(),
                         errors.flux()
                     ),
-                    displayName,
-                    address
+                    address,
+                    targetFamily,
+                    this.metadata
             );
         }
     }

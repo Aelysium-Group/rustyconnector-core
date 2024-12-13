@@ -2,9 +2,7 @@ package group.aelysium.rustyconnector.proxy.magic_link.packet_handlers;
 
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.errors.Error;
-import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
-import group.aelysium.rustyconnector.proxy.events.ServerLockedEvent;
 import group.aelysium.rustyconnector.proxy.events.ServerUnlockedEvent;
 import group.aelysium.rustyconnector.proxy.family.Server;
 
@@ -19,7 +17,7 @@ public class ServerUnlockListener {
 
             boolean success = server.unlock();
 
-            if(!success) throw new RuntimeException("An unknown error prevented the locking of the server: "+server.id()+" "+server.property("velocity_registration_name").orElse(""));
+            if(!success) throw new RuntimeException("An unknown error prevented the locking of the server: "+server.id()+" "+server.metadata("velocity_registration_name").orElse(""));
 
             RC.EventManager().fireEvent(new ServerUnlockedEvent(server.family().orElseThrow(), server));
             return PacketListener.Response.success("Successfully locked the server.").asReply();

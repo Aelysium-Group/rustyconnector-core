@@ -36,29 +36,34 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
     protected final String endpoint;
     protected final Map<Packet.SourceIdentifier, WsContext> clients = new ConcurrentHashMap<>();
     protected final InetSocketAddress address;
-    private final Javalin server = Javalin.create(/*c -> {
-        c.showJavalinBanner = false;
-
-        //c.jetty.modifyWebSocketServletFactory(ws -> ws.setIdleTimeout(Duration.ofMinutes(15)));
-
-        c.http.defaultContentType = ContentType.JSON;
-        c.http.strictContentTypes = true;
-    }*/);
+    private final Javalin server;
 
     protected WebSocketMagicLink(
             @NotNull InetSocketAddress address,
             @NotNull Packet.SourceIdentifier self,
             @NotNull AES cryptor,
             @NotNull PacketCache cache,
-            @NotNull Map<String, ServerRegistrationConfiguration> registrationConfigurations,
             @Nullable IPV6Broadcaster broadcaster
     ) {
-        super(self, cryptor, cache, registrationConfigurations, broadcaster);
+        super(self, cryptor, cache, broadcaster);
 
         this.endpoint = tokenGenerator.nextString();
 
         this.heartbeat();
         this.address = address;
+
+        // Temporarily switch the plugin classloader to load Javalin.
+        ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+
+        this.server = Javalin.create(c -> {
+            c.showJavalinBanner = false;
+
+            //c.jetty.modifyWebSocketServletFactory(ws -> ws.setIdleTimeout(Duration.ofMinutes(15)));
+
+            c.http.defaultContentType = ContentType.JSON;
+            c.http.strictContentTypes = true;
+        });
 
         // Register some dummy endpoints that don't do anything
         for (int i = 0; i < (new Random()).nextInt((32 - 7) + 1) + 32; i++) server.get("/"+tokenGenerator.nextString(), dummyHandler);
@@ -156,6 +161,8 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
 
         this.server.start(this.address.getHostName(), this.address.getPort());
 
+        Thread.currentThread().setContextClassLoader(originalClassLoader);
+
         this.listen(new HandshakeDisconnectListener());
         this.listen(new HandshakePingListener());
         this.listen(new ServerLockListener());
@@ -238,13 +245,12 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
         private final PacketCache cache;
         private final IPV6Broadcaster broadcaster;
         private final InetSocketAddress address;
-        private final Map<String, Proxy.ServerRegistrationConfiguration> registrationConfigurations;
+
         public Tinder(
                 @NotNull InetSocketAddress address,
                 @NotNull Packet.SourceIdentifier self,
                 @NotNull AES cryptor,
                 @NotNull PacketCache cache,
-                @NotNull Map<String, ServerRegistrationConfiguration> registrationConfigurations,
                 @Nullable IPV6Broadcaster broadcaster
                 ) {
             super();
@@ -252,7 +258,6 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
             this.self = self;
             this.cryptor = cryptor;
             this.cache = cache;
-            this.registrationConfigurations = registrationConfigurations;
             this.broadcaster = broadcaster;
         }
 
@@ -263,7 +268,6 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
                     this.self,
                     this.cryptor,
                     this.cache,
-                    this.registrationConfigurations,
                     this.broadcaster
             );
         }
