@@ -7,10 +7,12 @@ import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.proxy.events.ServerLockedEvent;
+import group.aelysium.rustyconnector.proxy.events.ServerPreJoinEvent;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.player.Player;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,12 +47,17 @@ public class SendPlayerListener {
             sendServer = serverOptional.isPresent();
         }
 
+        Player.Connection.Power power = Player.Connection.Power.MINIMAL;
+        List<MagicLinkCore.Packets.SendPlayer.Flag> flags = packet.flags();
+        if(flags.contains(MagicLinkCore.Packets.SendPlayer.Flag.MODERATE)) power = Player.Connection.Power.MODERATE;
+        if(flags.contains(MagicLinkCore.Packets.SendPlayer.Flag.AGGRESSIVE)) power = Player.Connection.Power.AGGRESSIVE;
+
         if(sendFamily) {
             String familyID = packet.targetFamily().orElseThrow();
             Family family = RC.P.Family(familyID)
                     .orElseThrow(()->new NoSuchElementException("No family with the id '"+familyID+"' exists."));
 
-            Player.Connection.Result result = family.connect(player).result().get(10, TimeUnit.SECONDS);
+            Player.Connection.Result result = family.connect(player, power).result().get(10, TimeUnit.SECONDS);
 
             if(!result.connected()) throw new RuntimeException("Unable to connect the player to that server.");
         }
@@ -59,7 +66,7 @@ public class SendPlayerListener {
             Server server = RC.P.Server(serverID)
                     .orElseThrow(()->new NoSuchElementException("No family with the id '"+serverID+"' exists."));
 
-            Player.Connection.Result result = server.connect(player).result().get(10, TimeUnit.SECONDS);
+            Player.Connection.Result result = server.connect(player, power).result().get(10, TimeUnit.SECONDS);
 
             if(!result.connected()) throw new RuntimeException("Unable to connect the player to that server.");
         }

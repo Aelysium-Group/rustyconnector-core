@@ -273,17 +273,18 @@ public final class Server implements ISortable, Player.Connectable {
     }
 
     @Override
-    public Player.Connection.Request connect(Player player) {
-        try {
-            ServerPreJoinEvent event = new ServerPreJoinEvent(this, player);
-            boolean canceled = RC.P.EventManager().fireEvent(event).get(1, TimeUnit.MINUTES);
-            if(canceled) return Player.Connection.Request.failedRequest(player, event.canceledMessage());
-        } catch (Exception ignore) {
-            return Player.Connection.Request.failedRequest(player, "Connection attempt timed out.");
-        }
+    public Player.Connection.Request connect(Player player, Player.Connection.Power power) {
         try {
             if (!player.online())
                 return Player.Connection.Request.failedRequest(player, player.username() + " isn't online.");
+
+            try {
+                ServerPreJoinEvent event = new ServerPreJoinEvent(this, player);
+                boolean canceled = RC.P.EventManager().fireEvent(event).get(1, TimeUnit.MINUTES);
+                if(canceled) return Player.Connection.Request.failedRequest(player, event.canceledMessage());
+            } catch (Exception ignore) {
+                return Player.Connection.Request.failedRequest(player, "Connection attempt timed out.");
+            }
 
             if (!this.validatePlayerLimits(player))
                 return Player.Connection.Request.failedRequest(player, "The server is currently full. Try again later.");
@@ -292,6 +293,9 @@ public final class Server implements ISortable, Player.Connectable {
         } catch (Exception ignore) {}
 
         return Player.Connection.Request.failedRequest(player, "Unable to connect you to the server!");
+    }
+    public Player.Connection.Request connect(Player player) {
+        return connect(player, Player.Connection.Power.MINIMAL);
     }
 
     @Override

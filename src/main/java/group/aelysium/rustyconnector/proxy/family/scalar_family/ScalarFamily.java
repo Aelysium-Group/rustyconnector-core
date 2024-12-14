@@ -120,7 +120,7 @@ public class ScalarFamily extends Family {
     }
 
     @Override
-    public Player.Connection.Request connect(Player player) {
+    public Player.Connection.Request connect(Player player, Player.Connection.Power power) {
         try {
             FamilyPreJoinEvent event = new FamilyPreJoinEvent(RC.P.Families().find(this.id).orElseThrow(), player);
             boolean canceled = RC.P.EventManager().fireEvent(event).get(1, TimeUnit.MINUTES);
@@ -128,10 +128,14 @@ public class ScalarFamily extends Family {
         } catch (Exception ignore) {}
 
         try {
-            return this.loadBalancer().access().get(20, TimeUnit.SECONDS).current().orElseThrow().connect(player);
+            return this.loadBalancer().access().get(20, TimeUnit.SECONDS).current().orElseThrow().connect(player, power);
         } catch (Exception ignore) {
             return Player.Connection.Request.failedRequest(player, "The server you're attempting to access isn't available! Try again later.");
         }
+    }
+    @Override
+    public Player.Connection.Request connect(Player player) {
+        return this.connect(player, Player.Connection.Power.MINIMAL);
     }
 
     @Override

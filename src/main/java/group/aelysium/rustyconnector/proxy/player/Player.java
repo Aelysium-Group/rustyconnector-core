@@ -85,6 +85,14 @@ public class Player {
          * It is the caller's job to handle outputs.
          * This method should never throw any exceptions.
          * @param player The player to connect.
+         * @param power The power level to use for the connection.
+         * @return A {@link Connection.Request} for the player's attempt.
+         */
+        Connection.Request connect(Player player, Connection.Power power);
+
+        /**
+         * Uses {@link #connect(Player, Connection.Power)} using {@link Connection.Power#MINIMAL}.
+         * @param player The player to connect.
          * @return A {@link Connection.Request} for the player's attempt.
          */
         Connection.Request connect(Player player);
@@ -150,6 +158,28 @@ public class Player {
                 if(server == null) return new Result(true, message, null);
                 return new Result(true, message, server);
             }
+        }
+
+        /**
+         * Connection Power dictates certain criteria to follow when connecting a player to servers.
+         * Depending on the state of the server and the connection power used, connections may fail.<br/>
+         * If the player has the proper bypass permissions, this power level will be ignored.
+         */
+        enum Power {
+            /**
+             * Default connection power used.
+             * If the server has reached it's softCap, the connection will fail.
+             */
+            MINIMAL,
+            /**
+             * If the server has reached it's softCap the player will still be able to join.
+             * If the server has reached it's hardCap, the connection will fail.
+             */
+            MODERATE,
+            /**
+             * Regardless of if the server has reached its soft or hard cap, the connection should never fail as a result of player count.
+             */
+            AGGRESSIVE
         }
     }
 }
