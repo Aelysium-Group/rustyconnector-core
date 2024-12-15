@@ -44,7 +44,7 @@ public abstract class RCKernel<A extends RCAdapter> implements Particle, PluginH
 
     /**
      * Registers a new plugin to the RustyConnector Kernel.
-     * This method does not care of the flux provided has been ignited or not, it's the callers job to ignite the flux.
+     * This method does not care if the flux provided has been ignited or not, it's the callers job to ignite the flux.
      * @param pluginName The name of the plugin to register.
      * @param plugin The plugin flux to register.
      * @throws IllegalStateException If a plugin already exists with the pluginName provided.
@@ -52,6 +52,20 @@ public abstract class RCKernel<A extends RCAdapter> implements Particle, PluginH
     public void registerPlugin(@NotNull String pluginName, Particle.Flux<?> plugin) throws IllegalStateException {
         this.plugins.registerPlugin(pluginName, plugin);
     }
+
+    /**
+     * Registers a new plugin to the RustyConnector Kernel.
+     * This method does not care if the flux provided has been ignited or not, it's the callers job to ignite the flux.
+     * @param plugin The plugin flux to register.
+     * @throws IllegalStateException If a plugin already exists with the pluginName provided.
+     * @throws IllegalArgumentException If the provided flux doesn't contain a "name" metadata entry.
+     */
+    public void registerPlugin(Particle.Flux<?> plugin) throws IllegalStateException, IllegalArgumentException {
+        String name = plugin.metadata("name");
+        if(name == null) throw new IllegalArgumentException("The provided flux must have the `name`, `description`, and `details` metadata added.");
+        this.registerPlugin(name, plugin);
+    }
+
     public <T extends Particle> Particle.Flux<T> fetchPlugin(@NotNull String name) {
         return this.plugins.fetchPlugin(name);
     }

@@ -5,7 +5,6 @@ import com.google.gson.JsonObject;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.common.RCKernel;
-import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.errors.ErrorRegistry;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
@@ -57,7 +56,7 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
             boolean canceled = RC.P.EventManager().fireEvent(event).get(1, TimeUnit.MINUTES);
             if (canceled) throw new CancellationException(event.canceledMessage());
         } catch (Exception e) {
-            RC.Error(Error.from(e));
+            e.printStackTrace();
         }
 
         Server server = Server.generateServer(configuration);

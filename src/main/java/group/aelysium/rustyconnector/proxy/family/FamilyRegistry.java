@@ -52,10 +52,12 @@ public class FamilyRegistry implements PluginHolder, Particle {
     /**
      * Registers a new family.
      * @param id The id of the family to add.
-     * @param family The family to add.
+     * @param flux The family flux to add.
+     * @throws Exception If the family was not ignited and failed to ignite.
      */
-    public void register(@NotNull String id, @NotNull Flux<? extends Family> family) {
-        this.families.put(id, family);
+    public void register(@NotNull String id, @NotNull Flux<? extends Family> flux) throws Exception {
+        Family family = flux.observe(5, TimeUnit.SECONDS);
+        this.families.put(id, flux);
         try {
             RC.EventManager().fireEvent(new FamilyRegisterEvent(family));
         } catch (Exception ignore) {}

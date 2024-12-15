@@ -65,7 +65,7 @@ javadoc {
 }
 
 shadowJar {
-    archiveBaseName.set('rustyconnector-core')
+    archiveBaseName.set(archives_base_name)
     archiveClassifier.set('')
     mergeServiceFiles()
     relocate 'org.reflections', 'group.aelysium.rustyconnector.shaded.org.reflections'

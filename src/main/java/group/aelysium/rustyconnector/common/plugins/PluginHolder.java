@@ -12,7 +12,6 @@ public interface PluginHolder {
     /**
      * Returns a map of plugins that this holder contains.
      * The map is immutable.
-     * The caller should be able to assume that all particles returned will be annotated with the {@link Plugin}.
      */
     Map<String, Particle.Flux<? extends Particle>> plugins();
 }

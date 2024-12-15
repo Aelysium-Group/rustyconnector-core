@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.errors.Error;
-import group.aelysium.rustyconnector.common.plugins.PluginTinder;
 import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
 import group.aelysium.rustyconnector.common.magic_link.PacketCache;
 import group.aelysium.rustyconnector.common.crypt.AES;
@@ -28,6 +27,8 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class WebSocketMagicLink extends MagicLinkCore.Proxy {
@@ -36,7 +37,14 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
     protected final String endpoint;
     protected final Map<Packet.SourceIdentifier, WsContext> clients = new ConcurrentHashMap<>();
     protected final InetSocketAddress address;
-    private final Javalin server;
+    private final Javalin server = Javalin.create(c -> {
+        c.showJavalinBanner = false;
+
+        //c.jetty.modifyWebSocketServletFactory(ws -> ws.setIdleTimeout(Duration.ofMinutes(15)));
+
+        c.http.defaultContentType = ContentType.JSON;
+        c.http.strictContentTypes = true;
+    });
 
     protected WebSocketMagicLink(
             @NotNull InetSocketAddress address,
@@ -48,22 +56,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
         super(self, cryptor, cache, broadcaster);
 
         this.endpoint = tokenGenerator.nextString();
-
-        this.heartbeat();
         this.address = address;
-
-        // Temporarily switch the plugin classloader to load Javalin.
-        ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
-        Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-
-        this.server = Javalin.create(c -> {
-            c.showJavalinBanner = false;
-
-            //c.jetty.modifyWebSocketServletFactory(ws -> ws.setIdleTimeout(Duration.ofMinutes(15)));
-
-            c.http.defaultContentType = ContentType.JSON;
-            c.http.strictContentTypes = true;
-        });
 
         // Register some dummy endpoints that don't do anything
         for (int i = 0; i < (new Random()).nextInt((32 - 7) + 1) + 32; i++) server.get("/"+tokenGenerator.nextString(), dummyHandler);
@@ -159,15 +152,18 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
             });
         });
 
-        this.server.start(this.address.getHostName(), this.address.getPort());
-
-        Thread.currentThread().setContextClassLoader(originalClassLoader);
-
+        this.listen(new SendPlayerListener());
         this.listen(new HandshakeDisconnectListener());
         this.listen(new HandshakePingListener());
         this.listen(new ServerLockListener());
         this.listen(new ServerUnlockListener());
-        this.listen(new SendPlayerListener());
+
+        ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+        this.server.start(this.address.getHostName(), this.address.getPort());
+        Thread.currentThread().setContextClassLoader(originalClassLoader);
+
+        this.executor.schedule(this::heartbeat, 3, TimeUnit.SECONDS);
     }
 
     private void heartbeat() {
