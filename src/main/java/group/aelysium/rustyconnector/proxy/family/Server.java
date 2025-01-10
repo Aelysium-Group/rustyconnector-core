@@ -279,7 +279,7 @@ public final class Server implements ISortable, Player.Connectable {
                 return Player.Connection.Request.failedRequest(player, player.username() + " isn't online.");
 
             try {
-                ServerPreJoinEvent event = new ServerPreJoinEvent(this, player);
+                ServerPreJoinEvent event = new ServerPreJoinEvent(this, player, power);
                 boolean canceled = RC.P.EventManager().fireEvent(event).get(1, TimeUnit.MINUTES);
                 if(canceled) return Player.Connection.Request.failedRequest(player, event.canceledMessage());
             } catch (Exception ignore) {

@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.proxy.player;
 
 import group.aelysium.ara.Particle;
-import group.aelysium.rustyconnector.common.plugins.PluginTinder;
+import group.aelysium.rustyconnector.RC;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -46,7 +46,7 @@ public class PlayerRegistry implements Particle {
         this.playersUsername.clear();
     }
 
-    public static class Tinder extends PluginTinder<PlayerRegistry> {
+    public static class Tinder extends RC.Plugin.Tinder<PlayerRegistry> {
         public Tinder() {
             super(
                 "PlayerRegistry",

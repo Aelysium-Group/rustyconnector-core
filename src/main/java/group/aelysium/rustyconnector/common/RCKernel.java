@@ -1,17 +1,17 @@
 package group.aelysium.rustyconnector.common;
 
 import group.aelysium.ara.Particle;
+import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.errors.ErrorRegistry;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
 import group.aelysium.rustyconnector.common.plugins.PluginCollection;
 import group.aelysium.rustyconnector.common.plugins.PluginHolder;
-import group.aelysium.rustyconnector.common.plugins.PluginTinder;
-import group.aelysium.rustyconnector.proxy.ProxyAdapter;
-import group.aelysium.rustyconnector.proxy.ProxyKernel;
+import group.aelysium.rustyconnector.common.plugins.PluginLoader;
 import group.aelysium.rustyconnector.proxy.util.Version;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.*;
 
 public abstract class RCKernel<A extends RCAdapter> implements Particle, PluginHolder {
@@ -99,12 +99,12 @@ public abstract class RCKernel<A extends RCAdapter> implements Particle, PluginH
         this.plugins.close();
     }
 
-    public static abstract class Tinder<B extends RCAdapter,T extends RCKernel<B>> extends PluginTinder<T> {
+    public static abstract class Tinder<B extends RCAdapter,T extends RCKernel<B>> extends RC.Plugin.Tinder<T> {
         protected final String id;
         protected final B adapter;
-        protected PluginTinder<? extends EventManager> eventManager = EventManager.Tinder.DEFAULT_CONFIGURATION;
-        protected PluginTinder<? extends ErrorRegistry> errors = ErrorRegistry.Tinder.DEFAULT_CONFIGURATION;
-        protected PluginTinder<? extends LangLibrary> lang = LangLibrary.Tinder.DEFAULT_LANG_LIBRARY;
+        protected RC.Plugin.Tinder<? extends EventManager> eventManager = EventManager.Tinder.DEFAULT_CONFIGURATION;
+        protected RC.Plugin.Tinder<? extends ErrorRegistry> errors = ErrorRegistry.Tinder.DEFAULT_CONFIGURATION;
+        protected RC.Plugin.Tinder<? extends LangLibrary> lang = LangLibrary.Tinder.DEFAULT_LANG_LIBRARY;
 
         public Tinder(
                 @NotNull String id,

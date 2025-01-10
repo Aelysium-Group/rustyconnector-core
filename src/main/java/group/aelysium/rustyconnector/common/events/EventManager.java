@@ -4,7 +4,6 @@ import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.algorithm.QuickSort;
 import group.aelysium.rustyconnector.common.errors.Error;
-import group.aelysium.rustyconnector.common.plugins.PluginTinder;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.ISortable;
 import org.jetbrains.annotations.NotNull;
 
@@ -93,20 +92,24 @@ public class EventManager implements Particle {
         if (listeners == null) return CompletableFuture.completedFuture(false);
         if (listeners.isEmpty()) return CompletableFuture.completedFuture(false);
 
-        try {
-            executor.execute(() -> listeners.forEach(listener -> {
-                if(event.canceled() && !listener.ignoreCanceled()) return;
-                try {
-                    listener.consumer().accept(event);
-                } catch (Exception e) {
-                    RC.Error(Error.from(e));
-                }
-            }));
-            return CompletableFuture.completedFuture(event.canceled());
-        } catch (Exception e) {
-            RC.Error(Error.from(e));
-        }
-        return CompletableFuture.completedFuture(false);
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
+        executor.execute(() -> {
+            try {
+                listeners.forEach(listener -> {
+                    if (event.canceled() && !listener.ignoreCanceled()) return;
+                    try {
+                        listener.consumer().accept(event);
+                    } catch (Exception e) {
+                        RC.Error(Error.from(e));
+                    }
+                });
+                future.complete(true);
+            } catch (Exception e) {
+                RC.Error(Error.from(e));
+                future.complete(false);
+            }
+        });
+        return future;
     }
 
 
@@ -115,7 +118,7 @@ public class EventManager implements Particle {
         this.executor.shutdown();
     }
 
-    public static class Tinder extends PluginTinder<EventManager> {
+    public static class Tinder extends RC.Plugin.Tinder<EventManager> {
         public Tinder() {
             super(
                 "EventManager",

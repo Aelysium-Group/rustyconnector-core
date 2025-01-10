@@ -2,7 +2,6 @@ package group.aelysium.rustyconnector.proxy.family.scalar_family;
 
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.plugins.PluginTinder;
 import group.aelysium.rustyconnector.proxy.events.FamilyPreJoinEvent;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.LoadBalancer;
@@ -122,7 +121,7 @@ public class ScalarFamily extends Family {
     @Override
     public Player.Connection.Request connect(Player player, Player.Connection.Power power) {
         try {
-            FamilyPreJoinEvent event = new FamilyPreJoinEvent(RC.P.Families().find(this.id).orElseThrow(), player);
+            FamilyPreJoinEvent event = new FamilyPreJoinEvent(RC.P.Families().find(this.id).orElseThrow(), player, power);
             boolean canceled = RC.P.EventManager().fireEvent(event).get(1, TimeUnit.MINUTES);
             if(canceled) return Player.Connection.Request.failedRequest(player, event.canceledMessage());
         } catch (Exception ignore) {}
@@ -143,7 +142,7 @@ public class ScalarFamily extends Family {
         this.plugins.forEach((k, v) -> v.close());
     }
 
-    public static class Tinder extends PluginTinder<ScalarFamily> {
+    public static class Tinder extends RC.Plugin.Tinder<ScalarFamily> {
         private final String id;
         private final String displayName;
         private final String parent;

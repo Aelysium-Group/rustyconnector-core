@@ -9,7 +9,6 @@ import group.aelysium.rustyconnector.common.errors.ErrorRegistry;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
-import group.aelysium.rustyconnector.common.plugins.PluginTinder;
 import group.aelysium.rustyconnector.proxy.events.ServerRegisterEvent;
 import group.aelysium.rustyconnector.proxy.events.ServerUnregisterEvent;
 import group.aelysium.rustyconnector.proxy.family.Family;
@@ -112,14 +111,14 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
      * technically optional because they also have default implementations.
      */
     public static class Tinder extends RCKernel.Tinder<ProxyAdapter, ProxyKernel> {
-        private PluginTinder<? extends FamilyRegistry> familyRegistry = FamilyRegistry.Tinder.DEFAULT_CONFIGURATION;
-        private PluginTinder<? extends MagicLinkCore.Proxy> magicLink;
-        private PluginTinder<? extends PlayerRegistry> playerRegistry = PlayerRegistry.Tinder.DEFAULT_CONFIGURATION;
+        private RC.Plugin.Tinder<? extends FamilyRegistry> familyRegistry = FamilyRegistry.Tinder.DEFAULT_CONFIGURATION;
+        private RC.Plugin.Tinder<? extends MagicLinkCore.Proxy> magicLink;
+        private RC.Plugin.Tinder<? extends PlayerRegistry> playerRegistry = PlayerRegistry.Tinder.DEFAULT_CONFIGURATION;
 
         public Tinder(
                 @NotNull String id,
                 @NotNull ProxyAdapter adapter,
-                @NotNull PluginTinder<? extends MagicLinkCore.Proxy> magicLink
+                @NotNull RC.Plugin.Tinder<? extends MagicLinkCore.Proxy> magicLink
                 ) {
             super(id, adapter);
             this.magicLink = magicLink;
@@ -148,39 +147,39 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
             }
         }
 
-        public Tinder lang(@NotNull PluginTinder<? extends LangLibrary> lang) {
+        public Tinder lang(@NotNull RC.Plugin.Tinder<? extends LangLibrary> lang) {
             this.lang = lang;
             return this;
         }
 
-        public Tinder magicLink(@NotNull PluginTinder<? extends MagicLinkCore.Proxy> magicLink) {
+        public Tinder magicLink(@NotNull RC.Plugin.Tinder<? extends MagicLinkCore.Proxy> magicLink) {
             this.magicLink = magicLink;
             return this;
         }
 
-        public Tinder familyRegistry(@NotNull PluginTinder<? extends FamilyRegistry> familyRegistry) {
+        public Tinder familyRegistry(@NotNull RC.Plugin.Tinder<? extends FamilyRegistry> familyRegistry) {
             this.familyRegistry = familyRegistry;
             return this;
         }
 
-        public Tinder playerRegistry(@NotNull PluginTinder<? extends PlayerRegistry> playerRegistry) {
+        public Tinder playerRegistry(@NotNull RC.Plugin.Tinder<? extends PlayerRegistry> playerRegistry) {
             this.playerRegistry = playerRegistry;
             return this;
         }
 
-        public Tinder eventManager(@NotNull PluginTinder<? extends EventManager> eventManager) {
+        public Tinder eventManager(@NotNull RC.Plugin.Tinder<? extends EventManager> eventManager) {
             this.eventManager = eventManager;
             return this;
         }
 
-        public Tinder errorHandler(@NotNull PluginTinder<? extends ErrorRegistry> errorHandler) {
+        public Tinder errorHandler(@NotNull RC.Plugin.Tinder<? extends ErrorRegistry> errorHandler) {
             this.errors = errorHandler;
             return this;
         }
 
         public @NotNull ProxyKernel ignite() throws Exception {
             Version version;
-            try (InputStream input = ProxyKernel.class.getClassLoader().getResourceAsStream("metadata.json")) {
+            try (InputStream input = ProxyKernel.class.getClassLoader().getResourceAsStream("rustyconnector-metadata.json")) {
                 if (input == null) throw new NullPointerException("Unable to initialize version number from jar.");
                 Gson gson = new Gson();
                 JsonObject object = gson.fromJson(new String(input.readAllBytes()), JsonObject.class);

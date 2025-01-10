@@ -3,14 +3,13 @@ package group.aelysium.rustyconnector.server;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import group.aelysium.ara.Particle;
-import group.aelysium.rustyconnector.common.crypt.NanoID;
+import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.common.RCKernel;
 import group.aelysium.rustyconnector.common.errors.ErrorRegistry;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
-import group.aelysium.rustyconnector.common.plugins.PluginTinder;
 import group.aelysium.rustyconnector.proxy.ProxyKernel;
 import group.aelysium.rustyconnector.proxy.util.Version;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
@@ -189,14 +188,14 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
     public static class Tinder extends RCKernel.Tinder<ServerAdapter, ServerKernel> {
         private final String targetFamily;
         private final InetSocketAddress address;
-        private PluginTinder<? extends MagicLinkCore.Server> magicLink;
+        private RC.Plugin.Tinder<? extends MagicLinkCore.Server> magicLink;
         private final Map<String, Packet.Parameter> metadata = new HashMap<>();
 
         public Tinder(
                 @NotNull String id,
                 @NotNull ServerAdapter adapter,
                 @NotNull InetSocketAddress address,
-                @NotNull PluginTinder<? extends MagicLinkCore.Server> magicLink,
+                @NotNull RC.Plugin.Tinder<? extends MagicLinkCore.Server> magicLink,
                 @NotNull String targetFamily
                 ) {
             super(id, adapter);
@@ -205,22 +204,22 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
             this.targetFamily = targetFamily;
         }
 
-        public Tinder lang(@NotNull PluginTinder<? extends LangLibrary> lang) {
+        public Tinder lang(@NotNull RC.Plugin.Tinder<? extends LangLibrary> lang) {
             this.lang = lang;
             return this;
         }
 
-        public Tinder magicLink(@NotNull PluginTinder<? extends MagicLinkCore.Server> magicLink) {
+        public Tinder magicLink(@NotNull RC.Plugin.Tinder<? extends MagicLinkCore.Server> magicLink) {
             this.magicLink = magicLink;
             return this;
         }
 
-        public Tinder eventManager(@NotNull PluginTinder<? extends EventManager> eventManager) {
+        public Tinder eventManager(@NotNull RC.Plugin.Tinder<? extends EventManager> eventManager) {
             this.eventManager = eventManager;
             return this;
         }
 
-        public Tinder errorHandler(@NotNull PluginTinder<? extends ErrorRegistry> errorHandler) {
+        public Tinder errorHandler(@NotNull RC.Plugin.Tinder<? extends ErrorRegistry> errorHandler) {
             this.errors = errorHandler;
             return this;
         }
@@ -233,7 +232,7 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
         @Override
         public @NotNull ServerKernel ignite() throws Exception {
             Version version;
-            try (InputStream input = ProxyKernel.class.getClassLoader().getResourceAsStream("metadata.json")) {
+            try (InputStream input = ProxyKernel.class.getClassLoader().getResourceAsStream("rustyconnector-metadata.json")) {
                 if (input == null) throw new NullPointerException("Unable to initialize version number from jar.");
                 Gson gson = new Gson();
                 JsonObject object = gson.fromJson(new String(input.readAllBytes()), JsonObject.class);

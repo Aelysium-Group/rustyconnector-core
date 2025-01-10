@@ -3,6 +3,7 @@ package group.aelysium.rustyconnector;
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.common.RCAdapter;
 import group.aelysium.rustyconnector.common.RCKernel;
+import group.aelysium.rustyconnector.common.plugins.PluginLoader;
 import group.aelysium.rustyconnector.server.ServerKernel;
 import group.aelysium.rustyconnector.proxy.ProxyKernel;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 public class RustyConnector {
-    private static final List<Consumer<Particle.Flux<RCKernel<?>>>> onStartHandlers = new Vector<>();
+    private static final List<Consumer<Particle.Flux<? extends RCKernel<?>>>> onStartHandlers = new Vector<>();
     protected static final AtomicReference<Particle.Flux<? extends RCKernel<?>>> kernel = new AtomicReference<>(null);
 
     /**
@@ -26,10 +27,12 @@ public class RustyConnector {
      * Any exceptions thrown by the consumer will be ignored, make sure you handle exceptions yourself.
      * @param consumer The consumer to handle the kernel.
      */
-    public static void Kernel(Consumer<Particle.Flux<RCKernel<?>>> consumer) {
+    public static void Kernel(Consumer<Particle.Flux<? extends RCKernel<?>>> consumer) {
         onStartHandlers.add(consumer);
+
+        if(kernel.get() == null) return;
         try {
-            consumer.accept((Particle.Flux<RCKernel<?>>) kernel.get());
+            consumer.accept(kernel.get());
         } catch (Exception ignore) {}
     }
 
@@ -42,17 +45,16 @@ public class RustyConnector {
         return (Particle.Flux<K>) Optional.ofNullable(kernel.get()).orElseThrow();
     }
 
-    public static RCKernel<? extends RCAdapter> registerAndIgnite(@NotNull Particle.Flux<? extends RCKernel<?>> flux) throws IllegalAccessError, Exception {
+    public static void registerAndIgnite(@NotNull Particle.Flux<? extends RCKernel<?>> flux) throws IllegalAccessError, Exception {
         Particle.Flux<? extends RCKernel<?>> kernelInstance = kernel.get();
         if (kernelInstance != null) throw new IllegalAccessError("The RustyConnector kernel has already been established.");
         kernel.set(flux);
-        RCKernel<?> kernel = flux.observe();
+        flux.observe();
         onStartHandlers.forEach(t->{
             try {
-                t.accept((Particle.Flux<RCKernel<?>>) flux);
+                t.accept(flux);
             } catch (Exception ignore) {}
         });
-        return kernel;
     }
 
     public static void unregister() throws Exception {

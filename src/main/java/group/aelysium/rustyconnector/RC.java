@@ -1,13 +1,16 @@
 package group.aelysium.rustyconnector;
 
 import group.aelysium.ara.Particle;
+import group.aelysium.rustyconnector.common.haze.HazeProvider;
 import group.aelysium.rustyconnector.common.RCAdapter;
 import group.aelysium.rustyconnector.common.RCKernel;
 import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.errors.ErrorRegistry;
 import group.aelysium.rustyconnector.common.events.EventManager;
+import group.aelysium.rustyconnector.common.haze.HazeRequest;
 import group.aelysium.rustyconnector.common.lang.LangNode;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
+import group.aelysium.rustyconnector.proxy.util.Version;
 import group.aelysium.rustyconnector.server.ServerAdapter;
 import group.aelysium.rustyconnector.server.ServerKernel;
 import group.aelysium.rustyconnector.proxy.ProxyAdapter;
@@ -20,12 +23,14 @@ import group.aelysium.rustyconnector.common.lang.LangLibrary;
 import group.aelysium.rustyconnector.proxy.player.PlayerRegistry;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 /**
  * This interface provides shorthand fetch operations for common requests.
@@ -64,6 +69,11 @@ public interface RC {
         static EventManager EventManager() throws NoSuchElementException {
             return (EventManager) P.Kernel().fetchPlugin("EventManager")
                     .orElseThrow(()->new NoSuchElementException("The Event Manager is not currently available. It might be rebooting."));
+        }
+
+        static HazeProvider Haze() throws NoSuchElementException {
+            return (HazeProvider) P.Kernel().fetchPlugin("Haze")
+                    .orElseThrow(()->new NoSuchElementException("The Haze Provider is not currently available. It might be rebooting or you haven't installed a RC module that implement it."));
         }
 
         static ProxyAdapter Adapter() throws NoSuchElementException {
@@ -115,6 +125,10 @@ public interface RC {
         }
         static Optional<Player> Player(String username) throws NoSuchElementException {
             return RC.P.Players().fetch(username);
+        }
+
+        static HazeRequest Haze(String key) throws NoSuchElementException {
+            return Haze().fetch(key).orElseThrow();
         }
     }
 
@@ -228,5 +242,49 @@ public interface RC {
             return RC.P.Adapter();
         } catch (Exception ignore) {}
         throw new NoSuchElementException("No RustyConnector kernels currently exist.");
+    }
+
+    interface Plugin extends Particle {
+        /**
+         * @return The version of RustyConnector this plugin is made for.
+         */
+        @NotNull Version targetVersion();
+
+        /**
+         * The initial access point for any RustyConnector plugin.
+         * This interface should be implemented for either Server or Proxy plugins.
+         * The caller can then do cast checks to either {@link ServerKernel} or {@link ProxyKernel} to derive the environment context.
+         */
+        interface Initializer {
+            /**
+             * This method will run once when the RustyConnector Kernel loads your module.
+             * If you have logic you'd like to run every time the kernel reloads you can add that logic here.
+             * You can cast the kernel to either {@link ServerKernel} or {@link ProxyKernel} based on the environment.
+             * @param kernel The active RustyConnector kernel.
+             */
+            void onStart(RCKernel<?> kernel);
+
+            /**
+             * This method will run once the RustyConnector Kernel unloads your module.
+             * This should be the root method that will close all resources held by your module.
+             */
+            void onClose();
+        }
+        abstract class Tinder<P extends Particle> extends Particle.Tinder<P> {
+            private Tinder() {
+                super();
+            }
+            public Tinder(
+                    String name,
+                    String description,
+                    String details
+            ) {
+                super(Map.of(
+                        "name", name,
+                        "description", description,
+                        "details", details
+                ));
+            }
+        }
     }
 }

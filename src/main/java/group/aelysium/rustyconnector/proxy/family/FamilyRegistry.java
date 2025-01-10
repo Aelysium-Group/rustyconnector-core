@@ -4,7 +4,6 @@ import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.plugins.PluginHolder;
-import group.aelysium.rustyconnector.common.plugins.PluginTinder;
 import group.aelysium.rustyconnector.proxy.events.FamilyRegisterEvent;
 import group.aelysium.rustyconnector.proxy.events.FamilyUnregisterEvent;
 import org.jetbrains.annotations.NotNull;
@@ -113,7 +112,7 @@ public class FamilyRegistry implements PluginHolder, Particle {
         return Collections.unmodifiableMap(this.families);
     }
 
-    public static class Tinder extends PluginTinder<FamilyRegistry> {
+    public static class Tinder extends RC.Plugin.Tinder<FamilyRegistry> {
         public Tinder() {
             super(
                 "FamilyRegistry",

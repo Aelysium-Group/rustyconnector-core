@@ -18,6 +18,9 @@ public class Permission {
 
         ProxyAdapter adapter = RC.P.Adapter();
 
+        if(adapter.checkPermission(player, "*")) return true;
+        if(adapter.checkPermission(player, "rustyconnector.*")) return true;
+
         for (String node : nodes) {
             String nodeToLower = node.toLowerCase(Locale.ROOT);
 
@@ -29,7 +32,7 @@ public class Permission {
             String adjustedNode = nodeToLower.replaceFirst("[A-z_\\-]*$","*");
             if(adapter.checkPermission(player, adjustedNode)) return true;
         }
-        return adapter.checkPermission(player, "rustyconnector.*"); // A hardcoded "master" permission that should always grant permission.
+        return false;
     }
 
     /**
