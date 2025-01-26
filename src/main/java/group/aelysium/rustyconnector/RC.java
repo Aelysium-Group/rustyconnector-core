@@ -181,7 +181,7 @@ public interface RC {
     static void Error(@NotNull Error error) throws NoSuchElementException {
         try {
             RC.Errors().register(error);
-        } catch (Exception ignore) {
+        } catch (Exception e) {
             if(error.throwable() != null) {
                 error.throwable().printStackTrace();
                 return;

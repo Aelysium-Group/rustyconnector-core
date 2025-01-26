@@ -7,11 +7,9 @@ import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
 import group.aelysium.rustyconnector.common.plugins.PluginCollection;
 import group.aelysium.rustyconnector.common.plugins.PluginHolder;
-import group.aelysium.rustyconnector.common.plugins.PluginLoader;
 import group.aelysium.rustyconnector.proxy.util.Version;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.*;
 
 public abstract class RCKernel<A extends RCAdapter> implements Particle, PluginHolder {
@@ -49,7 +47,7 @@ public abstract class RCKernel<A extends RCAdapter> implements Particle, PluginH
      * @param plugin The plugin flux to register.
      * @throws IllegalStateException If a plugin already exists with the pluginName provided.
      */
-    public void registerPlugin(@NotNull String pluginName, Particle.Flux<?> plugin) throws IllegalStateException {
+    public void registerPlugin(@NotNull String pluginName, Particle.Flux<? extends RC.Plugin> plugin) throws IllegalStateException {
         this.plugins.registerPlugin(pluginName, plugin);
     }
 
@@ -60,9 +58,11 @@ public abstract class RCKernel<A extends RCAdapter> implements Particle, PluginH
      * @throws IllegalStateException If a plugin already exists with the pluginName provided.
      * @throws IllegalArgumentException If the provided flux doesn't contain a "name" metadata entry.
      */
-    public void registerPlugin(Particle.Flux<?> plugin) throws IllegalStateException, IllegalArgumentException {
+    public void registerPlugin(Particle.Flux<? extends RC.Plugin> plugin) throws IllegalStateException, IllegalArgumentException {
         String name = plugin.metadata("name");
-        if(name == null) throw new IllegalArgumentException("The provided flux must have the `name`, `description`, and `details` metadata added.");
+        if(name == null) throw new IllegalArgumentException("Plugins must have the metadata for `name`, `description`, and `details` added to their flux before they can be registered.");
+        if(plugin.metadata("description") == null) throw new IllegalArgumentException("Plugins must have the metadata for `name`, `description`, and `details` added to their flux before they can be registered.");
+        if(plugin.metadata("details") == null) throw new IllegalArgumentException("Plugins must have the metadata for `name`, `description`, and `details` added to their flux before they can be registered.");
         this.registerPlugin(name, plugin);
     }
 

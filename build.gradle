@@ -34,20 +34,19 @@ repositories {
 }
 
 dependencies {
-    shadow 'org.jetbrains:annotations:24.1.0'
+    // Kiori Adventure should be provided by the wrapper
+    compileOnly 'net.kyori:adventure-api:4.17.0'
+    compileOnly 'org.jetbrains:annotations:24.1.0'
 
     shadow "group.aelysium:ara:1.4.2"
     shadow "group.aelysium:haze:0.0.4"
 
     shadow 'com.aventrix.jnanoid:jnanoid:2.0.0'
-    shadow 'net.kyori:adventure-api:4.17.0'
     shadow 'com.google.code.gson:gson:2.11.0'
 
     shadow "io.javalin:javalin:6.4.0"
     shadow "com.fasterxml.jackson.core:jackson-databind:2.17.0"
     shadow "org.java-websocket:Java-WebSocket:1.5.7"
-
-    shadow 'net.byteflux:libby-core:1.3.1'
 }
 
 processResources {
@@ -73,29 +72,17 @@ shadowJar {
     archiveClassifier.set('')
     mergeServiceFiles()
 
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // Make sure you update PluginLoader.java when you add or remove deps here.
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
     relocate 'org.reflections', 'group.aelysium.rustyconnector.shaded.org.reflections'
-    relocate 'org.jetbrains.annotations', 'group.aelysium.rustyconnector.shaded.org.jetbrains.annotations'
 
     relocate "group.aelysium.ara", 'group.aelysium.rustyconnector.shaded.group.aelysium.ara'
     relocate "group.aelysium.haze", 'group.aelysium.rustyconnector.shaded.group.aelysium.haze'
 
-    relocate 'com.aventrix.jnanoid.jnanoid', 'group.aelysium.rustyconnector.shaded.com.aventrix.jnanoid.jnanoid'
-    relocate 'net.kyori.adventure_api', 'group.aelysium.rustyconnector.shaded.net.kyori.adventure-api'
+    relocate 'com.aventrix.jnanoid', 'group.aelysium.rustyconnector.shaded.com.aventrix.jnanoid.jnanoid'
     relocate 'com.google.gson', 'group.aelysium.rustyconnector.shaded.com.google.code.gson.gson'
 
-    relocate "io.javalin", 'group.aelysium.rustyconnector.shaded.io.javalin.javalin'
-    relocate "com.fasterxml.jackson", 'group.aelysium.rustyconnector.shaded.com.fasterxml.jackson.core.jackson-databind'
-    relocate "org.java_websocket", 'group.aelysium.rustyconnector.shaded.org.java-websocket.Java-WebSocket'
-
-    relocate "net.byteflux.libby-core", 'group.aelysium.rustyconnector.shaded.net.byteflux.libby-core'
-
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // Make sure you update PluginLoader.java when you add or remove deps here.
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    relocate "io.javalin", 'group.aelysium.rustyconnector.shaded.io.javalin'
+    relocate "com.fasterxml.jackson.core", 'group.aelysium.rustyconnector.shaded.com.fasterxml.jackson.core.jackson_databind'
+    relocate "org.java_websocket", 'group.aelysium.rustyconnector.shaded.org.java_websocket.Java_WebSocket'
 
     configurations = [project.configurations.shadow]
 }

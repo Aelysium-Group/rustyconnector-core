@@ -1,48 +1,36 @@
 package group.aelysium.rustyconnector.common.plugins;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.RCKernel;
 import group.aelysium.rustyconnector.common.errors.Error;
-import net.byteflux.libby.Library;
-import net.byteflux.libby.LibraryManager;
-import net.byteflux.libby.classloader.IsolatedClassLoader;
-import net.byteflux.libby.logging.LogLevel;
-import net.byteflux.libby.logging.adapters.LogAdapter;
-import net.kyori.adventure.text.Component;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.net.URL;
-import java.nio.file.Path;
-import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.List;
 
-public class PluginLoader {
-    private final static IsolatedClassLoader classLoader = new IsolatedClassLoader();
-    private final static LogAdapter logger = new LogAdapter() {
-        @Override
-        public void log(LogLevel level, String message) {
-            try {
-                RC.Adapter().log(Component.text(message));
-            } catch (Exception ignore) {
-                System.out.println(message);
-            }
-        }
+public class PluginLoader implements AutoCloseable {
+    protected Gson gson = new Gson();
+    protected List<PluginClassLoader> classLoaders = new ArrayList<>();
+    protected final List<String> sharedPackages;
 
-        @Override
-        public void log(LogLevel level, String message, Throwable throwable) {
-            try {
-                RC.Adapter().log(Error.from(throwable).detail("Message", message).toComponent());
-            } catch (Exception ignore) {
-                System.out.println(message);
-            }
-        }
-    };
+    public PluginLoader() {
+        this.sharedPackages = List.of();
+    }
+    public PluginLoader(
+            List<String> sharedPackages
+    ) {
+        this.sharedPackages = sharedPackages;
+    }
 
-    public static void loadPlugins(Particle.Flux<? extends RCKernel<?>> kernel, String modulesDirectory) {
-        System.out.println("Loading RustyConnector Modules...");
+    public void loadPlugins(Particle.Flux<? extends RCKernel<?>> flux, String modulesDirectory) {
         File modules = new File(modulesDirectory);
+        final ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
         try {
             if(!modules.exists()) modules.mkdirs();
 
@@ -50,59 +38,53 @@ public class PluginLoader {
 
             if (files == null) return;
             for (File file : files) {
-                System.out.println("Found: "+file.getName());
-                loadAndRelocateJar(kernel, file);
+                try {
+                    PluginClassLoader classLoader = new PluginClassLoader(
+                            List.of(file.toURI().toURL()),
+                            getClass().getClassLoader(),
+                            this.sharedPackages
+                    );
+                    Thread.currentThread().setContextClassLoader(classLoader);
+
+                    InputStream stream = classLoader.getResourceAsStream("rc-module.json");
+                    if(stream == null) throw new NullPointerException("No rc-module.json exists for "+file.getName());
+                    try(InputStreamReader reader = new InputStreamReader(stream)) {
+                        JsonObject object = gson.fromJson(reader, JsonObject.class);
+
+                        if(!object.has("main")) throw new NullPointerException("rc-module.json must contain `main` which points to the entrypoint of the module.");
+                        Class<?> entrypoint = classLoader.loadClass(object.get("main").getAsString());
+
+                        if(!RC.Plugin.Initializer.class.isAssignableFrom(entrypoint))
+                            throw new ClassCastException("The `main` class must implement "+RC.Plugin.Initializer.class.getName());
+
+                        Constructor<RC.Plugin.Initializer> constructor = (Constructor<RC.Plugin.Initializer>) entrypoint.getDeclaredConstructor();
+
+                        constructor.setAccessible(true);
+                        RC.Plugin.Initializer plugin = constructor.newInstance();
+                        constructor.setAccessible(false);
+
+                        flux.onStart(plugin::onStart);
+                        flux.onClose(plugin::onClose);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    Thread.currentThread().setContextClassLoader(originalClassLoader);
+                }
             }
         } catch (Exception e) {
             RC.Error(Error.from(e).whileAttempting("To register external modules via `"+modules.getAbsolutePath()+"`"));
         }
-        System.out.println("RC Done!");
     }
 
-    private static void loadAndRelocateJar(Particle.Flux<? extends RCKernel<?>> flux, File jarFile) throws Exception {
-//        LibraryManager libraryManager = new LibraryManager(logger, jarFile.getParentFile().toPath(), "libs") {
-//            @Override
-//            protected void addToClasspath(Path file) {
-//                try {
-//                    URL url = file.toUri().toURL();
-//                    classLoader.addURL(url);
-//                } catch (Exception ex) {
-//                    throw new RuntimeException("Error adding " + file + " to classpath", ex);
-//                }
-//            }
-//        };
-//        Library lib = Library.builder()
-//                .url(jarFile.getAbsolutePath())
-//                .build();
-//        libraryManager.loadLibrary(lib);
-
-        System.out.println("Done relocating!");
-
-        // Load classes from the isolated class loader
-        try (JarInputStream jarStream = new JarInputStream(new FileInputStream(jarFile))) {
-            JarEntry jarEntry;
-            while ((jarEntry = jarStream.getNextJarEntry()) != null) {
-                if (!jarEntry.getName().endsWith(".class")) continue;
-
-                String className = jarEntry.getName().replace("/", ".").replace(".class", "");
-                System.out.println("Scanning "+className);
-                Class<?> clazz = null;
-                try {
-                    clazz = classLoader.loadClass(className);
-                } catch (Exception ignore) {
-                    continue;
-                }
-
-                System.out.println("--------------------FOUND "+className);
-                if(!RC.Plugin.Initializer.class.isAssignableFrom(clazz)) continue;
-                System.out.println("--------------------RESOLVED "+className);
-                RC.Plugin.Initializer plugin = (RC.Plugin.Initializer) clazz.getDeclaredConstructor().newInstance();
-
-                flux.onStart(plugin::onStart);
-                flux.onClose(plugin::onClose);
+    @Override
+    public void close() throws Exception {
+        classLoaders.forEach(c -> {
+            try {
+                c.close();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            (new Exception("Failed to load "+jarFile.getName()+"!", e)).printStackTrace();
-        }
+        });
     }
 }

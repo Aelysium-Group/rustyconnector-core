@@ -1,7 +1,6 @@
 package group.aelysium.rustyconnector.server;
 
 import group.aelysium.rustyconnector.common.RCAdapter;
-import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
