@@ -1,4 +1,4 @@
-package group.aelysium.rustyconnector.common.plugins;
+package group.aelysium.rustyconnector.common.modules;
 
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -11,7 +11,7 @@ import java.util.List;
  *
  * Only the classes in SHARED_PACKAGES are visible to the plugin.
  */
-public class PluginClassLoader extends URLClassLoader {
+public class ModuleClassLoader extends URLClassLoader {
     private final List<String> sharedPackages = new ArrayList<>(List.of(
             "group.aelysium",
             "net.kyori.adventure",
@@ -27,7 +27,7 @@ public class PluginClassLoader extends URLClassLoader {
 
     private final ClassLoader parentClassLoader;
 
-    public PluginClassLoader(List<URL> urls, ClassLoader parentClassLoader, List<String> sharedPackages) {
+    public ModuleClassLoader(List<URL> urls, ClassLoader parentClassLoader, List<String> sharedPackages) {
         super(urls.toArray(new URL[0]), null);
         this.parentClassLoader = parentClassLoader;
         this.sharedPackages.addAll(sharedPackages);

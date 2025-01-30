@@ -4,6 +4,7 @@ import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.algorithm.QuickSort;
 import group.aelysium.rustyconnector.common.errors.Error;
+import group.aelysium.rustyconnector.common.modules.ModuleTinder;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.ISortable;
 import org.jetbrains.annotations.NotNull;
 
@@ -118,7 +119,7 @@ public class EventManager implements Particle {
         this.executor.shutdown();
     }
 
-    public static class Tinder extends RC.Plugin.Tinder<EventManager> {
+    public static class Tinder extends ModuleTinder<EventManager> {
         public Tinder() {
             super(
                 "EventManager",

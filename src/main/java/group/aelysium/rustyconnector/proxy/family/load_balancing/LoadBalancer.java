@@ -2,6 +2,7 @@ package group.aelysium.rustyconnector.proxy.family.load_balancing;
 
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
+import group.aelysium.rustyconnector.common.modules.ModuleTinder;
 import group.aelysium.rustyconnector.proxy.events.*;
 import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
@@ -226,7 +227,7 @@ public abstract class LoadBalancer implements Server.Container, Particle {
         if(this.executor != null) this.executor.shutdownNow();
     }
 
-    public abstract static class Tinder<T extends LoadBalancer> extends RC.Plugin.Tinder<T> {
+    public abstract static class Tinder<T extends LoadBalancer> extends ModuleTinder<T> {
         protected final boolean weighted;
         protected final boolean persistence;
         protected final int attempts;

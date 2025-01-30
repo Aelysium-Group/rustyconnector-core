@@ -10,7 +10,6 @@ import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.haze.HazeRequest;
 import group.aelysium.rustyconnector.common.lang.LangNode;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
-import group.aelysium.rustyconnector.proxy.util.Version;
 import group.aelysium.rustyconnector.server.ServerAdapter;
 import group.aelysium.rustyconnector.server.ServerKernel;
 import group.aelysium.rustyconnector.proxy.ProxyAdapter;
@@ -23,14 +22,12 @@ import group.aelysium.rustyconnector.common.lang.LangLibrary;
 import group.aelysium.rustyconnector.proxy.player.PlayerRegistry;
 import org.jetbrains.annotations.NotNull;
 
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 /**
  * This interface provides shorthand fetch operations for common requests.
@@ -52,27 +49,27 @@ public interface RC {
         }
 
         static FamilyRegistry Families() throws NoSuchElementException {
-            return (FamilyRegistry) P.Kernel().fetchPlugin("FamilyRegistry")
+            return (FamilyRegistry) P.Kernel().fetchModule("FamilyRegistry")
                     .orElseThrow(()->new NoSuchElementException("The Family Registry is not currently available. It might be rebooting."));
         }
 
         static PlayerRegistry Players() throws NoSuchElementException {
-            return (PlayerRegistry) P.Kernel().fetchPlugin("PlayerRegistry")
+            return (PlayerRegistry) P.Kernel().fetchModule("PlayerRegistry")
                     .orElseThrow(()->new NoSuchElementException("The Player Registry is not currently available. It might be rebooting."));
         }
 
         static MagicLinkCore.Proxy MagicLink() throws NoSuchElementException {
-            return (MagicLinkCore.Proxy) P.Kernel().fetchPlugin("MagicLink")
+            return (MagicLinkCore.Proxy) P.Kernel().fetchModule("MagicLink")
                     .orElseThrow(()->new NoSuchElementException("The Magic Link module is not currently available. It might be rebooting."));
         }
 
         static EventManager EventManager() throws NoSuchElementException {
-            return (EventManager) P.Kernel().fetchPlugin("EventManager")
+            return (EventManager) P.Kernel().fetchModule("EventManager")
                     .orElseThrow(()->new NoSuchElementException("The Event Manager is not currently available. It might be rebooting."));
         }
 
         static HazeProvider Haze() throws NoSuchElementException {
-            return (HazeProvider) P.Kernel().fetchPlugin("Haze")
+            return (HazeProvider) P.Kernel().fetchModule("Haze")
                     .orElseThrow(()->new NoSuchElementException("The Haze Provider is not currently available. It might be rebooting or you haven't installed a RC module that implement it."));
         }
 
@@ -81,12 +78,12 @@ public interface RC {
         }
 
         static LangLibrary Lang() throws NoSuchElementException {
-            return (LangLibrary) P.Kernel().fetchPlugin("LangLibrary")
+            return (LangLibrary) P.Kernel().fetchModule("LangLibrary")
                     .orElseThrow(()->new NoSuchElementException("The Language Registry is not currently available. It might be rebooting."));
         }
 
         static ErrorRegistry Errors() {
-            return (ErrorRegistry) P.Kernel().fetchPlugin("ErrorRegistry")
+            return (ErrorRegistry) P.Kernel().fetchModule("ErrorRegistry")
                     .orElseThrow(()->new NoSuchElementException("The Error Registry is not currently available. It might be rebooting."));
         }
 
@@ -126,10 +123,6 @@ public interface RC {
         static Optional<Player> Player(String username) throws NoSuchElementException {
             return RC.P.Players().fetch(username);
         }
-
-        static HazeRequest Haze(String key) throws NoSuchElementException {
-            return Haze().fetch(key).orElseThrow();
-        }
     }
 
     /**
@@ -144,7 +137,7 @@ public interface RC {
         }
 
         static MagicLinkCore.Server MagicLink() throws NoSuchElementException {
-            return (MagicLinkCore.Server) S.Kernel().fetchPlugin("MagicLink")
+            return (MagicLinkCore.Server) S.Kernel().fetchModule("MagicLink")
                     .orElseThrow(()->new NoSuchElementException("The Magic Link module is not currently available. It might be rebooting."));
         }
 
@@ -153,17 +146,17 @@ public interface RC {
         }
 
         static LangLibrary Lang() throws NoSuchElementException {
-            return (LangLibrary) S.Kernel().fetchPlugin("LangLibrary")
+            return (LangLibrary) S.Kernel().fetchModule("LangLibrary")
                     .orElseThrow(()->new NoSuchElementException("The Language Registry is not currently available. It might be rebooting."));
         }
 
         static EventManager EventManager() throws NoSuchElementException {
-            return (EventManager) S.Kernel().fetchPlugin("EventManager")
+            return (EventManager) S.Kernel().fetchModule("EventManager")
                     .orElseThrow(()->new NoSuchElementException("The Event Manager is not currently available. It might be rebooting."));
         }
 
         static ErrorRegistry Errors() {
-            return (ErrorRegistry) S.Kernel().fetchPlugin("ErrorRegistry")
+            return (ErrorRegistry) S.Kernel().fetchModule("ErrorRegistry")
                     .orElseThrow(()->new NoSuchElementException("The Error Registry is not currently available. It might be rebooting."));
         }
     }
@@ -242,49 +235,5 @@ public interface RC {
             return RC.P.Adapter();
         } catch (Exception ignore) {}
         throw new NoSuchElementException("No RustyConnector kernels currently exist.");
-    }
-
-    interface Plugin extends Particle {
-        /**
-         * @return The version of RustyConnector this plugin is made for.
-         */
-        @NotNull Version targetVersion();
-
-        /**
-         * The initial access point for any RustyConnector plugin.
-         * This interface should be implemented for either Server or Proxy plugins.
-         * The caller can then do cast checks to either {@link ServerKernel} or {@link ProxyKernel} to derive the environment context.
-         */
-        interface Initializer {
-            /**
-             * This method will run once when the RustyConnector Kernel loads your module.
-             * If you have logic you'd like to run every time the kernel reloads you can add that logic here.
-             * You can cast the kernel to either {@link ServerKernel} or {@link ProxyKernel} based on the environment.
-             * @param kernel The active RustyConnector kernel.
-             */
-            void onStart(RCKernel<?> kernel);
-
-            /**
-             * This method will run once the RustyConnector Kernel unloads your module.
-             * This should be the root method that will close all resources held by your module.
-             */
-            void onClose();
-        }
-        abstract class Tinder<P extends Particle> extends Particle.Tinder<P> {
-            private Tinder() {
-                super();
-            }
-            public Tinder(
-                    String name,
-                    String description,
-                    String details
-            ) {
-                super(Map.of(
-                        "name", name,
-                        "description", description,
-                        "details", details
-                ));
-            }
-        }
     }
 }

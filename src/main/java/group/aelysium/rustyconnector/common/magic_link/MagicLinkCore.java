@@ -5,6 +5,7 @@ import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketType;
 import group.aelysium.rustyconnector.common.crypt.NanoID;
 import group.aelysium.rustyconnector.common.errors.Error;
+import group.aelysium.rustyconnector.common.modules.ModuleTinder;
 import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
 import group.aelysium.rustyconnector.common.cache.TimeoutCache;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
@@ -169,7 +170,7 @@ public abstract class MagicLinkCore implements Particle {
         }
     }
 
-    public static abstract class Tinder<T extends MagicLinkCore> extends RC.Plugin.Tinder<T> {
+    public static abstract class Tinder<T extends MagicLinkCore> extends ModuleTinder<T> {
         public Tinder() {
             super(
                     "MagicLink",

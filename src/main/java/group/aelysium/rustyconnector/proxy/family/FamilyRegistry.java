@@ -3,7 +3,8 @@ package group.aelysium.rustyconnector.proxy.family;
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.errors.Error;
-import group.aelysium.rustyconnector.common.plugins.PluginHolder;
+import group.aelysium.rustyconnector.common.modules.ModuleHolder;
+import group.aelysium.rustyconnector.common.modules.ModuleTinder;
 import group.aelysium.rustyconnector.proxy.events.FamilyRegisterEvent;
 import group.aelysium.rustyconnector.proxy.events.FamilyUnregisterEvent;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +14,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-public class FamilyRegistry implements PluginHolder, Particle {
+public class FamilyRegistry implements ModuleHolder, Particle {
     private final Map<String, Flux<? extends Family>> families = new ConcurrentHashMap<>();
     private String rootFamily = null;
 
@@ -108,11 +109,11 @@ public class FamilyRegistry implements PluginHolder, Particle {
     }
 
     @Override
-    public Map<String, Flux<? extends Particle>> plugins() {
+    public Map<String, Flux<? extends Particle>> modules() {
         return Collections.unmodifiableMap(this.families);
     }
 
-    public static class Tinder extends RC.Plugin.Tinder<FamilyRegistry> {
+    public static class Tinder extends ModuleTinder<FamilyRegistry> {
         public Tinder() {
             super(
                 "FamilyRegistry",

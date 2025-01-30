@@ -2,6 +2,7 @@ package group.aelysium.rustyconnector.common.errors;
 
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
+import group.aelysium.rustyconnector.common.modules.ModuleTinder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -47,7 +48,7 @@ public class ErrorRegistry implements Particle {
         this.errors.clear();
     }
 
-    public static class Tinder extends RC.Plugin.Tinder<ErrorRegistry> {
+    public static class Tinder extends ModuleTinder<ErrorRegistry> {
         private boolean logErrors = false;
         private int cacheSize = 200;
 
@@ -77,6 +78,6 @@ public class ErrorRegistry implements Particle {
             );
         }
 
-        public static RC.Plugin.Tinder<? extends ErrorRegistry> DEFAULT_CONFIGURATION = new Tinder();
+        public static ModuleTinder<? extends ErrorRegistry> DEFAULT_CONFIGURATION = new Tinder();
     }
 }

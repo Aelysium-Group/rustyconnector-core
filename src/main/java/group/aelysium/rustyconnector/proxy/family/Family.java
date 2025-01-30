@@ -2,18 +2,16 @@ package group.aelysium.rustyconnector.proxy.family;
 
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.plugins.PluginCollection;
-import group.aelysium.rustyconnector.common.plugins.PluginHolder;
+import group.aelysium.rustyconnector.common.modules.ModuleCollection;
+import group.aelysium.rustyconnector.common.modules.ModuleHolder;
 import group.aelysium.rustyconnector.proxy.player.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
-public abstract class Family implements Player.Connectable, Server.Container, PluginHolder, Particle {
-    protected final PluginCollection plugins = new PluginCollection();
+public abstract class Family extends ModuleCollection implements Player.Connectable, Server.Container, ModuleHolder, Particle {
     private final Map<String, Object> metadata = new ConcurrentHashMap<>(Map.of(
             "serverSoftCap", 30,
             "serverHardCap", 40
@@ -94,58 +92,11 @@ public abstract class Family implements Player.Connectable, Server.Container, Pl
         return Optional.empty();
     }
 
-    /**
-     * Installs the provided tinder as a plugin on this family.
-     * This method will immediately create a Flux from the tinder and attempt to ignite it.
-     * @param flux The flux to ignite the plugin from.
-     * @throws Exception If there was an issue igniting the plugin's tinder. Or if a plugin already exists with the defined name.
-     */
-    public void installPlugin(Particle.Flux<?> flux) throws Exception {
-        flux.observe(10, TimeUnit.MINUTES);
-        this.plugins.registerPlugin(flux);
-    }
-
-    /**
-     * Checks if a specific plugin exists on the family.
-     * @param pluginName The name of the plugin to check for.
-     * @return `true` if the plugin exists. `false` otherwise.
-     */
-    public boolean hasPlugin(String pluginName) {
-        return this.plugins.contains(pluginName);
-    }
-
-    /**
-     * Checks if a specific plugin exists on the family.
-     * @param pluginName The name of the plugin to check for.
-     * @return An optional containing the flux of the plugin if it exists. Otherwise, an empty optional.
-     */
-    public <F extends Particle> Optional<Particle.Flux<F>> fetchPlugin(String pluginName) {
-        return Optional.ofNullable(this.plugins.fetchPlugin(pluginName));
-    }
-
-    /**
-     * Uninstalls the specified plugin.
-     * This method will attempt to shut down the plugin before uninstalling it.
-     * @param pluginName The name of the plugin to uninstall.
-     * @return `true` if the plugin was uninstalled. `false` if there was no plugin to uninstall.
-     * @throws Exception If there was an issue uninstalling the plugin.
-     */
-    public boolean uninstallPlugin(String pluginName) throws Exception {
-        if(!this.plugins.contains(pluginName)) return false;
-        this.plugins.unregister(pluginName);
-        return true;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Family that = (Family) o;
         return Objects.equals(id, that.id);
-    }
-
-    @Override
-    public Map<String, Particle.Flux<?>> plugins() {
-        return this.plugins.plugins();
     }
 }

@@ -3,6 +3,7 @@ package group.aelysium.rustyconnector.common.lang;
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.errors.Error;
+import group.aelysium.rustyconnector.common.modules.ModuleTinder;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import org.jetbrains.annotations.NotNull;
@@ -188,7 +189,7 @@ public class LangLibrary implements Particle {
         };
     }
 
-    public static class Tinder extends RC.Plugin.Tinder<LangLibrary> {
+    public static class Tinder extends ModuleTinder<LangLibrary> {
         private ASCIIAlphabet asciiAlphabet = DEFAULT_ASCII_ALPHABET;
 
         public Tinder() {

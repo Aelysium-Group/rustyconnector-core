@@ -3,12 +3,12 @@ package group.aelysium.rustyconnector.proxy;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.common.RCKernel;
 import group.aelysium.rustyconnector.common.errors.ErrorRegistry;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
+import group.aelysium.rustyconnector.common.modules.ModuleTinder;
 import group.aelysium.rustyconnector.proxy.events.ServerRegisterEvent;
 import group.aelysium.rustyconnector.proxy.events.ServerUnregisterEvent;
 import group.aelysium.rustyconnector.proxy.family.Family;
@@ -30,9 +30,9 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
             @NotNull String id,
             @NotNull Version version,
             @NotNull ProxyAdapter adapter,
-            List<? extends Flux<? extends Particle>> plugins
+            List<? extends ModuleTinder<?>> modules
     ) {
-        super(id, version, adapter, plugins);
+        super(id, version, adapter, modules);
     }
 
     /**
@@ -111,14 +111,14 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
      * technically optional because they also have default implementations.
      */
     public static class Tinder extends RCKernel.Tinder<ProxyAdapter, ProxyKernel> {
-        private RC.Plugin.Tinder<? extends FamilyRegistry> familyRegistry = FamilyRegistry.Tinder.DEFAULT_CONFIGURATION;
-        private RC.Plugin.Tinder<? extends MagicLinkCore.Proxy> magicLink;
-        private RC.Plugin.Tinder<? extends PlayerRegistry> playerRegistry = PlayerRegistry.Tinder.DEFAULT_CONFIGURATION;
+        private ModuleTinder<? extends FamilyRegistry> familyRegistry = FamilyRegistry.Tinder.DEFAULT_CONFIGURATION;
+        private ModuleTinder<? extends MagicLinkCore.Proxy> magicLink;
+        private ModuleTinder<? extends PlayerRegistry> playerRegistry = PlayerRegistry.Tinder.DEFAULT_CONFIGURATION;
 
         public Tinder(
                 @NotNull String id,
                 @NotNull ProxyAdapter adapter,
-                @NotNull RC.Plugin.Tinder<? extends MagicLinkCore.Proxy> magicLink
+                @NotNull ModuleTinder<? extends MagicLinkCore.Proxy> magicLink
                 ) {
             super(id, adapter);
             this.magicLink = magicLink;
@@ -147,32 +147,32 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
             }
         }
 
-        public Tinder lang(@NotNull RC.Plugin.Tinder<? extends LangLibrary> lang) {
+        public Tinder lang(@NotNull ModuleTinder<? extends LangLibrary> lang) {
             this.lang = lang;
             return this;
         }
 
-        public Tinder magicLink(@NotNull RC.Plugin.Tinder<? extends MagicLinkCore.Proxy> magicLink) {
+        public Tinder magicLink(@NotNull ModuleTinder<? extends MagicLinkCore.Proxy> magicLink) {
             this.magicLink = magicLink;
             return this;
         }
 
-        public Tinder familyRegistry(@NotNull RC.Plugin.Tinder<? extends FamilyRegistry> familyRegistry) {
+        public Tinder familyRegistry(@NotNull ModuleTinder<? extends FamilyRegistry> familyRegistry) {
             this.familyRegistry = familyRegistry;
             return this;
         }
 
-        public Tinder playerRegistry(@NotNull RC.Plugin.Tinder<? extends PlayerRegistry> playerRegistry) {
+        public Tinder playerRegistry(@NotNull ModuleTinder<? extends PlayerRegistry> playerRegistry) {
             this.playerRegistry = playerRegistry;
             return this;
         }
 
-        public Tinder eventManager(@NotNull RC.Plugin.Tinder<? extends EventManager> eventManager) {
+        public Tinder eventManager(@NotNull ModuleTinder<? extends EventManager> eventManager) {
             this.eventManager = eventManager;
             return this;
         }
 
-        public Tinder errorHandler(@NotNull RC.Plugin.Tinder<? extends ErrorRegistry> errorHandler) {
+        public Tinder errorHandler(@NotNull ModuleTinder<? extends ErrorRegistry> errorHandler) {
             this.errors = errorHandler;
             return this;
         }
@@ -190,12 +190,12 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
                     version,
                     this.adapter,
                     List.of(
-                        this.lang.flux(),
-                        this.familyRegistry.flux(),
-                        this.magicLink.flux(),
-                        this.playerRegistry.flux(),
-                        this.eventManager.flux(),
-                        this.errors.flux()
+                        this.lang,
+                        this.familyRegistry,
+                        this.magicLink,
+                        this.playerRegistry,
+                        this.eventManager,
+                        this.errors
                     )
             );
         }

@@ -2,6 +2,7 @@ package group.aelysium.rustyconnector.proxy.family.scalar_family;
 
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
+import group.aelysium.rustyconnector.common.modules.ModuleTinder;
 import group.aelysium.rustyconnector.proxy.events.FamilyPreJoinEvent;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.LoadBalancer;
@@ -26,14 +27,14 @@ public class ScalarFamily extends Family {
             @Nullable String displayName,
             @Nullable String parent,
             @NotNull Map<String, Object> metadata,
-            @NotNull Particle.Flux<? extends LoadBalancer> loadBalancer
+            @NotNull ModuleTinder<? extends LoadBalancer> loadBalancer
     ) throws Exception {
         super(id, displayName, parent, metadata);
-        this.installPlugin(loadBalancer);
+        this.registerModule(loadBalancer);
     }
 
     public Particle.Flux<? extends LoadBalancer> loadBalancer() {
-        return this.plugins.fetchPlugin("LoadBalancer");
+        return this.fetchModule("LoadBalancer");
     }
 
     public void addServer(@NotNull Server server) {
@@ -138,11 +139,11 @@ public class ScalarFamily extends Family {
     }
 
     @Override
-    public void close() {
-        this.plugins.forEach((k, v) -> v.close());
+    public void close() throws Exception {
+        super.close();
     }
 
-    public static class Tinder extends RC.Plugin.Tinder<ScalarFamily> {
+    public static class Tinder extends ModuleTinder<ScalarFamily> {
         private final String id;
         private final String displayName;
         private final String parent;
@@ -178,7 +179,7 @@ public class ScalarFamily extends Family {
                     this.displayName,
                     this.parent,
                     this.metadata,
-                    this.loadBalancer.flux()
+                    this.loadBalancer
             );
         }
     }

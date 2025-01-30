@@ -2,14 +2,13 @@ package group.aelysium.rustyconnector.server;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import group.aelysium.ara.Particle;
-import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.common.RCKernel;
 import group.aelysium.rustyconnector.common.errors.ErrorRegistry;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
+import group.aelysium.rustyconnector.common.modules.ModuleTinder;
 import group.aelysium.rustyconnector.proxy.ProxyKernel;
 import group.aelysium.rustyconnector.proxy.util.Version;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
@@ -34,12 +33,12 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
             @NotNull String id,
             @NotNull Version version,
             @NotNull ServerAdapter adapter,
-            @NotNull List<? extends Flux<? extends Particle>> plugins,
+            @NotNull List<? extends ModuleTinder<?>> modules,
             @NotNull InetSocketAddress address,
             @NotNull String targetFamily,
             @NotNull Map<String, Packet.Parameter> metadata
     ) {
-        super(id, version, adapter, plugins);
+        super(id, version, adapter, modules);
         this.address = address;
         this.targetFamily = targetFamily;
         this.metadata.putAll(metadata);
@@ -188,14 +187,14 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
     public static class Tinder extends RCKernel.Tinder<ServerAdapter, ServerKernel> {
         private final String targetFamily;
         private final InetSocketAddress address;
-        private RC.Plugin.Tinder<? extends MagicLinkCore.Server> magicLink;
+        private ModuleTinder<? extends MagicLinkCore.Server> magicLink;
         private final Map<String, Packet.Parameter> metadata = new HashMap<>();
 
         public Tinder(
                 @NotNull String id,
                 @NotNull ServerAdapter adapter,
                 @NotNull InetSocketAddress address,
-                @NotNull RC.Plugin.Tinder<? extends MagicLinkCore.Server> magicLink,
+                @NotNull ModuleTinder<? extends MagicLinkCore.Server> magicLink,
                 @NotNull String targetFamily
                 ) {
             super(id, adapter);
@@ -204,22 +203,22 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
             this.targetFamily = targetFamily;
         }
 
-        public Tinder lang(@NotNull RC.Plugin.Tinder<? extends LangLibrary> lang) {
+        public Tinder lang(@NotNull ModuleTinder<? extends LangLibrary> lang) {
             this.lang = lang;
             return this;
         }
 
-        public Tinder magicLink(@NotNull RC.Plugin.Tinder<? extends MagicLinkCore.Server> magicLink) {
+        public Tinder magicLink(@NotNull ModuleTinder<? extends MagicLinkCore.Server> magicLink) {
             this.magicLink = magicLink;
             return this;
         }
 
-        public Tinder eventManager(@NotNull RC.Plugin.Tinder<? extends EventManager> eventManager) {
+        public Tinder eventManager(@NotNull ModuleTinder<? extends EventManager> eventManager) {
             this.eventManager = eventManager;
             return this;
         }
 
-        public Tinder errorHandler(@NotNull RC.Plugin.Tinder<? extends ErrorRegistry> errorHandler) {
+        public Tinder errorHandler(@NotNull ModuleTinder<? extends ErrorRegistry> errorHandler) {
             this.errors = errorHandler;
             return this;
         }
@@ -244,10 +243,10 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
                     version,
                     adapter,
                     List.of(
-                        lang.flux(),
-                        magicLink.flux(),
-                        eventManager.flux(),
-                        errors.flux()
+                        lang,
+                        magicLink,
+                        eventManager,
+                        errors
                     ),
                     address,
                     targetFamily,
