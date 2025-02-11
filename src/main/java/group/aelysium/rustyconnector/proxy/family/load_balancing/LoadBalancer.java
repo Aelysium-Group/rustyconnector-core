@@ -2,17 +2,22 @@ package group.aelysium.rustyconnector.proxy.family.load_balancing;
 
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
+import group.aelysium.rustyconnector.common.modules.ModuleParticle;
 import group.aelysium.rustyconnector.common.modules.ModuleTinder;
 import group.aelysium.rustyconnector.proxy.events.*;
 import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
+import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.*;
 
-public abstract class LoadBalancer implements Server.Container, Particle {
+import static net.kyori.adventure.text.Component.join;
+import static net.kyori.adventure.text.JoinConfiguration.newlines;
+
+public abstract class LoadBalancer implements Server.Container, ModuleParticle {
     protected final ScheduledExecutorService executor;
     protected boolean weighted;
     protected boolean persistence;
@@ -227,6 +232,19 @@ public abstract class LoadBalancer implements Server.Container, Particle {
         if(this.executor != null) this.executor.shutdownNow();
     }
 
+    @Override
+    public @Nullable Component details() {
+        return join(
+                newlines(),
+                RC.Lang("rustyconnector-keyValue").generate("Algorithm", this.getClass().getSimpleName()),
+                RC.Lang("rustyconnector-keyValue").generate("Total Servers", this.servers.size()),
+                RC.Lang("rustyconnector-keyValue").generate("Unlocked Servers", this.unlockedServers.size()),
+                RC.Lang("rustyconnector-keyValue").generate("Locked Servers", this.lockedServers.size()),
+                RC.Lang("rustyconnector-keyValue").generate("Weighted", this.weighted),
+                RC.Lang("rustyconnector-keyValue").generate("Persistence", this.persistence ? "Enabled ("+this.attempts+")" : "Disabled")
+        );
+    }
+
     public abstract static class Tinder<T extends LoadBalancer> extends ModuleTinder<T> {
         protected final boolean weighted;
         protected final boolean persistence;
@@ -241,8 +259,7 @@ public abstract class LoadBalancer implements Server.Container, Particle {
         ) {
             super(
                 "LoadBalancer",
-                "Provides server sorting capabilities.",
-                "rustyconnector-loadBalancerDetails"
+                "Provides server sorting capabilities."
             );
             this.weighted = weighted;
             this.persistence = persistence;

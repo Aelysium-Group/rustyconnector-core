@@ -88,16 +88,28 @@ public class ModuleLoader implements AutoCloseable {
             flux.onStart(k->order.forEach(o -> {
                 try {
                     PluginConfiguration c = preparedModulesConfigs.get(o);
+
+                    try {
+                        if (k instanceof ServerKernel && !c.environments.contains("server"))
+                            throw new IllegalStateException(c.name() + " does not support server environments! " + c.name() + " only supports: " + String.join(", ", c.environments));
+                        if (k instanceof ProxyKernel && !c.environments.contains("proxy"))
+                            throw new IllegalStateException(c.name() + " does not support proxy environments! " + c.name() + " only supports: " + String.join(", ", c.environments));
+                    } catch (IllegalStateException e) {
+                        System.out.println(e.getMessage());
+                        return;
+                    }
+
                     ExternalModuleTinder<?> t = preparedModules.get(o);
-                    k.registerModule(new ModuleTinder<>(c.name(), c.description(), c.details()) {
+                    ModuleParticle m = k.registerModule(new ModuleTinder<>(c.name(), c.description()) {
                         @Override
-                        public @NotNull Particle ignite() throws Exception {
+                        public @NotNull ModuleParticle ignite() throws Exception {
                             return t.ignite();
                         }
                     });
 
-                    if(k instanceof ServerKernel s) t.bind(s);
-                    if(k instanceof ProxyKernel p) t.bind(p);
+                    if(k instanceof ServerKernel s) t.bind(s, m);
+                    if(k instanceof ProxyKernel p) t.bind(p, m);
+
                 } catch (Exception e) {
                     RC.Error(Error.from(e).whileAttempting("To register the module: "+o));
                 }
@@ -171,7 +183,7 @@ public class ModuleLoader implements AutoCloseable {
             @NotNull String main,
             @NotNull String name,
             @NotNull String description,
-            @NotNull String details,
+            @NotNull List<String> environments,
             @Nullable List<String> dependencies
     ) {}
 }

@@ -5,6 +5,7 @@ import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketType;
 import group.aelysium.rustyconnector.common.crypt.NanoID;
 import group.aelysium.rustyconnector.common.errors.Error;
+import group.aelysium.rustyconnector.common.modules.ModuleParticle;
 import group.aelysium.rustyconnector.common.modules.ModuleTinder;
 import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
 import group.aelysium.rustyconnector.common.cache.TimeoutCache;
@@ -24,10 +25,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-public abstract class MagicLinkCore implements Particle {
+public abstract class MagicLinkCore implements ModuleParticle {
     protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-    private final TimeoutCache<NanoID, Packet.Local> packetsAwaitingReply = new TimeoutCache<>(LiquidTimestamp.from(15, TimeUnit.SECONDS));
-    private final Map<String, List<Consumer<Packet.Remote>>> listeners = new ConcurrentHashMap<>();
+    protected final TimeoutCache<NanoID, Packet.Local> packetsAwaitingReply = new TimeoutCache<>(LiquidTimestamp.from(15, TimeUnit.SECONDS));
+    protected final Map<String, List<Consumer<Packet.Remote>>> listeners = new ConcurrentHashMap<>();
     protected final AES aes;
     protected final PacketCache cache;
     protected final Packet.SourceIdentifier self;
@@ -174,8 +175,7 @@ public abstract class MagicLinkCore implements Particle {
         public Tinder() {
             super(
                     "MagicLink",
-                    "Provides packet communication services for the proxy.",
-                    "rustyconnector-magicLinkDetails"
+                    "Provides packet communication services for the proxy."
             );
         }
     }

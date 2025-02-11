@@ -2,6 +2,7 @@ package group.aelysium.rustyconnector.server;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.common.RCKernel;
 import group.aelysium.rustyconnector.common.errors.ErrorRegistry;
@@ -10,8 +11,10 @@ import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.common.modules.ModuleTinder;
 import group.aelysium.rustyconnector.proxy.ProxyKernel;
+import group.aelysium.rustyconnector.proxy.util.AddressUtil;
 import group.aelysium.rustyconnector.proxy.util.Version;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
+import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +23,11 @@ import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static net.kyori.adventure.text.Component.*;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.JoinConfiguration.newlines;
+import static net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY;
 
 public class ServerKernel extends RCKernel<ServerAdapter> {
     private final String targetFamily;
@@ -177,6 +185,29 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
                     return PacketListener.Response.success("Successfully indicated the status of the server's send request.");
                 });
         return response;
+    }
+
+    @Override
+    public @Nullable Component details() {
+        return join(
+                newlines(),
+                RC.Lang("rustyconnector-keyValue").generate("ID", this.id()),
+                RC.Lang("rustyconnector-keyValue").generate("Modules Installed", this.modules.size()),
+                RC.Lang("rustyconnector-keyValue").generate("Address", AddressUtil.addressToString(this.address())),
+                RC.Lang("rustyconnector-keyValue").generate("Family", this.targetFamily()),
+                RC.Lang("rustyconnector-keyValue").generate("Online Players", this.playerCount()),
+                empty(),
+                text("Extra Properties:", DARK_GRAY),
+                (
+                        this.metadata().isEmpty() ?
+                                text("There is no metadata to show.", DARK_GRAY)
+                                :
+                                join(
+                                        newlines(),
+                                        this.metadata().entrySet().stream().map(e -> RC.Lang("rustyconnector-keyValue").generate(e.getKey(), e.getValue())).toList()
+                                )
+                )
+        );
     }
 
     /**

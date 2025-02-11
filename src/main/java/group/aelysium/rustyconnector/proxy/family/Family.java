@@ -4,14 +4,24 @@ import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.modules.ModuleCollection;
 import group.aelysium.rustyconnector.common.modules.ModuleHolder;
+import group.aelysium.rustyconnector.common.modules.ModuleParticle;
 import group.aelysium.rustyconnector.proxy.player.Player;
+import group.aelysium.rustyconnector.proxy.util.AddressUtil;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
-public abstract class Family extends ModuleCollection implements Player.Connectable, Server.Container, ModuleHolder, Particle {
+import static net.kyori.adventure.text.Component.*;
+import static net.kyori.adventure.text.JoinConfiguration.newlines;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
+
+public abstract class Family extends ModuleCollection implements Player.Connectable, Server.Container, ModuleHolder, ModuleParticle {
     private final Map<String, Object> metadata = new ConcurrentHashMap<>(Map.of(
             "serverSoftCap", 30,
             "serverHardCap", 40
@@ -98,5 +108,69 @@ public abstract class Family extends ModuleCollection implements Player.Connecta
         if (o == null || getClass() != o.getClass()) return false;
         Family that = (Family) o;
         return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public @Nullable Component details() {
+        AtomicReference<String> parentName = new AtomicReference<>("none");
+        try {
+            Particle.Flux<? extends Family> parent = this.parent().orElse(null);
+            if(parent == null) throw new RuntimeException();
+            parent.executeLocking(f -> parentName.set(f.id()), ()->parentName.set("[Unavailable]"), 10, TimeUnit.SECONDS);
+        } catch (Exception ignore) {}
+
+        return join(
+                newlines(),
+                RC.Lang("rustyconnector-keyValue").generate("Display Name", this.displayName() == null ? "No Display Name" : this.displayName()),
+                RC.Lang("rustyconnector-keyValue").generate("Parent Family", parentName.get()),
+                RC.Lang("rustyconnector-keyValue").generate("Servers", this.servers().size()),
+                RC.Lang("rustyconnector-keyValue").generate("Players", this.players()),
+                RC.Lang("rustyconnector-keyValue").generate("Plugins", text(String.join(", ",this.modules().keySet()), BLUE)),
+                space(),
+                text("Extra Properties:", DARK_GRAY),
+                (
+                        this.metadata().isEmpty() ?
+                                text("There are no properties to show.", DARK_GRAY)
+                                :
+                                join(
+                                        newlines(),
+                                        this.metadata().entrySet().stream().map(e -> RC.Lang("rustyconnector-keyValue").generate(e.getKey(), e.getValue())).toList()
+                                )
+                ),
+                space(),
+                text("Servers:", DARK_GRAY),
+                (
+                        this.servers().isEmpty() ?
+                                text("There are no servers in this family.", DARK_GRAY)
+                                :
+                                join(
+                                        newlines(),
+                                        this.servers().stream().map(s->{
+                                            boolean locked = this.isLocked(s);
+                                            return join(
+                                                    JoinConfiguration.separator(empty()),
+                                                    text("[", DARK_GRAY),
+                                                    text(s.id(), BLUE),
+                                                    space(),
+                                                    text(AddressUtil.addressToString(s.address()), YELLOW),
+                                                    text("]:", DARK_GRAY),
+                                                    space(),
+                                                    (
+                                                            s.displayName() == null ? empty() :
+                                                                    text(Objects.requireNonNull(s.displayName()), AQUA)
+                                                                            .append(space())
+                                                    ),
+                                                    text("(Players: ", DARK_GRAY),
+                                                    text(s.players(), YELLOW),
+                                                    text(")", DARK_GRAY),
+                                                    space(),
+                                                    (
+                                                            locked ? text("Locked", RED) : empty()
+                                                    )
+                                            );
+                                        }).toList()
+                                )
+                )
+        );
     }
 }

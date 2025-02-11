@@ -121,6 +121,8 @@ public class ScalarFamily extends Family {
 
     @Override
     public Player.Connection.Request connect(Player player, Player.Connection.Power power) {
+        if(this.unlockedServers().isEmpty()) return Player.Connection.Request.failedRequest(player, "Unable to connect you to your server. Please try again later.");
+
         try {
             FamilyPreJoinEvent event = new FamilyPreJoinEvent(RC.P.Families().find(this.id).orElseThrow(), player, power);
             boolean canceled = RC.P.EventManager().fireEvent(event).get(1, TimeUnit.MINUTES);
@@ -130,7 +132,7 @@ public class ScalarFamily extends Family {
         try {
             return this.loadBalancer().access().get(20, TimeUnit.SECONDS).current().orElseThrow().connect(player, power);
         } catch (Exception ignore) {
-            return Player.Connection.Request.failedRequest(player, "The server you're attempting to access isn't available! Try again later.");
+            return Player.Connection.Request.failedRequest(player, "Unable to connect you to your server. Please try again later.");
         }
     }
     @Override
@@ -158,8 +160,7 @@ public class ScalarFamily extends Family {
         ) {
             super(
                 "ScalarFamily",
-                "Provides load balancing services for stateless servers.",
-                "rustyconnector-scalarFamilyDetails"
+                "Provides load balancing services for stateless servers."
             );
             this.id = id;
             this.displayName = displayName;

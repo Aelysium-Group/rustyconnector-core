@@ -16,14 +16,21 @@ import group.aelysium.rustyconnector.proxy.family.FamilyRegistry;
 import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.*;
 import group.aelysium.rustyconnector.proxy.player.PlayerRegistry;
+import group.aelysium.rustyconnector.proxy.util.AddressUtil;
 import group.aelysium.rustyconnector.proxy.util.Version;
+import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import static net.kyori.adventure.text.Component.*;
+import static net.kyori.adventure.text.JoinConfiguration.newlines;
+import static net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY;
 
 public class ProxyKernel extends RCKernel<ProxyAdapter> {
     protected ProxyKernel(
@@ -103,6 +110,22 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
                     RC.P.EventManager().fireEvent(new ServerUnregisterEvent(server, null));
                 }
                 ));
+    }
+
+    @Override
+    public @Nullable Component details() {
+        int families = RC.P.Families().size();
+        int servers = RC.P.Servers().size();
+        int players = RC.P.Players().dump().size();
+
+        return join(
+                newlines(),
+                RC.Lang("rustyconnector-keyValue").generate("ID", this.id()),
+                RC.Lang("rustyconnector-keyValue").generate("Modules Installed", this.modules.size()),
+                RC.Lang("rustyconnector-keyValue").generate("Family", families),
+                RC.Lang("rustyconnector-keyValue").generate("Servers", servers),
+                RC.Lang("rustyconnector-keyValue").generate("Online Players", players)
+        );
     }
 
     /**

@@ -9,6 +9,7 @@ import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
 import group.aelysium.rustyconnector.common.magic_link.PacketCache;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.util.URL;
+import group.aelysium.rustyconnector.proxy.util.AddressUtil;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 import group.aelysium.rustyconnector.server.ServerKernel;
 import group.aelysium.rustyconnector.server.events.ConnectedEvent;
@@ -36,6 +37,10 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static net.kyori.adventure.text.Component.join;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.JoinConfiguration.newlines;
 
 public class WebSocketMagicLink extends MagicLinkCore.Server {
     private final LiquidTimestamp retryDelay = LiquidTimestamp.from(20, TimeUnit.SECONDS);
@@ -271,6 +276,22 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
         try {
             RC.S.EventManager().fireEvent(new DisconnectedEvent());
         } catch (Exception ignore) {}
+    }
+
+    @Override
+    public @Nullable Component details() {
+        return join(
+                newlines(),
+                RC.Lang("rustyconnector-keyValue").generate("Target Address", this.address),
+                RC.Lang("rustyconnector-keyValue").generate("Packet Cache Size", this.cache.size()),
+                RC.Lang("rustyconnector-keyValue").generate("Packets Pending Responses", this.packetsAwaitingReply.size()),
+                RC.Lang("rustyconnector-keyValue").generate("Packets Pending Responses", this.packetsAwaitingReply.expiration()),
+                RC.Lang("rustyconnector-keyValue").generate("Ping Delay", this.retryDelay),
+                RC.Lang("rustyconnector-keyValue").generate("Is Registered", this.registered.get()),
+                RC.Lang("rustyconnector-keyValue").generate("Total Listeners Per Packet",
+                        text(String.join(", ", this.listeners.entrySet().stream().map(e -> e.getKey() + " ("+e.getValue().size()+")").toList()))
+                )
+        );
     }
 
     public static class Tinder extends MagicLinkCore.Tinder<WebSocketMagicLink> {

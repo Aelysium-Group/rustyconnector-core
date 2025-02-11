@@ -3,19 +3,23 @@ package group.aelysium.rustyconnector.common.lang;
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.errors.Error;
+import group.aelysium.rustyconnector.common.modules.ModuleParticle;
 import group.aelysium.rustyconnector.common.modules.ModuleTinder;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
+import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.Component.newline;
+import static net.kyori.adventure.text.JoinConfiguration.newlines;
 
-public class LangLibrary implements Particle {
+public class LangLibrary implements ModuleParticle {
     private final Map<String, LangNode> nodes = new ConcurrentHashMap<>();
     private final ASCIIAlphabet asciiAlphabet;
 
@@ -189,14 +193,22 @@ public class LangLibrary implements Particle {
         };
     }
 
+    @Override
+    public @Nullable Component details() {
+        return join(
+                newlines(),
+                RC.Lang("rustyconnector-keyValue").generate("ASCII Alphabet - Supported Characters", "'"+String.join("', '", this.asciiAlphabet().supportedCharacters().stream().map(Object::toString).toList())+"'"),
+                RC.Lang("rustyconnector-keyValue").generate("Registered Nodes", String.join(", ", this.langNodes()))
+        );
+    }
+
     public static class Tinder extends ModuleTinder<LangLibrary> {
         private ASCIIAlphabet asciiAlphabet = DEFAULT_ASCII_ALPHABET;
 
         public Tinder() {
             super(
                 "LangLibrary",
-                "Provides declarative language services.",
-                "rustyconnector-langLibraryDetails"
+                "Provides declarative language services."
             );
         }
 

@@ -2,12 +2,18 @@ package group.aelysium.rustyconnector.common.errors;
 
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
+import group.aelysium.rustyconnector.common.modules.ModuleParticle;
 import group.aelysium.rustyconnector.common.modules.ModuleTinder;
+import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ErrorRegistry implements Particle {
+import static net.kyori.adventure.text.Component.join;
+import static net.kyori.adventure.text.JoinConfiguration.newlines;
+
+public class ErrorRegistry implements ModuleParticle {
     private final boolean logErrors;
     private final int cacheSize;
     private final Vector<Error> errors = new Vector<>() {
@@ -48,6 +54,16 @@ public class ErrorRegistry implements Particle {
         this.errors.clear();
     }
 
+    @Override
+    public @Nullable Component details() {
+        return join(
+                newlines(),
+                RC.Lang("rustyconnector-keyValue").generate("Log Errors", this.logErrors),
+                RC.Lang("rustyconnector-keyValue").generate("Cache Size", this.cacheSize),
+                RC.Lang("rustyconnector-keyValue").generate("Error Count", this.errors.size())
+        );
+    }
+
     public static class Tinder extends ModuleTinder<ErrorRegistry> {
         private boolean logErrors = false;
         private int cacheSize = 200;
@@ -55,8 +71,7 @@ public class ErrorRegistry implements Particle {
         public Tinder() {
             super(
                 "ErrorRegistry",
-                "Provides error capture and logging services.",
-                "rustyconnector-errorRegistryDetails"
+                "Provides error capture and logging services."
             );
         }
 

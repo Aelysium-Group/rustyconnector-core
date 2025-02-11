@@ -13,5 +13,5 @@ public interface ModuleHolder {
      * Returns a map of modules that this holder contains.
      * The map is immutable.
      */
-    Map<String, Particle.Flux<? extends Particle>> modules();
+    Map<String, Particle.Flux<? extends ModuleParticle>> modules();
 }

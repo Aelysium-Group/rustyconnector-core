@@ -39,7 +39,7 @@ dependencies {
     compileOnly 'org.jetbrains:annotations:24.1.0'
 
     shadow "group.aelysium:ara:1.4.2"
-    shadow "group.aelysium:haze:0.0.4"
+    shadow "group.aelysium:haze:0.0.8"
 
     shadow 'com.aventrix.jnanoid:jnanoid:2.0.0'
     shadow 'com.google.code.gson:gson:2.11.0'

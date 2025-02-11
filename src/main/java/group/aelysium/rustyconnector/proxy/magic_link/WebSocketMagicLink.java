@@ -7,18 +7,18 @@ import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
 import group.aelysium.rustyconnector.common.magic_link.PacketCache;
 import group.aelysium.rustyconnector.common.crypt.AES;
-import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.common.crypt.SHA256;
 import group.aelysium.rustyconnector.common.crypt.Token;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
-import group.aelysium.rustyconnector.proxy.ProxyKernel;
 import group.aelysium.rustyconnector.proxy.events.ServerTimeoutEvent;
+import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.magic_link.packet_handlers.*;
-import group.aelysium.rustyconnector.server.ServerKernel;
+import group.aelysium.rustyconnector.proxy.util.AddressUtil;
 import io.javalin.Javalin;
 import io.javalin.http.*;
 import io.javalin.websocket.WsContext;
+import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +28,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+
+import static net.kyori.adventure.text.Component.join;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.JoinConfiguration.newlines;
 
 public class WebSocketMagicLink extends MagicLinkCore.Proxy {
     protected static final Handler dummyHandler = (request) -> {throw new UnauthorizedResponse();};
@@ -173,22 +177,22 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
         }
 
         try {
-            RC.P.Families().fetchAll().forEach(flux -> {
+            RC.P.Families().modules().values().forEach(flux -> {
                 try {
-                    flux.executeNow(f -> f.servers().forEach(server -> {
+                    flux.executeNow(f -> ((Family) f).servers().forEach(server -> {
                         try {
                             int newValue = server.decreaseTimeout(3);
 
                             if (newValue > 0) return;
 
                             try {
-                                RC.EventManager().fireEvent(new ServerTimeoutEvent(server, f));
+                                RC.EventManager().fireEvent(new ServerTimeoutEvent(server, ((Family) f)));
                             } catch (Exception ignore) {}
                             try {
                                 WsContext connection = this.clients.get(Packet.SourceIdentifier.server(server.id()));
                                 connection.closeSession(1013, "Stale connection. Re-register.");
                             } catch (Exception ignore) {}
-                            f.removeServer(server);
+                            ((Family) f).removeServer(server);
                         } catch (Exception e) {
                             RC.Error(Error.from(e).causedBy("WebSocketMagicLink:heartbeat"));
                         }
@@ -231,6 +235,22 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
         this.clients.clear();
         this.cache.close();
         this.executor.shutdownNow();
+    }
+
+    @Override
+    public @Nullable Component details() {
+        return join(
+                newlines(),
+                RC.Lang("rustyconnector-keyValue").generate("Address", AddressUtil.addressToString(this.address)),
+                RC.Lang("rustyconnector-keyValue").generate("Access Endpoint", AddressUtil.addressToString(this.address)+"/"+this.endpoint),
+                RC.Lang("rustyconnector-keyValue").generate("Total Connections", this.clients.size()),
+                RC.Lang("rustyconnector-keyValue").generate("Packet Cache Size", this.cache.size()),
+                RC.Lang("rustyconnector-keyValue").generate("Packets Pending Responses", this.packetsAwaitingReply.size()),
+                RC.Lang("rustyconnector-keyValue").generate("Packets Pending Responses", this.packetsAwaitingReply.expiration()),
+                RC.Lang("rustyconnector-keyValue").generate("Total Listeners Per Packet",
+                        text(String.join(", ", this.listeners.entrySet().stream().map(e -> e.getKey() + " ("+e.getValue().size()+")").toList()))
+                )
+        );
     }
 
     public static class Tinder extends MagicLinkCore.Tinder<WebSocketMagicLink> {

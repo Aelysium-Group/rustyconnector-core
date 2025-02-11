@@ -3,19 +3,29 @@ package group.aelysium.rustyconnector.proxy.family;
 import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.errors.Error;
+import group.aelysium.rustyconnector.common.modules.ModuleCollection;
 import group.aelysium.rustyconnector.common.modules.ModuleHolder;
+import group.aelysium.rustyconnector.common.modules.ModuleParticle;
 import group.aelysium.rustyconnector.common.modules.ModuleTinder;
 import group.aelysium.rustyconnector.proxy.events.FamilyRegisterEvent;
 import group.aelysium.rustyconnector.proxy.events.FamilyUnregisterEvent;
+import group.aelysium.rustyconnector.proxy.util.AddressUtil;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
-public class FamilyRegistry implements ModuleHolder, Particle {
-    private final Map<String, Flux<? extends Family>> families = new ConcurrentHashMap<>();
+import static net.kyori.adventure.text.Component.*;
+import static net.kyori.adventure.text.JoinConfiguration.newlines;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
+
+public class FamilyRegistry implements ModuleHolder, ModuleParticle {
+    private final ModuleCollection families = new ModuleCollection();
     private String rootFamily = null;
 
     protected FamilyRegistry() {}
@@ -26,7 +36,7 @@ public class FamilyRegistry implements ModuleHolder, Particle {
      * @throws NoSuchElementException If no family with the id provided exists.
      */
     public void setRootFamily(@NotNull String familyId) throws NoSuchElementException {
-        if(!this.families.containsKey(familyId)) throw new NoSuchElementException();
+        if(!this.families.containsModule(familyId)) throw new NoSuchElementException();
         this.rootFamily = familyId;
     }
 
@@ -38,7 +48,7 @@ public class FamilyRegistry implements ModuleHolder, Particle {
      */
     public @Nullable Flux<? extends Family> rootFamily() {
         if(this.rootFamily == null) return null;
-        return this.families.get(this.rootFamily);
+        return this.families.fetchModule(this.rootFamily);
     }
 
     /**
@@ -46,18 +56,17 @@ public class FamilyRegistry implements ModuleHolder, Particle {
      * @param id The id to search for.
      */
     public Optional<Flux<? extends Family>> find(@NotNull String id) {
-        return Optional.ofNullable(this.families.get(id));
+        return Optional.ofNullable(this.families.fetchModule(id));
     }
 
     /**
      * Registers a new family.
      * @param id The id of the family to add.
-     * @param flux The family flux to add.
+     * @param tinder The family tinder to add.
      * @throws Exception If the family was not ignited and failed to ignite.
      */
-    public void register(@NotNull String id, @NotNull Flux<? extends Family> flux) throws Exception {
-        Family family = flux.observe(5, TimeUnit.SECONDS);
-        this.families.put(id, flux);
+    public void register(@NotNull String id, @NotNull ModuleTinder<? extends Family> tinder) throws Exception {
+        Family family = (Family) this.families.registerModule(id, tinder);
         try {
             RC.EventManager().fireEvent(new FamilyRegisterEvent(family));
         } catch (Exception ignore) {}
@@ -69,22 +78,11 @@ public class FamilyRegistry implements ModuleHolder, Particle {
      */
     public void unregister(@NotNull String id) {
         try {
-            RC.EventManager().fireEvent(new FamilyUnregisterEvent(this.families.get(id).observe(3, TimeUnit.SECONDS)));
+            Family family = (Family) this.families.fetchModule(id).observe(3, TimeUnit.SECONDS);
+            RC.EventManager().fireEvent(new FamilyUnregisterEvent(family));
         } catch (Exception ignore) {}
 
-        Flux<? extends Family> flux = this.families.remove(id);
-        flux.close();
-    }
-
-    /**
-     * Gets a list of all families.
-     */
-    public List<Flux<? extends Family>> fetchAll() {
-        return this.families.values().stream().toList();
-    }
-
-    public void clear() {
-        this.families.clear();
+        this.families.unregisterModule(id);
     }
 
     /**
@@ -95,30 +93,43 @@ public class FamilyRegistry implements ModuleHolder, Particle {
         return this.families.size();
     }
 
-    public void close() {
-        // Teardown logic for any families that need it
-        for (Flux<? extends Family> family : this.families.values()) {
-            try {
-                family.close();
-            } catch (Exception e) {
-                RC.Error(Error.from(e));
-            }
-        }
-
-        this.families.clear();
+    public void close() throws Exception {
+        this.families.close();
     }
 
     @Override
-    public Map<String, Flux<? extends Particle>> modules() {
-        return Collections.unmodifiableMap(this.families);
+    public Map<String, Flux<? extends ModuleParticle>> modules() {
+        return this.families.modules();
+    }
+
+    @Override
+    public @Nullable Component details() {
+        List<Family> families = new ArrayList<>();
+        this.modules().values().forEach(f -> f.executeNow(a -> families.add((Family) a)));
+
+        AtomicReference<Family> rootFamily = new AtomicReference<>(null);
+        try {
+            this.rootFamily().executeNow(rootFamily::set);
+        } catch (Exception ignore) {}
+        return join(
+                newlines(),
+                RC.Lang("rustyconnector-keyValue").generate("Total Families", this.size()),
+                RC.Lang("rustyconnector-keyValue").generate("Available Families", families.size()),
+                RC.Lang("rustyconnector-keyValue").generate("Root Family", rootFamily.get() == null ? "Unavailable" : rootFamily.get().id()),
+                RC.Lang("rustyconnector-keyValue").generate("Families", join(
+                        JoinConfiguration.separator(text(", ", DARK_BLUE)),
+                        families.stream().map(f -> text(f.id(), BLUE)).toList()
+                )),
+                space(),
+                text("Families are technically considered plugins as well, you can view details for the above families if you'd like.", DARK_GRAY)
+        );
     }
 
     public static class Tinder extends ModuleTinder<FamilyRegistry> {
         public Tinder() {
             super(
                 "FamilyRegistry",
-                "Provides indexed access to families.",
-                "rustyconnector-familyRegistryDetails"
+                "Provides indexed access to families."
             );
         }
 

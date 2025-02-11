@@ -1,15 +1,16 @@
 package group.aelysium.rustyconnector;
 
 import group.aelysium.ara.Particle;
+import group.aelysium.rustyconnector.common.haze.HazeDatabase;
 import group.aelysium.rustyconnector.common.haze.HazeProvider;
 import group.aelysium.rustyconnector.common.RCAdapter;
 import group.aelysium.rustyconnector.common.RCKernel;
 import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.errors.ErrorRegistry;
 import group.aelysium.rustyconnector.common.events.EventManager;
-import group.aelysium.rustyconnector.common.haze.HazeRequest;
 import group.aelysium.rustyconnector.common.lang.LangNode;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
+import group.aelysium.rustyconnector.common.modules.ModuleParticle;
 import group.aelysium.rustyconnector.server.ServerAdapter;
 import group.aelysium.rustyconnector.server.ServerKernel;
 import group.aelysium.rustyconnector.proxy.ProxyAdapter;
@@ -70,7 +71,7 @@ public interface RC {
 
         static HazeProvider Haze() throws NoSuchElementException {
             return (HazeProvider) P.Kernel().fetchModule("Haze")
-                    .orElseThrow(()->new NoSuchElementException("The Haze Provider is not currently available. It might be rebooting or you haven't installed a RC module that implement it."));
+                    .orElseThrow(()->new NoSuchElementException("The Haze Provider is not currently available. It might be rebooting or you haven't installed an RC module that implemented it."));
         }
 
         static ProxyAdapter Adapter() throws NoSuchElementException {
@@ -95,11 +96,11 @@ public interface RC {
         }
 
         static Optional<Particle.Flux<? extends Family>> Family(Server server) throws NoSuchElementException {
-            for (Particle.Flux<? extends Family> familyFlux : RC.P.Families().fetchAll()) {
+            for (Particle.Flux<? extends ModuleParticle> f : RC.P.Families().modules().values()) {
                 try {
-                    Family family = familyFlux.access().get(5, TimeUnit.SECONDS);
+                    Family family = (Family) f.access().get(5, TimeUnit.SECONDS);
                     if (!family.containsServer(server.id())) continue;
-                    return Optional.of(familyFlux);
+                    return Optional.of(((Particle.Flux<? extends Family>) f));
                 } catch (InterruptedException | CancellationException | ExecutionException | TimeoutException ignore) {}
             }
             return Optional.empty();
@@ -107,13 +108,13 @@ public interface RC {
 
         static Optional<Server> Server(String id) throws NoSuchElementException {
             AtomicReference<Server> server = new AtomicReference<>(null);
-            Families().fetchAll().forEach(flux -> flux.executeNow(f->f.fetchServer(id).ifPresent(server::set)));
+            Families().modules().values().forEach(flux -> flux.executeNow(f->((Family) f).fetchServer(id).ifPresent(server::set)));
             return Optional.ofNullable(server.get());
         }
 
         static List<Server> Servers() throws NoSuchElementException {
             List<Server> servers = new ArrayList<>();
-            Families().fetchAll().forEach(flux -> flux.executeNow(f->servers.addAll(f.servers())));
+            Families().modules().values().forEach(flux -> flux.executeNow(f->servers.addAll(((Family) f).servers())));
             return Collections.unmodifiableList(servers);
         }
 
@@ -123,6 +124,13 @@ public interface RC {
         static Optional<Player> Player(String username) throws NoSuchElementException {
             return RC.P.Players().fetch(username);
         }
+
+        static Optional<? extends HazeDatabase> Haze(String name) throws NoSuchElementException {
+            Particle.Flux<? extends HazeDatabase> flux = P.Haze().fetchDatabase(name).orElse(null);
+            if(flux == null) return Optional.empty();
+            return Optional.of(flux.orElseThrow());
+        }
+
     }
 
     /**
@@ -159,6 +167,17 @@ public interface RC {
             return (ErrorRegistry) S.Kernel().fetchModule("ErrorRegistry")
                     .orElseThrow(()->new NoSuchElementException("The Error Registry is not currently available. It might be rebooting."));
         }
+
+        static HazeProvider Haze() throws NoSuchElementException {
+            return (HazeProvider) S.Kernel().fetchModule("Haze")
+                    .orElseThrow(()->new NoSuchElementException("The Haze Provider is not currently available. It might be rebooting or you haven't installed an RC module that implemented it."));
+        }
+
+        static Optional<? extends HazeDatabase> Haze(String name) throws NoSuchElementException {
+            Particle.Flux<? extends HazeDatabase> flux = S.Haze().fetchDatabase(name).orElse(null);
+            if(flux == null) return Optional.empty();
+            return Optional.of(flux.orElseThrow());
+        }
     }
 
     static RCKernel<? extends RCAdapter> Kernel() throws NoSuchElementException {
@@ -190,7 +209,7 @@ public interface RC {
         try {
             return RC.P.Errors();
         } catch (Exception ignore) {}
-        throw new NoSuchElementException("No RustyConnector kernels currently exist.");
+        throw new NoSuchElementException("The requested ErrorRegistry doesn't exist.");
     }
 
     static LangLibrary Lang() throws NoSuchElementException {
@@ -200,7 +219,7 @@ public interface RC {
         try {
             return RC.P.Lang();
         } catch (Exception ignore) {}
-        throw new NoSuchElementException("No RustyConnector kernels currently exist.");
+        throw new NoSuchElementException("The requested LangLibrary doesn't exist.");
     }
 
     static LangNode Lang(String id) throws NoSuchElementException {
@@ -214,7 +233,7 @@ public interface RC {
         try {
             return RC.P.EventManager();
         } catch (Exception ignore) {}
-        throw new NoSuchElementException("No RustyConnector kernels currently exist.");
+        throw new NoSuchElementException("The requested EventManager doesn't exist.");
     }
 
     static MagicLinkCore MagicLink() throws NoSuchElementException {
@@ -224,7 +243,7 @@ public interface RC {
         try {
             return RC.P.MagicLink();
         } catch (Exception ignore) {}
-        throw new NoSuchElementException("No RustyConnector kernels currently exist.");
+        throw new NoSuchElementException("The requested MagicLink provider doesn't exist.");
     }
 
     static RCAdapter Adapter() throws NoSuchElementException {
@@ -234,6 +253,26 @@ public interface RC {
         try {
             return RC.P.Adapter();
         } catch (Exception ignore) {}
-        throw new NoSuchElementException("No RustyConnector kernels currently exist.");
+        throw new NoSuchElementException("The requested adapter doesn't exist.");
+    }
+
+    static HazeProvider Haze() throws NoSuchElementException {
+        try {
+            return RC.S.Haze();
+        } catch (Exception ignore) {}
+        try {
+            return RC.P.Haze();
+        } catch (Exception ignore) {}
+        throw new NoSuchElementException("The requested Haze provider doesn't exist.");
+    }
+
+    static Optional<? extends HazeDatabase> Haze(String name) throws NoSuchElementException {
+        try {
+            return RC.S.Haze(name);
+        } catch (Exception ignore) {}
+        try {
+            return RC.P.Haze(name);
+        } catch (Exception ignore) {}
+        throw new NoSuchElementException("The requested Haze database doesn't exist.");
     }
 }

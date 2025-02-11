@@ -24,6 +24,10 @@ public class TimeoutCache<K, V> implements Closure, Map<K, V> {
         this.clock.execute(this::evaluateThenRunAgain);
     }
 
+    public LiquidTimestamp expiration() {
+        return this.expiration;
+    }
+
     private void evaluateThenRunAgain() {
         long now = Instant.now().getEpochSecond();
         this.map.entrySet().removeIf(entry -> {

@@ -1,18 +1,17 @@
 package group.aelysium.rustyconnector.common;
 
-import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.common.errors.ErrorRegistry;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
 import group.aelysium.rustyconnector.common.modules.ModuleCollection;
-import group.aelysium.rustyconnector.common.modules.ModuleHolder;
+import group.aelysium.rustyconnector.common.modules.ModuleParticle;
 import group.aelysium.rustyconnector.common.modules.ModuleTinder;
 import group.aelysium.rustyconnector.proxy.util.Version;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public abstract class RCKernel<A extends RCAdapter> extends ModuleCollection implements Particle {
+public abstract class RCKernel<A extends RCAdapter> extends ModuleCollection implements ModuleParticle {
     protected final String id;
     protected final Version version;
     protected final A adapter;
@@ -23,6 +22,8 @@ public abstract class RCKernel<A extends RCAdapter> extends ModuleCollection imp
             @NotNull A adapter,
             @NotNull List<? extends ModuleTinder<?>> modules
     ) {
+        if(id.length() > 64) throw new IllegalArgumentException("The Kernel ID cannot be longer than 64 characters.");
+
         this.id = id;
         this.version = version;
         this.adapter = adapter;
@@ -72,8 +73,7 @@ public abstract class RCKernel<A extends RCAdapter> extends ModuleCollection imp
         ) {
             super(
                     "Kernel",
-                    "The RustyConnector Kernel",
-                    "rustyconnector-kernelDetails"
+                    "The RustyConnector Kernel"
             );
 
             this.id = id;

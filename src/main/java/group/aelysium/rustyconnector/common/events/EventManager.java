@@ -4,9 +4,12 @@ import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.algorithm.QuickSort;
 import group.aelysium.rustyconnector.common.errors.Error;
+import group.aelysium.rustyconnector.common.modules.ModuleParticle;
 import group.aelysium.rustyconnector.common.modules.ModuleTinder;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.ISortable;
+import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -15,8 +18,19 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 
-public class EventManager implements Particle {
-    private final ExecutorService executor = Executors.newCachedThreadPool();
+import static net.kyori.adventure.text.Component.join;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.JoinConfiguration.newlines;
+
+public class EventManager implements ModuleParticle {
+    // This thread pool executor is the same one returned by Executors.newCachedThreadPool();
+    private final ThreadPoolExecutor executor = new ThreadPoolExecutor(
+            0,
+            Integer.MAX_VALUE,
+            60L,
+            TimeUnit.SECONDS,
+            new SynchronousQueue<>()
+    );
     private final ConcurrentHashMap<Class<? extends Event>, Vector<SortableListener>> listeners = new ConcurrentHashMap<>();
 
     protected EventManager() {}
@@ -119,12 +133,25 @@ public class EventManager implements Particle {
         this.executor.shutdown();
     }
 
+    @Override
+    public @Nullable Component details() {
+        return join(
+                newlines(),
+                RC.Lang("rustyconnector-keyValue").generate("Current Thread Pool Size", executor.getPoolSize()),
+                RC.Lang("rustyconnector-keyValue").generate("Busy Threads", executor.getActiveCount()),
+                RC.Lang("rustyconnector-keyValue").generate("Highest Concurrent Threads", executor.getLargestPoolSize()),
+                RC.Lang("rustyconnector-keyValue").generate("Pending Events", executor.getQueue().size()),
+                RC.Lang("rustyconnector-keyValue").generate("Total Listeners Per Event",
+                        text(String.join(", ", this.listeners.entrySet().stream().map(e -> e.getKey().getSimpleName() + " ("+e.getValue().size()+")").toList()))
+                )
+        );
+    }
+
     public static class Tinder extends ModuleTinder<EventManager> {
         public Tinder() {
             super(
                 "EventManager",
-                "Provides event bus services.",
-                "rustyconnector-eventManagerDetails"
+                "Provides event bus services."
             );
         }
 
