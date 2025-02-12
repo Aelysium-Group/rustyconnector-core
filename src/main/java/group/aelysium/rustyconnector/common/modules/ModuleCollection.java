@@ -24,7 +24,7 @@ public class ModuleCollection implements Closure, ModuleHolder {
     public @NotNull ModuleParticle registerModule(ModuleTinder<?> module) throws Exception {
         Particle.Flux<?> flux = module.flux();
         String name = flux.metadata("name");
-        if(name == null) throw new IllegalArgumentException("Modules must have the metadata for `name`, `description`, and `details` added to their flux before they can be registered.");
+        if(name == null) throw new IllegalArgumentException("Modules must have the metadata for `name` and `description` added to their flux before they can be registered.");
         return this.registerModule(name, module);
     }
 
@@ -38,9 +38,8 @@ public class ModuleCollection implements Closure, ModuleHolder {
      */
     public @NotNull ModuleParticle registerModule(@NotNull String key, ModuleTinder<?> module) throws Exception {
         Particle.Flux<? extends ModuleParticle> flux = module.flux();
-        if(flux.metadata("name") == null) throw new IllegalArgumentException("Modules must have the metadata for `name`, `description`, and `details` added to their flux before they can be registered.");
-        if(flux.metadata("description") == null) throw new IllegalArgumentException("Modules must have the metadata for `name`, `description`, and `details` added to their flux before they can be registered.");
-        if(flux.metadata("details") == null) throw new IllegalArgumentException("Modules must have the metadata for `name`, `description`, and `details` added to their flux before they can be registered.");
+        if(flux.metadata("name") == null) throw new IllegalArgumentException("Modules must have the metadata for `name` and `description` added to their flux before they can be registered.");
+        if(flux.metadata("description") == null) throw new IllegalArgumentException("Modules must have the metadata for `name` and `description` added to their flux before they can be registered.");
         if(this.modules.containsKey(key.toLowerCase())) throw new IllegalStateException("A module with the name "+key.toLowerCase()+" was already annotated.");
         ModuleParticle p = flux.observe(1, TimeUnit.MINUTES);
         this.modules.put(key.toLowerCase(), flux);
