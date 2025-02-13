@@ -142,67 +142,60 @@ public class ModuleLoader implements AutoCloseable {
     ) {}
 
     private static List<String> sortPlugins(Map<String, PluginConfiguration> configs) throws IllegalArgumentException {
-        Map<String, Integer> inDegree = new HashMap<>(); // Map to store in-degrees of each plugin (number of dependencies)
-        Map<String, List<String>> graph = new HashMap<>(); // Map to represent the dependency graph
+        Map<String, Integer> inDegree = new HashMap<>();
+        Map<String, List<String>> graph = new HashMap<>();
 
-        // Initialize the data structures
         configs.forEach((k,v)->{
-            inDegree.put(k, 0); // Initialize in-degrees to 0
-            graph.put(k, new ArrayList<>()); // Initialize the graph with empty lists
+            inDegree.put(k, 0);
+            graph.put(k, new ArrayList<>());
         });
 
-        // Build the graph and calculate in-degrees
         Set<String> missingDependencies = new HashSet<>();
-
         configs.forEach((k,v)->{
-            if (v.dependencies() == null) return; // If the plugin doesn't have dependencies, skip it
-            if (v.dependencies().isEmpty()) return; // If the plugin doesn't have dependencies, skip it
+            if (v.dependencies() == null) return;
+            if (v.dependencies().isEmpty()) return;
 
-            for (String dep : v.dependencies()) { // Iterate over each dependency
-                if (!configs.containsKey(dep.toLowerCase())) { // Check if the dependency exists
-                    // Skip loading this plugin if the dependency is not found
+            for (String dep : v.dependencies()) {
+                if (!configs.containsKey(dep.toLowerCase())) {
                     missingDependencies.add(k);
-                    inDegree.put(k, -1); // Mark this plugin as invalid
+                    inDegree.put(k, -1);
                     return;
                 }
 
-                graph.get(dep).add(k); // Add the plugin as a dependent of the dependency
-                inDegree.put(k, inDegree.get(k) + 1); // Increment the in-degree of the plugin
+                graph.get(dep).add(k);
+                inDegree.put(k, inDegree.get(k) + 1);
             }
         });
 
-        // Perform topological sort
-        Queue<String> queue = new LinkedList<>(); // Queue to store plugins with in-degree 0
-        for (Map.Entry<String, Integer> entry : inDegree.entrySet()) { // Iterate over in-degrees
-            if (entry.getValue() != 0) continue; // If the in-degree is greater than 0, skip it
+        Queue<String> queue = new LinkedList<>();
+        for (Map.Entry<String, Integer> entry : inDegree.entrySet()) {
+            if (entry.getValue() != 0) continue;
 
-            queue.add(entry.getKey()); // Add the plugin to the queue
+            queue.add(entry.getKey());
         }
 
-        List<String> sortedList = new ArrayList<>(); // List to store sorted plugins
-        while (!queue.isEmpty()) { // While there are plugins with in-degree 0
-            String current = queue.poll(); // Remove the plugin from the queue
-            sortedList.add(current); // Add it to the sorted list
+        List<String> sortedList = new ArrayList<>();
+        while (!queue.isEmpty()) {
+            String current = queue.poll();
+            sortedList.add(current);
 
-            for (String neighbor : graph.get(current)) { // Iterate over its dependents
-                inDegree.put(neighbor, inDegree.get(neighbor) - 1); // Decrement the in-degree of the dependent
+            for (String neighbor : graph.get(current)) {
+                inDegree.put(neighbor, inDegree.get(neighbor) - 1);
 
-                if (inDegree.get(neighbor) == 0) { // If the in-degree becomes 0
-                    queue.add(neighbor); // Add the dependent to the queue
-                }
+                if (inDegree.get(neighbor) == 0) queue.add(neighbor);
             }
         }
 
         Set<String> circularDependencies = new HashSet<>();
-        for (Map.Entry<String, Integer> entry : inDegree.entrySet()) { // Iterate over in-degrees
-            if (entry.getValue() > 0) circularDependencies.add(entry.getKey()); // Add to circular dependencies if in-degree is > 0
-        }
+        for (Map.Entry<String, Integer> entry : inDegree.entrySet())
+            if (entry.getValue() > 0)
+                circularDependencies.add(entry.getKey());
 
         if (!missingDependencies.isEmpty())
             RC.Error(Error.from("The following plugins have missing dependencies and were not loaded: " + String.join(", ", missingDependencies)).urgent(true));
         if (!circularDependencies.isEmpty())
             RC.Error(Error.from("The following plugins have circular dependencies and were not loaded: " + String.join(", ", circularDependencies)).urgent(true));
 
-        return sortedList; // Return the sorted list of plugins
+        return sortedList;
     }
 }
