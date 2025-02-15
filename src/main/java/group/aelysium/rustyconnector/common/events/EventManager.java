@@ -118,7 +118,7 @@ public class EventManager implements ModuleParticle {
                         RC.Error(Error.from(e));
                     }
                 });
-                future.complete(true);
+                future.complete(event.canceled());
             } catch (Exception e) {
                 RC.Error(Error.from(e));
                 future.complete(false);

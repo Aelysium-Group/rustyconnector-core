@@ -63,9 +63,7 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
             ServerRegisterEvent event = new ServerRegisterEvent(familyFlux, configuration);
             boolean canceled = RC.P.EventManager().fireEvent(event).get(1, TimeUnit.MINUTES);
             if (canceled) throw new CancellationException(event.canceledMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) {}
 
         Server server = Server.generateServer(configuration);
 
