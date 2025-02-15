@@ -162,10 +162,14 @@ public abstract class ProxyAdapter extends RCAdapter {
         } catch (Exception ignore) {}
 
         try {
-            Server server = RC.P.Families().rootFamily()
-                    .orElseThrow(()->new NoSuchElementException("The root family is not currently available. It might be rebooting."))
-                    .availableServer()
-                    .orElseThrow(()->new NoSuchElementException("The root family doesn't currently have any available servers."));
+            Family family = RC.P.Family(RC.P.Families().rootFamily()).orElse(null);
+            if(family == null)
+                return Player.Connection.Request.failedRequest(player, "There are no available servers for you to connect to right now.");
+            
+            Server server = family.availableServer().orElse(null);
+            if(server == null)
+                return Player.Connection.Request.failedRequest(player, "There are no available servers for you to connect to right now.");
+            
             return finalizeConnection.apply(server);
         } catch (Exception e) {
             RC.Error(Error.from(e));
@@ -213,7 +217,7 @@ public abstract class ProxyAdapter extends RCAdapter {
         try {
             if(isFromRootFamily) return new PlayerKickedResponse(true, Objects.requireNonNullElse(reason, text("Kicked by server.")), null);
 
-            Family family = RC.P.Families().rootFamily().access().get(2, TimeUnit.SECONDS);
+            Family family = RC.P.Families().find(RC.P.Families().rootFamily()).orElseThrow().observe(10, TimeUnit.SECONDS);
 
             Server server = family.availableServer().orElseThrow();
 

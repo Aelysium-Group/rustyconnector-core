@@ -28,8 +28,8 @@ public abstract class LoadBalancer implements Server.Container, ModuleParticle {
     protected Map<String, Server> servers = new ConcurrentHashMap<>();
     protected Runnable sorter = () -> {
         try {
-            Server p = this.unlockedServers.get(0);
-            if(p == null) p = this.lockedServers.get(0);
+            Server p = this.unlockedServers.getFirst();
+            if(p == null) p = this.lockedServers.getFirst();
             RC.P.EventManager().fireEvent(new FamilyRebalanceEvent(p.family().orElseThrow()));
         } catch (Exception ignore) {}
 
@@ -82,13 +82,10 @@ public abstract class LoadBalancer implements Server.Container, ModuleParticle {
     public Optional<Server> current() {
         if(this.unlockedServers.isEmpty()) return Optional.empty();
 
-        Server item;
-        if(this.index >= this.unlockedServers.size()) {
+        if(this.index >= this.unlockedServers.size())
             this.index = 0;
-            item = this.unlockedServers.get(this.index);
-        } else item = this.unlockedServers.get(this.index);
-
-        return Optional.of(item);
+        
+        return Optional.of(this.unlockedServers.get(this.index));
     }
 
     /**

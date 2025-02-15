@@ -45,7 +45,6 @@ public class ModuleLoader implements AutoCloseable {
             Map<String, PluginConfiguration> preparedModulesConfigs = new HashMap<>();
             for (File file : files) {
                 try {
-                    System.out.println("Loading "+file.getName());
                     ModuleClassLoader classLoader = new ModuleClassLoader(
                             List.of(file.toURI().toURL()),
                             getClass().getClassLoader(),
@@ -78,7 +77,7 @@ public class ModuleLoader implements AutoCloseable {
                     preparedModules.put(lowerConfigName, plugin);
                     preparedModulesConfigs.put(lowerConfigName, config);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    RC.Error(Error.from(e).whileAttempting("To register the module: "+file.getName()));
                 } finally {
                     Thread.currentThread().setContextClassLoader(originalClassLoader);
                 }
@@ -87,6 +86,7 @@ public class ModuleLoader implements AutoCloseable {
             List<String> order = sortPlugins(preparedModulesConfigs);
 
             flux.onStart(k->order.forEach(o -> {
+                System.out.println("Loading "+o);
                 try {
                     PluginConfiguration c = preparedModulesConfigs.get(o);
 

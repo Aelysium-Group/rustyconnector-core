@@ -9,17 +9,21 @@ import group.aelysium.rustyconnector.common.modules.ModuleTinder;
 import group.aelysium.rustyconnector.proxy.util.Version;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 
 public abstract class RCKernel<A extends RCAdapter> extends ModuleCollection implements ModuleParticle {
     protected final String id;
     protected final Version version;
     protected final A adapter;
+    protected final Path directory;
 
     protected RCKernel(
             @NotNull String id,
             @NotNull Version version,
             @NotNull A adapter,
+            @NotNull Path directory,
             @NotNull List<? extends ModuleTinder<?>> modules
     ) {
         if(id.length() > 64) throw new IllegalArgumentException("The Kernel ID cannot be longer than 64 characters.");
@@ -27,6 +31,7 @@ public abstract class RCKernel<A extends RCAdapter> extends ModuleCollection imp
         this.id = id;
         this.version = version;
         this.adapter = adapter;
+        this.directory = directory;
         modules.forEach(t -> {
             try {
                 this.registerModule(t);
@@ -42,6 +47,14 @@ public abstract class RCKernel<A extends RCAdapter> extends ModuleCollection imp
      */
     public String id() {
         return this.id;
+    }
+    
+    /**
+     * @return The directory that the RustyConnector kernel jar is located.
+     *         This path use useful for deciding where to load configuration files.
+     */
+    public Path directory() {
+        return this.directory;
     }
 
     /**
@@ -62,6 +75,7 @@ public abstract class RCKernel<A extends RCAdapter> extends ModuleCollection imp
 
     public static abstract class Tinder<B extends RCAdapter,T extends RCKernel<B>> extends ModuleTinder<T> {
         protected final String id;
+        protected final Path directory;
         protected final B adapter;
         protected ModuleTinder<? extends EventManager> eventManager = EventManager.Tinder.DEFAULT_CONFIGURATION;
         protected ModuleTinder<? extends ErrorRegistry> errors = ErrorRegistry.Tinder.DEFAULT_CONFIGURATION;
@@ -69,7 +83,8 @@ public abstract class RCKernel<A extends RCAdapter> extends ModuleCollection imp
 
         public Tinder(
                 @NotNull String id,
-                @NotNull B adapter
+                @NotNull B adapter,
+                @NotNull Path directory
         ) {
             super(
                     "Kernel",
@@ -78,6 +93,7 @@ public abstract class RCKernel<A extends RCAdapter> extends ModuleCollection imp
 
             this.id = id;
             this.adapter = adapter;
+            this.directory = directory;
         }
     }
 }

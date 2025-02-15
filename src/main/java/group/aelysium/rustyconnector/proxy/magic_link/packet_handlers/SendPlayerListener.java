@@ -65,6 +65,6 @@ public class SendPlayerListener {
             if(!result.connected()) throw new RuntimeException("Unable to connect the player to that server.");
         }
 
-        return PacketListener.Response.success("Successfully sent "/*+player.username()+"!"*/).asReply();
+        return PacketListener.Response.success("Successfully sent "+player.username()+"!").asReply();
     }
 }

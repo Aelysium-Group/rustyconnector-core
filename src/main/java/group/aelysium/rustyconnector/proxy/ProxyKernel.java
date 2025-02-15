@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
@@ -37,9 +38,10 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
             @NotNull String id,
             @NotNull Version version,
             @NotNull ProxyAdapter adapter,
+            @NotNull Path directory,
             List<? extends ModuleTinder<?>> modules
     ) {
-        super(id, version, adapter, modules);
+        super(id, version, adapter, directory, modules);
     }
 
     /**
@@ -140,10 +142,11 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
 
         public Tinder(
                 @NotNull String id,
+                @NotNull Path directory,
                 @NotNull ProxyAdapter adapter,
                 @NotNull ModuleTinder<? extends MagicLinkCore.Proxy> magicLink
                 ) {
-            super(id, adapter);
+            super(id, adapter, directory);
             this.magicLink = magicLink;
 
             try {
@@ -212,6 +215,7 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
                     this.id,
                     version,
                     this.adapter,
+                    this.directory,
                     List.of(
                         this.lang,
                         this.familyRegistry,

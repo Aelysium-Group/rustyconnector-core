@@ -15,11 +15,7 @@ public class ModuleClassLoader extends URLClassLoader {
     private final List<String> sharedPackages = new ArrayList<>(List.of(
             "group.aelysium",
             "net.kyori.adventure",
-            "java.lang",
-            "java.util",
-            "java.io",
-            "java.nio",
-            "java.net"
+            "java"
     ));
     private final List<String> blockedPackages = new ArrayList<>(List.of(
             "group.aelysium.rustyconnector.modules"

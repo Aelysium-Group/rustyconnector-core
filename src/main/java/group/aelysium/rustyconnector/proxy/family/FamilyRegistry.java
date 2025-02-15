@@ -33,22 +33,19 @@ public class FamilyRegistry implements ModuleHolder, ModuleParticle {
     /**
      * Sets the root family.
      * @param familyId The family's ID to be set as root.
-     * @throws NoSuchElementException If no family with the id provided exists.
      */
-    public void setRootFamily(@NotNull String familyId) throws NoSuchElementException {
-        if(!this.families.containsModule(familyId)) throw new NoSuchElementException();
+    public void rootFamily(@NotNull String familyId) {
         this.rootFamily = familyId;
     }
 
     /**
      * Get the root family of this FamilyService.
-     * If root family hasn't been set, or the family it references has been garbage collected,
-     * this will return `null`.
-     * @return The root family or `null`
+     * If root family hasn't been set, this will return an empty string.
+     * @return The root family id or an empty string.
      */
-    public @Nullable Flux<? extends Family> rootFamily() {
-        if(this.rootFamily == null) return null;
-        return this.families.fetchModule(this.rootFamily);
+    public @NotNull String rootFamily() {
+        if(this.rootFamily == null) return "";
+        return this.rootFamily;
     }
 
     /**
@@ -107,15 +104,11 @@ public class FamilyRegistry implements ModuleHolder, ModuleParticle {
         List<Family> families = new ArrayList<>();
         this.modules().values().forEach(f -> f.executeNow(a -> families.add((Family) a)));
 
-        AtomicReference<Family> rootFamily = new AtomicReference<>(null);
-        try {
-            this.rootFamily().executeNow(rootFamily::set);
-        } catch (Exception ignore) {}
         return join(
                 newlines(),
                 RC.Lang("rustyconnector-keyValue").generate("Total Families", this.size()),
                 RC.Lang("rustyconnector-keyValue").generate("Available Families", families.size()),
-                RC.Lang("rustyconnector-keyValue").generate("Root Family", rootFamily.get() == null ? "Unavailable" : rootFamily.get().id()),
+                RC.Lang("rustyconnector-keyValue").generate("Root Family", this.rootFamily),
                 RC.Lang("rustyconnector-keyValue").generate("Families", join(
                         JoinConfiguration.separator(text(", ", DARK_BLUE)),
                         families.stream().map(f -> text(f.id(), BLUE)).toList()
