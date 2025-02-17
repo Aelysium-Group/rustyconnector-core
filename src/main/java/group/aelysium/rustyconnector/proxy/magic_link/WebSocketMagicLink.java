@@ -27,6 +27,8 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static net.kyori.adventure.text.Component.join;
@@ -34,6 +36,7 @@ import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.JoinConfiguration.newlines;
 
 public class WebSocketMagicLink extends MagicLinkCore.Proxy {
+    protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     protected static final Handler dummyHandler = (request) -> {throw new UnauthorizedResponse();};
     protected static final Token tokenGenerator = new Token(128);
     protected final String endpoint;
@@ -51,11 +54,11 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
     protected WebSocketMagicLink(
             @NotNull InetSocketAddress address,
             @NotNull Packet.SourceIdentifier self,
-            @NotNull AES cryptor,
+            @NotNull AES aes,
             @NotNull PacketCache cache,
             @Nullable IPV6Broadcaster broadcaster
-    ) {
-        super(self, cryptor, cache, broadcaster);
+    ) throws Exception {
+        super(self, aes, cache, broadcaster);
 
         this.endpoint = tokenGenerator.nextString();
         this.address = address;
@@ -65,13 +68,13 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
 
         Gson gson = new Gson();
 
-        server.get("/bDaBMkmYdZ6r4iFExwW6UzJyNMDseWoS3HDa6FcyM7xNeCmtK98S3Mhp4o7g7oW6VB9CA6GuyH2pNhpQk3QvSmBUeCoUDZ6FXUsFCuVQC59CB2y22SBnGkMf9NMB9UWk", (request) -> {
+        server.get("/"+MagicLinkCore.endpoint, (request) -> {
             String authorization = request.header("Authorization");
             if(authorization == null) throw new UnauthorizedResponse();
             authorization = authorization.replaceAll("Bearer ", "");
 
             try {
-                long unix = Long.parseLong(cryptor.decrypt(authorization));
+                long unix = Long.parseLong(aes.decrypt(authorization));
                 Instant time = Instant.ofEpochSecond(unix);
                 Instant now = Instant.now();
 
@@ -80,8 +83,8 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
 
                 String randomData = tokenGenerator.nextString();
                 request.json(Map.of(
-                    "endpoint", cryptor.encrypt(endpoint),
-                    "token", cryptor.encrypt(now.getEpochSecond()+"-"+randomData),
+                    "endpoint", aes.encrypt(endpoint),
+                    "token", aes.encrypt(now.getEpochSecond()+"-"+randomData),
                     "signature", SHA256.hash(now.getEpochSecond()+"-"+randomData)
                 ));
             } catch (Exception e) {
@@ -96,7 +99,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
                 Packet.SourceIdentifier identification = Packet.SourceIdentifier.fromJSON(xServerIdentification);
 
                 authorization = authorization.replaceAll("Bearer ", "");
-                authorization = cryptor.decrypt(authorization);
+                authorization = aes.decrypt(authorization);
 
                 String[] split = authorization.split("\\$");
                 long timestamp = Long.parseLong(split[0].split("-")[0]);
@@ -255,7 +258,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
 
     public static class Tinder extends MagicLinkCore.Tinder<WebSocketMagicLink> {
         private final Packet.SourceIdentifier self;
-        private final AES cryptor;
+        private final AES aes;
         private final PacketCache cache;
         private final IPV6Broadcaster broadcaster;
         private final InetSocketAddress address;
@@ -263,14 +266,14 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
         public Tinder(
                 @NotNull InetSocketAddress address,
                 @NotNull Packet.SourceIdentifier self,
-                @NotNull AES cryptor,
+                @NotNull AES aes,
                 @NotNull PacketCache cache,
                 @Nullable IPV6Broadcaster broadcaster
                 ) {
             super();
             this.address = address;
             this.self = self;
-            this.cryptor = cryptor;
+            this.aes = aes;
             this.cache = cache;
             this.broadcaster = broadcaster;
         }
@@ -280,7 +283,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
             return new WebSocketMagicLink(
                     this.address,
                     this.self,
-                    this.cryptor,
+                    this.aes,
                     this.cache,
                     this.broadcaster
             );

@@ -12,9 +12,8 @@ public abstract class ModuleTinder<P extends ModuleParticle> extends Particle.Ti
             String name,
             String description
     ) {
-        super(Map.of(
-                "name", name,
-                "description", description
-        ));
+        super();
+        this.metadata("name", name);
+        this.metadata("description", description);
     }
 }

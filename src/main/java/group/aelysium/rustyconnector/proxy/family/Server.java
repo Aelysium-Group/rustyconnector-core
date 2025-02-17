@@ -288,8 +288,16 @@ public final class Server implements ISortable, Player.Connectable {
 
             if (!this.validatePlayerLimits(player))
                 return Player.Connection.Request.failedRequest(player, "The server is currently full. Try again later.");
-
-            return RC.P.Adapter().connectServer(this, player);
+            
+            Player.Connection.Request request = RC.P.Adapter().connectServer(this, player);
+            
+            try {
+                // In environments where player connections are able to move fast enough, this code will allow for the server player count to increase instantly.
+                // If this call times out, it's okay because the actual player count will be set the next time the underlying server pings.
+                if(request.result().get(1, TimeUnit.SECONDS).connected()) this.playerCount.addAndGet(1);
+            } catch (Exception ignore) {}
+            
+            return request;
         } catch (Exception ignore) {}
 
         return Player.Connection.Request.failedRequest(player, "Unable to connect you to the server!");

@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public abstract class MagicLinkCore implements ModuleParticle {
-    protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    protected static final String endpoint = "bDaBMkmYdZ6r4iFExwW6UzJyNMDseWoS3HDa6FcyM7xNeCmtK98S3Mhp4o7g7oW6VB9CA6GuyH2pNhpQk3QvSmBUeCoUDZ6FXUsFCuVQC59CB2y22SBnGkMf9NMB9UWk";
     protected final TimeoutCache<NanoID, Packet.Local> packetsAwaitingReply = new TimeoutCache<>(LiquidTimestamp.from(15, TimeUnit.SECONDS));
     protected final Map<String, List<Consumer<Packet.Remote>>> listeners = new ConcurrentHashMap<>();
     protected final AES aes;

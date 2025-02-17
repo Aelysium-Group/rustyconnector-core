@@ -113,7 +113,14 @@ public final class URL {
         if(path.endsWith("/")) path = path.substring(0, path.length() - 1);
         if(path.contains("/")) {
             pathList.addAll(Arrays.stream(path.split("/")).toList());
-            return this;
+            return new URL(
+                this.protocol,
+                this.domain,
+                this.port,
+                pathList,
+                this.query,
+                this.fragment
+            );
         }
         pathList.add(path);
         return new URL(
