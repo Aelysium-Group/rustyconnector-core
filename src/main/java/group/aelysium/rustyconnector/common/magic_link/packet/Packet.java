@@ -767,6 +767,12 @@ public abstract class Packet implements JSONParseable {
         public double getAsDouble() {
             return ((Number) this.object).doubleValue();
         }
+        public float getAsFloat() {
+            return ((Number) this.object).floatValue();
+        }
+        public short getAsShort() {
+            return ((Number) this.object).shortValue();
+        }
         public boolean getAsBoolean() {
             return (boolean) this.object;
         }

@@ -58,18 +58,31 @@ public abstract class ServerAdapter extends RCAdapter {
      * @param y The y coordinate to teleport to. If `null`, the player's y coordinate will not change.
      * @param z The z coordinate to teleport to. If `null`, the player's z coordinate will not change.
      */
-    public void teleport(@NotNull UUID player, @Nullable Integer x, @Nullable Integer y, @Nullable Integer z) {
-        this.teleport(player, x, y, z, null, null);
+    public void teleport(@NotNull UUID player, @Nullable Double x, @Nullable Double y, @Nullable Double z) {
+        this.teleport(player, null, x, y, z, null, null);
+    }
+    
+    /**
+     * Teleports a player to a location.
+     * @param player The player to teleport.
+     * @param world The world to teleport to. If `null`, the player's current world will not change.
+     * @param x The x coordinate to teleport to. If `null`, the player's x coordinate will not change.
+     * @param y The y coordinate to teleport to. If `null`, the player's y coordinate will not change.
+     * @param z The z coordinate to teleport to. If `null`, the player's z coordinate will not change.
+     */
+    public void teleport(@NotNull UUID player, @Nullable String world, @Nullable Double x, @Nullable Double y, @Nullable Double z) {
+        this.teleport(player, world, x, y, z, null, null);
     }
     
     /**
      * Teleports a player to a location and also rotates them to match the specific pitch and yaw.
      * @param player The player to teleport.
+     * @param world The world to teleport to. If `null`, the player's current world will not change.
      * @param x The x coordinate to teleport to. If `null`, the player's x coordinate will not change.
      * @param y The y coordinate to teleport to. If `null`, the player's y coordinate will not change.
      * @param z The z coordinate to teleport to. If `null`, the player's z coordinate will not change.
      * @param pitch The players pitch. If `null`, the player's pitch will not change.
      * @param yaw The players yaw. If `null`, the player's yaw will not change.
      */
-    public abstract void teleport(@NotNull UUID player, @Nullable Integer x, @Nullable Integer y, @Nullable Integer z, @Nullable Integer pitch, @Nullable Integer yaw);
+    public abstract void teleport(@NotNull UUID player, @Nullable String world, @Nullable Double x, @Nullable Double y, @Nullable Double z, @Nullable Float pitch, @Nullable Float yaw);
 }

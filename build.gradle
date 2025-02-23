@@ -37,9 +37,12 @@ dependencies {
     // Kiori Adventure should be provided by the wrapper
     compileOnly 'net.kyori:adventure-api:4.17.0'
     compileOnly 'org.jetbrains:annotations:24.1.0'
+    compileOnly 'org.incendo:cloud-core:2.0.0'
+    compileOnly "org.incendo:cloud-annotations:2.0.0"
 
     shadow "group.aelysium:ara:1.5.0"
     shadow "group.aelysium:haze:0.0.10"
+    shadow "group.aelysium:declarative-yaml:0.2.0"
 
     shadow 'com.aventrix.jnanoid:jnanoid:2.0.0'
     shadow 'com.google.code.gson:gson:2.11.0'
