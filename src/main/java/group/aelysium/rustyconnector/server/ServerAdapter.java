@@ -2,6 +2,7 @@ package group.aelysium.rustyconnector.server;
 
 import group.aelysium.rustyconnector.common.RCAdapter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -42,4 +43,33 @@ public abstract class ServerAdapter extends RCAdapter {
      * @return `true` of the player is online. `false` otherwise.
      */
     public abstract boolean isOnline(@NotNull UUID uuid);
+    
+    /**
+     * Teleports one player to another.
+     * @param from The player to teleport.
+     * @param to The player whose location will be teleported to by 'from'
+     */
+    public abstract void teleport(@NotNull UUID from, @NotNull UUID to);
+    
+    /**
+     * Teleports a player to a location.
+     * @param player The player to teleport.
+     * @param x The x coordinate to teleport to. If `null`, the player's x coordinate will not change.
+     * @param y The y coordinate to teleport to. If `null`, the player's y coordinate will not change.
+     * @param z The z coordinate to teleport to. If `null`, the player's z coordinate will not change.
+     */
+    public void teleport(@NotNull UUID player, @Nullable Integer x, @Nullable Integer y, @Nullable Integer z) {
+        this.teleport(player, x, y, z, null, null);
+    }
+    
+    /**
+     * Teleports a player to a location and also rotates them to match the specific pitch and yaw.
+     * @param player The player to teleport.
+     * @param x The x coordinate to teleport to. If `null`, the player's x coordinate will not change.
+     * @param y The y coordinate to teleport to. If `null`, the player's y coordinate will not change.
+     * @param z The z coordinate to teleport to. If `null`, the player's z coordinate will not change.
+     * @param pitch The players pitch. If `null`, the player's pitch will not change.
+     * @param yaw The players yaw. If `null`, the player's yaw will not change.
+     */
+    public abstract void teleport(@NotNull UUID player, @Nullable Integer x, @Nullable Integer y, @Nullable Integer z, @Nullable Integer pitch, @Nullable Integer yaw);
 }
