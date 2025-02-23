@@ -134,11 +134,12 @@ public class ModuleLoader implements AutoCloseable {
     }
 
     private record PluginConfiguration(
-            @NotNull String main,
-            @NotNull String name,
-            @NotNull String description,
-            @NotNull List<String> environments,
-            @Nullable List<String> dependencies
+        @NotNull String main,
+        @NotNull String name,
+        @NotNull String description,
+        @NotNull List<String> environments,
+        @Nullable List<String> dependencies,
+        @Nullable List<String> softDependencies
     ) {}
 
     private static List<String> sortPlugins(Map<String, PluginConfiguration> configs) throws IllegalArgumentException {
@@ -151,19 +152,26 @@ public class ModuleLoader implements AutoCloseable {
         });
 
         Set<String> missingDependencies = new HashSet<>();
-        configs.forEach((k,v)->{
-            if (v.dependencies() == null) return;
-            if (v.dependencies().isEmpty()) return;
-
-            for (String dep : v.dependencies()) {
-                if (!configs.containsKey(dep.toLowerCase())) {
-                    missingDependencies.add(k);
-                    inDegree.put(k, -1);
-                    return;
+        configs.forEach((k, v) -> {
+            if (v.dependencies() != null) {
+                for (String dep : v.dependencies()) {
+                    if (!configs.containsKey(dep.toLowerCase())) {
+                        missingDependencies.add(k);
+                        inDegree.put(k, -1);
+                        return;
+                    }
+                    graph.get(dep).add(k);
+                    inDegree.put(k, inDegree.get(k) + 1);
                 }
-
-                graph.get(dep).add(k);
-                inDegree.put(k, inDegree.get(k) + 1);
+            }
+            
+            if (v.softDependencies() != null) {
+                for (String softDep : v.softDependencies()) {
+                    if (configs.containsKey(softDep.toLowerCase())) {
+                        graph.get(softDep).add(k);
+                        inDegree.put(k, inDegree.get(k) + 1);
+                    }
+                }
             }
         });
 
