@@ -105,56 +105,56 @@ public class FamilyRegistry implements ModuleHolder, ModuleParticle {
         this.modules().values().forEach(f -> f.executeNow(a -> families.add((Family) a)));
 
         return join(
-                newlines(),
-                RC.Lang("rustyconnector-keyValue").generate("Total Families", this.size()),
-                RC.Lang("rustyconnector-keyValue").generate("Available Families", families.size()),
-                RC.Lang("rustyconnector-keyValue").generate("Root Family", this.rootFamily),
-                space(),
-                text("Registered Families:", DARK_GRAY),
-                (
-                    families.isEmpty() ?
-                        text("There are no families registered.", DARK_GRAY)
-                        :
-                        join(
-                            newlines(),
-                            families.stream().map(f->{
-                                return join(
-                                    JoinConfiguration.separator(empty()),
-                                    text("[", DARK_GRAY),
-                                    text(f.id(), BLUE),
-                                    text("]:", DARK_GRAY),
-                                    space(),
-                                    (
-                                        f.displayName() == null ? empty() :
-                                            text(Objects.requireNonNull(f.displayName()), AQUA)
-                                                .append(space())
-                                    ),
-                                    text("(Players: ", DARK_GRAY),
-                                    text(f.players(), GRAY),
-                                    text("/", DARK_GRAY),
-                                    (
-                                        f.players() <= f.unlockedServers().stream().map(Server::softPlayerCap).reduce(0, Integer::sum) ?
-                                            text(f.unlockedServers().stream().map(Server::softPlayerCap).reduce(0, Integer::sum), DARK_GRAY)
-                                        :
-                                            text(f.unlockedServers().stream().map(Server::hardPlayerCap).reduce(0, Integer::sum), RED)
-                                    ),
-                                    text(")", DARK_GRAY),
-                                    space(),
-                                    text("(Available Servers: ", DARK_GRAY),
-                                    text(f.unlockedServers().size(), GRAY),
-                                    (
-                                        f.lockedServers().isEmpty() ? empty() :
-                                            join(
-                                                JoinConfiguration.separator(empty()),
-                                                text("/", DARK_GRAY),
-                                                text(f.servers().size(), DARK_GRAY)
-                                            )
-                                    ),
-                                    text(")", DARK_GRAY)
-                                );
-                            }).toList()
-                        )
-                )
+            newlines(),
+            RC.Lang("rustyconnector-keyValue").generate("Total Families", this.size()),
+            RC.Lang("rustyconnector-keyValue").generate("Available Families", families.size()),
+            RC.Lang("rustyconnector-keyValue").generate("Root Family", this.rootFamily),
+            space(),
+            text("Registered Families:", DARK_GRAY),
+            (
+                families.isEmpty() ?
+                    text("There are no families registered.", DARK_GRAY)
+                    :
+                    join(
+                        newlines(),
+                        families.stream().map(f->{
+                            return join(
+                                JoinConfiguration.separator(empty()),
+                                text("[", DARK_GRAY),
+                                text(f.id(), BLUE),
+                                text("]:", DARK_GRAY),
+                                space(),
+                                (
+                                    f.displayName() == null ? empty() :
+                                        text(Objects.requireNonNull(f.displayName()), AQUA)
+                                            .append(space())
+                                ),
+                                text("(Players: ", DARK_GRAY),
+                                text(f.players(), GRAY),
+                                text("/", DARK_GRAY),
+                                (
+                                    f.players() <= f.unlockedServers().stream().map(Server::softPlayerCap).reduce(0, Integer::sum) ?
+                                        text(f.unlockedServers().stream().map(Server::softPlayerCap).reduce(0, Integer::sum), DARK_GRAY)
+                                    :
+                                        text(f.unlockedServers().stream().map(Server::hardPlayerCap).reduce(0, Integer::sum), RED)
+                                ),
+                                text(")", DARK_GRAY),
+                                space(),
+                                text("(Available Servers: ", DARK_GRAY),
+                                text(f.unlockedServers().size(), GRAY),
+                                (
+                                    f.lockedServers().isEmpty() ? empty() :
+                                        join(
+                                            JoinConfiguration.separator(empty()),
+                                            text("/", DARK_GRAY),
+                                            text(f.servers().size(), DARK_GRAY)
+                                        )
+                                ),
+                                text(")", DARK_GRAY)
+                            );
+                        }).toList()
+                    )
+            )
         );
     }
 

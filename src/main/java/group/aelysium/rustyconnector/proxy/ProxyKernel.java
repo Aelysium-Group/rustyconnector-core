@@ -39,9 +39,10 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
             @NotNull Version version,
             @NotNull ProxyAdapter adapter,
             @NotNull Path directory,
+            @NotNull Path modulesDirectory,
             List<? extends ModuleTinder<?>> modules
     ) {
-        super(id, version, adapter, directory, modules);
+        super(id, version, adapter, directory, modulesDirectory, modules);
     }
 
     /**
@@ -141,10 +142,11 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
         public Tinder(
                 @NotNull String id,
                 @NotNull Path directory,
+                @NotNull Path modulesDirectory,
                 @NotNull ProxyAdapter adapter,
                 @NotNull ModuleTinder<? extends MagicLinkCore.Proxy> magicLink
                 ) {
-            super(id, adapter, directory);
+            super(id, adapter, directory, modulesDirectory);
             this.magicLink = magicLink;
 
             try {
@@ -214,6 +216,7 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
                     version,
                     this.adapter,
                     this.directory,
+                    this.modulesDirectory,
                     List.of(
                         this.lang,
                         this.familyRegistry,

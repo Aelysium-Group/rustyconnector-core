@@ -5,6 +5,7 @@ import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketType;
+import group.aelysium.rustyconnector.common.util.MetadataHolder;
 import group.aelysium.rustyconnector.proxy.Permission;
 import group.aelysium.rustyconnector.proxy.events.ServerPreJoinEvent;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.ISortable;
@@ -21,7 +22,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public final class Server implements ISortable, Player.Connectable {
+public final class Server implements MetadataHolder<Object>, ISortable, Player.Connectable {
     private final Map<String, Object> metadata = new ConcurrentHashMap<>(Map.of(
             "softCap", 30,
             "hardCap", 40
@@ -42,40 +43,25 @@ public final class Server implements ISortable, Player.Connectable {
         this.timeout.set(timeout);
         this.metadata.putAll(metadata);
     }
-
-    /**
-     * Stores metadata in the Server.
-     * @param propertyName The name of the metadata to store.
-     * @param property The metadata to store.
-     * @return `true` if the metadata could be stored. `false` if the name of the metadata is already in use.
-     */
-    public boolean metadata(String propertyName, Object property) {
+    
+    @Override
+    public boolean storeMetadata(String propertyName, Object property) {
         if(this.metadata.containsKey(propertyName)) return false;
         this.metadata.put(propertyName, property);
         return true;
     }
 
-    /**
-     * Fetches metadata from the server.
-     * @param propertyName The name of the metadata to fetch.
-     * @return An optional containing the metadata, or an empty metadata if no metadata could be found.
-     * @param <T> The type of the metadata that's being fetched.
-     */
-    public <T> Optional<T> metadata(String propertyName) {
+    @Override
+    public <T> Optional<T> fetchMetadata(String propertyName) {
         return Optional.ofNullable((T) this.metadata.get(propertyName));
     }
-
-    /**
-     * Removes metadata from the server.
-     * @param propertyName The name of the metadata to remove.
-     */
-    public void dropMetadata(String propertyName) {
+    
+    @Override
+    public void removeMetadata(String propertyName) {
         this.metadata.remove(propertyName);
     }
-
-    /**
-     * @return A map containing all of this server's metadata.
-     */
+    
+    @Override
     public Map<String, Object> metadata() {
         return Collections.unmodifiableMap(this.metadata);
     }
@@ -246,7 +232,7 @@ public final class Server implements ISortable, Player.Connectable {
     @Override
     public int weight() {
         try {
-            return (int) this.metadata("loadBalancer-weight").orElse(0);
+            return (int) this.fetchMetadata("loadBalancer-weight").orElse(0);
         } catch (Exception ignore) {}
         return 0;
     }

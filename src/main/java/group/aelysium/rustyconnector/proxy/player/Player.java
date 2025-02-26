@@ -1,6 +1,7 @@
 package group.aelysium.rustyconnector.proxy.player;
 
 import group.aelysium.rustyconnector.common.errors.Error;
+import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.RC;
 import net.kyori.adventure.text.Component;
@@ -58,12 +59,23 @@ public class Player {
             RC.Error(Error.from(e));
         }
     }
-
+    
     /**
      * Fetches the player's server if they're connected to one.
      */
     public Optional<Server> server() {
         return RC.P.Adapter().fetchServer(this);
+    }
+    
+    /**
+     * Fetches the player's family if they're connected to one.
+     */
+    public Optional<? extends Family> family() {
+        try {
+            return Optional.of(this.server().orElseThrow().family().orElseThrow().orElseThrow());
+        } catch (Exception ignore) {
+            return Optional.empty();
+        }
     }
 
     public boolean equals(Object object) {

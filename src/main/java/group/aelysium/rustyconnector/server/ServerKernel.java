@@ -43,12 +43,13 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
             @NotNull Version version,
             @NotNull ServerAdapter adapter,
             @NotNull Path directory,
+            @NotNull Path modulesDirectory,
             @NotNull List<? extends ModuleTinder<?>> modules,
             @NotNull InetSocketAddress address,
             @NotNull String targetFamily,
             @NotNull Map<String, Packet.Parameter> metadata
     ) {
-        super(id, version, adapter, directory, modules);
+        super(id, version, adapter, directory,modulesDirectory, modules);
         this.address = address;
         this.targetFamily = targetFamily;
         this.metadata.putAll(metadata);
@@ -227,11 +228,12 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
                 @NotNull String id,
                 @NotNull ServerAdapter adapter,
                 @NotNull Path directory,
+                @NotNull Path modulesDirectory,
                 @NotNull InetSocketAddress address,
                 @NotNull ModuleTinder<? extends MagicLinkCore.Server> magicLink,
                 @NotNull String targetFamily
                 ) {
-            super(id, adapter, directory);
+            super(id, adapter, directory, modulesDirectory);
             this.address = address;
             this.magicLink = magicLink;
             this.targetFamily = targetFamily;
@@ -277,6 +279,7 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
                     version,
                     adapter,
                     this.directory,
+                    this.modulesDirectory,
                     List.of(
                         lang,
                         magicLink,

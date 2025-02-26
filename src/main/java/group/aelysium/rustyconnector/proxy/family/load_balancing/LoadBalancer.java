@@ -1,6 +1,5 @@
 package group.aelysium.rustyconnector.proxy.family.load_balancing;
 
-import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.modules.ModuleParticle;
 import group.aelysium.rustyconnector.common.modules.ModuleTinder;

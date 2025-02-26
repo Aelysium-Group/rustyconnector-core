@@ -17,7 +17,7 @@ public class ServerUnlockListener {
 
             boolean success = server.unlock();
 
-            if(!success) throw new RuntimeException("An unknown error prevented the locking of the server: "+server.id()+" "+server.metadata("velocity_registration_name").orElse(""));
+            if(!success) throw new RuntimeException("An unknown error prevented the locking of the server: "+server.id());
 
             RC.EventManager().fireEvent(new ServerUnlockedEvent(server.family().orElseThrow(), server));
             return PacketListener.Response.success("Successfully unlocked the server.").asReply();

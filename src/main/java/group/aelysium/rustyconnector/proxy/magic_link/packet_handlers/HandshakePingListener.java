@@ -14,7 +14,6 @@ import group.aelysium.rustyconnector.proxy.util.AddressUtil;
 import java.security.InvalidAlgorithmParameterException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 public class HandshakePingListener {
@@ -40,10 +39,10 @@ public class HandshakePingListener {
 
             // Some family metadata is supposed to effect the server meta, that's done here.
             Map<String, Object> metadata = new HashMap<>();
-            metadata.put("softCap", family.metadata("serverSoftCap").orElse(30));
-            metadata.put("hardCap", family.metadata("serverHardCap").orElse(40));
-            if(family.metadata("displayName").isPresent())
-                metadata.put("displayName", family.metadata("displayName").orElse(null));
+            metadata.put("softCap", family.fetchMetadata("serverSoftCap").orElse(30));
+            metadata.put("hardCap", family.fetchMetadata("serverHardCap").orElse(40));
+            if(family.fetchMetadata("displayName").isPresent())
+                metadata.put("displayName", family.fetchMetadata("displayName").orElse(null));
             metadata.putAll(packet.metadata());
 
             Server.Configuration configuration = new Server.Configuration(
