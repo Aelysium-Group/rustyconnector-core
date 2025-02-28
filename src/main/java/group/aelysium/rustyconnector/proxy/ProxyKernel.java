@@ -1,22 +1,12 @@
 package group.aelysium.rustyconnector.proxy;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import group.aelysium.ara.Flux;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.RCKernel;
-import group.aelysium.rustyconnector.common.errors.ErrorRegistry;
-import group.aelysium.rustyconnector.common.events.EventManager;
-import group.aelysium.rustyconnector.common.lang.LangLibrary;
-import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
-import group.aelysium.rustyconnector.common.modules.ModuleTinder;
 import group.aelysium.rustyconnector.proxy.events.ServerRegisterEvent;
 import group.aelysium.rustyconnector.proxy.events.ServerUnregisterEvent;
 import group.aelysium.rustyconnector.proxy.family.Family;
-import group.aelysium.rustyconnector.proxy.family.FamilyRegistry;
 import group.aelysium.rustyconnector.proxy.family.Server;
-import group.aelysium.rustyconnector.proxy.family.load_balancing.*;
-import group.aelysium.rustyconnector.proxy.player.PlayerRegistry;
-import group.aelysium.rustyconnector.proxy.util.AddressUtil;
 import group.aelysium.rustyconnector.proxy.util.Version;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +21,6 @@ import java.util.concurrent.TimeoutException;
 
 import static net.kyori.adventure.text.Component.*;
 import static net.kyori.adventure.text.JoinConfiguration.newlines;
-import static net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY;
 
 public class ProxyKernel extends RCKernel<ProxyAdapter> {
     protected ProxyKernel(
@@ -39,10 +28,9 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
             @NotNull Version version,
             @NotNull ProxyAdapter adapter,
             @NotNull Path directory,
-            @NotNull Path modulesDirectory,
-            List<? extends ModuleTinder<?>> modules
-    ) {
-        super(id, version, adapter, directory, modulesDirectory, modules);
+            @NotNull Path modulesDirectory
+    ) throws Exception {
+        super(id, version, adapter, directory, modulesDirectory);
     }
 
     /**
@@ -59,7 +47,7 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
      * @throws IllegalStateException IF there was an issue registering the server.
      * @throws NoSuchElementException If the provided family flux doesn't resolve within a few seconds.
      */
-    public @NotNull Server registerServer(@NotNull Flux<? extends Family> familyFlux, @NotNull Server.Configuration configuration) throws CancellationException, NoSuchElementException, IllegalStateException {
+    public @NotNull Server registerServer(@NotNull Flux<Family> familyFlux, @NotNull Server.Configuration configuration) throws CancellationException, NoSuchElementException, IllegalStateException {
         try {
             ServerRegisterEvent event = new ServerRegisterEvent(familyFlux, configuration);
             boolean canceled = RC.P.EventManager().fireEvent(event).get(1, TimeUnit.MINUTES);
@@ -70,7 +58,7 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
 
         Family family = null;
         try {
-            family = familyFlux.access().get(10, TimeUnit.SECONDS);
+            family = familyFlux.get(10, TimeUnit.SECONDS);
             family.addServer(server);
 
             if(!RC.P.Adapter().registerServer(server))
@@ -103,14 +91,14 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
     public void unregisterServer(@NotNull Server server) {
         RC.P.Adapter().unregisterServer(server);
 
-        server.family().ifPresent(flux -> flux.executeNow(
-                family -> {
-                    family.removeServer(server);
-                    RC.P.EventManager().fireEvent(new ServerUnregisterEvent(server, family));
-                }, () -> {
-                    RC.P.EventManager().fireEvent(new ServerUnregisterEvent(server, null));
-                }
-                ));
+        server.family().ifPresent(flux -> flux.compute(
+            family -> {
+                family.removeServer(server);
+                RC.P.EventManager().fireEvent(new ServerUnregisterEvent(server, family));
+            }, () -> {
+                RC.P.EventManager().fireEvent(new ServerUnregisterEvent(server, null));
+            }
+        ));
     }
 
     @Override
@@ -129,103 +117,22 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
         );
     }
 
-    /**
-     * Provides a declarative method by which you can establish a new Proxy instance on RC.
-     * Parameters listed in the constructor are required, any other parameters are
-     * technically optional because they also have default implementations.
-     */
-    public static class Tinder extends RCKernel.Tinder<ProxyAdapter, ProxyKernel> {
-        private ModuleTinder<? extends FamilyRegistry> familyRegistry = FamilyRegistry.Tinder.DEFAULT_CONFIGURATION;
-        private ModuleTinder<? extends MagicLinkCore.Proxy> magicLink;
-        private ModuleTinder<? extends PlayerRegistry> playerRegistry = PlayerRegistry.Tinder.DEFAULT_CONFIGURATION;
-
-        public Tinder(
-                @NotNull String id,
-                @NotNull Path directory,
-                @NotNull Path modulesDirectory,
-                @NotNull ProxyAdapter adapter,
-                @NotNull ModuleTinder<? extends MagicLinkCore.Proxy> magicLink
-                ) {
-            super(id, adapter, directory, modulesDirectory);
-            this.magicLink = magicLink;
-
-            try {
-                LoadBalancerAlgorithmExchange.registerAlgorithm(RoundRobin.algorithm, settings -> new RoundRobin.Tinder(
-                        settings.weighted(),
-                        settings.persistence(),
-                        settings.attempts(),
-                        settings.rebalance()
-                ));
-                LoadBalancerAlgorithmExchange.registerAlgorithm(MostConnection.algorithm, settings -> new MostConnection.Tinder(
-                        settings.weighted(),
-                        settings.persistence(),
-                        settings.attempts(),
-                        settings.rebalance()
-                ));
-                LoadBalancerAlgorithmExchange.registerAlgorithm(LeastConnection.algorithm, settings -> new LeastConnection.Tinder(
-                        settings.weighted(),
-                        settings.persistence(),
-                        settings.attempts(),
-                        settings.rebalance()
-                ));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        public Tinder lang(@NotNull ModuleTinder<? extends LangLibrary> lang) {
-            this.lang = lang;
-            return this;
-        }
-
-        public Tinder magicLink(@NotNull ModuleTinder<? extends MagicLinkCore.Proxy> magicLink) {
-            this.magicLink = magicLink;
-            return this;
-        }
-
-        public Tinder familyRegistry(@NotNull ModuleTinder<? extends FamilyRegistry> familyRegistry) {
-            this.familyRegistry = familyRegistry;
-            return this;
-        }
-
-        public Tinder playerRegistry(@NotNull ModuleTinder<? extends PlayerRegistry> playerRegistry) {
-            this.playerRegistry = playerRegistry;
-            return this;
-        }
-
-        public Tinder eventManager(@NotNull ModuleTinder<? extends EventManager> eventManager) {
-            this.eventManager = eventManager;
-            return this;
-        }
-
-        public Tinder errorHandler(@NotNull ModuleTinder<? extends ErrorRegistry> errorHandler) {
-            this.errors = errorHandler;
-            return this;
-        }
-
-        public @NotNull ProxyKernel ignite() throws Exception {
-            Version version;
-            try (InputStream input = ProxyKernel.class.getClassLoader().getResourceAsStream("rustyconnector-metadata.json")) {
-                if (input == null) throw new NullPointerException("Unable to initialize version number from jar.");
-                Gson gson = new Gson();
-                JsonObject object = gson.fromJson(new String(input.readAllBytes()), JsonObject.class);
-                version = new Version(object.get("version").getAsString());
-            }
-            return new ProxyKernel(
-                    this.id,
-                    version,
-                    this.adapter,
-                    this.directory,
-                    this.modulesDirectory,
-                    List.of(
-                        this.lang,
-                        this.familyRegistry,
-                        this.magicLink,
-                        this.playerRegistry,
-                        this.eventManager,
-                        this.errors
-                    )
-            );
-        }
-    }
+//                LoadBalancerAlgorithmExchange.registerAlgorithm(RoundRobin.algorithm, settings -> new RoundRobin.Builder(
+//        settings.weighted(),
+//        settings.persistence(),
+//        settings.attempts(),
+//        settings.rebalance()
+//        ));
+//                LoadBalancerAlgorithmExchange.registerAlgorithm(MostConnection.algorithm, settings -> new MostConnection.Builder(
+//        settings.weighted(),
+//        settings.persistence(),
+//        settings.attempts(),
+//        settings.rebalance()
+//        ));
+//                LoadBalancerAlgorithmExchange.registerAlgorithm(LeastConnection.algorithm, settings -> new LeastConnection.Builder(
+//        settings.weighted(),
+//        settings.persistence(),
+//        settings.attempts(),
+//        settings.rebalance()
+//        ));
 }

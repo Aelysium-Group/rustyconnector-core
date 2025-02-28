@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.common.modules;
 
 import com.google.gson.Gson;
-import group.aelysium.ara.Particle;
+import group.aelysium.ara.Flux;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.RCKernel;
 import group.aelysium.rustyconnector.common.errors.Error;
@@ -30,7 +30,7 @@ public class ModuleLoader implements AutoCloseable {
         this.sharedPackages = sharedPackages;
     }
 
-    public void loadFromFolder(Particle.Flux<? extends RCKernel<?>> flux, String modulesDirectory) {
+    public void loadFromFolder(Flux<? extends RCKernel<?>> flux, String modulesDirectory) {
         System.out.println("Loading modules.");
         File modules = new File(modulesDirectory);
         final ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
@@ -41,7 +41,7 @@ public class ModuleLoader implements AutoCloseable {
 
             if (files == null) return;
 
-            Map<String, ExternalModuleTinder<?>> preparedModules = new HashMap<>();
+            Map<String, ExternalModuleTinder<ModuleParticle>> preparedModules = new HashMap<>();
             Map<String, PluginConfiguration> preparedModulesConfigs = new HashMap<>();
             for (File file : files) {
                 try {
@@ -64,10 +64,10 @@ public class ModuleLoader implements AutoCloseable {
                     if(!ExternalModuleTinder.class.isAssignableFrom(entrypoint))
                         throw new ClassCastException("The `main` class must extend "+ExternalModuleTinder.class.getName());
 
-                    Constructor<ExternalModuleTinder<?>> constructor = (Constructor<ExternalModuleTinder<?>>) entrypoint.getDeclaredConstructor();
+                    Constructor<ExternalModuleTinder<ModuleParticle>> constructor = (Constructor<ExternalModuleTinder<ModuleParticle>>) entrypoint.getDeclaredConstructor();
 
                     constructor.setAccessible(true);
-                    ExternalModuleTinder<?> plugin = constructor.newInstance();
+                    ExternalModuleTinder<ModuleParticle> plugin = constructor.newInstance();
                     constructor.setAccessible(false);
 
                     String lowerConfigName = config.name().toLowerCase();
@@ -100,11 +100,11 @@ public class ModuleLoader implements AutoCloseable {
                         return;
                     }
 
-                    ExternalModuleTinder<?> t = preparedModules.get(o);
-                    ModuleParticle m = k.registerModule(new ModuleTinder<>(c.name(), c.description()) {
+                    ExternalModuleTinder<ModuleParticle> t = preparedModules.get(o);
+                    ModuleParticle m = k.registerModule(new ModuleBuilder<>(c.name(), c.description()) {
                         @Override
-                        public @NotNull ModuleParticle ignite() throws Exception {
-                            return t.ignite();
+                        public ModuleParticle get() {
+                            return t.get();
                         }
                     });
 

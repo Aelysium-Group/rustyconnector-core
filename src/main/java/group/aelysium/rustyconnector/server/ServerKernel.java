@@ -9,7 +9,7 @@ import group.aelysium.rustyconnector.common.errors.ErrorRegistry;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
-import group.aelysium.rustyconnector.common.modules.ModuleTinder;
+import group.aelysium.rustyconnector.common.modules.ModuleBuilder;
 import group.aelysium.rustyconnector.proxy.ProxyKernel;
 import group.aelysium.rustyconnector.proxy.util.AddressUtil;
 import group.aelysium.rustyconnector.proxy.util.Version;
@@ -44,12 +44,11 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
             @NotNull ServerAdapter adapter,
             @NotNull Path directory,
             @NotNull Path modulesDirectory,
-            @NotNull List<? extends ModuleTinder<?>> modules,
             @NotNull InetSocketAddress address,
             @NotNull String targetFamily,
             @NotNull Map<String, Packet.Parameter> metadata
-    ) {
-        super(id, version, adapter, directory,modulesDirectory, modules);
+    ) throws Exception {
+        super(id, version, adapter, directory, modulesDirectory);
         this.address = address;
         this.targetFamily = targetFamily;
         this.metadata.putAll(metadata);
@@ -211,85 +210,5 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
                                 )
                 )
         );
-    }
-
-    /**
-     * Provides a declarative method by which you can establish a new Server instance on RC.
-     * Parameters listed in the constructor are required, any other parameters are
-     * technically optional because they also have default implementations.
-     */
-    public static class Tinder extends RCKernel.Tinder<ServerAdapter, ServerKernel> {
-        private final String targetFamily;
-        private final InetSocketAddress address;
-        private ModuleTinder<? extends MagicLinkCore.Server> magicLink;
-        private final Map<String, Packet.Parameter> metadata = new HashMap<>();
-
-        public Tinder(
-                @NotNull String id,
-                @NotNull ServerAdapter adapter,
-                @NotNull Path directory,
-                @NotNull Path modulesDirectory,
-                @NotNull InetSocketAddress address,
-                @NotNull ModuleTinder<? extends MagicLinkCore.Server> magicLink,
-                @NotNull String targetFamily
-                ) {
-            super(id, adapter, directory, modulesDirectory);
-            this.address = address;
-            this.magicLink = magicLink;
-            this.targetFamily = targetFamily;
-        }
-
-        public Tinder lang(@NotNull ModuleTinder<? extends LangLibrary> lang) {
-            this.lang = lang;
-            return this;
-        }
-
-        public Tinder magicLink(@NotNull ModuleTinder<? extends MagicLinkCore.Server> magicLink) {
-            this.magicLink = magicLink;
-            return this;
-        }
-
-        public Tinder eventManager(@NotNull ModuleTinder<? extends EventManager> eventManager) {
-            this.eventManager = eventManager;
-            return this;
-        }
-
-        public Tinder errorHandler(@NotNull ModuleTinder<? extends ErrorRegistry> errorHandler) {
-            this.errors = errorHandler;
-            return this;
-        }
-
-        public Tinder metadata(@NotNull String key, @NotNull Packet.Parameter value) {
-            this.metadata.put(key, value);
-            return this;
-        }
-
-        @Override
-        public @NotNull ServerKernel ignite() throws Exception {
-            Version version;
-            try (InputStream input = ProxyKernel.class.getClassLoader().getResourceAsStream("rustyconnector-metadata.json")) {
-                if (input == null) throw new NullPointerException("Unable to initialize version number from jar.");
-                Gson gson = new Gson();
-                JsonObject object = gson.fromJson(new String(input.readAllBytes()), JsonObject.class);
-                version = new Version(object.get("version").getAsString());
-            }
-
-            return new ServerKernel(
-                    this.id,
-                    version,
-                    adapter,
-                    this.directory,
-                    this.modulesDirectory,
-                    List.of(
-                        lang,
-                        magicLink,
-                        eventManager,
-                        errors
-                    ),
-                    address,
-                    targetFamily,
-                    this.metadata
-            );
-        }
     }
 }

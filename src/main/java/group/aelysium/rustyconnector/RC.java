@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector;
 
-import group.aelysium.ara.Particle;
+import group.aelysium.ara.Flux;
 import group.aelysium.rustyconnector.common.haze.HazeDatabase;
 import group.aelysium.rustyconnector.common.haze.HazeProvider;
 import group.aelysium.rustyconnector.common.RCAdapter;
@@ -43,35 +43,30 @@ public interface RC {
      */
     interface P {
         static ProxyKernel Kernel() throws NoSuchElementException {
-            Particle.Flux<? extends RCKernel<?>> flux = RustyConnector.kernel.get();
+            Flux<? extends RCKernel<?>> flux = RustyConnector.kernel.get();
             if(flux == null) throw new NoSuchElementException("No Proxy Kernel has been registered for RustyConnector.");
-            if(!flux.exists()) throw new NoSuchElementException("The RustyConnector Proxy Kernel is currently unavailable. It might be rebooting.");
+            if(flux.isEmpty()) throw new NoSuchElementException("The RustyConnector Proxy Kernel is currently unavailable. It might be rebooting.");
             return (ProxyKernel) flux.orElseThrow();
         }
 
         static FamilyRegistry Families() throws NoSuchElementException {
-            return (FamilyRegistry) P.Kernel().fetchModule("FamilyRegistry")
-                    .orElseThrow(()->new NoSuchElementException("The Family Registry is not currently available. It might be rebooting."));
+            return (FamilyRegistry) RC.Module("FamilyRegistry");
         }
 
         static PlayerRegistry Players() throws NoSuchElementException {
-            return (PlayerRegistry) P.Kernel().fetchModule("PlayerRegistry")
-                    .orElseThrow(()->new NoSuchElementException("The Player Registry is not currently available. It might be rebooting."));
+            return (PlayerRegistry) RC.Module("PlayerRegistry");
         }
 
         static MagicLinkCore.Proxy MagicLink() throws NoSuchElementException {
-            return (MagicLinkCore.Proxy) P.Kernel().fetchModule("MagicLink")
-                    .orElseThrow(()->new NoSuchElementException("The Magic Link module is not currently available. It might be rebooting."));
+            return (MagicLinkCore.Proxy) RC.Module("MagicLink");
         }
 
         static EventManager EventManager() throws NoSuchElementException {
-            return (EventManager) P.Kernel().fetchModule("EventManager")
-                    .orElseThrow(()->new NoSuchElementException("The Event Manager is not currently available. It might be rebooting."));
+            return (EventManager) RC.Module("EventManager");
         }
 
         static HazeProvider Haze() throws NoSuchElementException {
-            return (HazeProvider) P.Kernel().fetchModule("Haze")
-                    .orElseThrow(()->new NoSuchElementException("The Haze Provider is not currently available. It might be rebooting or you haven't installed an RC module that implemented it."));
+            return (HazeProvider) RC.Module("Haze");
         }
 
         static ProxyAdapter Adapter() throws NoSuchElementException {
@@ -79,28 +74,28 @@ public interface RC {
         }
 
         static LangLibrary Lang() throws NoSuchElementException {
-            return (LangLibrary) P.Kernel().fetchModule("LangLibrary")
-                    .orElseThrow(()->new NoSuchElementException("The Language Registry is not currently available. It might be rebooting."));
+            return (LangLibrary) RC.Module("LangLibrary");
         }
 
         static ErrorRegistry Errors() {
-            return (ErrorRegistry) P.Kernel().fetchModule("ErrorRegistry")
-                    .orElseThrow(()->new NoSuchElementException("The Error Registry is not currently available. It might be rebooting."));
+            return (ErrorRegistry) RC.Module("ErrorRegistry");
         }
 
-        static Optional<? extends Family> Family(String id) throws NoSuchElementException {
-            Family family = RC.P.Families().find(id)
-                    .orElseThrow(()->new NoSuchElementException("No family with the id "+id+" exists."))
-                    .orElseThrow(()->new NoSuchElementException("The family "+id+" is not currently available. it might be rebooting."));
-            return Optional.ofNullable(family);
+        static <F extends Family> Optional<F> Family(String id) throws NoSuchElementException {
+            try {
+                F family = (F) P.Families().find(id)
+                    .orElseThrow(() -> new NoSuchElementException("The family " + id + " is not currently available. it might be rebooting."));
+                return Optional.ofNullable(family);
+            } catch (NullPointerException ignore) {}
+            throw new NoSuchElementException("No family with the id " + id + " exists.");
         }
 
-        static Optional<Particle.Flux<? extends Family>> Family(Server server) throws NoSuchElementException {
-            for (Particle.Flux<? extends ModuleParticle> f : RC.P.Families().modules().values()) {
+        static <F extends Family> Optional<Flux<Family>> Family(Server server) throws NoSuchElementException {
+            for (Flux<Family> f : RC.P.Families().modules().values()) {
                 try {
-                    Family family = (Family) f.access().get(5, TimeUnit.SECONDS);
+                    F family = (F) f.get(5, TimeUnit.SECONDS);
                     if (!family.containsServer(server.id())) continue;
-                    return Optional.of(((Particle.Flux<? extends Family>) f));
+                    return Optional.of(f);
                 } catch (InterruptedException | CancellationException | ExecutionException | TimeoutException ignore) {}
             }
             return Optional.empty();
@@ -108,13 +103,13 @@ public interface RC {
 
         static Optional<Server> Server(String id) throws NoSuchElementException {
             AtomicReference<Server> server = new AtomicReference<>(null);
-            Families().modules().values().forEach(flux -> flux.executeNow(f->((Family) f).fetchServer(id).ifPresent(server::set)));
+            Families().modules().values().forEach(flux -> flux.ifPresent(f-> f.fetchServer(id).ifPresent(server::set)));
             return Optional.ofNullable(server.get());
         }
 
         static List<Server> Servers() throws NoSuchElementException {
             List<Server> servers = new ArrayList<>();
-            Families().modules().values().forEach(flux -> flux.executeNow(f->servers.addAll(((Family) f).servers())));
+            Families().modules().values().forEach(flux -> flux.ifPresent(f->servers.addAll(f.servers())));
             return Collections.unmodifiableList(servers);
         }
 
@@ -126,7 +121,7 @@ public interface RC {
         }
 
         static Optional<? extends HazeDatabase> Haze(String name) throws NoSuchElementException {
-            Particle.Flux<? extends HazeDatabase> flux = P.Haze().fetchDatabase(name).orElse(null);
+            Flux<? extends HazeDatabase> flux = P.Haze().fetchDatabase(name);
             if(flux == null) return Optional.empty();
             return Optional.of(flux.orElseThrow());
         }
@@ -138,15 +133,14 @@ public interface RC {
      */
     interface S {
         static ServerKernel Kernel() throws NoSuchElementException {
-            Particle.Flux<? extends RCKernel<?>> flux = RustyConnector.kernel.get();
+            Flux<? extends RCKernel<?>> flux = RustyConnector.kernel.get();
             if(flux == null) throw new NoSuchElementException("No Server Kernel has been registered for RustyConnector.");
-            if(!flux.exists()) throw new NoSuchElementException("The RustyConnector Server Kernel is currently unavailable. It might be rebooting.");
+            if(flux.isEmpty()) throw new NoSuchElementException("The RustyConnector Server Kernel is currently unavailable. It might be rebooting.");
             return (ServerKernel) flux.orElseThrow();
         }
 
         static MagicLinkCore.Server MagicLink() throws NoSuchElementException {
-            return (MagicLinkCore.Server) S.Kernel().fetchModule("MagicLink")
-                    .orElseThrow(()->new NoSuchElementException("The Magic Link module is not currently available. It might be rebooting."));
+            return (MagicLinkCore.Server) RC.Module("MagicLink");
         }
 
         static ServerAdapter Adapter() throws NoSuchElementException {
@@ -154,27 +148,23 @@ public interface RC {
         }
 
         static LangLibrary Lang() throws NoSuchElementException {
-            return (LangLibrary) S.Kernel().fetchModule("LangLibrary")
-                    .orElseThrow(()->new NoSuchElementException("The Language Registry is not currently available. It might be rebooting."));
+            return (LangLibrary) RC.Module("LangLibrary");
         }
 
         static EventManager EventManager() throws NoSuchElementException {
-            return (EventManager) S.Kernel().fetchModule("EventManager")
-                    .orElseThrow(()->new NoSuchElementException("The Event Manager is not currently available. It might be rebooting."));
+            return (EventManager) RC.Module("EventManager");
         }
 
         static ErrorRegistry Errors() {
-            return (ErrorRegistry) S.Kernel().fetchModule("ErrorRegistry")
-                    .orElseThrow(()->new NoSuchElementException("The Error Registry is not currently available. It might be rebooting."));
+            return (ErrorRegistry) RC.Module("ErrorRegistry");
         }
 
         static HazeProvider Haze() throws NoSuchElementException {
-            return (HazeProvider) S.Kernel().fetchModule("Haze")
-                    .orElseThrow(()->new NoSuchElementException("The Haze Provider is not currently available. It might be rebooting or you haven't installed an RC module that implemented it."));
+            return (HazeProvider) RC.Module("Haze");
         }
 
         static Optional<? extends HazeDatabase> Haze(String name) throws NoSuchElementException {
-            Particle.Flux<? extends HazeDatabase> flux = S.Haze().fetchDatabase(name).orElse(null);
+            Flux<? extends HazeDatabase> flux = S.Haze().fetchDatabase(name);
             if(flux == null) return Optional.empty();
             return Optional.of(flux.orElseThrow());
         }
@@ -274,5 +264,22 @@ public interface RC {
             return RC.P.Haze(name);
         } catch (Exception ignore) {}
         throw new NoSuchElementException("The requested Haze database doesn't exist.");
+    }
+    
+    static <M extends ModuleParticle> M Module(@NotNull String moduleName) throws NoSuchElementException {
+        return ((Flux<M>) RC.ModuleFlux(moduleName)).orElseThrow(()->new NoSuchElementException(moduleName+" is not currently available. It might be rebooting."));
+    }
+    static <M extends ModuleParticle> Flux<M> ModuleFlux(@NotNull String moduleName) throws NoSuchElementException {
+        Flux<M> f = RC.Kernel().fetchModule(moduleName);
+        if(f == null) throw new NoSuchElementException(moduleName+" is not currently available. It might be rebooting.");
+        return f;
+    }
+    
+    static boolean checkAvailability(@NotNull String moduleName) {
+        try {
+            RC.Kernel().fetchModule(moduleName).orElseThrow();
+            return true;
+        } catch (Exception ignore) {}
+        return false;
     }
 }

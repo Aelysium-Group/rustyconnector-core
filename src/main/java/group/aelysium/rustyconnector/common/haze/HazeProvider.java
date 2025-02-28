@@ -1,23 +1,25 @@
 package group.aelysium.rustyconnector.common.haze;
 
+import group.aelysium.ara.Flux;
 import group.aelysium.rustyconnector.common.modules.ModuleCollection;
 import group.aelysium.rustyconnector.common.modules.ModuleHolder;
 import group.aelysium.rustyconnector.common.modules.ModuleParticle;
-import group.aelysium.rustyconnector.common.modules.ModuleTinder;
+import group.aelysium.rustyconnector.common.modules.ModuleBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public abstract class HazeProvider implements ModuleParticle, ModuleHolder {
-    protected ModuleCollection databases = new ModuleCollection();
+public abstract class HazeProvider implements ModuleParticle, ModuleHolder<HazeDatabase> {
+    protected ModuleCollection<HazeDatabase> databases = new ModuleCollection<>();
 
     /**
      * Fetches a database.
      * @param name The name of the database to fetch.
      * @return An optional containing the database flux if it exists.
      */
-    public @NotNull Optional<Flux<? extends HazeDatabase>> fetchDatabase(@NotNull String name) {
-        return Optional.ofNullable(this.databases.fetchModule(name));
+    public @Nullable Flux<HazeDatabase> fetchDatabase(@NotNull String name) {
+        return this.databases.fetchModule(name);
     }
 
     /**
@@ -35,7 +37,7 @@ public abstract class HazeProvider implements ModuleParticle, ModuleHolder {
      * @throws IllegalStateException If a database with the specific name already exists.
      * @throws Exception If there's an issue initializing the database.
      */
-    public void registerDatabase(@NotNull ModuleTinder<? extends HazeDatabase> database) throws Exception {
+    public void registerDatabase(@NotNull ModuleBuilder<HazeDatabase> database) throws Exception {
         this.databases.registerModule(database);
     }
     public boolean containsDatabase(@NotNull String name) {
@@ -43,21 +45,12 @@ public abstract class HazeProvider implements ModuleParticle, ModuleHolder {
     }
 
     @Override
-    public void close() throws Exception {
-        this.databases.close();
-    }
-
-    @Override
-    public Map<String, Flux<? extends ModuleParticle>> modules() {
+    public Map<String, Flux<HazeDatabase>> modules() {
         return Map.of();
     }
-
-    public static abstract class Tinder extends ModuleTinder<HazeProvider> {
-        public Tinder() {
-            super(
-                "Haze",
-                "Provides abstracted database connections."
-            );
-        }
+    
+    @Override
+    public void close() throws Exception {
+        this.databases.close();
     }
 }

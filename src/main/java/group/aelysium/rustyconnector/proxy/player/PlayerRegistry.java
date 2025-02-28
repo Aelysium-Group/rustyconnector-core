@@ -2,7 +2,7 @@ package group.aelysium.rustyconnector.proxy.player;
 
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.modules.ModuleParticle;
-import group.aelysium.rustyconnector.common.modules.ModuleTinder;
+import group.aelysium.rustyconnector.common.modules.ModuleBuilder;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,21 +64,5 @@ public class PlayerRegistry implements ModuleParticle {
                         BLUE
                 ))
         );
-    }
-
-    public static class Tinder extends ModuleTinder<PlayerRegistry> {
-        public Tinder() {
-            super(
-                "PlayerRegistry",
-                "Provides player access services."
-            );
-        }
-
-        @Override
-        public @NotNull PlayerRegistry ignite() throws Exception {
-            return new PlayerRegistry();
-        }
-
-        public static Tinder DEFAULT_CONFIGURATION = new Tinder();
     }
 }

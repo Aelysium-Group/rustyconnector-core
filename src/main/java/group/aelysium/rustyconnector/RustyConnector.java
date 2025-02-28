@@ -1,7 +1,9 @@
 package group.aelysium.rustyconnector;
 
-import group.aelysium.ara.Particle;
+import group.aelysium.ara.Closure;
+import group.aelysium.ara.Flux;
 import group.aelysium.rustyconnector.common.RCKernel;
+import group.aelysium.rustyconnector.common.modules.ModuleParticle;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.ParameterizedType;
@@ -11,10 +13,11 @@ import java.util.Optional;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class RustyConnector {
-    private static final List<Consumer<Particle.Flux<? extends RCKernel<?>>>> onStartHandlers = new Vector<>();
-    protected static final AtomicReference<Particle.Flux<? extends RCKernel<?>>> kernel = new AtomicReference<>(null);
+    private static final List<Consumer<Flux<? extends RCKernel<?>>>> onStartHandlers = new Vector<>();
+    protected static final AtomicReference<Flux<? extends RCKernel<?>>> kernel = new AtomicReference<>(null);
 
     /**
      * Registers a consumer which will run whenever the kernel's flux is available.
@@ -22,7 +25,7 @@ public class RustyConnector {
      * Any exceptions thrown by the consumer will be ignored, make sure you handle exceptions yourself.
      * @param consumer The consumer to handle the kernel.
      */
-    public static void Kernel(Consumer<Particle.Flux<? extends RCKernel<?>>> consumer) {
+    public static void Kernel(Consumer<Flux<? extends RCKernel<?>>> consumer) {
         onStartHandlers.add(consumer);
 
         if(kernel.get() == null) return;
@@ -36,15 +39,15 @@ public class RustyConnector {
      * @param <K> The type of the flux.
      * @throws NoSuchElementException If no flux has been registered.
      */
-    public static <K extends RCKernel<?>> Particle.Flux<K> Kernel() throws NoSuchElementException {
-        return (Particle.Flux<K>) Optional.ofNullable(kernel.get()).orElseThrow();
+    public static <K extends RCKernel<?>> Flux<K> Kernel() throws NoSuchElementException {
+        return (Flux<K>) Optional.ofNullable(kernel.get()).orElseThrow();
     }
 
-    public static void registerAndIgnite(@NotNull Particle.Flux<? extends RCKernel<?>> flux) throws IllegalAccessError, Exception {
-        Particle.Flux<? extends RCKernel<?>> kernelInstance = kernel.get();
+    public static void registerAndIgnite(@NotNull Flux<? extends RCKernel<?>> flux) throws IllegalAccessError, Exception {
+        Flux<? extends RCKernel<?>> kernelInstance = kernel.get();
         if (kernelInstance != null) throw new IllegalAccessError("The RustyConnector kernel has already been established.");
         kernel.set(flux);
-        flux.observe();
+        flux.build();
         onStartHandlers.forEach(t->{
             try {
                 t.accept(flux);
@@ -53,14 +56,14 @@ public class RustyConnector {
     }
 
     public static void unregister() throws Exception {
-        Particle.Flux<? extends RCKernel<?>> kernelInstance = kernel.get();
+        Flux<? extends RCKernel<?>> kernelInstance = kernel.get();
         if(kernelInstance == null) return;
 
         kernelInstance.close();
         kernel.set(null);
     }
 
-    public static Class<?> getGenericType(Particle.Flux<? extends Particle> flux) {
+    public static Class<?> getGenericType(Flux<ModuleParticle> flux) {
         if (!(flux.getClass().getGenericSuperclass() instanceof ParameterizedType type))
             return null;
         return (Class<?>) type.getActualTypeArguments()[0];

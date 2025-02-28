@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.proxy.events;
 
-import group.aelysium.ara.Particle;
+import group.aelysium.ara.Flux;
 import group.aelysium.rustyconnector.common.events.Event;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import org.jetbrains.annotations.NotNull;

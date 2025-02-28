@@ -306,37 +306,4 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                 )
         );
     }
-
-    public static class Tinder extends MagicLinkCore.Tinder<WebSocketMagicLink> {
-        private final URL httpAddress;
-        private final Packet.SourceIdentifier self;
-        private final AES aes;
-        private final PacketCache cache;
-        private final IPV6Broadcaster broadcaster;
-        public Tinder(
-                @NotNull URL httpAddress,
-                @NotNull Packet.SourceIdentifier self,
-                @NotNull AES aes,
-                @NotNull PacketCache cache,
-                @Nullable IPV6Broadcaster broadcaster
-                ) {
-            super();
-            this.httpAddress = httpAddress;
-            this.aes = aes;
-            this.self = self;
-            this.cache = cache;
-            this.broadcaster = broadcaster;
-        }
-
-        @Override
-        public @NotNull WebSocketMagicLink ignite() throws Exception {
-            return new WebSocketMagicLink(
-                    this.httpAddress,
-                    this.self,
-                    this.aes,
-                    this.cache,
-                    this.broadcaster
-            );
-        }
-    }
 }

@@ -23,24 +23,4 @@ public class RoundRobin extends LoadBalancer {
 
     @Override
     public void singleSort() {}
-
-    public static class Tinder extends LoadBalancer.Tinder<RoundRobin> {
-        public Tinder(
-                boolean weighted,
-                boolean persistence,
-                int attempts,
-                @NotNull LiquidTimestamp rebalance
-        ) {
-            super(weighted, persistence, attempts, rebalance);
-        }
-
-        @Override
-        public @NotNull RoundRobin ignite() throws Exception {
-            return new RoundRobin(
-                    this.weighted,
-                    this.persistence,
-                    this.attempts
-            );
-        }
-    }
 }

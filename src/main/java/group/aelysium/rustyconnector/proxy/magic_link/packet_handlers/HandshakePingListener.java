@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.proxy.magic_link.packet_handlers;
 
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.ara.Particle;
+import group.aelysium.ara.Flux;
 import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
@@ -28,10 +28,8 @@ public class HandshakePingListener {
         } catch (Exception ignore) {}
 
         try {
-            Particle.Flux<? extends Family> familyFlux = RC.P.Families().find(packet.targetFamily()).orElseThrow(() ->
-                    new InvalidAlgorithmParameterException("No family with the id `"+packet.targetFamily()+"` exist!")
-            );
-            Family family = familyFlux.access().get(10, TimeUnit.SECONDS);
+            Flux<Family> familyFlux = RC.P.Families().find(packet.targetFamily());
+            Family family = familyFlux.get(10, TimeUnit.SECONDS);
 
             RC.P.Server(packet.local().id()).ifPresent(m -> {
                 throw new RuntimeException("Server " + packet.local().id() + " can't be registered twice!");

@@ -1,10 +1,10 @@
 package group.aelysium.rustyconnector.common.modules;
 
-import group.aelysium.ara.Particle;
+import group.aelysium.ara.Closure;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.Nullable;
 
-public interface ModuleParticle extends Particle {
+public interface ModuleParticle extends Closure {
     /**
      * Returns a {@link Component} which describes the internal details of this module.
      * If there's no details to show, can just return null.

@@ -1,12 +1,11 @@
 package group.aelysium.rustyconnector.common.magic_link;
 
-import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketType;
 import group.aelysium.rustyconnector.common.crypt.NanoID;
 import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.modules.ModuleParticle;
-import group.aelysium.rustyconnector.common.modules.ModuleTinder;
+import group.aelysium.rustyconnector.common.modules.ModuleBuilder;
 import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
 import group.aelysium.rustyconnector.common.cache.TimeoutCache;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
@@ -19,8 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -171,8 +168,8 @@ public abstract class MagicLinkCore implements ModuleParticle {
         }
     }
 
-    public static abstract class Tinder<T extends MagicLinkCore> extends ModuleTinder<T> {
-        public Tinder() {
+    public static abstract class Builder<T extends MagicLinkCore> extends ModuleBuilder<T> {
+        public Builder() {
             super(
                     "MagicLink",
                     "Provides packet communication services for the proxy."

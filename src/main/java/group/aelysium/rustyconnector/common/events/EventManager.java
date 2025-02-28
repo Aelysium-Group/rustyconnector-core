@@ -1,11 +1,10 @@
 package group.aelysium.rustyconnector.common.events;
 
-import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.algorithm.QuickSort;
 import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.modules.ModuleParticle;
-import group.aelysium.rustyconnector.common.modules.ModuleTinder;
+import group.aelysium.rustyconnector.common.modules.ModuleBuilder;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.ISortable;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
@@ -32,8 +31,6 @@ public class EventManager implements ModuleParticle {
             new SynchronousQueue<>()
     );
     private final ConcurrentHashMap<Class<? extends Event>, Vector<SortableListener>> listeners = new ConcurrentHashMap<>();
-
-    protected EventManager() {}
 
     /**
      * Registers the provided listener.
@@ -145,22 +142,6 @@ public class EventManager implements ModuleParticle {
                         text(String.join(", ", this.listeners.entrySet().stream().map(e -> e.getKey().getSimpleName() + " ("+e.getValue().size()+")").toList()))
                 )
         );
-    }
-
-    public static class Tinder extends ModuleTinder<EventManager> {
-        public Tinder() {
-            super(
-                "EventManager",
-                "Provides event bus services."
-            );
-        }
-
-        @Override
-        public @NotNull EventManager ignite() throws Exception {
-            return new EventManager();
-        }
-
-        public static Tinder DEFAULT_CONFIGURATION = new Tinder();
     }
 
     protected static class SortableListener implements ISortable {

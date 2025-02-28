@@ -1,6 +1,6 @@
 package group.aelysium.rustyconnector.proxy.family;
 
-import group.aelysium.ara.Particle;
+import group.aelysium.ara.Flux;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.modules.ModuleCollection;
 import group.aelysium.rustyconnector.common.modules.ModuleHolder;
@@ -22,7 +22,7 @@ import static net.kyori.adventure.text.Component.*;
 import static net.kyori.adventure.text.JoinConfiguration.newlines;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 
-public abstract class Family extends ModuleCollection implements MetadataHolder<Object>, Player.Connectable, Server.Container, ModuleHolder, ModuleParticle {
+public abstract class Family extends ModuleCollection<ModuleParticle> implements MetadataHolder<Object>, Player.Connectable, Server.Container, ModuleHolder<ModuleParticle>, ModuleParticle {
     private final Map<String, Object> metadata = new ConcurrentHashMap<>(Map.of(
             "serverSoftCap", 30,
             "serverHardCap", 40
@@ -35,7 +35,7 @@ public abstract class Family extends ModuleCollection implements MetadataHolder<
             @NotNull String id,
             @Nullable String displayName,
             @Nullable String parent,
-            @NotNull Map<String, Object> metadata
+            @NotNull Map<String, ?> metadata
     ) {
         if(id.length() > 16) throw new IllegalArgumentException("Family names must be no longer than 16 characters. If you want a longer name for the family, use display name.");
         if(id.isBlank()) throw new IllegalArgumentException("Please provide a valid family name.");
@@ -79,10 +79,10 @@ public abstract class Family extends ModuleCollection implements MetadataHolder<
      * The parent of this family should always be either another family, or the root family.
      * If this family is the root family, this method will always return `null`.
      */
-    public @NotNull Optional<Particle.Flux<? extends Family>> parent() {
+    public @NotNull Optional<Flux<Family>> parent() {
         if(this.parent == null) return Optional.empty();
         try {
-            return RC.P.Families().find(this.parent);
+            return Optional.ofNullable(RC.P.Families().find(this.parent));
         } catch (Exception ignore) {}
         return Optional.empty();
     }
@@ -99,9 +99,13 @@ public abstract class Family extends ModuleCollection implements MetadataHolder<
     public @Nullable Component details() {
         AtomicReference<String> parentName = new AtomicReference<>("none");
         try {
-            Particle.Flux<? extends Family> parent = this.parent().orElse(null);
+            Flux<Family> parent = this.parent().orElse(null);
             if(parent == null) throw new RuntimeException();
-            parent.executeLocking(f -> parentName.set(f.id()), ()->parentName.set("[Unavailable]"), 10, TimeUnit.SECONDS);
+            parent.compute(
+                f -> parentName.set(f.id()),
+                ()->parentName.set("[Unavailable]"),
+                10, TimeUnit.SECONDS
+            );
         } catch (Exception ignore) {}
 
         return join(

@@ -1,31 +1,27 @@
 package group.aelysium.rustyconnector.proxy.family;
 
-import group.aelysium.ara.Particle;
+import group.aelysium.ara.Flux;
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.modules.ModuleCollection;
 import group.aelysium.rustyconnector.common.modules.ModuleHolder;
 import group.aelysium.rustyconnector.common.modules.ModuleParticle;
-import group.aelysium.rustyconnector.common.modules.ModuleTinder;
+import group.aelysium.rustyconnector.common.modules.ModuleBuilder;
 import group.aelysium.rustyconnector.proxy.events.FamilyRegisterEvent;
 import group.aelysium.rustyconnector.proxy.events.FamilyUnregisterEvent;
-import group.aelysium.rustyconnector.proxy.util.AddressUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static net.kyori.adventure.text.Component.*;
 import static net.kyori.adventure.text.JoinConfiguration.newlines;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 
-public class FamilyRegistry implements ModuleHolder, ModuleParticle {
-    private final ModuleCollection families = new ModuleCollection();
+public class FamilyRegistry implements ModuleHolder<Family>, ModuleParticle {
+    private final ModuleCollection<Family> families = new ModuleCollection<>();
     private String rootFamily = null;
 
     protected FamilyRegistry() {}
@@ -52,8 +48,8 @@ public class FamilyRegistry implements ModuleHolder, ModuleParticle {
      * Finds a family based on an id.
      * @param id The id to search for.
      */
-    public Optional<Flux<? extends Family>> find(@NotNull String id) {
-        return Optional.ofNullable(this.families.fetchModule(id));
+    public <F extends Family> Flux<F> find(@NotNull String id) {
+        return this.families.fetchModule(id);
     }
 
     /**
@@ -62,8 +58,8 @@ public class FamilyRegistry implements ModuleHolder, ModuleParticle {
      * @param tinder The family tinder to add.
      * @throws Exception If the family was not ignited and failed to ignite.
      */
-    public void register(@NotNull String id, @NotNull ModuleTinder<? extends Family> tinder) throws Exception {
-        Family family = (Family) this.families.registerModule(id, tinder);
+    public void register(@NotNull String id, @NotNull ModuleBuilder<Family> tinder) throws Exception {
+        Family family = this.families.registerModule(id, tinder);
         try {
             RC.EventManager().fireEvent(new FamilyRegisterEvent(family));
         } catch (Exception ignore) {}
@@ -75,7 +71,7 @@ public class FamilyRegistry implements ModuleHolder, ModuleParticle {
      */
     public void unregister(@NotNull String id) {
         try {
-            Family family = (Family) this.families.fetchModule(id).observe(3, TimeUnit.SECONDS);
+            Family family = this.families.fetchModule(id).get(3, TimeUnit.SECONDS);
             RC.EventManager().fireEvent(new FamilyUnregisterEvent(family));
         } catch (Exception ignore) {}
 
@@ -95,14 +91,14 @@ public class FamilyRegistry implements ModuleHolder, ModuleParticle {
     }
 
     @Override
-    public Map<String, Flux<? extends ModuleParticle>> modules() {
+    public Map<String, Flux<Family>> modules() {
         return this.families.modules();
     }
 
     @Override
     public @Nullable Component details() {
         List<Family> families = new ArrayList<>();
-        this.modules().values().forEach(f -> f.executeNow(a -> families.add((Family) a)));
+        this.modules().values().forEach(f -> f.ifPresent(families::add));
 
         return join(
             newlines(),
@@ -156,25 +152,5 @@ public class FamilyRegistry implements ModuleHolder, ModuleParticle {
                     )
             )
         );
-    }
-
-    public static class Tinder extends ModuleTinder<FamilyRegistry> {
-        public Tinder() {
-            super(
-                "FamilyRegistry",
-                "Provides indexed access to families."
-            );
-        }
-
-        @Override
-        public @NotNull FamilyRegistry ignite() throws Exception {
-            return new FamilyRegistry();
-        }
-
-        /**
-         * Returns the default configuration for a FamilyRegistry manager.
-         * This default configuration has no root family set and no initial families loaded.
-         */
-        public static Tinder DEFAULT_CONFIGURATION = new Tinder();
     }
 }

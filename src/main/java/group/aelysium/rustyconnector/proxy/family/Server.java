@@ -1,7 +1,7 @@
 package group.aelysium.rustyconnector.proxy.family;
 
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.ara.Particle;
+import group.aelysium.ara.Flux;
 import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketType;
@@ -181,12 +181,12 @@ public final class Server implements MetadataHolder<Object>, ISortable, Player.C
         if(RC.P.Family(this).isEmpty()) return false;
         return true;
     }
-
+    
     /**
      * Get the family this server is associated with.
      * @return An optional containing the Family in a Flux state if it exists. If this server wasn't assigned a family, this will return an empty optional.
      */
-    public Optional<Particle.Flux<? extends Family>> family() {
+    public Optional<Flux<Family>> family() {
         return RC.P.Family(this);
     }
 
@@ -199,7 +199,7 @@ public final class Server implements MetadataHolder<Object>, ISortable, Player.C
      */
     public boolean lock() {
         try {
-            this.family().orElseThrow().executeNow(f -> f.lockServer(Server.this));
+            this.family().orElseThrow().ifPresent(f -> f.lockServer(Server.this));
             return true;
         } catch(Exception e) {
             RC.Error(Error.from(e).whileAttempting("To lock the server "+this.id()));
@@ -216,7 +216,7 @@ public final class Server implements MetadataHolder<Object>, ISortable, Player.C
      */
     public boolean unlock() {
         try {
-            this.family().orElseThrow().executeNow(f -> f.unlockServer(Server.this));
+            this.family().orElseThrow().ifPresent(f -> f.unlockServer(Server.this));
             return true;
         } catch(Exception e) {
             RC.Error(Error.from(e).whileAttempting("To unlock the server "+this.id()));
@@ -239,7 +239,7 @@ public final class Server implements MetadataHolder<Object>, ISortable, Player.C
 
 
     private boolean validatePlayerLimits(Player player) throws ExecutionException, InterruptedException, TimeoutException {
-        Family family = this.family().orElseThrow().access().get(10, TimeUnit.SECONDS);
+        Family family = this.family().orElseThrow().get(10, TimeUnit.SECONDS);
 
         if(Permission.validate(
                 player,
@@ -419,7 +419,7 @@ public final class Server implements MetadataHolder<Object>, ISortable, Player.C
 
     /**
      * A Server Configuration.
-     * Used alongside {@link group.aelysium.rustyconnector.proxy.ProxyKernel#registerServer(Particle.Flux, Configuration)} to register new server instances.
+     * Used alongside {@link group.aelysium.rustyconnector.proxy.ProxyKernel#registerServer(Flux, Configuration)} to register new server instances.
      * @param id The unique id for this server - this value must be unique between servers.
      * @param address The connection address for the server.
      * @param timeout The number of seconds that this server needs to refresh or else it'll timeout.

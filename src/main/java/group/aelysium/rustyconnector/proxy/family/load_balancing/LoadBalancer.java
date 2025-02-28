@@ -2,7 +2,7 @@ package group.aelysium.rustyconnector.proxy.family.load_balancing;
 
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.modules.ModuleParticle;
-import group.aelysium.rustyconnector.common.modules.ModuleTinder;
+import group.aelysium.rustyconnector.common.modules.ModuleBuilder;
 import group.aelysium.rustyconnector.proxy.events.*;
 import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
@@ -239,28 +239,5 @@ public abstract class LoadBalancer implements Server.Container, ModuleParticle {
                 RC.Lang("rustyconnector-keyValue").generate("Weighted", this.weighted),
                 RC.Lang("rustyconnector-keyValue").generate("Persistence", this.persistence ? "Enabled ("+this.attempts+")" : "Disabled")
         );
-    }
-
-    public abstract static class Tinder<T extends LoadBalancer> extends ModuleTinder<T> {
-        protected final boolean weighted;
-        protected final boolean persistence;
-        protected final int attempts;
-        protected final LiquidTimestamp rebalance;
-
-        public Tinder(
-            boolean weighted,
-            boolean persistence,
-            int attempts,
-            @NotNull LiquidTimestamp rebalance
-        ) {
-            super(
-                "LoadBalancer",
-                "Provides server sorting capabilities."
-            );
-            this.weighted = weighted;
-            this.persistence = persistence;
-            this.attempts = attempts;
-            this.rebalance = rebalance;
-        }
     }
 }

@@ -1,6 +1,5 @@
 package group.aelysium.rustyconnector.proxy.family.load_balancing;
 
-import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.common.algorithm.QuickSort;
 import group.aelysium.rustyconnector.common.algorithm.WeightedQuickSort;
 import group.aelysium.rustyconnector.proxy.family.Server;
@@ -40,26 +39,5 @@ public class MostConnection extends LeastConnection {
     @Override
     public String toString() {
         return "LoadBalancer (MostConnection): "+this.servers.size()+" items";
-    }
-
-    public static class Tinder extends LoadBalancer.Tinder<MostConnection> {
-        public Tinder(
-                boolean weighted,
-                boolean persistence,
-                int attempts,
-                @NotNull LiquidTimestamp rebalance
-        ) {
-            super(weighted, persistence, attempts, rebalance);
-        }
-
-        @Override
-        public @NotNull MostConnection ignite() throws Exception {
-            return new MostConnection(
-                    this.weighted,
-                    this.persistence,
-                    this.attempts,
-                    this.rebalance
-            );
-        }
     }
 }
