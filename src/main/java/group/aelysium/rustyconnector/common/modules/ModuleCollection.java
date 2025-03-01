@@ -38,6 +38,7 @@ public class ModuleCollection<P extends ModuleParticle> implements Closure, Modu
         if(this.modules.containsKey(key.toLowerCase())) throw new IllegalStateException("A module with the name "+key.toLowerCase()+" was already registered.");
         flux.metadata("name", builder.name);
         flux.metadata("description", builder.description);
+        flux.build();
         P p = flux.get(1, TimeUnit.MINUTES);
         this.modules.put(key.toLowerCase(), flux);
         return p;

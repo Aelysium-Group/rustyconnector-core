@@ -79,6 +79,7 @@ shadowJar {
 
     relocate "group.aelysium.ara", 'group.aelysium.rustyconnector.shaded.group.aelysium.ara'
     relocate "group.aelysium.haze", 'group.aelysium.rustyconnector.shaded.group.aelysium.haze'
+    relocate "group.aelysium.declarative_yaml", 'group.aelysium.rustyconnector.shaded.group.aelysium.declarative_yaml'
 
     relocate 'com.aventrix.jnanoid', 'group.aelysium.rustyconnector.shaded.com.aventrix.jnanoid.jnanoid'
     relocate 'com.google.gson', 'group.aelysium.rustyconnector.shaded.com.google.code.gson.gson'
