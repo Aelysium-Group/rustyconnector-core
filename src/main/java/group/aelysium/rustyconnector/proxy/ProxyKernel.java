@@ -7,12 +7,10 @@ import group.aelysium.rustyconnector.proxy.events.ServerRegisterEvent;
 import group.aelysium.rustyconnector.proxy.events.ServerUnregisterEvent;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
-import group.aelysium.rustyconnector.proxy.util.Version;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CancellationException;
@@ -23,14 +21,13 @@ import static net.kyori.adventure.text.Component.*;
 import static net.kyori.adventure.text.JoinConfiguration.newlines;
 
 public class ProxyKernel extends RCKernel<ProxyAdapter> {
-    protected ProxyKernel(
+    public ProxyKernel(
             @NotNull String id,
-            @NotNull Version version,
             @NotNull ProxyAdapter adapter,
             @NotNull Path directory,
             @NotNull Path modulesDirectory
     ) throws Exception {
-        super(id, version, adapter, directory, modulesDirectory);
+        super(id, adapter, directory, modulesDirectory);
     }
 
     /**
@@ -91,14 +88,11 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
     public void unregisterServer(@NotNull Server server) {
         RC.P.Adapter().unregisterServer(server);
 
-        server.family().ifPresent(flux -> flux.compute(
-            family -> {
-                family.removeServer(server);
-                RC.P.EventManager().fireEvent(new ServerUnregisterEvent(server, family));
-            }, () -> {
-                RC.P.EventManager().fireEvent(new ServerUnregisterEvent(server, null));
-            }
-        ));
+        Family family = server.family().orElse(null);
+        
+        if(family != null) family.removeServer(server);
+        
+        RC.P.EventManager().fireEvent(new ServerUnregisterEvent(server, family));
     }
 
     @Override

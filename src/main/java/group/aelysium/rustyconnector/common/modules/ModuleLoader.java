@@ -19,16 +19,6 @@ import java.util.*;
 public class ModuleLoader implements AutoCloseable {
     protected Gson gson = new Gson();
     protected List<ModuleClassLoader> classLoaders = new ArrayList<>();
-    protected final List<String> sharedPackages;
-
-    public ModuleLoader() {
-        this.sharedPackages = List.of();
-    }
-    public ModuleLoader(
-            List<String> sharedPackages
-    ) {
-        this.sharedPackages = sharedPackages;
-    }
 
     public void loadFromFolder(Flux<? extends RCKernel<?>> flux, String modulesDirectory) {
         System.out.println("Loading modules.");
@@ -45,21 +35,21 @@ public class ModuleLoader implements AutoCloseable {
             Map<String, PluginConfiguration> preparedModulesConfigs = new HashMap<>();
             for (File file : files) {
                 try {
-                    ModuleClassLoader classLoader = new ModuleClassLoader(
-                            List.of(file.toURI().toURL()),
-                            getClass().getClassLoader(),
-                            this.sharedPackages
-                    );
-                    Thread.currentThread().setContextClassLoader(classLoader);
 
-                    InputStream stream = classLoader.getResourceAsStream("rc-module.json");
+                    InputStream stream = originalClassLoader.getResourceAsStream("rc-module.json");
                     if(stream == null) throw new NullPointerException("No rc-module.json exists for "+file.getName());
 
                     PluginConfiguration config;
                     try(InputStreamReader reader = new InputStreamReader(stream)) {
                         config = gson.fromJson(reader, PluginConfiguration.class);
                     }
-
+                    
+                    ModuleClassLoader classLoader = new ModuleClassLoader(
+                        List.of(file.toURI().toURL()),
+                        getClass().getClassLoader(),
+                        config.sharedPackages == null ? List.of() : config.sharedPackages
+                    );
+                    Thread.currentThread().setContextClassLoader(classLoader);
                     Class<?> entrypoint = classLoader.loadClass(config.main());
                     if(!ExternalModuleTinder.class.isAssignableFrom(entrypoint))
                         throw new ClassCastException("The `main` class must extend "+ExternalModuleTinder.class.getName());
@@ -139,7 +129,8 @@ public class ModuleLoader implements AutoCloseable {
         @NotNull String description,
         @NotNull List<String> environments,
         @Nullable List<String> dependencies,
-        @Nullable List<String> softDependencies
+        @Nullable List<String> softDependencies,
+        @Nullable List<String> sharedPackages
     ) {}
 
     private static List<String> sortPlugins(Map<String, PluginConfiguration> configs) throws IllegalArgumentException {

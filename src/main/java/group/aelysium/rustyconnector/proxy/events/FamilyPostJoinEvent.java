@@ -11,18 +11,18 @@ import org.jetbrains.annotations.NotNull;
  * Represents a player successfully connecting to a family.
  */
 public class FamilyPostJoinEvent extends Event {
-    protected final Flux<? extends Family> family;
+    protected final Family family;
     protected final Server server;
     protected final Player player;
 
-    public FamilyPostJoinEvent(@NotNull Flux<? extends Family> family, @NotNull Server server, @NotNull Player player) {
+    public FamilyPostJoinEvent(@NotNull Family family, @NotNull Server server, @NotNull Player player) {
         super();
         this.family = family;
         this.server = server;
         this.player = player;
     }
 
-    public Flux<? extends Family> family() {
+    public Family family() {
         return family;
     }
     public Server server() {

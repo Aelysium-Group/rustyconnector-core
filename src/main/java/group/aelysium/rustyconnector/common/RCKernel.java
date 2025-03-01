@@ -25,7 +25,6 @@ public abstract class RCKernel<A extends RCAdapter> extends ModuleCollection<Mod
 
     public RCKernel(
             @NotNull String id,
-            @NotNull Version version,
             @NotNull A adapter,
             @NotNull Path directory,
             @NotNull Path moduleDirectory

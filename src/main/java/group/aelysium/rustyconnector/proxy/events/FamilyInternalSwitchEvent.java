@@ -11,12 +11,12 @@ import org.jetbrains.annotations.NotNull;
  * Represents a player switching from one Server in a family to another Server in that same family.
  */
 public class FamilyInternalSwitchEvent extends Event {
-    protected final Flux<? extends Family> family;
+    protected final Family family;
     protected final Server previousServer;
     protected final Server newServer;
     protected final Player player;
 
-    public FamilyInternalSwitchEvent(@NotNull Flux<? extends Family> family, @NotNull Server previousServer, @NotNull Server newServer, @NotNull Player player) {
+    public FamilyInternalSwitchEvent(@NotNull Family family, @NotNull Server previousServer, @NotNull Server newServer, @NotNull Player player) {
         super();
         this.family = family;
         this.previousServer = previousServer;
@@ -24,7 +24,7 @@ public class FamilyInternalSwitchEvent extends Event {
         this.player = player;
     }
 
-    public Flux<? extends Family> family() {
+    public Family family() {
         return family;
     }
     public Server previousServer() {

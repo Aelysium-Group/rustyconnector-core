@@ -21,8 +21,8 @@ import static net.kyori.adventure.text.JoinConfiguration.newlines;
 public class LangLibrary implements ModuleParticle {
     private final Map<String, LangNode> nodes = new ConcurrentHashMap<>();
     private final ASCIIAlphabet asciiAlphabet;
-
-    protected LangLibrary(
+    
+    public LangLibrary(
             @NotNull ASCIIAlphabet asciiAlphabet
     ) {
         this.asciiAlphabet = asciiAlphabet;

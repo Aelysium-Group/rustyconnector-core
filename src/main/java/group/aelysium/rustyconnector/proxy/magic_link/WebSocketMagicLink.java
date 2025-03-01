@@ -51,13 +51,13 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
         c.http.strictContentTypes = true;
     });
 
-    protected WebSocketMagicLink(
+    public WebSocketMagicLink(
             @NotNull InetSocketAddress address,
             @NotNull Packet.SourceIdentifier self,
             @NotNull AES aes,
             @NotNull PacketCache cache,
             @Nullable IPV6Broadcaster broadcaster
-    ) throws Exception {
+    ) {
         super(self, aes, cache, broadcaster);
 
         this.endpoint = tokenGenerator.nextString();

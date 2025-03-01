@@ -8,14 +8,14 @@ import group.aelysium.rustyconnector.proxy.family.Family;
  * Represents a family rebalancing its Servers via it's load balancer.
  */
 public class FamilyRebalanceEvent extends Event {
-    protected final Flux<? extends Family> family;
+    protected final Family family;
 
-    public FamilyRebalanceEvent(Flux<? extends Family> family) {
+    public FamilyRebalanceEvent(Family family) {
         super();
         this.family = family;
     }
 
-    public Flux<? extends Family> family() {
+    public Family family() {
         return this.family;
     }
 }

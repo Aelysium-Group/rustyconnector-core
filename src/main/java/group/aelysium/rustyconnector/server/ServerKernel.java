@@ -38,9 +38,8 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
             "hardCap", new Packet.Parameter(40)
     ));
 
-    protected ServerKernel(
+    public ServerKernel(
             @NotNull String id,
-            @NotNull Version version,
             @NotNull ServerAdapter adapter,
             @NotNull Path directory,
             @NotNull Path modulesDirectory,
@@ -48,7 +47,7 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
             @NotNull String targetFamily,
             @NotNull Map<String, Packet.Parameter> metadata
     ) throws Exception {
-        super(id, version, adapter, directory, modulesDirectory);
+        super(id, adapter, directory, modulesDirectory);
         this.address = address;
         this.targetFamily = targetFamily;
         this.metadata.putAll(metadata);

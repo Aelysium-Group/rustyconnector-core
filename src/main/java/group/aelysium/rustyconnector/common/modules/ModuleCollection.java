@@ -35,9 +35,9 @@ public class ModuleCollection<P extends ModuleParticle> implements Closure, Modu
      */
     public @NotNull P registerModule(@NotNull String key, ModuleBuilder<? extends P> builder) throws Exception {
         Flux<P> flux = (Flux<P>) Flux.using(builder);
-        if(flux.metadata("name") == null) throw new IllegalArgumentException("Modules must have the metadata for `name` and `description` added to their flux before they can be registered.");
-        if(flux.metadata("description") == null) throw new IllegalArgumentException("Modules must have the metadata for `name` and `description` added to their flux before they can be registered.");
-        if(this.modules.containsKey(key.toLowerCase())) throw new IllegalStateException("A module with the name "+key.toLowerCase()+" was already annotated.");
+        if(this.modules.containsKey(key.toLowerCase())) throw new IllegalStateException("A module with the name "+key.toLowerCase()+" was already registered.");
+        flux.metadata("name", builder.name);
+        flux.metadata("description", builder.description);
         P p = flux.get(1, TimeUnit.MINUTES);
         this.modules.put(key.toLowerCase(), flux);
         return p;

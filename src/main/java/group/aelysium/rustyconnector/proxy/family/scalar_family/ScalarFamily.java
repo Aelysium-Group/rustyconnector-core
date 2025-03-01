@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * They provide an example for how familyRegistry should be implemented.
  */
 public class ScalarFamily extends Family {
-    protected ScalarFamily(
+    public ScalarFamily(
             @NotNull String id,
             @Nullable String displayName,
             @Nullable String parent,

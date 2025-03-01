@@ -118,7 +118,7 @@ public abstract class ProxyAdapter extends RCAdapter {
         @Nullable Server oldServer,
         @NotNull Server newServer
     ) throws RuntimeException {
-        Flux<? extends Family> newFamily = newServer.family().orElseThrow();
+        Family newFamily = newServer.family().orElseThrow();
 
         // Check if the player just joined the proxy.
         if(oldServer == null) {
@@ -128,7 +128,7 @@ public abstract class ProxyAdapter extends RCAdapter {
             return;
         }
 
-        Flux<? extends Family> oldFamily = oldServer.family().orElseThrow();
+        Family oldFamily = oldServer.family().orElseThrow();
         boolean isTheSameFamily = newFamily.equals(oldFamily);
 
         if(isTheSameFamily) {
@@ -186,7 +186,7 @@ public abstract class ProxyAdapter extends RCAdapter {
 
         Server server = player.server().orElse(null);
         if(server == null) return;
-        Flux<? extends Family> family = server.family().orElse(null);
+        Family family = server.family().orElse(null);
         if(family == null) return;
 
         RC.P.EventManager().fireEvent(new FamilyLeaveEvent(family, server, player, true));
@@ -205,7 +205,7 @@ public abstract class ProxyAdapter extends RCAdapter {
 
         try {
             Server oldServer = player.server().orElseThrow();
-            Flux<? extends Family> family = oldServer.family().orElseThrow();
+            Family family = oldServer.family().orElseThrow();
 
             RC.P.EventManager().fireEvent(new FamilyLeaveEvent(family, oldServer, player, true));
             RC.P.EventManager().fireEvent(new ServerLeaveEvent(oldServer, player, true));

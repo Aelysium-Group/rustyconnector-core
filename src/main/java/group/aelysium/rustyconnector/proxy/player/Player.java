@@ -70,9 +70,9 @@ public class Player {
     /**
      * Fetches the player's family if they're connected to one.
      */
-    public Optional<? extends Family> family() {
+    public Optional<Family> family() {
         try {
-            return Optional.of(this.server().orElseThrow().family().orElseThrow().orElseThrow());
+            return Optional.of(this.server().orElseThrow().family().orElseThrow());
         } catch (Exception ignore) {
             return Optional.empty();
         }

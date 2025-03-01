@@ -24,8 +24,6 @@ public class FamilyRegistry implements ModuleHolder<Family>, ModuleParticle {
     private final ModuleCollection<Family> families = new ModuleCollection<>();
     private String rootFamily = null;
 
-    protected FamilyRegistry() {}
-
     /**
      * Sets the root family.
      * @param familyId The family's ID to be set as root.

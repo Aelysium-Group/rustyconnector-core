@@ -50,23 +50,23 @@ public interface RC {
         }
 
         static FamilyRegistry Families() throws NoSuchElementException {
-            return (FamilyRegistry) RC.Module("FamilyRegistry");
+            return RC.Module("FamilyRegistry");
         }
 
         static PlayerRegistry Players() throws NoSuchElementException {
-            return (PlayerRegistry) RC.Module("PlayerRegistry");
+            return RC.Module("PlayerRegistry");
         }
 
         static MagicLinkCore.Proxy MagicLink() throws NoSuchElementException {
-            return (MagicLinkCore.Proxy) RC.Module("MagicLink");
+            return RC.Module("MagicLink");
         }
 
         static EventManager EventManager() throws NoSuchElementException {
-            return (EventManager) RC.Module("EventManager");
+            return RC.Module("EventManager");
         }
 
         static HazeProvider Haze() throws NoSuchElementException {
-            return (HazeProvider) RC.Module("Haze");
+            return RC.Module("Haze");
         }
 
         static ProxyAdapter Adapter() throws NoSuchElementException {
@@ -74,29 +74,28 @@ public interface RC {
         }
 
         static LangLibrary Lang() throws NoSuchElementException {
-            return (LangLibrary) RC.Module("LangLibrary");
+            return RC.Module("LangLibrary");
         }
 
         static ErrorRegistry Errors() {
-            return (ErrorRegistry) RC.Module("ErrorRegistry");
+            return RC.Module("ErrorRegistry");
         }
 
-        static <F extends Family> Optional<F> Family(String id) throws NoSuchElementException {
+        static Optional<Family> Family(String id) throws NoSuchElementException {
             try {
-                F family = (F) P.Families().find(id)
-                    .orElseThrow(() -> new NoSuchElementException("The family " + id + " is not currently available. it might be rebooting."));
-                return Optional.ofNullable(family);
+                return Optional.ofNullable(P.Families().find(id)
+                    .orElseThrow(() -> new NoSuchElementException("The family " + id + " is not currently available. it might be rebooting.")));
             } catch (NullPointerException ignore) {}
             throw new NoSuchElementException("No family with the id " + id + " exists.");
         }
 
-        static <F extends Family> Optional<Flux<Family>> Family(Server server) throws NoSuchElementException {
+        static Optional<Family> Family(Server server) throws NoSuchElementException {
             for (Flux<Family> f : RC.P.Families().modules().values()) {
                 try {
-                    F family = (F) f.get(5, TimeUnit.SECONDS);
+                    Family family = f.orElseThrow();
                     if (!family.containsServer(server.id())) continue;
-                    return Optional.of(f);
-                } catch (InterruptedException | CancellationException | ExecutionException | TimeoutException ignore) {}
+                    return Optional.of(family);
+                } catch (Exception ignore) {}
             }
             return Optional.empty();
         }
@@ -120,8 +119,8 @@ public interface RC {
             return RC.P.Players().fetch(username);
         }
 
-        static Optional<? extends HazeDatabase> Haze(String name) throws NoSuchElementException {
-            Flux<? extends HazeDatabase> flux = P.Haze().fetchDatabase(name);
+        static Optional<HazeDatabase> Haze(String name) throws NoSuchElementException {
+            Flux<HazeDatabase> flux = P.Haze().fetchDatabase(name);
             if(flux == null) return Optional.empty();
             return Optional.of(flux.orElseThrow());
         }
@@ -140,7 +139,7 @@ public interface RC {
         }
 
         static MagicLinkCore.Server MagicLink() throws NoSuchElementException {
-            return (MagicLinkCore.Server) RC.Module("MagicLink");
+            return RC.Module("MagicLink");
         }
 
         static ServerAdapter Adapter() throws NoSuchElementException {
@@ -148,23 +147,23 @@ public interface RC {
         }
 
         static LangLibrary Lang() throws NoSuchElementException {
-            return (LangLibrary) RC.Module("LangLibrary");
+            return RC.Module("LangLibrary");
         }
 
         static EventManager EventManager() throws NoSuchElementException {
-            return (EventManager) RC.Module("EventManager");
+            return RC.Module("EventManager");
         }
 
         static ErrorRegistry Errors() {
-            return (ErrorRegistry) RC.Module("ErrorRegistry");
+            return RC.Module("ErrorRegistry");
         }
 
         static HazeProvider Haze() throws NoSuchElementException {
-            return (HazeProvider) RC.Module("Haze");
+            return RC.Module("Haze");
         }
 
-        static Optional<? extends HazeDatabase> Haze(String name) throws NoSuchElementException {
-            Flux<? extends HazeDatabase> flux = S.Haze().fetchDatabase(name);
+        static Optional<HazeDatabase> Haze(String name) throws NoSuchElementException {
+            Flux<HazeDatabase> flux = S.Haze().fetchDatabase(name);
             if(flux == null) return Optional.empty();
             return Optional.of(flux.orElseThrow());
         }

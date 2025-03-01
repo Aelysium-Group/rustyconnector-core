@@ -240,4 +240,13 @@ public abstract class LoadBalancer implements Server.Container, ModuleParticle {
                 RC.Lang("rustyconnector-keyValue").generate("Persistence", this.persistence ? "Enabled ("+this.attempts+")" : "Disabled")
         );
     }
+    
+    public record Config(
+        @NotNull String name,
+        @NotNull String algorithm,
+        boolean weighted,
+        boolean persistence,
+        int attempts,
+        @Nullable LiquidTimestamp rebalance
+    ) {}
 }

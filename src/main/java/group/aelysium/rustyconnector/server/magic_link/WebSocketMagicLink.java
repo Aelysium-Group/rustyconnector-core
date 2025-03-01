@@ -53,14 +53,14 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
     private final AtomicBoolean registered = new AtomicBoolean(false);
     private final AtomicReference<WebSocketClient> client = new AtomicReference<>(null);
     private final URL address;
-
-    protected WebSocketMagicLink(
+    
+    public WebSocketMagicLink(
             @NotNull URL address,
             @NotNull Packet.SourceIdentifier self,
             @NotNull AES aes,
             @NotNull PacketCache cache,
             @Nullable IPV6Broadcaster broadcaster
-    ) throws Exception {
+    ) {
         super(self, aes, cache, broadcaster);
         this.address = address.appendPath(MagicLinkCore.endpoint);
         

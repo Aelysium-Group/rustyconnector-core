@@ -9,16 +9,16 @@ import group.aelysium.rustyconnector.proxy.family.Server;
  * Represents a Server being unlocked on its family.
  */
 public class ServerUnlockedEvent extends Event.Cancelable {
-    protected final Flux<? extends Family> family;
+    protected final Family family;
     protected final Server server;
 
-    public ServerUnlockedEvent(Flux<? extends Family> family, Server server) {
+    public ServerUnlockedEvent(Family family, Server server) {
         super();
         this.family = family;
         this.server = server;
     }
 
-    public Flux<? extends Family> family() {
+    public Family family() {
         return family;
     }
     public Server server() {

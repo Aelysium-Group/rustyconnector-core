@@ -11,13 +11,13 @@ import org.jetbrains.annotations.NotNull;
  * Represents a player switching from one family to another family.
  */
 public class FamilySwitchEvent extends Event {
-    protected final Flux<? extends Family> oldFamily;
-    protected final Flux<? extends Family> newFamily;
+    protected final Family oldFamily;
+    protected final Family newFamily;
     protected final Server oldServer;
     protected final Server newServer;
     protected final Player player;
 
-    public FamilySwitchEvent(@NotNull Flux<? extends Family> oldFamily, @NotNull Flux<? extends Family> newFamily, @NotNull Server oldServer, @NotNull Server newServer, @NotNull Player player) {
+    public FamilySwitchEvent(@NotNull Family oldFamily, @NotNull Family newFamily, @NotNull Server oldServer, @NotNull Server newServer, @NotNull Player player) {
         super();
         this.oldFamily = oldFamily;
         this.newFamily = newFamily;
@@ -26,10 +26,10 @@ public class FamilySwitchEvent extends Event {
         this.player = player;
     }
 
-    public Flux<? extends Family> oldFamily() {
+    public Family oldFamily() {
         return oldFamily;
     }
-    public Flux<? extends Family> newFamily() {
+    public Family newFamily() {
         return newFamily;
     }
     public Server oldServer() {

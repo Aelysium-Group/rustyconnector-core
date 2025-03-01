@@ -186,7 +186,7 @@ public final class Server implements MetadataHolder<Object>, ISortable, Player.C
      * Get the family this server is associated with.
      * @return An optional containing the Family in a Flux state if it exists. If this server wasn't assigned a family, this will return an empty optional.
      */
-    public Optional<Flux<Family>> family() {
+    public Optional<Family> family() {
         return RC.P.Family(this);
     }
 
@@ -199,7 +199,7 @@ public final class Server implements MetadataHolder<Object>, ISortable, Player.C
      */
     public boolean lock() {
         try {
-            this.family().orElseThrow().ifPresent(f -> f.lockServer(Server.this));
+            this.family().orElseThrow().lockServer(this);
             return true;
         } catch(Exception e) {
             RC.Error(Error.from(e).whileAttempting("To lock the server "+this.id()));
@@ -216,7 +216,7 @@ public final class Server implements MetadataHolder<Object>, ISortable, Player.C
      */
     public boolean unlock() {
         try {
-            this.family().orElseThrow().ifPresent(f -> f.unlockServer(Server.this));
+            this.family().orElseThrow().unlockServer(this);
             return true;
         } catch(Exception e) {
             RC.Error(Error.from(e).whileAttempting("To unlock the server "+this.id()));
@@ -238,8 +238,8 @@ public final class Server implements MetadataHolder<Object>, ISortable, Player.C
     }
 
 
-    private boolean validatePlayerLimits(Player player) throws ExecutionException, InterruptedException, TimeoutException {
-        Family family = this.family().orElseThrow().get(10, TimeUnit.SECONDS);
+    private boolean validatePlayerLimits(Player player) {
+        Family family = this.family().orElseThrow();
 
         if(Permission.validate(
                 player,
