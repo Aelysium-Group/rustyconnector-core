@@ -31,17 +31,24 @@ public class ModuleLoader implements AutoCloseable {
 
             if (files == null) return;
 
-            Map<String, ExternalModuleTinder<ModuleParticle>> preparedModules = new HashMap<>();
+            Map<String, ExternalModuleBuilder<ModuleParticle>> preparedModules = new HashMap<>();
             Map<String, PluginConfiguration> preparedModulesConfigs = new HashMap<>();
             for (File file : files) {
                 try {
-
-                    InputStream stream = originalClassLoader.getResourceAsStream("rc-module.json");
-                    if(stream == null) throw new NullPointerException("No rc-module.json exists for "+file.getName());
-
                     PluginConfiguration config;
-                    try(InputStreamReader reader = new InputStreamReader(stream)) {
-                        config = gson.fromJson(reader, PluginConfiguration.class);
+                    {
+                        ModuleClassLoader resourceGrabber = new ModuleClassLoader(
+                            List.of(file.toURI().toURL()),
+                            getClass().getClassLoader(),
+                            List.of()
+                        );
+                        InputStream stream = resourceGrabber.getResourceAsStream("rc-module.json");
+                        if(stream == null) throw new NullPointerException("No rc-module.json exists for "+file.getName());
+    
+                        try(InputStreamReader reader = new InputStreamReader(stream)) {
+                            config = gson.fromJson(reader, PluginConfiguration.class);
+                        }
+                        resourceGrabber.close();
                     }
                     
                     ModuleClassLoader classLoader = new ModuleClassLoader(
@@ -51,13 +58,13 @@ public class ModuleLoader implements AutoCloseable {
                     );
                     Thread.currentThread().setContextClassLoader(classLoader);
                     Class<?> entrypoint = classLoader.loadClass(config.main());
-                    if(!ExternalModuleTinder.class.isAssignableFrom(entrypoint))
-                        throw new ClassCastException("The `main` class must extend "+ExternalModuleTinder.class.getName());
+                    if(!ExternalModuleBuilder.class.isAssignableFrom(entrypoint))
+                        throw new ClassCastException("The `main` class must extend "+ ExternalModuleBuilder.class.getName());
 
-                    Constructor<ExternalModuleTinder<ModuleParticle>> constructor = (Constructor<ExternalModuleTinder<ModuleParticle>>) entrypoint.getDeclaredConstructor();
+                    Constructor<ExternalModuleBuilder<ModuleParticle>> constructor = (Constructor<ExternalModuleBuilder<ModuleParticle>>) entrypoint.getDeclaredConstructor();
 
                     constructor.setAccessible(true);
-                    ExternalModuleTinder<ModuleParticle> plugin = constructor.newInstance();
+                    ExternalModuleBuilder<ModuleParticle> plugin = constructor.newInstance();
                     constructor.setAccessible(false);
 
                     String lowerConfigName = config.name().toLowerCase();
@@ -90,7 +97,7 @@ public class ModuleLoader implements AutoCloseable {
                         return;
                     }
 
-                    ExternalModuleTinder<ModuleParticle> t = preparedModules.get(o);
+                    ExternalModuleBuilder<ModuleParticle> t = preparedModules.get(o);
                     ModuleParticle m = k.registerModule(new ModuleBuilder<>(c.name(), c.description()) {
                         @Override
                         public ModuleParticle get() {

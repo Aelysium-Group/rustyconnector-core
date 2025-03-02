@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
-public abstract class ExternalModuleTinder<P extends ModuleParticle> implements Supplier<P> {
+public abstract class ExternalModuleBuilder<P extends ModuleParticle> implements Supplier<P> {
     /**
      * Runs after {@link #onStart()} successfully returns an instance.
      * This is where you can register into the RustyConnector Kernel.
