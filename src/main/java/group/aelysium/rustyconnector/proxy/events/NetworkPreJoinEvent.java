@@ -7,14 +7,10 @@ import group.aelysium.rustyconnector.proxy.player.Player;
  * Represents a player attempting to join the network.
  */
 public class NetworkPreJoinEvent extends Event.Cancelable {
-    protected final Player player;
+    public final Player player;
 
     public NetworkPreJoinEvent(Player player) {
         super();
         this.player = player;
-    }
-
-    public Player player() {
-        return player;
     }
 }

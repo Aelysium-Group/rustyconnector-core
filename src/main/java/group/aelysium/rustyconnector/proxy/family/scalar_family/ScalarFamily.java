@@ -2,7 +2,7 @@ package group.aelysium.rustyconnector.proxy.family.scalar_family;
 
 import group.aelysium.ara.Flux;
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.modules.ModuleBuilder;
+import group.aelysium.rustyconnector.common.modules.Module;
 import group.aelysium.rustyconnector.proxy.events.FamilyPreJoinEvent;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.LoadBalancer;
@@ -27,7 +27,7 @@ public class ScalarFamily extends Family {
             @Nullable String displayName,
             @Nullable String parent,
             @NotNull Map<String, Object> metadata,
-            @NotNull ModuleBuilder<LoadBalancer> loadBalancer
+            @NotNull Module.Builder<LoadBalancer> loadBalancer
     ) throws Exception {
         super(id, displayName, parent, metadata);
         this.registerModule(loadBalancer);
@@ -124,7 +124,7 @@ public class ScalarFamily extends Family {
         if(this.unlockedServers().isEmpty()) return Player.Connection.Request.failedRequest(player, "Unable to connect you to your server. Please try again later.");
 
         try {
-            FamilyPreJoinEvent event = new FamilyPreJoinEvent(RC.P.Families().find(this.id), player, power);
+            FamilyPreJoinEvent event = new FamilyPreJoinEvent(RC.P.Families().find(this.id).orElseThrow(), player, power);
             boolean canceled = RC.P.EventManager().fireEvent(event).get(1, TimeUnit.MINUTES);
             if(canceled) return Player.Connection.Request.failedRequest(player, event.canceledMessage());
         } catch (Exception ignore) {}

@@ -3,14 +3,13 @@ package group.aelysium.rustyconnector.common.modules;
 import group.aelysium.ara.Closure;
 import group.aelysium.ara.Flux;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
-public class ModuleCollection<P extends ModuleParticle> implements Closure, ModuleHolder<P> {
+public class ModuleCollection<P extends Module> implements Closure, ModuleHolder<P> {
     protected final Map<String, Flux<P>> modules = new ConcurrentHashMap<>();
 
     /**
@@ -21,7 +20,7 @@ public class ModuleCollection<P extends ModuleParticle> implements Closure, Modu
      * @throws IllegalStateException If a module with the key already exists.
      * @throws Exception If there's an issue initializing the module.
      */
-    public @NotNull ModuleParticle registerModule(ModuleBuilder<? extends P> builder) throws Exception {
+    public @NotNull Module registerModule(Module.Builder<? extends P> builder) throws Exception {
         return this.registerModule(builder.name, builder);
     }
 
@@ -33,7 +32,7 @@ public class ModuleCollection<P extends ModuleParticle> implements Closure, Modu
      * @throws IllegalArgumentException If a module with the key already exists.
      * @throws Exception If there's an issue initializing the module.
      */
-    public @NotNull P registerModule(@NotNull String key, ModuleBuilder<? extends P> builder) throws Exception {
+    public @NotNull P registerModule(@NotNull String key, Module.Builder<? extends P> builder) throws Exception {
         Flux<P> flux = (Flux<P>) Flux.using(builder);
         if(this.modules.containsKey(key.toLowerCase())) throw new IllegalStateException("A module with the name "+key.toLowerCase()+" was already registered.");
         flux.metadata("name", builder.name);

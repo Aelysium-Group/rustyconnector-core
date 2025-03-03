@@ -1,17 +1,15 @@
 package group.aelysium.rustyconnector.common.modules;
 
-import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.proxy.ProxyKernel;
 import group.aelysium.rustyconnector.server.ServerKernel;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Supplier;
+import java.nio.file.Path;
 
-public abstract class ExternalModuleBuilder<P extends ModuleParticle> implements Supplier<P> {
+public abstract class ExternalModuleBuilder<P extends Module> {
     /**
-     * Runs after {@link #onStart()} successfully returns an instance.
-     * This is where you can register into the RustyConnector Kernel.
+     * Runs after {@link #onStart(Path)} successfully returns an instance and is registered into the RustyConnector kernel.
+     * This is where you can link your systems into the kernel's;
      * Example usages would be registering Lang nodes or adding events to the EventListener.
      * @param kernel The running kernel that's ready to be bound to.
      * @param instance The Particle instance that was just created.
@@ -19,8 +17,8 @@ public abstract class ExternalModuleBuilder<P extends ModuleParticle> implements
     public void bind(@NotNull ProxyKernel kernel, @NotNull P instance) {}
 
     /**
-     * Runs after {@link #onStart()} successfully returns an instance.
-     * This is where you can register into the RustyConnector Kernel.
+     * Runs after {@link #onStart(Path)} successfully returns an instance and is registered into the RustyConnector kernel.
+     * This is where you can link your systems into the kernel's;
      * Example usages would be registering Lang nodes or adding events to the EventListener.
      * @param kernel The running kernel that's ready to be bound to.
      * @param instance The Particle instance that was just created.
@@ -33,14 +31,5 @@ public abstract class ExternalModuleBuilder<P extends ModuleParticle> implements
      * @return The fully configured and running instance of your module.
      * @throws Exception If there was any issue initializing your module.
      */
-    public abstract @NotNull P onStart() throws Exception;
-
-    public final P get() {
-        try {
-            return this.onStart();
-        } catch (Exception e) {
-            RC.Error(Error.from(e));
-        }
-        return null;
-    }
+    public abstract @NotNull P onStart(@NotNull Path dataDirectory) throws Exception;
 }

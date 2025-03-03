@@ -1,8 +1,8 @@
 package group.aelysium.rustyconnector.proxy.family.load_balancing;
 
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.modules.ModuleParticle;
-import group.aelysium.rustyconnector.common.modules.ModuleBuilder;
+import group.aelysium.rustyconnector.common.modules.Module;
+import group.aelysium.rustyconnector.common.util.MetadataHolder;
 import group.aelysium.rustyconnector.proxy.events.*;
 import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
@@ -16,7 +16,8 @@ import java.util.concurrent.*;
 import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.JoinConfiguration.newlines;
 
-public abstract class LoadBalancer implements Server.Container, ModuleParticle {
+public abstract class LoadBalancer implements Server.Container, MetadataHolder<Object>, Module {
+    private final Map<String, Object> metadata = new ConcurrentHashMap<>();
     protected final ScheduledExecutorService executor;
     protected boolean weighted;
     protected boolean persistence;
@@ -35,16 +36,39 @@ public abstract class LoadBalancer implements Server.Container, ModuleParticle {
         this.completeSort();
     };
 
-    protected LoadBalancer(boolean weighted, boolean persistence, int attempts, @Nullable LiquidTimestamp rebalance) {
+    protected LoadBalancer(boolean weighted, boolean persistence, int attempts, @Nullable LiquidTimestamp rebalance, @NotNull Map<String, Object> metadata) {
         this.weighted = weighted;
         this.persistence = persistence;
         this.attempts = attempts;
+        this.metadata.putAll(metadata);
 
         if(rebalance == null) this.executor = null;
         else {
             this.executor = Executors.newSingleThreadScheduledExecutor();
             this.executor.schedule(this.sorter, rebalance.value(), rebalance.unit());
         }
+    }
+    
+    @Override
+    public boolean storeMetadata(String propertyName, Object property) {
+        if(this.metadata.containsKey(propertyName)) return false;
+        this.metadata.put(propertyName, property);
+        return true;
+    }
+    
+    @Override
+    public <T> Optional<T> fetchMetadata(String propertyName) {
+        return Optional.ofNullable((T) this.metadata.get(propertyName));
+    }
+    
+    @Override
+    public void removeMetadata(String propertyName) {
+        this.metadata.remove(propertyName);
+    }
+    
+    @Override
+    public Map<String, Object> metadata() {
+        return Collections.unmodifiableMap(this.metadata);
     }
 
     /**

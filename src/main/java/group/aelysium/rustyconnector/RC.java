@@ -10,7 +10,7 @@ import group.aelysium.rustyconnector.common.errors.ErrorRegistry;
 import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.lang.LangNode;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
-import group.aelysium.rustyconnector.common.modules.ModuleParticle;
+import group.aelysium.rustyconnector.common.modules.Module;
 import group.aelysium.rustyconnector.server.ServerAdapter;
 import group.aelysium.rustyconnector.server.ServerKernel;
 import group.aelysium.rustyconnector.proxy.ProxyAdapter;
@@ -24,10 +24,6 @@ import group.aelysium.rustyconnector.proxy.player.PlayerRegistry;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -265,10 +261,10 @@ public interface RC {
         throw new NoSuchElementException("The requested Haze database doesn't exist.");
     }
     
-    static <M extends ModuleParticle> M Module(@NotNull String moduleName) throws NoSuchElementException {
+    static <M extends Module> M Module(@NotNull String moduleName) throws NoSuchElementException {
         return ((Flux<M>) RC.ModuleFlux(moduleName)).orElseThrow(()->new NoSuchElementException(moduleName+" is not currently available. It might be rebooting."));
     }
-    static <M extends ModuleParticle> Flux<M> ModuleFlux(@NotNull String moduleName) throws NoSuchElementException {
+    static <M extends Module> Flux<M> ModuleFlux(@NotNull String moduleName) throws NoSuchElementException {
         Flux<M> f = RC.Kernel().fetchModule(moduleName);
         if(f == null) throw new NoSuchElementException(moduleName+" is not currently available. It might be rebooting.");
         return f;

@@ -2,21 +2,15 @@ package group.aelysium.rustyconnector.common;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import group.aelysium.rustyconnector.common.errors.ErrorRegistry;
-import group.aelysium.rustyconnector.common.events.EventManager;
-import group.aelysium.rustyconnector.common.lang.LangLibrary;
 import group.aelysium.rustyconnector.common.modules.ModuleCollection;
-import group.aelysium.rustyconnector.common.modules.ModuleParticle;
-import group.aelysium.rustyconnector.common.modules.ModuleBuilder;
-import group.aelysium.rustyconnector.proxy.ProxyKernel;
+import group.aelysium.rustyconnector.common.modules.Module;
 import group.aelysium.rustyconnector.proxy.util.Version;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.*;
 
-public abstract class RCKernel<A extends RCAdapter> extends ModuleCollection<ModuleParticle> implements ModuleParticle {
+public abstract class RCKernel<A extends RCAdapter> extends ModuleCollection<Module> implements Module {
     protected final String id;
     protected final Version version;
     protected final A adapter;
@@ -62,9 +56,16 @@ public abstract class RCKernel<A extends RCAdapter> extends ModuleCollection<Mod
     
     /**
      * @return The directory that RustyConnector modules are located (typically an `rc-modules` folder)
-     *         This path use useful for deciding where to load configuration files.
      */
     public Path moduleDirectory() {
+        return this.directory;
+    }
+    
+    /**
+     * @return The directory that RustyConnector modules are located (typically an `rc-modules` folder)
+     *         This path use useful for deciding where to load configuration files.
+     */
+    public Path moduleConfigDirectory() {
         return this.directory;
     }
 

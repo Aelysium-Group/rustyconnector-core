@@ -1,10 +1,9 @@
 package group.aelysium.rustyconnector;
 
-import group.aelysium.ara.Closure;
 import group.aelysium.ara.Flux;
 import group.aelysium.rustyconnector.common.RCAdapter;
 import group.aelysium.rustyconnector.common.RCKernel;
-import group.aelysium.rustyconnector.common.modules.ModuleParticle;
+import group.aelysium.rustyconnector.common.modules.Module;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.ParameterizedType;
@@ -14,7 +13,6 @@ import java.util.Optional;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public class RustyConnector {
     private static final List<Consumer<Flux<RCKernel<? extends RCAdapter>>>> onStartHandlers = new Vector<>();
@@ -63,7 +61,7 @@ public class RustyConnector {
         kernel.set(null);
     }
 
-    public static Class<?> getGenericType(Flux<ModuleParticle> flux) {
+    public static Class<?> getGenericType(Flux<Module> flux) {
         if (!(flux.getClass().getGenericSuperclass() instanceof ParameterizedType type))
             return null;
         return (Class<?>) type.getActualTypeArguments()[0];

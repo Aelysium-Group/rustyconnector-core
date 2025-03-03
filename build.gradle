@@ -53,7 +53,7 @@ dependencies {
 }
 
 processResources {
-    def props = ['version': version, 'config_version': config_version, 'magic_link_version': magic_link_version]
+    def props = ['version': version]
     inputs.properties props
     filteringCharset "UTF-8"
 

@@ -45,17 +45,18 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
      * @throws NoSuchElementException If the provided family flux doesn't resolve within a few seconds.
      */
     public @NotNull Server registerServer(@NotNull Flux<Family> familyFlux, @NotNull Server.Configuration configuration) throws CancellationException, NoSuchElementException, IllegalStateException {
-        try {
-            ServerRegisterEvent event = new ServerRegisterEvent(familyFlux, configuration);
-            boolean canceled = RC.P.EventManager().fireEvent(event).get(1, TimeUnit.MINUTES);
-            if (canceled) throw new CancellationException(event.canceledMessage());
-        } catch (Exception e) {}
-
         Server server = Server.generateServer(configuration);
-
+        
         Family family = null;
         try {
             family = familyFlux.get(10, TimeUnit.SECONDS);
+            
+            try {
+                ServerRegisterEvent event = new ServerRegisterEvent(familyFlux.orElseThrow(), configuration);
+                boolean canceled = RC.P.EventManager().fireEvent(event).get(1, TimeUnit.MINUTES);
+                if (canceled) throw new CancellationException(event.canceledMessage());
+            } catch (Exception ignore) {}
+            
             family.addServer(server);
 
             if(!RC.P.Adapter().registerServer(server))

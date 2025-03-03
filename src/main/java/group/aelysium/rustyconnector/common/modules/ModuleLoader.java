@@ -31,7 +31,7 @@ public class ModuleLoader implements AutoCloseable {
 
             if (files == null) return;
 
-            Map<String, ExternalModuleBuilder<ModuleParticle>> preparedModules = new HashMap<>();
+            Map<String, ExternalModuleBuilder<Module>> preparedModules = new HashMap<>();
             Map<String, PluginConfiguration> preparedModulesConfigs = new HashMap<>();
             for (File file : files) {
                 try {
@@ -61,10 +61,10 @@ public class ModuleLoader implements AutoCloseable {
                     if(!ExternalModuleBuilder.class.isAssignableFrom(entrypoint))
                         throw new ClassCastException("The `main` class must extend "+ ExternalModuleBuilder.class.getName());
 
-                    Constructor<ExternalModuleBuilder<ModuleParticle>> constructor = (Constructor<ExternalModuleBuilder<ModuleParticle>>) entrypoint.getDeclaredConstructor();
+                    Constructor<ExternalModuleBuilder<Module>> constructor = (Constructor<ExternalModuleBuilder<Module>>) entrypoint.getDeclaredConstructor();
 
                     constructor.setAccessible(true);
-                    ExternalModuleBuilder<ModuleParticle> plugin = constructor.newInstance();
+                    ExternalModuleBuilder<Module> plugin = constructor.newInstance();
                     constructor.setAccessible(false);
 
                     String lowerConfigName = config.name().toLowerCase();
@@ -97,11 +97,16 @@ public class ModuleLoader implements AutoCloseable {
                         return;
                     }
 
-                    ExternalModuleBuilder<ModuleParticle> t = preparedModules.get(o);
-                    ModuleParticle m = k.registerModule(new ModuleBuilder<>(c.name(), c.description()) {
+                    ExternalModuleBuilder<Module> t = preparedModules.get(o);
+                    Module m = k.registerModule(new Module.Builder<>(c.name(), c.description()) {
                         @Override
-                        public ModuleParticle get() {
-                            return t.get();
+                        public Module get() {
+                            try {
+                                return t.onStart(k.moduleDirectory());
+                            } catch (Exception e) {
+                                RC.Error(Error.from(e));
+                            }
+                            return null;
                         }
                     });
 

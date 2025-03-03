@@ -3,11 +3,9 @@ package group.aelysium.rustyconnector.common.events;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.algorithm.QuickSort;
 import group.aelysium.rustyconnector.common.errors.Error;
-import group.aelysium.rustyconnector.common.modules.ModuleParticle;
-import group.aelysium.rustyconnector.common.modules.ModuleBuilder;
+import group.aelysium.rustyconnector.common.modules.Module;
 import group.aelysium.rustyconnector.proxy.family.load_balancing.ISortable;
 import net.kyori.adventure.text.Component;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
@@ -21,7 +19,7 @@ import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.JoinConfiguration.newlines;
 
-public class EventManager implements ModuleParticle {
+public class EventManager implements Module {
     // This thread pool executor is the same one returned by Executors.newCachedThreadPool();
     private final ThreadPoolExecutor executor = new ThreadPoolExecutor(
             0,

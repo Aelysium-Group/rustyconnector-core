@@ -4,7 +4,7 @@ import group.aelysium.ara.Flux;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.modules.ModuleCollection;
 import group.aelysium.rustyconnector.common.modules.ModuleHolder;
-import group.aelysium.rustyconnector.common.modules.ModuleParticle;
+import group.aelysium.rustyconnector.common.modules.Module;
 import group.aelysium.rustyconnector.common.util.MetadataHolder;
 import group.aelysium.rustyconnector.proxy.player.Player;
 import group.aelysium.rustyconnector.proxy.util.AddressUtil;
@@ -22,7 +22,7 @@ import static net.kyori.adventure.text.Component.*;
 import static net.kyori.adventure.text.JoinConfiguration.newlines;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 
-public abstract class Family extends ModuleCollection<ModuleParticle> implements MetadataHolder<Object>, Player.Connectable, Server.Container, ModuleHolder<ModuleParticle>, ModuleParticle {
+public abstract class Family extends ModuleCollection<Module> implements MetadataHolder<Object>, Player.Connectable, Server.Container, ModuleHolder<Module>, Module {
     private final Map<String, Object> metadata = new ConcurrentHashMap<>(Map.of(
             "serverSoftCap", 30,
             "serverHardCap", 40
@@ -44,13 +44,13 @@ public abstract class Family extends ModuleCollection<ModuleParticle> implements
         this.parent = parent;
     }
 
-    @Override
     public boolean storeMetadata(String propertyName, Object property) {
         if(this.metadata.containsKey(propertyName)) return false;
         this.metadata.put(propertyName, property);
         return true;
     }
     
+    @Override
     public <T> Optional<T> fetchMetadata(String propertyName) {
         return Optional.ofNullable((T) this.metadata.get(propertyName));
     }

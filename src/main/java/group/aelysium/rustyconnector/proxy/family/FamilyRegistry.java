@@ -4,8 +4,7 @@ import group.aelysium.ara.Flux;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.modules.ModuleCollection;
 import group.aelysium.rustyconnector.common.modules.ModuleHolder;
-import group.aelysium.rustyconnector.common.modules.ModuleParticle;
-import group.aelysium.rustyconnector.common.modules.ModuleBuilder;
+import group.aelysium.rustyconnector.common.modules.Module;
 import group.aelysium.rustyconnector.proxy.events.FamilyRegisterEvent;
 import group.aelysium.rustyconnector.proxy.events.FamilyUnregisterEvent;
 import net.kyori.adventure.text.Component;
@@ -20,7 +19,7 @@ import static net.kyori.adventure.text.Component.*;
 import static net.kyori.adventure.text.JoinConfiguration.newlines;
 import static net.kyori.adventure.text.format.NamedTextColor.*;
 
-public class FamilyRegistry implements ModuleHolder<Family>, ModuleParticle {
+public class FamilyRegistry implements ModuleHolder<Family>, Module {
     private final ModuleCollection<Family> families = new ModuleCollection<>();
     private String rootFamily = null;
 
@@ -56,7 +55,7 @@ public class FamilyRegistry implements ModuleHolder<Family>, ModuleParticle {
      * @param tinder The family tinder to add.
      * @throws Exception If the family was not ignited and failed to ignite.
      */
-    public void register(@NotNull String id, @NotNull ModuleBuilder<Family> tinder) throws Exception {
+    public void register(@NotNull String id, @NotNull Module.Builder<Family> tinder) throws Exception {
         Family family = this.families.registerModule(id, tinder);
         try {
             RC.EventManager().fireEvent(new FamilyRegisterEvent(family));

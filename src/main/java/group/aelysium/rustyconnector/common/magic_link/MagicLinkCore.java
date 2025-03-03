@@ -4,8 +4,7 @@ import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketType;
 import group.aelysium.rustyconnector.common.crypt.NanoID;
 import group.aelysium.rustyconnector.common.errors.Error;
-import group.aelysium.rustyconnector.common.modules.ModuleParticle;
-import group.aelysium.rustyconnector.common.modules.ModuleBuilder;
+import group.aelysium.rustyconnector.common.modules.Module;
 import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
 import group.aelysium.rustyconnector.common.cache.TimeoutCache;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
@@ -22,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-public abstract class MagicLinkCore implements ModuleParticle {
+public abstract class MagicLinkCore implements Module {
     protected static final String endpoint = "bDaBMkmYdZ6r4iFExwW6UzJyNMDseWoS3HDa6FcyM7xNeCmtK98S3Mhp4o7g7oW6VB9CA6GuyH2pNhpQk3QvSmBUeCoUDZ6FXUsFCuVQC59CB2y22SBnGkMf9NMB9UWk";
     protected final TimeoutCache<NanoID, Packet.Local> packetsAwaitingReply = new TimeoutCache<>(LiquidTimestamp.from(15, TimeUnit.SECONDS));
     protected final Map<String, List<Consumer<Packet.Remote>>> listeners = new ConcurrentHashMap<>();
@@ -142,7 +141,7 @@ public abstract class MagicLinkCore implements ModuleParticle {
         try {
             packet = Packet.parseIncoming(this.aes.decrypt(rawMessage));
         } catch (Exception e) {
-            RC.Error(Error.from(e));
+            RC.Error(Error.from(e).whileAttempting("To decrypt a packet incoming into MagicLink."));
             return;
         }
         try {
@@ -165,15 +164,6 @@ public abstract class MagicLinkCore implements ModuleParticle {
             listeners.forEach(l -> l.accept(packet));
         } catch (Exception e) {
             packet.status(false, e.getMessage());
-        }
-    }
-
-    public static abstract class Builder<T extends MagicLinkCore> extends ModuleBuilder<T> {
-        public Builder() {
-            super(
-                    "MagicLink",
-                    "Provides packet communication services for the proxy."
-            );
         }
     }
 

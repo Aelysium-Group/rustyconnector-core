@@ -3,14 +3,13 @@ package group.aelysium.rustyconnector.common.haze;
 import group.aelysium.ara.Flux;
 import group.aelysium.rustyconnector.common.modules.ModuleCollection;
 import group.aelysium.rustyconnector.common.modules.ModuleHolder;
-import group.aelysium.rustyconnector.common.modules.ModuleParticle;
-import group.aelysium.rustyconnector.common.modules.ModuleBuilder;
+import group.aelysium.rustyconnector.common.modules.Module;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public abstract class HazeProvider implements ModuleParticle, ModuleHolder<HazeDatabase> {
+public abstract class HazeProvider implements Module, ModuleHolder<HazeDatabase> {
     protected ModuleCollection<HazeDatabase> databases = new ModuleCollection<>();
 
     /**
@@ -37,7 +36,7 @@ public abstract class HazeProvider implements ModuleParticle, ModuleHolder<HazeD
      * @throws IllegalStateException If a database with the specific name already exists.
      * @throws Exception If there's an issue initializing the database.
      */
-    public void registerDatabase(@NotNull ModuleBuilder<HazeDatabase> database) throws Exception {
+    public void registerDatabase(@NotNull Module.Builder<HazeDatabase> database) throws Exception {
         this.databases.registerModule(database);
     }
     public boolean containsDatabase(@NotNull String name) {

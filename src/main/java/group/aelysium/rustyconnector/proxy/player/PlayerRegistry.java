@@ -1,8 +1,7 @@
 package group.aelysium.rustyconnector.proxy.player;
 
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.modules.ModuleParticle;
-import group.aelysium.rustyconnector.common.modules.ModuleBuilder;
+import group.aelysium.rustyconnector.common.modules.Module;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +14,7 @@ import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.JoinConfiguration.newlines;
 import static net.kyori.adventure.text.format.NamedTextColor.BLUE;
 
-public class PlayerRegistry implements ModuleParticle {
+public class PlayerRegistry implements Module {
     private final Map<UUID, Player> playersUUID = new ConcurrentHashMap<>();
     private final Map<String, Player> playersUsername = new ConcurrentHashMap<>();
 

@@ -13,10 +13,10 @@ import org.jetbrains.annotations.NotNull;
  * This event will also fire if a player leaves the family by logging out of the network.
  */
 public class FamilyLeaveEvent extends Event {
-    protected final Family family;
-    protected final Server server;
-    protected final Player player;
-    protected final boolean disconnected;
+    public final Family family;
+    public final Server server;
+    public final Player player;
+    public final boolean disconnected;
 
     public FamilyLeaveEvent(
             @NotNull Family family,
@@ -29,18 +29,5 @@ public class FamilyLeaveEvent extends Event {
         this.server = server;
         this.player = player;
         this.disconnected = disconnected;
-    }
-
-    public Family family() {
-        return family;
-    }
-    public Server server() {
-        return server;
-    }
-    public Player player() {
-        return player;
-    }
-    public boolean disconnected() {
-        return disconnected;
     }
 }

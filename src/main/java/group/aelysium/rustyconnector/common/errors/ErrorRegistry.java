@@ -1,8 +1,7 @@
 package group.aelysium.rustyconnector.common.errors;
 
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.modules.ModuleParticle;
-import group.aelysium.rustyconnector.common.modules.ModuleBuilder;
+import group.aelysium.rustyconnector.common.modules.Module;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,7 +11,7 @@ import java.util.*;
 import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.JoinConfiguration.newlines;
 
-public class ErrorRegistry implements ModuleParticle {
+public class ErrorRegistry implements Module {
     private final boolean logErrors;
     private final int cacheSize;
     private final Vector<Error> errors = new Vector<>() {

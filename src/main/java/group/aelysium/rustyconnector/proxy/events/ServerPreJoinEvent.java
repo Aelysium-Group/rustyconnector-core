@@ -9,9 +9,9 @@ import org.jetbrains.annotations.NotNull;
  * Represents a player attempting to join a Server.
  */
 public class ServerPreJoinEvent extends Event.Cancelable {
-    protected final Server server;
-    protected final Player player;
-    protected final Player.Connection.Power power;
+    public final Server server;
+    public final Player player;
+    public final Player.Connection.Power power;
 
     public ServerPreJoinEvent(
             @NotNull Server server,
@@ -22,12 +22,5 @@ public class ServerPreJoinEvent extends Event.Cancelable {
         this.server = server;
         this.player = player;
         this.power = power;
-    }
-
-    public Server server() {
-        return server;
-    }
-    public Player player() {
-        return player;
     }
 }

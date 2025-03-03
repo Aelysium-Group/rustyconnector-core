@@ -11,24 +11,14 @@ import group.aelysium.rustyconnector.proxy.player.Player;
  * This event fires after {@link FamilyPostJoinEvent}.
  */
 public class NetworkPostJoinEvent extends Event {
-    protected final Family family;
-    protected final Server server;
-    protected final Player player;
+    public final Family family;
+    public final Server server;
+    public final Player player;
 
     public NetworkPostJoinEvent(Family family, Server server, Player player) {
         super();
         this.family = family;
         this.server = server;
         this.player = player;
-    }
-
-    public Family family() {
-        return family;
-    }
-    public Server server() {
-        return server;
-    }
-    public Player player() {
-        return player;
     }
 }
