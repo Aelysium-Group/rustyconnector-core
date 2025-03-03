@@ -7,11 +7,19 @@ import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
+
 public class LeastConnection extends LoadBalancer {
     public static final String algorithm = "LEAST_CONNECTION";
 
-    public LeastConnection(boolean weighted, boolean persistence, int attempts, @NotNull LiquidTimestamp rebalance) {
-        super(weighted, persistence, attempts, rebalance);
+    public LeastConnection(
+        boolean weighted,
+        boolean persistence,
+        int attempts,
+        @NotNull LiquidTimestamp rebalance,
+        @NotNull Map<String, Object> metadata
+    ) {
+        super(weighted, persistence, attempts, rebalance, metadata);
     }
 
     @Override

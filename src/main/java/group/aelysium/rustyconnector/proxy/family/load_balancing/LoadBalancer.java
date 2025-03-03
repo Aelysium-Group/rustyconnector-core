@@ -14,7 +14,9 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import static net.kyori.adventure.text.Component.join;
+import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.JoinConfiguration.newlines;
+import static net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY;
 
 public abstract class LoadBalancer implements Server.Container, MetadataHolder<Object>, Module {
     private final Map<String, Object> metadata = new ConcurrentHashMap<>();
@@ -36,7 +38,13 @@ public abstract class LoadBalancer implements Server.Container, MetadataHolder<O
         this.completeSort();
     };
 
-    protected LoadBalancer(boolean weighted, boolean persistence, int attempts, @Nullable LiquidTimestamp rebalance, @NotNull Map<String, Object> metadata) {
+    protected LoadBalancer(
+        boolean weighted,
+        boolean persistence,
+        int attempts,
+        @Nullable LiquidTimestamp rebalance,
+        @NotNull Map<String, Object> metadata
+    ) {
         this.weighted = weighted;
         this.persistence = persistence;
         this.attempts = attempts;
@@ -261,7 +269,17 @@ public abstract class LoadBalancer implements Server.Container, MetadataHolder<O
                 RC.Lang("rustyconnector-keyValue").generate("Unlocked Servers", this.unlockedServers.size()),
                 RC.Lang("rustyconnector-keyValue").generate("Locked Servers", this.lockedServers.size()),
                 RC.Lang("rustyconnector-keyValue").generate("Weighted", this.weighted),
-                RC.Lang("rustyconnector-keyValue").generate("Persistence", this.persistence ? "Enabled ("+this.attempts+")" : "Disabled")
+                RC.Lang("rustyconnector-keyValue").generate("Persistence", this.persistence ? "Enabled ("+this.attempts+")" : "Disabled"),
+                text("Extra Properties:", DARK_GRAY),
+                (
+                    this.metadata().isEmpty() ?
+                        text("There are no properties to show.", DARK_GRAY)
+                        :
+                        join(
+                            newlines(),
+                            this.metadata().entrySet().stream().map(e -> RC.Lang("rustyconnector-keyValue").generate(e.getKey(), e.getValue())).toList()
+                        )
+                )
         );
     }
     
@@ -271,6 +289,7 @@ public abstract class LoadBalancer implements Server.Container, MetadataHolder<O
         boolean weighted,
         boolean persistence,
         int attempts,
-        @Nullable LiquidTimestamp rebalance
+        @Nullable LiquidTimestamp rebalance,
+        @NotNull Map<String, Object> metadata
     ) {}
 }

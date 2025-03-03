@@ -7,12 +7,19 @@ import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.Map;
 
 public class MostConnection extends LeastConnection {
     public static final String algorithm = "MOST_CONNECTION";
 
-    public MostConnection(boolean weighted, boolean persistence, int attempts, @NotNull LiquidTimestamp rebalance) {
-        super(weighted, persistence, attempts, rebalance);
+    public MostConnection(
+        boolean weighted,
+        boolean persistence,
+        int attempts,
+        @NotNull LiquidTimestamp rebalance,
+        @NotNull Map<String, Object> metadata
+    ) {
+        super(weighted, persistence, attempts, rebalance, metadata);
     }
 
     @Override
