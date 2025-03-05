@@ -134,7 +134,7 @@ public class ModuleLoader implements AutoCloseable {
             }
         });
     }
-
+    
     private record PluginConfiguration(
         @NotNull String main,
         @NotNull String name,
@@ -144,69 +144,79 @@ public class ModuleLoader implements AutoCloseable {
         @Nullable List<String> softDependencies,
         @Nullable List<String> sharedPackages
     ) {}
-
+    
     private static List<String> sortPlugins(Map<String, PluginConfiguration> configs) throws IllegalArgumentException {
         Map<String, Integer> inDegree = new HashMap<>();
         Map<String, List<String>> graph = new HashMap<>();
-
-        configs.forEach((k,v)->{
-            inDegree.put(k, 0);
-            graph.put(k, new ArrayList<>());
+        
+        // Initialize inDegree and graph
+        configs.forEach((k, v) -> {
+            String key = k.toLowerCase();
+            inDegree.put(key, 0);
+            graph.put(key, new ArrayList<>());
         });
-
+        
         Set<String> missingDependencies = new HashSet<>();
         configs.forEach((k, v) -> {
+            String key = k.toLowerCase();
             if (v.dependencies() != null) {
                 for (String dep : v.dependencies()) {
-                    if (!configs.containsKey(dep.toLowerCase())) {
-                        missingDependencies.add(k);
-                        inDegree.put(k, -1);
-                        return;
+                    String depKey = dep.toLowerCase();
+                    if (!configs.containsKey(depKey)) {
+                        missingDependencies.add(key);
+                        inDegree.put(key, -1);
+                        continue;
                     }
-                    graph.get(dep).add(k);
-                    inDegree.put(k, inDegree.get(k) + 1);
+                    graph.get(depKey).add(key);
+                    inDegree.put(key, inDegree.get(key) + 1);
                 }
             }
             
             if (v.softDependencies() != null) {
                 for (String softDep : v.softDependencies()) {
-                    if (configs.containsKey(softDep.toLowerCase())) {
-                        graph.get(softDep).add(k);
-                        inDegree.put(k, inDegree.get(k) + 1);
+                    String softDepKey = softDep.toLowerCase();
+                    if (configs.containsKey(softDepKey)) {
+                        graph.get(softDepKey).add(key);
+                        inDegree.put(key, inDegree.get(key) + 1);
                     }
                 }
             }
         });
-
+        
         Queue<String> queue = new LinkedList<>();
         for (Map.Entry<String, Integer> entry : inDegree.entrySet()) {
-            if (entry.getValue() != 0) continue;
-
-            queue.add(entry.getKey());
+            if (entry.getValue() == 0) {
+                queue.add(entry.getKey());
+            }
         }
-
+        
         List<String> sortedList = new ArrayList<>();
         while (!queue.isEmpty()) {
             String current = queue.poll();
             sortedList.add(current);
-
+            
             for (String neighbor : graph.get(current)) {
                 inDegree.put(neighbor, inDegree.get(neighbor) - 1);
-
-                if (inDegree.get(neighbor) == 0) queue.add(neighbor);
+                if (inDegree.get(neighbor) == 0) {
+                    queue.add(neighbor);
+                }
             }
         }
-
+        
         Set<String> circularDependencies = new HashSet<>();
-        for (Map.Entry<String, Integer> entry : inDegree.entrySet())
-            if (entry.getValue() > 0)
+        for (Map.Entry<String, Integer> entry : inDegree.entrySet()) {
+            if (entry.getValue() > 0) {
                 circularDependencies.add(entry.getKey());
-
+            }
+        }
+        
         if (!missingDependencies.isEmpty())
-            RC.Error(Error.from("The following plugins have missing dependencies and were not loaded: " + String.join(", ", missingDependencies)).urgent(true));
+            System.out.println("The following plugins have missing dependencies and were not loaded: " + String.join(", ", missingDependencies));
         if (!circularDependencies.isEmpty())
-            RC.Error(Error.from("The following plugins have circular dependencies and were not loaded: " + String.join(", ", circularDependencies)).urgent(true));
-
+            System.out.println("The following plugins have circular dependencies and were not loaded: " + String.join(", ", circularDependencies));
+        
         return sortedList;
     }
+    
+    
 }

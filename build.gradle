@@ -40,7 +40,7 @@ dependencies {
     compileOnly 'org.incendo:cloud-core:2.0.0'
     compileOnly "org.incendo:cloud-annotations:2.0.0"
 
-    shadow "group.aelysium:ara:2.0.4"
+    shadow "group.aelysium:ara:2.0.5"
     shadow "group.aelysium:haze:0.0.10"
     shadow "group.aelysium:declarative-yaml:0.2.0"
 

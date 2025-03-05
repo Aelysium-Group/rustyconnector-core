@@ -1,16 +1,20 @@
 package group.aelysium.rustyconnector.proxy.family.load_balancing;
 
+import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.modules.Module;
+import group.aelysium.rustyconnector.proxy.util.AddressUtil;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+
+import static net.kyori.adventure.text.Component.*;
+import static net.kyori.adventure.text.JoinConfiguration.newlines;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public class LoadBalancerRegistry implements Module {
     private final Map<String, Function<LoadBalancer.Config, Module.Builder<LoadBalancer>>> algorithms = new ConcurrentHashMap<>();
@@ -71,7 +75,10 @@ public class LoadBalancerRegistry implements Module {
     
     @Override
     public @Nullable Component details() {
-        return null;
+        return join(
+            newlines(),
+            RC.Lang("rustyconnector-keyValue").generate("Available Algorithms", String.join(", ", this.algorithms.keySet()))
+        );
     }
     
     @Override
