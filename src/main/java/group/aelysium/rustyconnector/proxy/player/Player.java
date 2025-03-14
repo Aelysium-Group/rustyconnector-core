@@ -1,5 +1,7 @@
 package group.aelysium.rustyconnector.proxy.player;
 
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonSerializer;
 import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
@@ -18,15 +20,15 @@ import java.util.concurrent.Future;
 import static net.kyori.adventure.text.Component.text;
 
 public class Player {
-    protected UUID uuid;
+    protected String id;
     protected String username;
 
-    public Player(@NotNull UUID uuid, @NotNull String username) {
-        this.uuid = uuid;
+    public Player(@NotNull String id, @NotNull String username) {
+        this.id = id;
         this.username = username;
     }
 
-    public UUID uuid() { return this.uuid; }
+    public String id() { return this.id; }
     public String username() { return this.username; }
 
     /**
@@ -44,7 +46,7 @@ public class Player {
      */
     public void message(@NotNull Component message) {
         try {
-            RC.P.Adapter().messagePlayer(this.uuid(), message);
+            RC.P.Adapter().messagePlayer(this.id(), message);
         } catch (Exception ignore) {}
     }
 
@@ -83,11 +85,11 @@ public class Player {
         if (object == null || getClass() != object.getClass()) return false;
 
         Player that = (Player) object;
-        return Objects.equals(uuid, that.uuid);
+        return Objects.equals(id, that.id);
     }
 
     public String toString() {
-        return "<Player uuid="+this.uuid.toString()+" username="+this.username+">";
+        return "<Player id="+this.id+" username="+this.username+">";
     }
 
     public interface Connectable {

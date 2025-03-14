@@ -17,7 +17,7 @@ public abstract class RCAdapter {
      * Logs the specified component into the console.
      * @param component The component to log.
      */
-    public abstract void messagePlayer(@NotNull UUID player, @NotNull Component component);
+    public abstract void messagePlayer(@NotNull String playerID, @NotNull Component component);
     
     public abstract <T> CommandManager<T> commandManager();
 }

@@ -115,6 +115,19 @@ public class TimeoutCache<K, V> implements Closure, Map<K, V> {
                 .map(entry -> new AbstractMap.SimpleEntry<>(entry.getKey(), entry.getValue().value()))
                 .collect(Collectors.toSet());
     }
+    
+    /**
+     * Refreshes the timeout of the specified key, if it exists, to once again equal {@link #expiration()}.
+     * @param key The key to refresh if it exists.
+     * @return The value associated with the key if the key exists in the cache. Otherwise, returns null.
+     */
+    public V refresh(K key) {
+        V value = this.get(key);
+        if(value == null) return null;
+        
+        this.put(key, value);
+        return value;
+    }
 
     protected static class TimedValue<V> {
         private final V value;

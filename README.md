@@ -35,7 +35,7 @@ Originally written as a Minecraft specific software, it's now been expanded to c
   <td valign="top">
     <h3>Download</h3>
     <p>
-      <a href="https://github.com/Aelysium-Group/rustyconnector-core/releases">Download from GitHub</a>, or check out the plugin release pages.
+      <a href="https://github.com/Aelysium-Group/rustyconnector-core/releases">Download from GitHub</a>, or check out the moduleRegistrar release pages.
     </p>
   </td>
 </tr>
@@ -61,7 +61,7 @@ Originally written as a Minecraft specific software, it's now been expanded to c
   <td>
     <h3>Report Bugs</h3>
     <p>
-    Experiencing annoying bugs while using the plugin? Report them <a href="https://github.com/Aelysium-Group/rustyconnector-core/issues"> here</a> to help us squash them.
+    Experiencing annoying bugs while using the moduleRegistrar? Report them <a href="https://github.com/Aelysium-Group/rustyconnector-core/issues"> here</a> to help us squash them.
     </p>
   </td>
 </tr>
@@ -106,7 +106,7 @@ Originally written as a Minecraft specific software, it's now been expanded to c
 ---
 # 🎨 Statistics
 
-## 🌌 Minecraft Networks Served ([Click to view](https://bstats.org/plugin/velocity/RustyConnector/17972)):
+## 🌌 Minecraft Networks Served ([Click to view](https://bstats.org/moduleRegistrar/velocity/RustyConnector/17972)):
 [![RustyConnector bstats graph](https://bstats.org/signatures/velocity/RustyConnector.svg)](https://bstats.org/signatures/velocity/RustyConnector.svg)
 
 2024 © [Aelysium](https://www.aelysium.group)

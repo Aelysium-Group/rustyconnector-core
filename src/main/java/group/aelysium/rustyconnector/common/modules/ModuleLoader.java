@@ -3,6 +3,7 @@ package group.aelysium.rustyconnector.common.modules;
 import com.google.gson.Gson;
 import group.aelysium.ara.Flux;
 import group.aelysium.rustyconnector.RC;
+import group.aelysium.rustyconnector.common.RCAdapter;
 import group.aelysium.rustyconnector.common.RCKernel;
 import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.proxy.ProxyKernel;
@@ -15,14 +16,16 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ModuleLoader implements AutoCloseable {
     protected Gson gson = new Gson();
-    protected List<ModuleClassLoader> classLoaders = new ArrayList<>();
+    protected final List<ModuleClassLoader> classLoaders = new ArrayList<>();
+    private final Map<String, ModuleRegistrar> registrars = new HashMap<>();
 
-    public void loadFromFolder(Flux<? extends RCKernel<?>> flux, String modulesDirectory) {
+    public void queueFromFolder(String modulesDirectory) {
         System.out.println("Loading modules.");
         File modules = new File(modulesDirectory);
         final ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
@@ -33,11 +36,9 @@ public class ModuleLoader implements AutoCloseable {
 
             if (files == null) return;
 
-            Map<String, ExternalModuleBuilder<Module>> preparedModules = new HashMap<>();
-            Map<String, PluginConfiguration> preparedModulesConfigs = new HashMap<>();
             for (File file : files) {
                 try {
-                    PluginConfiguration config;
+                    ModuleConfiguration config;
                     {
                         ModuleClassLoader resourceGrabber = new ModuleClassLoader(
                             List.of(file.toURI().toURL()),
@@ -48,7 +49,7 @@ public class ModuleLoader implements AutoCloseable {
                         if(stream == null) throw new NullPointerException("No rc-module.json exists for "+file.getName());
     
                         try(InputStreamReader reader = new InputStreamReader(stream)) {
-                            config = gson.fromJson(reader, PluginConfiguration.class);
+                            config = gson.fromJson(reader, ModuleConfiguration.class);
                         }
                         resourceGrabber.close();
                     }
@@ -70,60 +71,91 @@ public class ModuleLoader implements AutoCloseable {
                     constructor.setAccessible(false);
 
                     String lowerConfigName = config.name().toLowerCase();
-                    if(preparedModules.containsKey(lowerConfigName))
-                        throw new IllegalStateException("Duplicate module names "+config.name()+" are not allowed! Ignoring "+file.getName());
-
-                    preparedModules.put(lowerConfigName, plugin);
-                    preparedModulesConfigs.put(lowerConfigName, config);
+                    if(this.registrars.containsKey(lowerConfigName))
+                        throw new IllegalStateException("Duplicate module names '"+config.name()+"' are not allowed! Ignoring "+file.getName());
+                    
+                    Consumer<RCKernel<?>> registerRunnable = k -> {
+                        try {
+                            
+                            try {
+                                if (k instanceof ServerKernel && !config.environments.contains("server"))
+                                    RC.Error(Error.from(config.name() + " does not support server environments! " + config.name() + " only supports: " + String.join(", ", config.environments)).urgent(true));
+                                if (k instanceof ProxyKernel && !config.environments.contains("proxy"))
+                                    RC.Error(Error.from(config.name() + " does not support proxy environments! " + config.name() + " only supports: " + String.join(", ", config.environments)).urgent(true));
+                            } catch (IllegalStateException e) {
+                                System.out.println(e.getMessage());
+                                return;
+                            }
+                            
+                            Module m = k.registerModule(new Module.Builder<>(config.name(), config.description()) {
+                                @Override
+                                public Module get() {
+                                    try {
+                                        return plugin.onStart(k.moduleDirectory());
+                                    } catch (Exception e) {
+                                        RC.Error(Error.from(e));
+                                    }
+                                    return null;
+                                }
+                            });
+                            
+                            if(k instanceof ServerKernel s) plugin.bind(s, m);
+                            if(k instanceof ProxyKernel p) plugin.bind(p, m);
+                            
+                        } catch (Exception e) {
+                            RC.Error(Error.from(e).whileAttempting("To register the module: "+lowerConfigName));
+                        }
+                    };
+                    
+                    this.registrars.put(lowerConfigName, new ModuleRegistrar(
+                        lowerConfigName,
+                        registerRunnable,
+                        Stream.of(config.dependencies(), config.dependency(), config.depend())
+                            .filter(Objects::nonNull)
+                            .flatMap(List::stream)
+                            .distinct()
+                            .toList(),
+                        Stream.of(config.softDependencies(), config.softDependency(), config.softDepend())
+                            .filter(Objects::nonNull)
+                            .flatMap(List::stream)
+                            .distinct()
+                            .toList()
+                    ));
                 } catch (Exception e) {
                     RC.Error(Error.from(e).whileAttempting("To register the module: "+file.getName()));
                 } finally {
                     Thread.currentThread().setContextClassLoader(originalClassLoader);
                 }
             }
-
-            List<String> order = sortPlugins(preparedModulesConfigs);
-
-            flux.onStart(k->order.forEach(o -> {
-                System.out.println("Loading "+o);
-                try {
-                    PluginConfiguration c = preparedModulesConfigs.get(o);
-
-                    try {
-                        if (k instanceof ServerKernel && !c.environments.contains("server"))
-                            RC.Error(Error.from(c.name() + " does not support server environments! " + c.name() + " only supports: " + String.join(", ", c.environments)).urgent(true));
-                        if (k instanceof ProxyKernel && !c.environments.contains("proxy"))
-                            RC.Error(Error.from(c.name() + " does not support proxy environments! " + c.name() + " only supports: " + String.join(", ", c.environments)).urgent(true));
-                    } catch (IllegalStateException e) {
-                        System.out.println(e.getMessage());
-                        return;
-                    }
-
-                    ExternalModuleBuilder<Module> t = preparedModules.get(o);
-                    Module m = k.registerModule(new Module.Builder<>(c.name(), c.description()) {
-                        @Override
-                        public Module get() {
-                            try {
-                                return t.onStart(k.moduleDirectory());
-                            } catch (Exception e) {
-                                RC.Error(Error.from(e));
-                            }
-                            return null;
-                        }
-                    });
-
-                    if(k instanceof ServerKernel s) t.bind(s, m);
-                    if(k instanceof ProxyKernel p) t.bind(p, m);
-
-                } catch (Exception e) {
-                    RC.Error(Error.from(e).whileAttempting("To register the module: "+o));
-                }
-            }));
         } catch (Exception e) {
             RC.Error(Error.from(e).whileAttempting("To register external modules via `"+modules.getAbsolutePath()+"`"));
         } finally {
             System.out.println("Done loading modules.");
         }
+    }
+    
+    public void queue(ModuleRegistrar registrar) {
+        this.registrars.put(registrar.name, registrar);
+    }
+    
+    /**
+     * Resolves the dependencies of all modules and registers them to the kernel.
+     * Once this has run, all queued registrars will be dequeued.
+     */
+    public void resolveAndRegister(Flux<? extends RCKernel<?>> flux) {
+        List<String> order = ModuleDependencyResolver.sortPlugins(Set.copyOf(this.registrars.values()));
+        
+        flux.onStart(k->order.forEach(o -> {
+            System.out.println("Loading "+o);
+            try {
+                ModuleRegistrar registrar = this.registrars.get(o);
+                registrar.register.accept(k);
+            } catch (Exception e) {
+                RC.Error(Error.from(e).whileAttempting("To register the module `"+o+"`"));
+            }
+        }));
+        
+        this.registrars.clear();
     }
 
     @Override
@@ -137,7 +169,7 @@ public class ModuleLoader implements AutoCloseable {
         });
     }
     
-    private record PluginConfiguration(
+    private record ModuleConfiguration(
         @NotNull String main,
         @NotNull String name,
         @NotNull String description,
@@ -153,78 +185,22 @@ public class ModuleLoader implements AutoCloseable {
         @Nullable List<String> softDepend
     ) {}
     
-    private static List<String> sortPlugins(Map<String, PluginConfiguration> configs) throws IllegalArgumentException {
-        Map<String, Integer> inDegree = new HashMap<>();
-        Map<String, List<String>> graph = new HashMap<>();
-        
-        
-        configs.forEach((k, v) -> {
-            String key = k.toLowerCase();
-            inDegree.put(key, 0);
-            graph.put(key, new ArrayList<>());
-        });
-        
-        Set<String> missingDependencies = new HashSet<>();
-        configs.forEach((k, v) -> {
-            String key = k.toLowerCase();
-            
-            Stream.of(v.dependencies(), v.dependency(), v.depend())
-                .filter(java.util.Objects::nonNull)
-                .flatMap(List::stream)
-                .distinct()
-                .forEach(dep -> {
-                    String depKey = dep.toLowerCase();
-                    if (!configs.containsKey(depKey)) {
-                        missingDependencies.add(key);
-                        inDegree.put(key, -1);
-                        return;
-                    }
-                    graph.get(depKey).add(key);
-                    inDegree.put(key, inDegree.get(key) + 1);
-                });
-            Stream.of(v.softDependencies(), v.softDependency(), v.softDepend())
-                .filter(java.util.Objects::nonNull)
-                .flatMap(List::stream)
-                .distinct()
-                .forEach(softDep -> {
-                    String softDepKey = softDep.toLowerCase();
-                    if (!configs.containsKey(softDepKey)) return;
-                    graph.get(softDepKey).add(key);
-                    inDegree.put(key, inDegree.get(key) + 1);
-                });
-        });
-        
-        Queue<String> queue = new LinkedList<>();
-        for (Map.Entry<String, Integer> entry : inDegree.entrySet())
-            if (entry.getValue() == 0)
-                queue.add(entry.getKey());
-        
-        List<String> sortedList = new ArrayList<>();
-        while (!queue.isEmpty()) {
-            String current = queue.poll();
-            sortedList.add(current);
-            
-            for (String neighbor : graph.get(current)) {
-                inDegree.put(neighbor, inDegree.get(neighbor) - 1);
-                
-                if (inDegree.get(neighbor) != 0) continue;
-                
-                queue.add(neighbor);
-            }
+    public record ModuleRegistrar(
+        String name,
+        Consumer<RCKernel<?>> register,
+        List<String> dependencies,
+        List<String> softDependencies
+    ) {
+        @Override
+        public boolean equals(Object o) {
+            if (o == null || getClass() != o.getClass()) return false;
+            ModuleRegistrar moduleRegistrar = (ModuleRegistrar) o;
+            return Objects.equals(name, moduleRegistrar.name);
         }
         
-        Set<String> circularDependencies = new HashSet<>();
-        for (Map.Entry<String, Integer> entry : inDegree.entrySet())
-            if (entry.getValue() > 0)
-                circularDependencies.add(entry.getKey());
-        
-        if (!missingDependencies.isEmpty())
-            System.out.println("The following plugins have missing dependencies and were not loaded: " + String.join(", ", missingDependencies));
-        if (!circularDependencies.isEmpty())
-            System.out.println("The following plugins have circular dependencies and were not loaded: " + String.join(", ", circularDependencies));
-        
-        return sortedList;
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(name);
+        }
     }
-    
-    
 }

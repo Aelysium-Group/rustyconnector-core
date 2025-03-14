@@ -155,27 +155,42 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
                 });
         return response;
     }
-
+    
     /**
      * Sends a player to a family or server if it exists.
-     * If both a family AND server have an id equal to `target`, you'll have to clarify which to send to use.
-     * @param player The uuid or username of the player to send. RustyConnector will automatically determine if this is a UUID or username.
+     * If both a family AND server have an id equal to `target`, you'll have to clarify which to use via "flags".
+     * @param playerID The id of the player to send.
      * @param target The id of the family or server to send the player to.
+     * @param flags A set of flags to use.
      * @return A future that completes to the response received from the proxy.
      */
-    public CompletableFuture<MagicLinkCore.Packets.Response> send(String player, String target, String flags) {
+    public CompletableFuture<MagicLinkCore.Packets.Response> sendID(String playerID, String target, Set<MagicLinkCore.Packets.SendPlayer.Flag> flags) {
         CompletableFuture<MagicLinkCore.Packets.Response> response = new CompletableFuture<>();
-        Packet.New()
-                .identification(Packet.Type.from("RC","PS"))
-                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.PLAYER, player)
-                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.GENERIC_TARGET, target)
-                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.FLAGS, flags)
-                .addressTo(Packet.SourceIdentifier.allAvailableProxies())
-                .send()
-                .onReply(MagicLinkCore.Packets.Response.class, packet -> {
-                    response.complete(packet);
-                    return PacketListener.Response.success("Successfully indicated the status of the server's send request.");
-                });
+        MagicLinkCore.Packets.SendPlayer
+            .sendID(playerID, target, flags)
+            .onReply(MagicLinkCore.Packets.Response.class, packet -> {
+                response.complete(packet);
+                return PacketListener.Response.success("Successfully indicated the status of the server's send request.");
+            });
+        return response;
+    }
+    
+    /**
+     * Sends a player to a family or server if it exists.
+     * If both a family AND server have an id equal to `target`, you'll have to clarify which to use via "flags".
+     * @param playerUsername The username of the player to send.
+     * @param target The id of the family or server to send the player to.
+     * @param flags A set of flags to use.
+     * @return A future that completes to the response received from the proxy.
+     */
+    public CompletableFuture<MagicLinkCore.Packets.Response> sendUsername(String playerUsername, String target, Set<MagicLinkCore.Packets.SendPlayer.Flag> flags) {
+        CompletableFuture<MagicLinkCore.Packets.Response> response = new CompletableFuture<>();
+        MagicLinkCore.Packets.SendPlayer
+            .sendUsername(playerUsername, target, flags)
+            .onReply(MagicLinkCore.Packets.Response.class, packet -> {
+                response.complete(packet);
+                return PacketListener.Response.success("Successfully indicated the status of the server's send request.");
+            });
         return response;
     }
 

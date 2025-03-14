@@ -123,4 +123,4 @@ bin/
 
 # Remove Ignore List
 
-!/plugin/gradle/wrapper/gradle-wrapper.jar
+!/moduleRegistrar/gradle/wrapper/gradle-wrapper.jar

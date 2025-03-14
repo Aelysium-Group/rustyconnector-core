@@ -15,7 +15,7 @@ import static net.kyori.adventure.text.JoinConfiguration.newlines;
 import static net.kyori.adventure.text.format.NamedTextColor.BLUE;
 
 public class PlayerRegistry implements Module {
-    private final Map<UUID, Player> playersUUID = new ConcurrentHashMap<>();
+    private final Map<String, Player> playersID = new ConcurrentHashMap<>();
     private final Map<String, Player> playersUsername = new ConcurrentHashMap<>();
 
     /**
@@ -23,14 +23,14 @@ public class PlayerRegistry implements Module {
      * @param player The player to add.
      */
     public void add(@NotNull Player player) {
-        this.playersUUID.put(player.uuid(), player);
+        this.playersID.put(player.id(), player);
         this.playersUsername.put(player.username(), player);
     }
 
-    public Optional<Player> fetch(@NotNull UUID uuid) {
-        return Optional.ofNullable(this.playersUUID.get(uuid));
+    public Optional<Player> fetchByID(@NotNull String id) {
+        return Optional.ofNullable(this.playersID.get(id));
     }
-    public Optional<Player> fetch(@NotNull String username) {
+    public Optional<Player> fetchByUsername(@NotNull String username) {
         return Optional.ofNullable(this.playersUsername.get(username));
     }
 
@@ -39,17 +39,17 @@ public class PlayerRegistry implements Module {
      * @param player The player to remove.
      */
     public void remove(@NotNull Player player) {
-        this.playersUUID.remove(player.uuid());
+        this.playersID.remove(player.id());
         this.playersUsername.remove(player.username());
     }
 
     public List<Player> dump() {
-        return new ArrayList<>(this.playersUUID.values());
+        return new ArrayList<>(this.playersID.values());
     }
 
     @Override
     public void close() {
-        this.playersUUID.clear();
+        this.playersID.clear();
         this.playersUsername.clear();
     }
 
@@ -57,7 +57,7 @@ public class PlayerRegistry implements Module {
     public @Nullable Component details() {
         return join(
                 newlines(),
-                RC.Lang("rustyconnector-keyValue").generate("Total Players", this.playersUUID.size()),
+                RC.Lang("rustyconnector-keyValue").generate("Total Players", this.playersID.size()),
                         RC.Lang("rustyconnector-keyValue").generate("Players", text(
                         String.join(", ", this.playersUsername.keySet().stream().toList()),
                         BLUE

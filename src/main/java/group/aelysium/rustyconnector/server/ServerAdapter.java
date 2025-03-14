@@ -24,32 +24,32 @@ public abstract class ServerAdapter extends RCAdapter {
     public abstract int onlinePlayerCount();
 
     /**
-     * Resolves a player's username into that player's corresponding UUID.
+     * Resolves a player's username into that player's corresponding ID.
      * @param username The username.
-     * @return An optional containing the user's UUID if there is one, if not, returns an Empty optional.
+     * @return An optional containing the user's ID if there is one, if not, returns an Empty optional.
      */
-    public abstract Optional<UUID> playerUUID(@NotNull String username);
+    public abstract Optional<String> playerID(@NotNull String username);
 
     /**
-     * Resolves a player's UUID into that player's corresponding username.
-     * @param uuid The id.
+     * Resolves a player's ID into that player's corresponding username.
+     * @param id The id.
      * @return An optional containing the user's username if there is one, if not, returns an Empty optional.
      */
-    public abstract Optional<String> playerUsername(@NotNull UUID uuid);
+    public abstract Optional<String> playerUsername(@NotNull String id);
 
     /**
      * Checks if a player is online.
-     * @param uuid The id of the player to check for.
+     * @param playerID The id of the player to check for.
      * @return `true` of the player is online. `false` otherwise.
      */
-    public abstract boolean isOnline(@NotNull UUID uuid);
+    public abstract boolean isOnline(@NotNull String playerID);
     
     /**
      * Teleports one player to another.
-     * @param from The player to teleport.
-     * @param to The player whose location will be teleported to by 'from'
+     * @param fromPlayer The player to teleport.
+     * @param toPlayer The player whose location will be teleported to by 'from'
      */
-    public abstract void teleport(@NotNull UUID from, @NotNull UUID to);
+    public abstract void teleport(@NotNull String fromPlayer, @NotNull String toPlayer);
     
     /**
      * Teleports a player to a location.

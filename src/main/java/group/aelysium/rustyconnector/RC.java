@@ -108,11 +108,11 @@ public interface RC {
             return Collections.unmodifiableList(servers);
         }
 
-        static Optional<Player> Player(UUID uuid) throws NoSuchElementException {
-            return RC.P.Players().fetch(uuid);
+        static Optional<Player> PlayerFromID(String id) throws NoSuchElementException {
+            return RC.P.Players().fetchByID(id);
         }
-        static Optional<Player> Player(String username) throws NoSuchElementException {
-            return RC.P.Players().fetch(username);
+        static Optional<Player> PlayerFromUsername(String username) throws NoSuchElementException {
+            return RC.P.Players().fetchByUsername(username);
         }
 
         static Optional<HazeDatabase> Haze(String name) throws NoSuchElementException {

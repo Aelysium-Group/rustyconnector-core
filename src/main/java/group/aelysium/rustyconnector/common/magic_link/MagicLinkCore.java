@@ -20,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public abstract class MagicLinkCore implements Module {
     protected static final String endpoint = "bDaBMkmYdZ6r4iFExwW6UzJyNMDseWoS3HDa6FcyM7xNeCmtK98S3Mhp4o7g7oW6VB9CA6GuyH2pNhpQk3QvSmBUeCoUDZ6FXUsFCuVQC59CB2y22SBnGkMf9NMB9UWk";
@@ -291,23 +292,26 @@ public abstract class MagicLinkCore implements Module {
                 return List.of();
             }
 
-            public Optional<UUID> playerUUID() {
+            public Optional<String> playerID() {
                 try {
-                    return Optional.of(UUID.fromString(this.parameters().get(Parameters.PLAYER).getAsString()));
+                    String player = this.parameters().get(Parameters.PLAYER).getAsString();
+                    if(!player.startsWith("id-")) return Optional.empty();
+                    return Optional.of(player.substring(3));
                 } catch (Exception ignore) {}
                 return Optional.empty();
             }
             public Optional<String> playerUsername() {
                 try {
-                    UUID.fromString(this.parameters().get(Parameters.PLAYER).getAsString());
-                    return Optional.empty();
+                    String player = this.parameters().get(Parameters.PLAYER).getAsString();
+                    if(!player.startsWith("u-")) return Optional.empty();
+                    return Optional.of(player.substring(2));
                 } catch (Exception ignore) {}
                 return Optional.of(this.parameters().get(Parameters.PLAYER).getAsString());
             }
 
             /**
              * @return The player identifier. This can either be a UUID, or the player's username.
-             *         Use either {@link #playerUsername()} or {@link #playerUUID()} to get the specific value.
+             *         Use either {@link #playerUsername()} or {@link #playerID()} to get the specific value.
              */
             public String player() {
                 return this.parameters().get(Parameters.PLAYER).getAsString();
@@ -315,6 +319,53 @@ public abstract class MagicLinkCore implements Module {
 
             public SendPlayer(Packet packet) {
                 super(packet);
+            }
+            
+            public static Packet.Local sendUsername(
+                @NotNull String username,
+                @NotNull String target,
+                @NotNull Set<Flag> flags
+            
+            ) {
+                
+                return Packet.New()
+                    .identification(Type.from("RC", "PS"))
+                    .parameter("p", "u-"+username)
+                    .parameter("t", target)
+                    .parameter("f",
+                        flags.stream().map(f -> switch (f) {
+                            case FAMILY -> "f";
+                            case SERVER -> "s";
+                            case MINIMAL -> "i";
+                            case MODERATE -> "o";
+                            case AGGRESSIVE -> "a";
+                        }).collect(Collectors.joining())
+                    )
+                    .addressTo(SourceIdentifier.allAvailableProxies())
+                    .send();
+            }
+            
+            public static Packet.Local sendID(
+                @NotNull String id,
+                @NotNull String target,
+                @NotNull Set<Flag> flags
+            
+            ) {
+                return Packet.New()
+                    .identification(Type.from("RC", "PS"))
+                    .parameter("p", "id-"+id)
+                    .parameter("t", target)
+                    .parameter("f",
+                        flags.stream().map(f -> switch (f) {
+                            case FAMILY -> "f";
+                            case SERVER -> "s";
+                            case MINIMAL -> "i";
+                            case MODERATE -> "o";
+                            case AGGRESSIVE -> "a";
+                        }).collect(Collectors.joining())
+                    )
+                    .addressTo(SourceIdentifier.allAvailableProxies())
+                    .send();
             }
 
             public interface Parameters {
@@ -324,10 +375,29 @@ public abstract class MagicLinkCore implements Module {
             }
 
             public enum Flag {
+                /**
+                 * Declares that the provided target is a family id.
+                 */
                 FAMILY,
+                
+                /**
+                 * Declares that the provided target is a server id.
+                 */
                 SERVER,
+                
+                /**
+                 * Declares that the connection should use a "minimal" {@link group.aelysium.rustyconnector.proxy.player.Player.Connection.Power Power}.
+                 */
                 MINIMAL,
+                
+                /**
+                 * Declares that the connection should use a "moderate" {@link group.aelysium.rustyconnector.proxy.player.Player.Connection.Power Power}.
+                 */
                 MODERATE,
+                
+                /**
+                 * Declares that the connection should use an "aggressive" {@link group.aelysium.rustyconnector.proxy.player.Player.Connection.Power Power}.
+                 */
                 AGGRESSIVE
             }
         }
