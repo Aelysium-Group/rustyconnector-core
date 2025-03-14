@@ -41,13 +41,13 @@ dependencies {
     compileOnly "org.incendo:cloud-annotations:2.0.0"
 
     shadow "group.aelysium:ara:2.0.5"
-    shadow "group.aelysium:haze:0.0.10"
+    shadow "group.aelysium:haze:0.0.11"
     shadow "group.aelysium:declarative-yaml:0.2.0"
 
     shadow 'com.aventrix.jnanoid:jnanoid:2.0.0'
     shadow 'com.google.code.gson:gson:2.11.0'
 
-    shadow "io.javalin:javalin:6.4.0"
+    shadow "io.javalin:javalin:6.5.0"
     shadow "com.fasterxml.jackson.core:jackson-databind:2.17.0"
     shadow "org.java-websocket:Java-WebSocket:1.5.7"
 }
@@ -71,7 +71,6 @@ javadoc {
 }
 
 shadowJar {
-    archiveBaseName.set(archives_base_name)
     archiveClassifier.set('')
     mergeServiceFiles()
 
@@ -99,6 +98,16 @@ tasks.withType(JavaCompile) {
 }
 tasks.withType(Javadoc) {
     options.addStringOption('Xdoclint:none', '-quiet')
+}
+
+tasks.withType(Jar) {
+    if (name == 'shadowJar') {
+        archiveFileName.set("${archives_base_name}-${project.version}.jar")
+    } else if (name == 'javadocJar') {
+        archiveFileName.set("${archives_base_name}-${project.version}-javadoc.jar")
+    } else if (name == 'sourcesJar') {
+        archiveFileName.set("${archives_base_name}-${project.version}-sources.jar")
+    }
 }
 
 jar.finalizedBy(shadowJar)

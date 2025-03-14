@@ -15,6 +15,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ModuleLoader implements AutoCloseable {
     protected Gson gson = new Gson();
@@ -140,16 +142,22 @@ public class ModuleLoader implements AutoCloseable {
         @NotNull String name,
         @NotNull String description,
         @NotNull List<String> environments,
+        @Nullable List<String> sharedPackages,
+        // These are variants of eachother for better UX.
         @Nullable List<String> dependencies,
+        @Nullable List<String> dependency,
+        @Nullable List<String> depend,
+        // These are variants of eachother for better UX.
         @Nullable List<String> softDependencies,
-        @Nullable List<String> sharedPackages
+        @Nullable List<String> softDependency,
+        @Nullable List<String> softDepend
     ) {}
     
     private static List<String> sortPlugins(Map<String, PluginConfiguration> configs) throws IllegalArgumentException {
         Map<String, Integer> inDegree = new HashMap<>();
         Map<String, List<String>> graph = new HashMap<>();
         
-        // Initialize inDegree and graph
+        
         configs.forEach((k, v) -> {
             String key = k.toLowerCase();
             inDegree.put(key, 0);
@@ -159,36 +167,37 @@ public class ModuleLoader implements AutoCloseable {
         Set<String> missingDependencies = new HashSet<>();
         configs.forEach((k, v) -> {
             String key = k.toLowerCase();
-            if (v.dependencies() != null) {
-                for (String dep : v.dependencies()) {
+            
+            Stream.of(v.dependencies(), v.dependency(), v.depend())
+                .filter(java.util.Objects::nonNull)
+                .flatMap(List::stream)
+                .distinct()
+                .forEach(dep -> {
                     String depKey = dep.toLowerCase();
                     if (!configs.containsKey(depKey)) {
                         missingDependencies.add(key);
                         inDegree.put(key, -1);
-                        continue;
+                        return;
                     }
                     graph.get(depKey).add(key);
                     inDegree.put(key, inDegree.get(key) + 1);
-                }
-            }
-            
-            if (v.softDependencies() != null) {
-                for (String softDep : v.softDependencies()) {
+                });
+            Stream.of(v.softDependencies(), v.softDependency(), v.softDepend())
+                .filter(java.util.Objects::nonNull)
+                .flatMap(List::stream)
+                .distinct()
+                .forEach(softDep -> {
                     String softDepKey = softDep.toLowerCase();
-                    if (configs.containsKey(softDepKey)) {
-                        graph.get(softDepKey).add(key);
-                        inDegree.put(key, inDegree.get(key) + 1);
-                    }
-                }
-            }
+                    if (!configs.containsKey(softDepKey)) return;
+                    graph.get(softDepKey).add(key);
+                    inDegree.put(key, inDegree.get(key) + 1);
+                });
         });
         
         Queue<String> queue = new LinkedList<>();
-        for (Map.Entry<String, Integer> entry : inDegree.entrySet()) {
-            if (entry.getValue() == 0) {
+        for (Map.Entry<String, Integer> entry : inDegree.entrySet())
+            if (entry.getValue() == 0)
                 queue.add(entry.getKey());
-            }
-        }
         
         List<String> sortedList = new ArrayList<>();
         while (!queue.isEmpty()) {
@@ -197,18 +206,17 @@ public class ModuleLoader implements AutoCloseable {
             
             for (String neighbor : graph.get(current)) {
                 inDegree.put(neighbor, inDegree.get(neighbor) - 1);
-                if (inDegree.get(neighbor) == 0) {
-                    queue.add(neighbor);
-                }
+                
+                if (inDegree.get(neighbor) != 0) continue;
+                
+                queue.add(neighbor);
             }
         }
         
         Set<String> circularDependencies = new HashSet<>();
-        for (Map.Entry<String, Integer> entry : inDegree.entrySet()) {
-            if (entry.getValue() > 0) {
+        for (Map.Entry<String, Integer> entry : inDegree.entrySet())
+            if (entry.getValue() > 0)
                 circularDependencies.add(entry.getKey());
-            }
-        }
         
         if (!missingDependencies.isEmpty())
             System.out.println("The following plugins have missing dependencies and were not loaded: " + String.join(", ", missingDependencies));

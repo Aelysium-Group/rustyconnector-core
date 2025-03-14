@@ -9,7 +9,8 @@ import java.nio.file.Path;
 public abstract class ExternalModuleBuilder<P extends Module> {
     /**
      * Runs after {@link #onStart(Path)} successfully returns an instance and is registered into the RustyConnector kernel.
-     * This is where you can link your systems into the kernel's;
+     * This method will only be run when your module is first registered to the kernel, or when the kernel is restarted.
+     * It should be used to specifically link into kernel resources on a one-off basis.
      * Example usages would be registering Lang nodes or adding events to the EventListener.
      * @param kernel The running kernel that's ready to be bound to.
      * @param instance The Particle instance that was just created.
@@ -17,8 +18,9 @@ public abstract class ExternalModuleBuilder<P extends Module> {
     public void bind(@NotNull ProxyKernel kernel, @NotNull P instance) {}
 
     /**
-     * Runs after {@link #onStart(Path)} successfully returns an instance and is registered into the RustyConnector kernel.
-     * This is where you can link your systems into the kernel's;
+     * Runs after {@link #onStart(Path)} successfully returns an instance and is registered into the RustyConnector kernel for the first time.
+     * This method will only be run when your module is first registered to the kernel, or when the kernel is restarted.
+     * It should be used to specifically link into kernel resources on a one-off basis.
      * Example usages would be registering Lang nodes or adding events to the EventListener.
      * @param kernel The running kernel that's ready to be bound to.
      * @param instance The Particle instance that was just created.
