@@ -5,10 +5,11 @@ import group.aelysium.rustyconnector.server.ServerKernel;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
+import java.util.Set;
 
 public abstract class ExternalModuleBuilder<P extends Module> {
     /**
-     * Runs after {@link #onStart(Path)} successfully returns an instance and is registered into the RustyConnector kernel.
+     * Runs after {@link #onStart(Context)} successfully returns an instance and is registered into the RustyConnector kernel.
      * This method will only be run when your module is first registered to the kernel, or when the kernel is restarted.
      * It should be used to specifically link into kernel resources on a one-off basis.
      * Example usages would be registering Lang nodes or adding events to the EventListener.
@@ -18,7 +19,7 @@ public abstract class ExternalModuleBuilder<P extends Module> {
     public void bind(@NotNull ProxyKernel kernel, @NotNull P instance) {}
 
     /**
-     * Runs after {@link #onStart(Path)} successfully returns an instance and is registered into the RustyConnector kernel for the first time.
+     * Runs after {@link #onStart(Context)} successfully returns an instance and is registered into the RustyConnector kernel for the first time.
      * This method will only be run when your module is first registered to the kernel, or when the kernel is restarted.
      * It should be used to specifically link into kernel resources on a one-off basis.
      * Example usages would be registering Lang nodes or adding events to the EventListener.
@@ -33,5 +34,15 @@ public abstract class ExternalModuleBuilder<P extends Module> {
      * @return The fully configured and running instance of your module.
      * @throws Exception If there was any issue initializing your module.
      */
-    public abstract @NotNull P onStart(@NotNull Path dataDirectory) throws Exception;
+    public abstract @NotNull P onStart(@NotNull Context context) throws Exception;
+
+    public record Context(
+        @NotNull String name,
+        @NotNull String description,
+        @NotNull Set<String> supportedEnvironments,
+        @NotNull Set<String> availableSoftDependencies,
+        @NotNull String currentEnvironment,
+        @NotNull Path dataDirectory,
+        @NotNull Path kernelDirectory
+    ) {}
 }

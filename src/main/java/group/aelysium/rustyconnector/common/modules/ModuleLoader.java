@@ -73,25 +73,38 @@ public class ModuleLoader implements AutoCloseable {
                     String lowerConfigName = config.name().toLowerCase();
                     if(this.registrars.containsKey(lowerConfigName))
                         throw new IllegalStateException("Duplicate module names '"+config.name()+"' are not allowed! Ignoring "+file.getName());
-                    
+                    List<String> softDeps = Stream.of(config.softDependencies(), config.softDependency(), config.softDepend())
+                        .filter(Objects::nonNull)
+                        .flatMap(List::stream)
+                        .distinct()
+                        .toList();
+
                     Consumer<RCKernel<?>> registerRunnable = k -> {
                         try {
-                            
-                            try {
-                                if (k instanceof ServerKernel && !config.environments.contains("server"))
-                                    RC.Error(Error.from(config.name() + " does not support server environments! " + config.name() + " only supports: " + String.join(", ", config.environments)).urgent(true));
-                                if (k instanceof ProxyKernel && !config.environments.contains("proxy"))
-                                    RC.Error(Error.from(config.name() + " does not support proxy environments! " + config.name() + " only supports: " + String.join(", ", config.environments)).urgent(true));
-                            } catch (IllegalStateException e) {
-                                System.out.println(e.getMessage());
+                            String environment = (
+                                k instanceof ServerKernel ? "server" :
+                                k instanceof ProxyKernel ? "proxy" :
+                                "other"
+                            );
+
+                            if (!config.environments.contains(environment)) {
+                                RC.Error(Error.from(config.name() + " does not support '"+environment+"' environments! " + config.name() + " only supports: " + String.join(", ", config.environments)).urgent(true));
                                 return;
                             }
-                            
+
                             Module m = k.registerModule(new Module.Builder<>(config.name(), config.description()) {
                                 @Override
                                 public Module get() {
                                     try {
-                                        return plugin.onStart(k.moduleDirectory());
+                                        return plugin.onStart(new ExternalModuleBuilder.Context(
+                                            config.name(),
+                                            config.description(),
+                                            Set.copyOf(config.environments()),
+                                            softDeps.stream().filter(ModuleLoader.this.registrars::containsKey).collect(Collectors.toSet()),
+                                            environment,
+                                            k.moduleDirectory(),
+                                            k.directory()
+                                        ));
                                     } catch (Exception e) {
                                         RC.Error(Error.from(e));
                                     }
@@ -115,11 +128,7 @@ public class ModuleLoader implements AutoCloseable {
                             .flatMap(List::stream)
                             .distinct()
                             .toList(),
-                        Stream.of(config.softDependencies(), config.softDependency(), config.softDepend())
-                            .filter(Objects::nonNull)
-                            .flatMap(List::stream)
-                            .distinct()
-                            .toList()
+                        softDeps
                     ));
                 } catch (Exception e) {
                     RC.Error(Error.from(e).whileAttempting("To register the module: "+file.getName()));
