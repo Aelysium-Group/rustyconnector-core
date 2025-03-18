@@ -106,15 +106,19 @@ public class ModuleLoader implements AutoCloseable {
                                             k.directory()
                                         ));
                                     } catch (Exception e) {
-                                        RC.Error(Error.from(e));
+                                        RC.Error(Error.from(e).whileAttempting("To register "+config.name()).urgent(true));
                                     }
                                     return null;
                                 }
                             });
                             
-                            if(k instanceof ServerKernel s) plugin.bind(s, m);
-                            if(k instanceof ProxyKernel p) plugin.bind(p, m);
-                            
+                            try {
+                                if (k instanceof ServerKernel s) plugin.bind(s, m);
+                                if (k instanceof ProxyKernel p) plugin.bind(p, m);
+                            } catch (Exception e) {
+                                RC.Error(Error.from(e).whileAttempting("To bind "+config.name()+" to the kernel.").urgent(true));
+                                k.unregisterModule(config.name());
+                            }
                         } catch (Exception e) {
                             RC.Error(Error.from(e).whileAttempting("To register the module: "+lowerConfigName));
                         }
