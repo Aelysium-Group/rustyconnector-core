@@ -1,11 +1,13 @@
 package group.aelysium.rustyconnector.proxy.player;
 
 import group.aelysium.ara.Flux;
+import group.aelysium.haze.exceptions.HazeException;
 import group.aelysium.haze.lib.DataHolder;
 import group.aelysium.haze.lib.Filter;
+import group.aelysium.haze.lib.Orderable;
 import group.aelysium.haze.lib.Type;
+import group.aelysium.haze.requests.ReadRequest;
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.cache.TimeoutCache;
 import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.haze.HazeDatabase;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
@@ -13,6 +15,7 @@ import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -21,45 +24,122 @@ import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.JoinConfiguration.newlines;
 import static net.kyori.adventure.text.format.NamedTextColor.BLUE;
 
-public class PersistentPlayerRegistry extends PlayerRegistry {
+public class PersistentPlayerRegistry implements PlayerRegistry {
     private static final String PLAYERS_TABLE = "player_uuid_username_mappings";
     
     private final ExecutorService executor = Executors.newCachedThreadPool();
-    private final TimeoutCache<String, Player> playersID;
-    private final Map<String, Player> playersUsername = new ConcurrentHashMap<>();
+    
+    private final Map<String, Player> offlineIDs = new LinkedHashMap<>(512) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry eldest) {
+            offlineUsernames.remove(((Player) eldest.getValue()).username);
+            return this.size() > 512;
+        }
+    };
+    private final Map<String, Player> offlineUsernames = new ConcurrentHashMap<>();
+    
+    private final Map<String, Player> onlineIDs = new ConcurrentHashMap<>();
+    private final Map<String, Player> onlineUsernames = new ConcurrentHashMap<>();
+    
     private final String databaseName;
     private final Flux<HazeDatabase> database;
     
     public PersistentPlayerRegistry(@NotNull String databaseName, @NotNull LiquidTimestamp cacheTimeout) throws Exception {
         this.databaseName = databaseName;
-        this.playersID = new TimeoutCache<>(cacheTimeout);
-        this.playersID.onTimeout(p -> playersUsername.remove(p.username()));
         
         this.database = RC.P.Haze().fetchDatabase(this.databaseName);
         if(this.database == null) throw new NoSuchElementException("No database exists on the haze provider with the name '"+this.databaseName+"'.");
         HazeDatabase db = this.database.get(1, TimeUnit.MINUTES);
+        
+        
+        RC.P.Adapter().onlinePlayers().forEach(p -> {
+            onlineIDs.put(p.id, p);
+            onlineUsernames.put(p.username, p);
+        });
+        
         
         if(db.doesDataHolderExist(PLAYERS_TABLE)) return;
         
         DataHolder table = new DataHolder(PLAYERS_TABLE);
         Map<String, Type> columns = Map.of(
             "id", Type.STRING(36).nullable(false).primaryKey(true),
-            "username", Type.STRING(64).nullable(false).unique(true)
+            "username", Type.STRING(64).nullable(false).unique(true),
+            "last_online", Type.DATETIME().nullable(false)
         );
         columns.forEach(table::addKey);
         db.createDataHolder(table);
+        
+        try {
+            ReadRequest sp = db.newReadRequest(PLAYERS_TABLE);
+            
+            sp.orderBy("list_online", Orderable.Ordering.DESCENDING);
+            sp.limit(512);
+            
+            sp.execute(PlayerDTO.class).forEach(e->{
+                Player player = new Player(e.id, e.username);
+                
+                this.cache(player);
+            });
+        } catch (Exception e) {
+            RC.Error(Error.from(e).whileAttempting("To fill the internal database cache with recently logged-in players."));
+        }
     }
 
-    public void add(@NotNull Player player) {
-        this.playersUsername.put(player.username(), player);
-        this.playersID.put(player.id(), player);
+    public void signedIn(@NotNull Player player) {
+        if(this.onlineIDs.containsKey(player.id) || this.offlineIDs.containsKey(player.id)) return;
         
         this.executor.execute(()->{
             try {
-                HazeDatabase db = this.database.get(10, TimeUnit.SECONDS);
+                HazeDatabase db = this.database.get(5, TimeUnit.SECONDS);
                 db.newUpsertRequest(PLAYERS_TABLE)
                     .parameter("id", player.id)
                     .parameter("username", player.username)
+                    .parameter("last_online", LocalDateTime.now())
+                    .withFilter(Filter.by("id", new Filter.Value(player.id, Filter.Qualifier.EQUALS)))
+                    .execute();
+            } catch (Exception e) {
+                RC.Error(
+                    Error.from(e)
+                        .whileAttempting("to upsert a player into the Haze provider.")
+                        .detail("Player ID", player.id)
+                        .detail("Username", player.username)
+                );
+            }
+        });
+        this.cache(player);
+    }
+    
+    public void cache(@NotNull Player player) {
+        if(player.online()) {
+            this.onlineIDs.put(player.id, player);
+            this.onlineUsernames.put(player.username, player);
+            
+            this.offlineIDs.remove(player.id);
+            this.offlineUsernames.remove(player.username);
+            return;
+        }
+        
+        this.offlineIDs.put(player.id, player);
+        this.offlineUsernames.put(player.username, player);
+        
+        this.onlineIDs.remove(player.id);
+        this.onlineUsernames.remove(player.username);
+    }
+    
+    @Override
+    public void signedOut(@NotNull Player player) {
+        this.onlineIDs.remove(player.id);
+        this.onlineUsernames.remove(player.username);
+        this.offlineIDs.remove(player.id);
+        this.offlineUsernames.remove(player.username);
+        
+        this.executor.execute(()->{
+            try {
+                HazeDatabase db = this.database.get(5, TimeUnit.SECONDS);
+                db.newUpsertRequest(PLAYERS_TABLE)
+                    .parameter("id", player.id)
+                    .parameter("username", player.username)
+                    .parameter("last_online", LocalDateTime.now())
                     .withFilter(Filter.by("id", new Filter.Value(player.id, Filter.Qualifier.EQUALS)))
                     .execute();
             } catch (Exception e) {
@@ -75,10 +155,10 @@ public class PersistentPlayerRegistry extends PlayerRegistry {
 
     @Override
     public Optional<Player> fetchByID(@NotNull String id) {
-        Player found = this.playersID.get(id);
+        Player found = Optional.ofNullable(this.onlineIDs.get(id)).orElse(this.offlineIDs.get(id));
         if(found == null) {
             try {
-                HazeDatabase db = this.database.get(10, TimeUnit.SECONDS);
+                HazeDatabase db = this.database.get(5, TimeUnit.SECONDS);
                 Set<Player> result = db.newReadRequest(PLAYERS_TABLE)
                     .withFilter(Filter.by("id", new Filter.Value(id, Filter.Qualifier.EQUALS)))
                     .limit(1)
@@ -88,24 +168,23 @@ public class PersistentPlayerRegistry extends PlayerRegistry {
                 
                 if(found == null) return Optional.empty();
                 
-                this.playersID.put(found.id, found);
-                this.playersUsername.put(found.username, found);
-            } catch (Exception e) {
+                this.cache(found);
+            } catch (HazeException e) {
                 RC.Error(
                     Error.from(e)
                         .whileAttempting("to fetch the player's data from the Haze provider.")
                         .detail("Player ID", id)
                 );
-            }
-        } else this.playersID.refresh(id);
+            } catch (Exception ignore) {}
+        }
         return Optional.ofNullable(found);
     }
     @Override
     public Optional<Player> fetchByUsername(@NotNull String username) {
-        Player found = this.playersUsername.get(username);
+        Player found = Optional.ofNullable(this.onlineUsernames.get(username)).orElse(this.offlineUsernames.get(username));
         if(found == null) {
             try {
-                HazeDatabase db = this.database.get(10, TimeUnit.SECONDS);
+                HazeDatabase db = this.database.get(5, TimeUnit.SECONDS);
                 Set<Player> result = db.newReadRequest(PLAYERS_TABLE)
                     .withFilter(Filter.by("username", new Filter.Value(username, Filter.Qualifier.EQUALS)))
                     .limit(1)
@@ -115,52 +194,49 @@ public class PersistentPlayerRegistry extends PlayerRegistry {
                 
                 if(found == null) return Optional.empty();
                 
-                this.playersID.put(found.id, found);
-                this.playersUsername.put(found.username, found);
-            } catch (Exception e) {
+                this.cache(found);
+            } catch (HazeException e) {
                 RC.Error(
                     Error.from(e)
                         .whileAttempting("to fetch the player's data from the Haze provider.")
                         .detail("Username", username)
                 );
-            }
-        } else this.playersID.refresh(found.id);
+            } catch (Exception ignore) {}
+        }
         return Optional.ofNullable(found);
     }
-
-    /**
-     * Removes a player.
-     * This method only removes the player from the cache.
-     * If you intend to delete the player from the persistent storage, you'll have to do that manually.
-     * @param player The player to remove.
-     */
+    
     @Override
-    public void remove(@NotNull Player player) {
-        this.playersUsername.remove(player.username());
-        this.playersID.remove(player.id());
+    public @NotNull Set<Player> onlinePlayers() {
+        return Set.copyOf(this.onlineIDs.values());
     }
-
-    public List<Player> dump() {
-        return new ArrayList<>(this.playersUsername.values());
-    }
-
+    
     @Override
     public void close() {
-        this.playersID.clear();
-        this.playersUsername.clear();
-        // Database instance is managed by HazeProvider. Not us.
         this.executor.close();
+        
+        this.offlineIDs.clear();
+        this.offlineUsernames.clear();
+        
+        this.onlineIDs.clear();
+        this.onlineUsernames.clear();
     }
 
     @Override
     public @Nullable Component details() {
         return join(
                 newlines(),
-                RC.Lang("rustyconnector-keyValue").generate("Total Players", this.playersID.size()),
+                RC.Lang("rustyconnector-keyValue").generate("Online Players", this.onlineIDs.size()),
                         RC.Lang("rustyconnector-keyValue").generate("Players", text(
-                        String.join(", ", this.playersUsername.keySet().stream().toList()),
+                        String.join(", ", this.onlineUsernames.keySet().stream().toList()),
                         BLUE
                 ))
         );
     }
+    
+    private record PlayerDTO(
+        String id,
+        String username,
+        LocalDateTime last_online
+    ) {}
 }

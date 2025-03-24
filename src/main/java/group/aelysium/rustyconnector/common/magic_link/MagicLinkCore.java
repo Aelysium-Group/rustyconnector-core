@@ -7,6 +7,7 @@ import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.modules.Module;
 import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
 import group.aelysium.rustyconnector.common.cache.TimeoutCache;
+import group.aelysium.rustyconnector.common.util.Parameter;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 import group.aelysium.rustyconnector.common.crypt.AES;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
@@ -14,7 +15,9 @@ import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -49,7 +52,7 @@ public abstract class MagicLinkCore implements Module {
             if(!method.isAnnotationPresent(PacketListener.class)) continue;
             PacketListener annotation = method.getAnnotation(PacketListener.class);
             try {
-                Parameter firstParameter = method.getParameters()[0];
+                java.lang.reflect.Parameter firstParameter = method.getParameters()[0];
 
                 if(!annotation.value().equals(firstParameter.getType()))
                     throw new NoSuchMethodException("Methods annotated with @PacketListener must contain a single parameter of the same class type as defined on @PacketListener. Expected "+annotation.value().getName()+" but got "+firstParameter.getType().getName());

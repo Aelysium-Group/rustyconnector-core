@@ -35,13 +35,14 @@ public abstract class Family extends ModuleCollection<Module> implements Metadat
             @NotNull String id,
             @Nullable String displayName,
             @Nullable String parent,
-            @NotNull Map<String, ?> metadata
+            @NotNull Map<String, Object> metadata
     ) {
         if(id.length() > 16) throw new IllegalArgumentException("Family names must be no longer than 16 characters. If you want a longer name for the family, use display name.");
         if(id.isBlank()) throw new IllegalArgumentException("Please provide a valid family name.");
         this.id = id;
         this.displayName = displayName;
         this.parent = parent;
+        this.metadata.putAll(metadata);
     }
 
     public boolean storeMetadata(String propertyName, Object property) {

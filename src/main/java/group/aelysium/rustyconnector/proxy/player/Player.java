@@ -1,7 +1,5 @@
 package group.aelysium.rustyconnector.proxy.player;
 
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonSerializer;
 import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
@@ -13,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
@@ -91,7 +88,12 @@ public class Player {
     public String toString() {
         return "<Player id="+this.id+" username="+this.username+">";
     }
-
+    
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
+    
     public interface Connectable {
         /**
          * Connects the player to the specified resource.

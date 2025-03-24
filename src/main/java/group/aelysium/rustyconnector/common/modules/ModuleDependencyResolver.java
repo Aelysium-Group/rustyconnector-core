@@ -5,7 +5,7 @@ import java.util.*;
 public class ModuleDependencyResolver {
     public static List<String> sortPlugins(Set<ModuleLoader.ModuleRegistrar> moduleRegistrars) throws IllegalArgumentException {
         Map<String, ModuleLoader.ModuleRegistrar> configs = new HashMap<>();
-        moduleRegistrars.forEach(t->configs.put(t.name(), t));
+        moduleRegistrars.forEach(t->configs.put(t.name().toLowerCase(), t));
         Map<String, Integer> inDegree = new HashMap<>();
         Map<String, List<String>> graph = new HashMap<>();
         

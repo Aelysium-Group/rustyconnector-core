@@ -19,6 +19,7 @@ import java.util.concurrent.TimeoutException;
 
 import static net.kyori.adventure.text.Component.*;
 import static net.kyori.adventure.text.JoinConfiguration.newlines;
+import static net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY;
 
 public class ProxyKernel extends RCKernel<ProxyAdapter> {
     public ProxyKernel(
@@ -100,15 +101,26 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
     public @Nullable Component details() {
         int families = RC.P.Families().size();
         int servers = RC.P.Servers().size();
-        int players = RC.P.Players().dump().size();
+        int players = RC.P.Players().onlinePlayers().size();
 
         return join(
-                newlines(),
-                RC.Lang("rustyconnector-keyValue").generate("ID", this.id()),
-                RC.Lang("rustyconnector-keyValue").generate("Modules Installed", this.modules.size()),
-                RC.Lang("rustyconnector-keyValue").generate("Family", families),
-                RC.Lang("rustyconnector-keyValue").generate("Servers", servers),
-                RC.Lang("rustyconnector-keyValue").generate("Online Players", players)
+            newlines(),
+            RC.Lang("rustyconnector-keyValue").generate("ID", this.id()),
+            RC.Lang("rustyconnector-keyValue").generate("Modules Installed", this.modules.size()),
+            RC.Lang("rustyconnector-keyValue").generate("Family", families),
+            RC.Lang("rustyconnector-keyValue").generate("Servers", servers),
+            RC.Lang("rustyconnector-keyValue").generate("Online Players", players),
+            space(),
+            text("Extra Properties:", DARK_GRAY),
+            (
+                this.metadata().isEmpty() ?
+                    text("There are no properties to show.", DARK_GRAY)
+                    :
+                    join(
+                        newlines(),
+                        this.metadata().entrySet().stream().map(e -> RC.Lang("rustyconnector-keyValue").generate(e.getKey(), e.getValue())).toList()
+                    )
+            )
         );
     }
 

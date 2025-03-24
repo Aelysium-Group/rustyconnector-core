@@ -12,8 +12,8 @@ public class ServerLockListener {
     @PacketListener(Server.Packets.Lock.class)
     public PacketListener.Response handle(Server.Packets.Lock packet) {
         try {
-            Server server = RC.P.Server(packet.local().id())
-                    .orElseThrow(()->new NoSuchElementException("No server with the id "+packet.local().id()+" exists."));
+            Server server = RC.P.Server(packet.local().namespace())
+                    .orElseThrow(()->new NoSuchElementException("No server with the id "+packet.local().namespace()+" exists."));
 
             boolean success = server.lock();
 

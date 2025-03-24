@@ -8,6 +8,7 @@ import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
 import group.aelysium.rustyconnector.common.magic_link.PacketCache;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
+import group.aelysium.rustyconnector.common.util.Parameter;
 import group.aelysium.rustyconnector.common.util.URL;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 import group.aelysium.rustyconnector.server.ServerKernel;
@@ -96,7 +97,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                 websocketEndpoint = aes.decrypt(object.get("endpoint").getAsString());
                 bearer[0] = aes.decrypt(object.get("token").getAsString());
                 bearer[1] = object.get("signature").getAsString();
-                bearer[2] = this.self.id(); // Including the id in the bearer as well as "X-Server-Identification" is intentional.
+                bearer[2] = this.self.namespace(); // Including the id in the bearer as well as "X-Server-Identification" is intentional.
             }
 
             Map<String, String> headers = Map.of(
@@ -189,14 +190,14 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
             ServerKernel kernel = RC.S.Kernel();
             
             JsonObject metadata = new JsonObject();
-            kernel.parameterizedMetadata().forEach((k, v) -> metadata.add(k, v.toJSON()));
+            kernel.metadata().forEach((k, v) -> metadata.add(k, v.toJSON()));
             
             packetBuilder = Packet.New()
                 .identification(Packet.Type.from("RC", "P"))
                 .parameter(MagicLinkCore.Packets.Ping.Parameters.TARGET_FAMILY, kernel.targetFamily())
                 .parameter(MagicLinkCore.Packets.Ping.Parameters.ADDRESS, kernel.address().getHostName() + ":" + kernel.address().getPort())
-                .parameter(MagicLinkCore.Packets.Ping.Parameters.METADATA, new Packet.Parameter(metadata))
-                .parameter(MagicLinkCore.Packets.Ping.Parameters.PLAYER_COUNT, new Packet.Parameter(kernel.playerCount())
+                .parameter(MagicLinkCore.Packets.Ping.Parameters.METADATA, new Parameter(metadata))
+                .parameter(MagicLinkCore.Packets.Ping.Parameters.PLAYER_COUNT, new Parameter(kernel.playerCount())
                 );
         } catch (WebsocketNotConnectedException ignore) {
             return; // Theoretically the websocket disconnect should be getting handled elsewhere

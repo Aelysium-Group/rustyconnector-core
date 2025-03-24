@@ -5,6 +5,7 @@ import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.common.RCKernel;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
+import group.aelysium.rustyconnector.common.util.Parameter;
 import group.aelysium.rustyconnector.proxy.util.AddressUtil;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
@@ -24,10 +25,6 @@ import static net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY;
 public class ServerKernel extends RCKernel<ServerAdapter> {
     private final String targetFamily;
     private final InetSocketAddress address;
-    private final Map<String, Packet.Parameter> metadata = new ConcurrentHashMap<>(Map.of(
-            "softCap", new Packet.Parameter(30),
-            "hardCap", new Packet.Parameter(40)
-    ));
 
     public ServerKernel(
             @NotNull String id,
@@ -35,67 +32,19 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
             @NotNull Path directory,
             @NotNull Path modulesDirectory,
             @NotNull InetSocketAddress address,
-            @NotNull String targetFamily,
-            @NotNull Map<String, Packet.Parameter> metadata
+            @NotNull String targetFamily
     ) throws Exception {
         super(id, adapter, directory, modulesDirectory);
         this.address = address;
         this.targetFamily = targetFamily;
-        this.metadata.putAll(metadata);
     }
-
-    /**
-     * Stores metadata in the Server.
-     * @param propertyName The name of the metadata to store.
-     * @param property The metadata to store.
-     * @return `true` if the metadata could be stored. `false` if the name of the metadata is already in use.
-     */
-    public boolean metadata(String propertyName, Packet.Parameter property) {
-        if(this.metadata.containsKey(propertyName)) return false;
-        this.metadata.put(propertyName, property);
-        return true;
-    }
-
-    /**
-     * Fetches metadata from the server.
-     * @param propertyName The name of the metadata to fetch.
-     * @return An optional containing the metadata, or an empty metadata if no metadata could be found.
-     * @param <T> The type of the metadata that's being fetched.
-     */
-    public <T> Optional<T> metadata(String propertyName) {
-        return Optional.ofNullable((T) this.metadata.get(propertyName));
-    }
-
-    /**
-     * Removes metadata from the server.
-     * @param propertyName The name of the metadata to remove.
-     */
-    public void dropMetadata(String propertyName) {
-        this.metadata.remove(propertyName);
-    }
-
-    /**
-     * @return A map containing all of this server's metadata.
-     */
-    public Map<String, Object> metadata() {
-        Map<String, Object> reduced = new HashMap<>();
-        this.metadata.forEach((k, v)->reduced.put(k, v.getOriginalValue()));
-        return Collections.unmodifiableMap(reduced);
-    }
-
-    /**
-     * @return A map containing all of this server's metadata.
-     */
-    public Map<String, Packet.Parameter> parameterizedMetadata() {
-        return Collections.unmodifiableMap(this.metadata);
-    }
-
+    
     /**
      * The display name of this Server.
      */
     public @Nullable String displayName() {
         try {
-            return this.metadata.get("displayName").getAsString();
+            return this.fetchMetadata("displayName").orElseThrow().toString();
         } catch(Exception ignore) {}
         return null;
     }
@@ -197,23 +146,23 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
     @Override
     public @Nullable Component details() {
         return join(
-                newlines(),
-                RC.Lang("rustyconnector-keyValue").generate("ID", this.id()),
-                RC.Lang("rustyconnector-keyValue").generate("Modules Installed", this.modules.size()),
-                RC.Lang("rustyconnector-keyValue").generate("Address", AddressUtil.addressToString(this.address())),
-                RC.Lang("rustyconnector-keyValue").generate("Family", this.targetFamily()),
-                RC.Lang("rustyconnector-keyValue").generate("Online Players", this.playerCount()),
-                empty(),
-                text("Extra Properties:", DARK_GRAY),
-                (
-                        this.metadata().isEmpty() ?
-                                text("There is no metadata to show.", DARK_GRAY)
-                                :
-                                join(
-                                        newlines(),
-                                        this.metadata().entrySet().stream().map(e -> RC.Lang("rustyconnector-keyValue").generate(e.getKey(), e.getValue())).toList()
-                                )
-                )
+            newlines(),
+            RC.Lang("rustyconnector-keyValue").generate("ID", this.id()),
+            RC.Lang("rustyconnector-keyValue").generate("Modules Installed", this.modules.size()),
+            RC.Lang("rustyconnector-keyValue").generate("Address", AddressUtil.addressToString(this.address())),
+            RC.Lang("rustyconnector-keyValue").generate("Family", this.targetFamily()),
+            RC.Lang("rustyconnector-keyValue").generate("Online Players", this.playerCount()),
+            empty(),
+            text("Extra Properties:", DARK_GRAY),
+            (
+                this.metadata().isEmpty() ?
+                    text("There is no metadata to show.", DARK_GRAY)
+                    :
+                    join(
+                        newlines(),
+                        this.metadata().entrySet().stream().map(e -> RC.Lang("rustyconnector-keyValue").generate(e.getKey(), e.getValue())).toList()
+                    )
+            )
         );
     }
 }

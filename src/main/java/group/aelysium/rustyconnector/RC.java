@@ -11,6 +11,7 @@ import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.lang.LangNode;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.modules.Module;
+import group.aelysium.rustyconnector.proxy.player.PlayerRegistry;
 import group.aelysium.rustyconnector.server.ServerAdapter;
 import group.aelysium.rustyconnector.server.ServerKernel;
 import group.aelysium.rustyconnector.proxy.ProxyAdapter;
@@ -20,7 +21,7 @@ import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.player.Player;
 import group.aelysium.rustyconnector.common.lang.LangLibrary;
-import group.aelysium.rustyconnector.proxy.player.PlayerRegistry;
+import group.aelysium.rustyconnector.proxy.player.OnlinePlayersRegistry;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -178,7 +179,7 @@ public interface RC {
     static void Error(@NotNull Error error) throws NoSuchElementException {
         try {
             RC.Errors().register(error);
-        } catch (Exception e) {
+        } catch (Exception ignore) {
             if(error.throwable() != null) {
                 error.throwable().printStackTrace();
                 return;

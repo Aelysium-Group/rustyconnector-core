@@ -124,8 +124,8 @@ public class ScalarFamily extends Family {
         if(this.unlockedServers().isEmpty()) return Player.Connection.Request.failedRequest(player, "Unable to connect you to your server. Please try again later.");
 
         try {
-            FamilyPreJoinEvent event = new FamilyPreJoinEvent(RC.P.Families().find(this.id).orElseThrow(), player, power);
-            boolean canceled = RC.P.EventManager().fireEvent(event).get(1, TimeUnit.MINUTES);
+            FamilyPreJoinEvent event = new FamilyPreJoinEvent(this, player, power);
+            boolean canceled = RC.P.EventManager().fireEvent(event).get(10, TimeUnit.SECONDS);
             if(canceled) return Player.Connection.Request.failedRequest(player, event.canceledMessage());
         } catch (Exception ignore) {}
 

@@ -1,10 +1,9 @@
 package group.aelysium.rustyconnector.common;
 
+import group.aelysium.rustyconnector.common.util.CommandClient;
 import net.kyori.adventure.text.Component;
 import org.incendo.cloud.CommandManager;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.UUID;
 
 public abstract class RCAdapter {
     /**
@@ -19,5 +18,5 @@ public abstract class RCAdapter {
      */
     public abstract void messagePlayer(@NotNull String playerID, @NotNull Component component);
     
-    public abstract <T> CommandManager<T> commandManager();
+    public abstract CommandManager<CommandClient> commandManager();
 }

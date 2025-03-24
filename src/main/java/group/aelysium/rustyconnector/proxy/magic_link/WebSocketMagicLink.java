@@ -106,7 +106,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
                 String token = split[0].split("-")[1];
                 String signature = split[1];
 
-                if (!identification.id().equals(split[2])) throw new UnauthorizedResponse("Invalid identification.");
+                if (!identification.namespace().equals(split[2])) throw new UnauthorizedResponse("Invalid identification.");
                 if (!SHA256.hash(timestamp + "-" + token).equals(signature)) throw new UnauthorizedResponse("Invalid token.");
 
                 Instant time = Instant.ofEpochSecond(timestamp);

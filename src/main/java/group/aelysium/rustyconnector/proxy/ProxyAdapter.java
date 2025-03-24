@@ -7,17 +7,15 @@ import group.aelysium.rustyconnector.proxy.events.*;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
-import group.aelysium.rustyconnector.proxy.family.scalar_family.ScalarFamily;
 import group.aelysium.rustyconnector.proxy.player.Player;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static net.kyori.adventure.text.Component.text;
@@ -27,6 +25,11 @@ import static net.kyori.adventure.text.Component.text;
  * can properly execute them regardless of disparate data types between the wrapper and RustyConnector.
  */
 public abstract class ProxyAdapter extends RCAdapter {
+    /**
+     * @return A set containing all players that are currently online.
+     */
+    public abstract @NotNull Set<Player> onlinePlayers();
+    
     /**
      * Converts the RustyConnector player object to the Proxy's version.
      * @param player The RustyConnector player.
@@ -152,12 +155,12 @@ public abstract class ProxyAdapter extends RCAdapter {
      */
     public final @NotNull Player.Connection.Request onInitialConnect(@NotNull Player player, @NotNull Function<Server, Player.Connection.Request> finalizeConnection) throws RuntimeException {
         try {
-            RC.P.Players().add(player);
+            RC.P.Players().signedIn(player);
         } catch (Exception ignore) {}
-
+        
         try {
             NetworkPreJoinEvent event = new NetworkPreJoinEvent(player);
-            boolean canceled = RC.P.EventManager().fireEvent(event).get(1, TimeUnit.MINUTES);
+            boolean canceled = RC.P.EventManager().fireEvent(event).get(10, TimeUnit.SECONDS);
             if (canceled) return Player.Connection.Request.failedRequest(player, event.canceledMessage());
         } catch (Exception ignore) {}
 
@@ -166,9 +169,21 @@ public abstract class ProxyAdapter extends RCAdapter {
             if(family == null)
                 return Player.Connection.Request.failedRequest(player, "There are no available servers for you to connect to right now.");
             
+            try {
+                FamilyPreJoinEvent event = new FamilyPreJoinEvent(family, player, Player.Connection.Power.MINIMAL);
+                boolean canceled = RC.P.EventManager().fireEvent(event).get(10, TimeUnit.SECONDS);
+                if (canceled) return Player.Connection.Request.failedRequest(player, event.canceledMessage());
+            } catch (Exception ignore) {}
+            
             Server server = family.availableServer().orElse(null);
             if(server == null)
                 return Player.Connection.Request.failedRequest(player, "There are no available servers for you to connect to right now.");
+            
+            try {
+                ServerPreJoinEvent event = new ServerPreJoinEvent(server, player, Player.Connection.Power.MINIMAL);
+                boolean canceled = RC.P.EventManager().fireEvent(event).get(10, TimeUnit.SECONDS);
+                if (canceled) return Player.Connection.Request.failedRequest(player, event.canceledMessage());
+            } catch (Exception ignore) {}
             
             return finalizeConnection.apply(server);
         } catch (Exception e) {
@@ -178,11 +193,11 @@ public abstract class ProxyAdapter extends RCAdapter {
     }
 
     public final void onDisconnect(@NotNull Player player) {
-        RC.P.EventManager().fireEvent(new NetworkLeaveEvent(player));
-
         try {
-            RC.P.Players().remove(player);
+            RC.P.Players().signedOut(player);
         } catch (Exception ignore) {}
+        
+        RC.P.EventManager().fireEvent(new NetworkLeaveEvent(player));
 
         Server server = player.server().orElse(null);
         if(server == null) return;

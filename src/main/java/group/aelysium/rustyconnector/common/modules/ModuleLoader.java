@@ -73,11 +73,19 @@ public class ModuleLoader implements AutoCloseable {
                     String lowerConfigName = config.name().toLowerCase();
                     if(this.registrars.containsKey(lowerConfigName))
                         throw new IllegalStateException("Duplicate module names '"+config.name()+"' are not allowed! Ignoring "+file.getName());
-                    List<String> softDeps = Stream.of(config.softDependencies(), config.softDependency(), config.softDepend())
+                    List<String> softDeps = new ArrayList<>(Stream.of(config.softDependencies(), config.softDependency(), config.softDepend())
+                        .filter(Objects::nonNull)
+                        .flatMap(List::stream)
+                        .distinct()
+                        .toList());
+                    List<String> deps = Stream.of(config.dependencies(), config.dependency(), config.depend())
                         .filter(Objects::nonNull)
                         .flatMap(List::stream)
                         .distinct()
                         .toList();
+                    
+                    // If there are no dependencies defined, mark the module to load after MagicLink, which loads last in the module chain.
+                    if(softDeps.isEmpty() && deps.isEmpty()) softDeps.add("MagicLink");
 
                     Consumer<RCKernel<?>> registerRunnable = k -> {
                         try {
@@ -127,11 +135,7 @@ public class ModuleLoader implements AutoCloseable {
                     this.registrars.put(lowerConfigName, new ModuleRegistrar(
                         lowerConfigName,
                         registerRunnable,
-                        Stream.of(config.dependencies(), config.dependency(), config.depend())
-                            .filter(Objects::nonNull)
-                            .flatMap(List::stream)
-                            .distinct()
-                            .toList(),
+                        deps,
                         softDeps
                     ));
                 } catch (Exception e) {
@@ -148,25 +152,25 @@ public class ModuleLoader implements AutoCloseable {
     }
     
     public void queue(ModuleRegistrar registrar) {
-        this.registrars.put(registrar.name, registrar);
+        this.registrars.put(registrar.name.toLowerCase(), registrar);
     }
     
     /**
      * Resolves the dependencies of all modules and registers them to the kernel.
      * Once this has run, all queued registrars will be dequeued.
      */
-    public void resolveAndRegister(Flux<? extends RCKernel<?>> flux) {
+    public void resolveAndRegister(RCKernel<?> kernel) {
         List<String> order = ModuleDependencyResolver.sortPlugins(Set.copyOf(this.registrars.values()));
         
-        flux.onStart(k->order.forEach(o -> {
+        order.forEach(o -> {
             System.out.println("Loading "+o);
             try {
-                ModuleRegistrar registrar = this.registrars.get(o);
-                registrar.register.accept(k);
+                ModuleRegistrar registrar = this.registrars.get(o.toLowerCase());
+                registrar.register().accept(kernel);
             } catch (Exception e) {
                 RC.Error(Error.from(e).whileAttempting("To register the module `"+o+"`"));
             }
-        }));
+        });
         
         this.registrars.clear();
     }

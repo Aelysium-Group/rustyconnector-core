@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -17,7 +18,7 @@ public class TimeoutCache<K, V> implements Closure, Map<K, V> {
     private final Map<K, TimedValue<V>> map = new ConcurrentHashMap<>();
     private final List<Consumer<V>> onTimeout = new Vector<>();
     private final LiquidTimestamp expiration;
-    private boolean shutdown = false;
+    private final AtomicBoolean shutdown = new AtomicBoolean(false);
 
     public TimeoutCache(LiquidTimestamp expiration) {
         this.expiration = expiration;
@@ -29,6 +30,8 @@ public class TimeoutCache<K, V> implements Closure, Map<K, V> {
     }
 
     private void evaluateThenRunAgain() {
+        if(shutdown.get()) return;
+        
         long now = Instant.now().getEpochSecond();
         this.map.entrySet().removeIf(entry -> {
             boolean shouldRemove = entry.getValue().expiration() < now;
@@ -36,7 +39,7 @@ public class TimeoutCache<K, V> implements Closure, Map<K, V> {
             return shouldRemove;
         });
 
-        if(shutdown) return;
+        if(shutdown.get()) return;
         this.clock.schedule(this::evaluateThenRunAgain, this.expiration.value(), this.expiration.unit());
     }
 
@@ -46,8 +49,9 @@ public class TimeoutCache<K, V> implements Closure, Map<K, V> {
 
     @Override
     public void close() {
-        this.shutdown = true;
+        this.shutdown.set(true);
         this.onTimeout.clear();
+        this.map.clear();
         this.clock.shutdownNow();
     }
 
