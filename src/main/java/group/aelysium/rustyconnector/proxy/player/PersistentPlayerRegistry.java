@@ -95,7 +95,7 @@ public class PersistentPlayerRegistry implements PlayerRegistry {
                     .parameter("id", player.id)
                     .parameter("username", player.username)
                     .parameter("last_online", LocalDateTime.now())
-                    .withFilter(Filter.by("id", new Filter.Value(player.id, Filter.Qualifier.EQUALS)))
+                    .withFilter(Filter.by("id", player.id, Filter.EQUALS))
                     .execute();
             } catch (Exception e) {
                 RC.Error(
@@ -140,7 +140,7 @@ public class PersistentPlayerRegistry implements PlayerRegistry {
                     .parameter("id", player.id)
                     .parameter("username", player.username)
                     .parameter("last_online", LocalDateTime.now())
-                    .withFilter(Filter.by("id", new Filter.Value(player.id, Filter.Qualifier.EQUALS)))
+                    .withFilter(Filter.by("id", player.id, Filter.EQUALS))
                     .execute();
             } catch (Exception e) {
                 RC.Error(
@@ -160,7 +160,7 @@ public class PersistentPlayerRegistry implements PlayerRegistry {
             try {
                 HazeDatabase db = this.database.get(5, TimeUnit.SECONDS);
                 Set<Player> result = db.newReadRequest(PLAYERS_TABLE)
-                    .withFilter(Filter.by("id", new Filter.Value(id, Filter.Qualifier.EQUALS)))
+                    .withFilter(Filter.by("id", id, Filter.EQUALS))
                     .limit(1)
                     .execute(Player.class);
                 
@@ -186,7 +186,7 @@ public class PersistentPlayerRegistry implements PlayerRegistry {
             try {
                 HazeDatabase db = this.database.get(5, TimeUnit.SECONDS);
                 Set<Player> result = db.newReadRequest(PLAYERS_TABLE)
-                    .withFilter(Filter.by("username", new Filter.Value(username, Filter.Qualifier.EQUALS)))
+                    .withFilter(Filter.by("username", username, Filter.EQUALS))
                     .limit(1)
                     .execute(Player.class);
                 

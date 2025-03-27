@@ -1,15 +1,23 @@
 package group.aelysium.rustyconnector.common.haze;
 
 import group.aelysium.ara.Flux;
+import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.modules.ModuleCollection;
 import group.aelysium.rustyconnector.common.modules.ModuleHolder;
 import group.aelysium.rustyconnector.common.modules.Module;
+import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public abstract class HazeProvider implements Module, ModuleHolder<HazeDatabase> {
+import static net.kyori.adventure.text.Component.join;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.JoinConfiguration.newlines;
+import static net.kyori.adventure.text.format.NamedTextColor.DARK_BLUE;
+import static net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY;
+
+public class HazeProvider implements Module, ModuleHolder<HazeDatabase> {
     protected ModuleCollection<HazeDatabase> databases = new ModuleCollection<>();
 
     /**
@@ -51,5 +59,22 @@ public abstract class HazeProvider implements Module, ModuleHolder<HazeDatabase>
     @Override
     public void close() throws Exception {
         this.databases.close();
+    }
+
+    @Override
+    public @Nullable Component details() {
+        return join(
+                newlines(),
+                RC.Lang("rustyconnector-keyValue").generate("Available Databases", this.databases.size()),
+                RC.Lang("rustyconnector-keyValue").generate("Databases",
+                    this.databases.isEmpty() ?
+                        text("There are no registered databases.", DARK_GRAY)
+                        :
+                        text(
+                            String.join(", ", this.databases.modules().keySet().stream().toList()),
+                            DARK_BLUE
+                        )
+                )
+        );
     }
 }

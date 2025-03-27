@@ -41,7 +41,7 @@ dependencies {
     compileOnly "org.incendo:cloud-annotations:2.0.0"
 
     shadow "group.aelysium:ara:2.0.5"
-    shadow "group.aelysium:haze:0.0.13"
+    shadow "group.aelysium:haze:0.0.20"
     shadow "group.aelysium:declarative-yaml:0.2.0"
 
     shadow 'com.aventrix.jnanoid:jnanoid:2.0.0'
