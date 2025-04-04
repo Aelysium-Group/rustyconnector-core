@@ -37,6 +37,7 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
         super(id, adapter, directory, modulesDirectory);
         this.address = address;
         this.targetFamily = targetFamily;
+        this.storeMetadata("serverGenerator", Parameter.fromUnknown("default"));
     }
     
     /**

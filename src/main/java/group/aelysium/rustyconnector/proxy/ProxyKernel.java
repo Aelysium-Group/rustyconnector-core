@@ -6,6 +6,7 @@ import group.aelysium.rustyconnector.common.RCKernel;
 import group.aelysium.rustyconnector.proxy.events.ServerRegisterEvent;
 import group.aelysium.rustyconnector.proxy.events.ServerUnregisterEvent;
 import group.aelysium.rustyconnector.proxy.family.Family;
+import group.aelysium.rustyconnector.proxy.family.FamilyRegistry;
 import group.aelysium.rustyconnector.proxy.family.Server;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,20 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
      * @throws NoSuchElementException If the provided family flux doesn't resolve within a few seconds.
      */
     public @NotNull Server registerServer(@NotNull Flux<Family> familyFlux, @NotNull Server.Configuration configuration) throws CancellationException, NoSuchElementException, IllegalStateException {
-        Server server = Server.generateServer(configuration);
+        FamilyRegistry familyRegistry = RC.P.Families();
+        Server server;
+        try {
+            server = familyRegistry.ServerGenerators()
+                    .fetch(configuration.metadata().get("serverGenerator").toString())
+                    .apply(configuration);
+        } catch (NullPointerException ignore) {
+            server = new Server(
+                    configuration.id(),
+                    configuration.address(),
+                    configuration.metadata(),
+                    configuration.timeout()
+            );
+        }
         
         Family family = null;
         try {

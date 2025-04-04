@@ -22,7 +22,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public final class Server implements MetadataHolder<Object>, ISortable, Player.Connectable {
+public class Server implements MetadataHolder<Object>, ISortable, Player.Connectable {
     private final Map<String, Object> metadata = new ConcurrentHashMap<>(Map.of(
             "softCap", 30,
             "hardCap", 40
@@ -315,15 +315,6 @@ public final class Server implements MetadataHolder<Object>, ISortable, Player.C
         return Objects.equals(id, server.id());
     }
 
-    public static @NotNull Server generateServer(Configuration configuration) {
-        return new Server(
-            configuration.id,
-            configuration.address,
-            configuration.metadata,
-            configuration.timeout
-        );
-    }
-
     /**
      * Responsible for holding multiple servers.
      */
@@ -425,9 +416,9 @@ public final class Server implements MetadataHolder<Object>, ISortable, Player.C
      * @param timeout The number of seconds that this server needs to refresh or else it'll timeout.
      */
     public record Configuration(
-            @NotNull String id,
-            @NotNull InetSocketAddress address,
-            @NotNull Map<String, Object> metadata,
-            int timeout
+        @NotNull String id,
+        @NotNull InetSocketAddress address,
+        @NotNull Map<String, Object> metadata,
+        int timeout
     ) {}
 }

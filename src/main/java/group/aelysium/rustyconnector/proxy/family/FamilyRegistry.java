@@ -5,15 +5,19 @@ import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.modules.ModuleCollection;
 import group.aelysium.rustyconnector.common.modules.ModuleHolder;
 import group.aelysium.rustyconnector.common.modules.Module;
+import group.aelysium.rustyconnector.common.util.GeneratorMap;
 import group.aelysium.rustyconnector.proxy.events.FamilyRegisterEvent;
 import group.aelysium.rustyconnector.proxy.events.FamilyUnregisterEvent;
+import group.aelysium.rustyconnector.proxy.family.load_balancing.LoadBalancer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static net.kyori.adventure.text.Component.*;
 import static net.kyori.adventure.text.JoinConfiguration.newlines;
@@ -21,7 +25,24 @@ import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public class FamilyRegistry implements ModuleHolder<Family>, Module {
     private final ModuleCollection<Family> families = new ModuleCollection<>();
+    private final GeneratorMap<Server.Configuration, Server> serverGenerators = new GeneratorMap<>();
     private String rootFamily = null;
+
+    public FamilyRegistry() {
+        this.serverGenerators.register(
+            "default",
+            config -> new Server(
+                config.id(),
+                config.address(),
+                config.metadata(),
+                config.timeout()
+            )
+        );
+    }
+
+    public GeneratorMap<Server.Configuration, Server> ServerGenerators() {
+        return this.serverGenerators;
+    }
 
     /**
      * Sets the root family.
