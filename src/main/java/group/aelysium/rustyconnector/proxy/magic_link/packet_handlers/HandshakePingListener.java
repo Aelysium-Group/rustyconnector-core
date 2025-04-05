@@ -19,7 +19,7 @@ public class HandshakePingListener {
     @PacketListener(MagicLinkCore.Packets.Ping.class)
     public PacketListener.Response handle(WebSocketMagicLink.Packets.Ping packet) {
         try {
-            Server server = RC.P.Server(packet.local().namespace()).orElseThrow();
+            Server server = RC.P.Server(packet.local().id()).orElseThrow();
 
             server.setTimeout(15);
             server.setPlayerCount(packet.playerCount());
@@ -30,8 +30,8 @@ public class HandshakePingListener {
             Flux<Family> familyFlux = RC.P.Families().find(packet.targetFamily());
             Family family = familyFlux.get(10, TimeUnit.SECONDS);
 
-            RC.P.Server(packet.local().namespace()).ifPresent(m -> {
-                throw new RuntimeException("Server " + packet.local().namespace() + " can't be registered twice!");
+            RC.P.Server(packet.local().id()).ifPresent(m -> {
+                throw new RuntimeException("Server " + packet.local().id() + " can't be registered twice!");
             });
 
             // Some family metadata is supposed to effect the server meta, that's done here.
@@ -43,7 +43,7 @@ public class HandshakePingListener {
             metadata.putAll(packet.metadata());
 
             Server.Configuration configuration = new Server.Configuration(
-                packet.local().namespace(),
+                packet.local().id(),
                 AddressUtil.parseAddress(packet.address()),
                 metadata,
                 15

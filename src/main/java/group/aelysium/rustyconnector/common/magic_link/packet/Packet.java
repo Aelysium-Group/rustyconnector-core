@@ -287,17 +287,17 @@ public abstract class Packet implements JSONParseable {
      * Identifies the source of a packet across various machines.
      */
     public static class SourceIdentifier implements JSONParseable {
-        private final String namespace;
+        private final String id;
         private final Origin origin;
         private NanoID replyEndpoint;
 
-        private SourceIdentifier(String namespace, @NotNull Origin origin) {
-            this.namespace = namespace;
+        private SourceIdentifier(String id, @NotNull Origin origin) {
+            this.id = id;
             this.origin = origin;
         }
 
-        public String namespace() {
-            return this.namespace;
+        public String id() {
+            return this.id;
         }
         public Origin origin() {
             return this.origin;
@@ -324,7 +324,7 @@ public abstract class Packet implements JSONParseable {
         public JsonObject toJSON() {
             JsonObject object = new JsonObject();
 
-            if(this.namespace != null) object.add("u", new JsonPrimitive(this.namespace));
+            if(this.id != null) object.add("u", new JsonPrimitive(this.id));
             object.add("n", new JsonPrimitive(Origin.toInteger(this.origin)));
             if(this.replyEndpoint != null) object.add("r", new JsonPrimitive(this.replyEndpoint.toString()));
 
@@ -403,12 +403,12 @@ public abstract class Packet implements JSONParseable {
             SourceIdentifier target = (SourceIdentifier) o;
 
             // If the two match as defined by default expected behaviour, return true.
-            return Objects.equals(namespace, target.namespace) && Objects.equals(origin, target.origin);
+            return Objects.equals(id, target.id) && Objects.equals(origin, target.origin);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(namespace, origin);
+            return Objects.hash(id, origin);
         }
 
         public enum Origin {

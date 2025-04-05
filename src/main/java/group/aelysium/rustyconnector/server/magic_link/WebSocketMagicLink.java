@@ -97,7 +97,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                 websocketEndpoint = aes.decrypt(object.get("endpoint").getAsString());
                 bearer[0] = aes.decrypt(object.get("token").getAsString());
                 bearer[1] = object.get("signature").getAsString();
-                bearer[2] = this.self.namespace(); // Including the id in the bearer as well as "X-Server-Identification" is intentional.
+                bearer[2] = this.self.id(); // Including the id in the bearer as well as "X-Server-Identification" is intentional.
             }
 
             Map<String, String> headers = Map.of(
