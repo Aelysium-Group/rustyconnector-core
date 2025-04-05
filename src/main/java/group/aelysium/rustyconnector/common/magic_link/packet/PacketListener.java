@@ -1,5 +1,6 @@
 package group.aelysium.rustyconnector.common.magic_link.packet;
 
+import group.aelysium.rustyconnector.common.util.Parameter;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.ElementType;
@@ -31,13 +32,13 @@ public @interface PacketListener {
     class Response {
         public final boolean successful;
         public final String message;
-        public final Map<String, Packet.Parameter> parameters;
+        public final Map<String, Parameter> parameters;
         protected boolean shouldSendPacket = false;
 
         protected Response (
                 boolean successful,
                 @NotNull String message,
-                @NotNull Map<String, Packet.Parameter> parameters
+                @NotNull Map<String, Parameter> parameters
         ) {
             this.successful = successful;
             this.message = message;
@@ -51,14 +52,14 @@ public @interface PacketListener {
         public static Response success(@NotNull String message) {
             return success(message, Map.of());
         }
-        public static Response success(@NotNull String message, @NotNull Map<String, Packet.Parameter> parameters) {
+        public static Response success(@NotNull String message, @NotNull Map<String, Parameter> parameters) {
             return new Response(true, message, parameters);
         }
 
         public static Response error(@NotNull String message) {
             return error(message, Map.of());
         }
-        public static Response error(@NotNull String message, @NotNull Map<String, Packet.Parameter> parameters) {
+        public static Response error(@NotNull String message, @NotNull Map<String, Parameter> parameters) {
             return new Response(false, message, parameters);
         }
 

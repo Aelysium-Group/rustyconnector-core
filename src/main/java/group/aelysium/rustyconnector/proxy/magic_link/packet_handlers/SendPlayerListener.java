@@ -17,13 +17,13 @@ public class SendPlayerListener {
     public PacketListener.Response handle(MagicLinkCore.Packets.SendPlayer packet) throws Exception {
         if(packet.targetFamily().isEmpty() && packet.targetServer().isEmpty() && packet.genericTarget().isEmpty())
             throw new IllegalStateException("You must define either a target family or server.");
-        if(packet.playerUUID().isEmpty() && packet.playerUsername().isEmpty())
+        if(packet.playerID().isEmpty() && packet.playerUsername().isEmpty())
             throw new IllegalStateException("You must define a user to send.");
 
         Player player = null;
         try {
-            if(packet.playerUsername().isPresent()) player = RC.P.Player(packet.playerUsername().orElseThrow()).orElseThrow();
-            if(packet.playerUUID().isPresent()) player = RC.P.Player(packet.playerUUID().orElseThrow()).orElseThrow();
+            if(packet.playerUsername().isPresent()) player = RC.P.PlayerFromUsername(packet.playerUsername().orElseThrow()).orElseThrow();
+            if(packet.playerID().isPresent()) player = RC.P.PlayerFromUsername(packet.playerID().orElseThrow()).orElseThrow();
         } catch (NoSuchElementException ignore) {}
         if(player == null || !player.online()) throw new NoSuchElementException("No player '"+packet.player()+"' is online.");
 

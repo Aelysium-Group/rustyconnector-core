@@ -1,10 +1,8 @@
 package group.aelysium.rustyconnector.common.lang;
 
-import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.errors.Error;
-import group.aelysium.rustyconnector.common.modules.ModuleParticle;
-import group.aelysium.rustyconnector.common.modules.ModuleTinder;
+import group.aelysium.rustyconnector.common.modules.Module;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import org.jetbrains.annotations.NotNull;
@@ -19,11 +17,11 @@ import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.Component.newline;
 import static net.kyori.adventure.text.JoinConfiguration.newlines;
 
-public class LangLibrary implements ModuleParticle {
+public class LangLibrary implements Module {
     private final Map<String, LangNode> nodes = new ConcurrentHashMap<>();
     private final ASCIIAlphabet asciiAlphabet;
-
-    protected LangLibrary(
+    
+    public LangLibrary(
             @NotNull ASCIIAlphabet asciiAlphabet
     ) {
         this.asciiAlphabet = asciiAlphabet;
@@ -200,31 +198,6 @@ public class LangLibrary implements ModuleParticle {
                 RC.Lang("rustyconnector-keyValue").generate("ASCII Alphabet - Supported Characters", "'"+String.join("', '", this.asciiAlphabet().supportedCharacters().stream().map(Object::toString).toList())+"'"),
                 RC.Lang("rustyconnector-keyValue").generate("Registered Nodes", String.join(", ", this.langNodes()))
         );
-    }
-
-    public static class Tinder extends ModuleTinder<LangLibrary> {
-        private ASCIIAlphabet asciiAlphabet = DEFAULT_ASCII_ALPHABET;
-
-        public Tinder() {
-            super(
-                "LangLibrary",
-                "Provides declarative language services."
-            );
-        }
-
-        public Tinder asciiAlphabet(ASCIIAlphabet asciiAlphabet) {
-            this.asciiAlphabet = asciiAlphabet;
-            return this;
-        }
-
-        @Override
-        public @NotNull LangLibrary ignite() throws Exception {
-            return new LangLibrary(
-                    this.asciiAlphabet
-            );
-        }
-
-        public static LangLibrary.Tinder DEFAULT_LANG_LIBRARY = new LangLibrary.Tinder();
     }
 
     public static ASCIIAlphabet DEFAULT_ASCII_ALPHABET = new EnglishAlphabet();

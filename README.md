@@ -1,4 +1,4 @@
-![Aelysium Wordmark Image](https://github.com/Aelysium-Group/rustyconnector-core/blob/main/blob/images/wordmark.png?raw=true)
+![Aelysium Wordmark Image](https://github.com/Aelysium-Group/rustyconnector-core/blob/main/blob/images/banner.png?raw=true)
 
 # 👋 Welcome to RustyConnector Core
 [![Aelysium](https://flat.badgen.net/badge/Discord/Aelysium/5865F2?icon=discord)](https://join.aelysium.group/)
@@ -35,7 +35,7 @@ Originally written as a Minecraft specific software, it's now been expanded to c
   <td valign="top">
     <h3>Download</h3>
     <p>
-      <a href="https://github.com/Aelysium-Group/rustyconnector-core/releases">Download from GitHub</a>, or check out the plugin release pages.
+      <a href="https://github.com/Aelysium-Group/rustyconnector-core/releases">Download from GitHub</a>, or check out the moduleRegistrar release pages.
     </p>
   </td>
 </tr>
@@ -61,7 +61,7 @@ Originally written as a Minecraft specific software, it's now been expanded to c
   <td>
     <h3>Report Bugs</h3>
     <p>
-    Experiencing annoying bugs while using the plugin? Report them <a href="https://github.com/Aelysium-Group/rustyconnector-core/issues"> here</a> to help us squash them.
+    Experiencing annoying bugs while using the moduleRegistrar? Report them <a href="https://github.com/Aelysium-Group/rustyconnector-core/issues"> here</a> to help us squash them.
     </p>
   </td>
 </tr>
@@ -78,7 +78,7 @@ Originally written as a Minecraft specific software, it's now been expanded to c
   <td valign="top">
     <h3>Minecraft</h3>
     <p>
-      <a href="https://github.com/Aelysium-Group/rusty-connector">Click for the RustyConnector Minecraft port.</a>
+      <a href="https://github.com/Aelysium-Group/rustyconnector-minecraft">Click for the RustyConnector Minecraft port.</a>
     </p>
   </td>
 </tr>
@@ -86,30 +86,22 @@ Originally written as a Minecraft specific software, it's now been expanded to c
 </table>
 
 ---
-# ⭐ Basic Features
+# ⭐ Core Features
 - ### ✅ Register new servers to the proxy during runtime
 - ### ✅ Organize servers into Families
-- ### ✅ Network and Family level whitelists
-- ### ✅ Set soft and hard player limits for servers
-
-# ✨ Advanced Features
-- ### ✅ Supports Kubernetes/Docker
-- ### ✅ Toolkit API
 - ### ✅ Integrated Load Balancing
-- ### ✅ End-to-end packet encryption (AES-256)
-
-# 🤔 Upcoming Features
-- ### 🔳 Kubernetes-Native Dynamic Scaling (v0.9)
-- ### 🔳 Comprehensive Git-Ops (v0.9)
-
-- ### 🔳 Viewport Integrated Dashboard (Release Version TBD)
+- ### ✅ Set soft and hard player limits for servers
+- ### ✅ Supports Kubernetes/Docker
+- ### ✅ End-to-end packet encryption (AES-256)`
+- ### ✅ Comprehensive API
+- ### ✅ Fully Extensive Plugin System
 ---
 # 🎨 Statistics
 
-## 🌌 Minecraft Networks Served ([Click to view](https://bstats.org/plugin/velocity/RustyConnector/17972)):
+## 🌌 Minecraft Networks Served ([Click to view](https://bstats.org/moduleRegistrar/velocity/RustyConnector/17972)):
 [![RustyConnector bstats graph](https://bstats.org/signatures/velocity/RustyConnector.svg)](https://bstats.org/signatures/velocity/RustyConnector.svg)
 
-2024 © [Aelysium](https://www.aelysium.group)
+2025 © [Aelysium](https://www.aelysium.group)
 
 <!-- URL LIST -->
 [Folia]:https://github.com/PaperMC/Folia

@@ -10,24 +10,14 @@ import org.jetbrains.annotations.NotNull;
  * This event doesn't care about what family the servers are a part of.
  */
 public class ServerSwitchEvent extends Event {
-    protected final Server oldServer;
-    protected final Server newServer;
-    protected final Player player;
+    final Server oldServer;
+    final Server newServer;
+    final Player player;
 
     public ServerSwitchEvent(@NotNull Server oldServer, @NotNull Server newServer, @NotNull Player player) {
         super();
         this.oldServer = oldServer;
         this.newServer = newServer;
         this.player = player;
-    }
-
-    public Server oldServer() {
-        return oldServer;
-    }
-    public Server newServer() {
-        return newServer;
-    }
-    public Player player() {
-        return player;
     }
 }

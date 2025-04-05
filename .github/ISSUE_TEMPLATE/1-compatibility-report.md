@@ -1,6 +1,6 @@
 ---
 name: "\U0001F50C I found a compatibility issue"
-about: Feedback plugin related compatibility issues
+about: Feedback moduleRegistrar related compatibility issues
 title: ''
 labels: ''
 assignees: ''

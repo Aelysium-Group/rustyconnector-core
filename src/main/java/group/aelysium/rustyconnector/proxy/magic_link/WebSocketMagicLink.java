@@ -51,13 +51,13 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
         c.http.strictContentTypes = true;
     });
 
-    protected WebSocketMagicLink(
+    public WebSocketMagicLink(
             @NotNull InetSocketAddress address,
             @NotNull Packet.SourceIdentifier self,
             @NotNull AES aes,
             @NotNull PacketCache cache,
             @Nullable IPV6Broadcaster broadcaster
-    ) throws Exception {
+    ) {
         super(self, aes, cache, broadcaster);
 
         this.endpoint = tokenGenerator.nextString();
@@ -182,7 +182,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
         try {
             RC.P.Families().modules().values().forEach(flux -> {
                 try {
-                    flux.executeNow(f -> ((Family) f).servers().forEach(server -> {
+                    flux.ifPresent(f -> f.servers().forEach(server -> {
                         try {
                             int newValue = server.decreaseTimeout(3);
 
@@ -195,7 +195,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
                                 WsContext connection = this.clients.get(Packet.SourceIdentifier.server(server.id()));
                                 connection.closeSession(1013, "Stale connection. Re-register.");
                             } catch (Exception ignore) {}
-                            ((Family) f).removeServer(server);
+                            f.removeServer(server);
                         } catch (Exception e) {
                             RC.Error(Error.from(e).causedBy("WebSocketMagicLink:heartbeat"));
                         }
@@ -254,39 +254,5 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
                         text(String.join(", ", this.listeners.entrySet().stream().map(e -> e.getKey() + " ("+e.getValue().size()+")").toList()))
                 )
         );
-    }
-
-    public static class Tinder extends MagicLinkCore.Tinder<WebSocketMagicLink> {
-        private final Packet.SourceIdentifier self;
-        private final AES aes;
-        private final PacketCache cache;
-        private final IPV6Broadcaster broadcaster;
-        private final InetSocketAddress address;
-
-        public Tinder(
-                @NotNull InetSocketAddress address,
-                @NotNull Packet.SourceIdentifier self,
-                @NotNull AES aes,
-                @NotNull PacketCache cache,
-                @Nullable IPV6Broadcaster broadcaster
-                ) {
-            super();
-            this.address = address;
-            this.self = self;
-            this.aes = aes;
-            this.cache = cache;
-            this.broadcaster = broadcaster;
-        }
-
-        @Override
-        public @NotNull WebSocketMagicLink ignite() throws Exception {
-            return new WebSocketMagicLink(
-                    this.address,
-                    this.self,
-                    this.aes,
-                    this.cache,
-                    this.broadcaster
-            );
-        }
     }
 }

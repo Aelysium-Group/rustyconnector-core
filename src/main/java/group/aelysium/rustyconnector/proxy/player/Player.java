@@ -11,22 +11,21 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 import static net.kyori.adventure.text.Component.text;
 
 public class Player {
-    protected UUID uuid;
+    protected String id;
     protected String username;
 
-    public Player(@NotNull UUID uuid, @NotNull String username) {
-        this.uuid = uuid;
+    public Player(@NotNull String id, @NotNull String username) {
+        this.id = id;
         this.username = username;
     }
 
-    public UUID uuid() { return this.uuid; }
+    public String id() { return this.id; }
     public String username() { return this.username; }
 
     /**
@@ -44,7 +43,7 @@ public class Player {
      */
     public void message(@NotNull Component message) {
         try {
-            RC.P.Adapter().messagePlayer(this.uuid(), message);
+            RC.P.Adapter().messagePlayer(this.id(), message);
         } catch (Exception ignore) {}
     }
 
@@ -70,9 +69,9 @@ public class Player {
     /**
      * Fetches the player's family if they're connected to one.
      */
-    public Optional<? extends Family> family() {
+    public Optional<Family> family() {
         try {
-            return Optional.of(this.server().orElseThrow().family().orElseThrow().orElseThrow());
+            return Optional.of(this.server().orElseThrow().family().orElseThrow());
         } catch (Exception ignore) {
             return Optional.empty();
         }
@@ -83,13 +82,18 @@ public class Player {
         if (object == null || getClass() != object.getClass()) return false;
 
         Player that = (Player) object;
-        return Objects.equals(uuid, that.uuid);
+        return Objects.equals(id, that.id);
     }
 
     public String toString() {
-        return "<Player uuid="+this.uuid.toString()+" username="+this.username+">";
+        return "<Player id="+this.id+" username="+this.username+">";
     }
-
+    
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
+    
     public interface Connectable {
         /**
          * Connects the player to the specified resource.

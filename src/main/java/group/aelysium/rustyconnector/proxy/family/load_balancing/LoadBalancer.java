@@ -1,8 +1,8 @@
 package group.aelysium.rustyconnector.proxy.family.load_balancing;
 
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.modules.ModuleParticle;
-import group.aelysium.rustyconnector.common.modules.ModuleTinder;
+import group.aelysium.rustyconnector.common.modules.Module;
+import group.aelysium.rustyconnector.common.util.MetadataHolder;
 import group.aelysium.rustyconnector.proxy.events.*;
 import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
@@ -14,9 +14,12 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import static net.kyori.adventure.text.Component.join;
+import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.JoinConfiguration.newlines;
+import static net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY;
 
-public abstract class LoadBalancer implements Server.Container, ModuleParticle {
+public abstract class LoadBalancer implements Server.Container, MetadataHolder<Object>, Module {
+    private final Map<String, Object> metadata = new ConcurrentHashMap<>();
     protected final ScheduledExecutorService executor;
     protected boolean weighted;
     protected boolean persistence;
@@ -35,16 +38,45 @@ public abstract class LoadBalancer implements Server.Container, ModuleParticle {
         this.completeSort();
     };
 
-    protected LoadBalancer(boolean weighted, boolean persistence, int attempts, @Nullable LiquidTimestamp rebalance) {
+    protected LoadBalancer(
+        boolean weighted,
+        boolean persistence,
+        int attempts,
+        @Nullable LiquidTimestamp rebalance,
+        @NotNull Map<String, Object> metadata
+    ) {
         this.weighted = weighted;
         this.persistence = persistence;
         this.attempts = attempts;
+        this.metadata.putAll(metadata);
 
         if(rebalance == null) this.executor = null;
         else {
             this.executor = Executors.newSingleThreadScheduledExecutor();
             this.executor.schedule(this.sorter, rebalance.value(), rebalance.unit());
         }
+    }
+    
+    @Override
+    public boolean storeMetadata(String propertyName, Object property) {
+        if(this.metadata.containsKey(propertyName)) return false;
+        this.metadata.put(propertyName, property);
+        return true;
+    }
+    
+    @Override
+    public <T> Optional<T> fetchMetadata(String propertyName) {
+        return Optional.ofNullable((T) this.metadata.get(propertyName));
+    }
+    
+    @Override
+    public void removeMetadata(String propertyName) {
+        this.metadata.remove(propertyName);
+    }
+    
+    @Override
+    public Map<String, Object> metadata() {
+        return Collections.unmodifiableMap(this.metadata);
     }
 
     /**
@@ -237,30 +269,27 @@ public abstract class LoadBalancer implements Server.Container, ModuleParticle {
                 RC.Lang("rustyconnector-keyValue").generate("Unlocked Servers", this.unlockedServers.size()),
                 RC.Lang("rustyconnector-keyValue").generate("Locked Servers", this.lockedServers.size()),
                 RC.Lang("rustyconnector-keyValue").generate("Weighted", this.weighted),
-                RC.Lang("rustyconnector-keyValue").generate("Persistence", this.persistence ? "Enabled ("+this.attempts+")" : "Disabled")
+                RC.Lang("rustyconnector-keyValue").generate("Persistence", this.persistence ? "Enabled ("+this.attempts+")" : "Disabled"),
+                text("Extra Properties:", DARK_GRAY),
+                (
+                    this.metadata().isEmpty() ?
+                        text("There are no properties to show.", DARK_GRAY)
+                        :
+                        join(
+                            newlines(),
+                            this.metadata().entrySet().stream().map(e -> RC.Lang("rustyconnector-keyValue").generate(e.getKey(), e.getValue())).toList()
+                        )
+                )
         );
     }
-
-    public abstract static class Tinder<T extends LoadBalancer> extends ModuleTinder<T> {
-        protected final boolean weighted;
-        protected final boolean persistence;
-        protected final int attempts;
-        protected final LiquidTimestamp rebalance;
-
-        public Tinder(
-            boolean weighted,
-            boolean persistence,
-            int attempts,
-            @NotNull LiquidTimestamp rebalance
-        ) {
-            super(
-                "LoadBalancer",
-                "Provides server sorting capabilities."
-            );
-            this.weighted = weighted;
-            this.persistence = persistence;
-            this.attempts = attempts;
-            this.rebalance = rebalance;
-        }
-    }
+    
+    public record Config(
+        @NotNull String name,
+        @NotNull String algorithm,
+        boolean weighted,
+        boolean persistence,
+        int attempts,
+        @Nullable LiquidTimestamp rebalance,
+        @NotNull Map<String, Object> metadata
+    ) {}
 }

@@ -1,9 +1,7 @@
 package group.aelysium.rustyconnector.common.errors;
 
-import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.modules.ModuleParticle;
-import group.aelysium.rustyconnector.common.modules.ModuleTinder;
+import group.aelysium.rustyconnector.common.modules.Module;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +11,7 @@ import java.util.*;
 import static net.kyori.adventure.text.Component.join;
 import static net.kyori.adventure.text.JoinConfiguration.newlines;
 
-public class ErrorRegistry implements ModuleParticle {
+public class ErrorRegistry implements Module {
     private final boolean logErrors;
     private final int cacheSize;
     private final Vector<Error> errors = new Vector<>() {
@@ -24,7 +22,7 @@ public class ErrorRegistry implements ModuleParticle {
         }
     };
 
-    protected ErrorRegistry(boolean logErrors, int cacheSize) {
+    public ErrorRegistry(boolean logErrors, int cacheSize) {
         this.logErrors = logErrors;
         this.cacheSize = cacheSize;
     }
@@ -62,37 +60,5 @@ public class ErrorRegistry implements ModuleParticle {
                 RC.Lang("rustyconnector-keyValue").generate("Cache Size", this.cacheSize),
                 RC.Lang("rustyconnector-keyValue").generate("Error Count", this.errors.size())
         );
-    }
-
-    public static class Tinder extends ModuleTinder<ErrorRegistry> {
-        private boolean logErrors = false;
-        private int cacheSize = 200;
-
-        public Tinder() {
-            super(
-                "ErrorRegistry",
-                "Provides error capture and logging services."
-            );
-        }
-
-        public Tinder logErrors(boolean logErrors) {
-            this.logErrors = logErrors;
-            return this;
-        }
-
-        public Tinder cacheSize(int cacheSize) {
-            this.cacheSize = cacheSize;
-            return this;
-        }
-
-        @Override
-        public @NotNull ErrorRegistry ignite() throws Exception {
-            return new ErrorRegistry(
-                    this.logErrors,
-                    this.cacheSize
-            );
-        }
-
-        public static ModuleTinder<? extends ErrorRegistry> DEFAULT_CONFIGURATION = new Tinder();
     }
 }

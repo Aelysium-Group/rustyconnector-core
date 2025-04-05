@@ -6,6 +6,7 @@ public class Version implements Comparable<Version> {
     protected int major;
     protected int minor;
     protected int fix;
+    protected int build;
 
     public Version(int major, int minor, int fix) {
         this.major = major;

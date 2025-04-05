@@ -1,14 +1,13 @@
 package group.aelysium.rustyconnector.common.magic_link;
 
-import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketType;
 import group.aelysium.rustyconnector.common.crypt.NanoID;
 import group.aelysium.rustyconnector.common.errors.Error;
-import group.aelysium.rustyconnector.common.modules.ModuleParticle;
-import group.aelysium.rustyconnector.common.modules.ModuleTinder;
+import group.aelysium.rustyconnector.common.modules.Module;
 import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
 import group.aelysium.rustyconnector.common.cache.TimeoutCache;
+import group.aelysium.rustyconnector.common.util.Parameter;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 import group.aelysium.rustyconnector.common.crypt.AES;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
@@ -16,16 +15,17 @@ import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
-public abstract class MagicLinkCore implements ModuleParticle {
+public abstract class MagicLinkCore implements Module {
     protected static final String endpoint = "bDaBMkmYdZ6r4iFExwW6UzJyNMDseWoS3HDa6FcyM7xNeCmtK98S3Mhp4o7g7oW6VB9CA6GuyH2pNhpQk3QvSmBUeCoUDZ6FXUsFCuVQC59CB2y22SBnGkMf9NMB9UWk";
     protected final TimeoutCache<NanoID, Packet.Local> packetsAwaitingReply = new TimeoutCache<>(LiquidTimestamp.from(15, TimeUnit.SECONDS));
     protected final Map<String, List<Consumer<Packet.Remote>>> listeners = new ConcurrentHashMap<>();
@@ -52,7 +52,7 @@ public abstract class MagicLinkCore implements ModuleParticle {
             if(!method.isAnnotationPresent(PacketListener.class)) continue;
             PacketListener annotation = method.getAnnotation(PacketListener.class);
             try {
-                Parameter firstParameter = method.getParameters()[0];
+                java.lang.reflect.Parameter firstParameter = method.getParameters()[0];
 
                 if(!annotation.value().equals(firstParameter.getType()))
                     throw new NoSuchMethodException("Methods annotated with @PacketListener must contain a single parameter of the same class type as defined on @PacketListener. Expected "+annotation.value().getName()+" but got "+firstParameter.getType().getName());
@@ -145,7 +145,7 @@ public abstract class MagicLinkCore implements ModuleParticle {
         try {
             packet = Packet.parseIncoming(this.aes.decrypt(rawMessage));
         } catch (Exception e) {
-            RC.Error(Error.from(e));
+            RC.Error(Error.from(e).whileAttempting("To decrypt a packet incoming into MagicLink."));
             return;
         }
         try {
@@ -168,15 +168,6 @@ public abstract class MagicLinkCore implements ModuleParticle {
             listeners.forEach(l -> l.accept(packet));
         } catch (Exception e) {
             packet.status(false, e.getMessage());
-        }
-    }
-
-    public static abstract class Tinder<T extends MagicLinkCore> extends ModuleTinder<T> {
-        public Tinder() {
-            super(
-                    "MagicLink",
-                    "Provides packet communication services for the proxy."
-            );
         }
     }
 
@@ -304,23 +295,26 @@ public abstract class MagicLinkCore implements ModuleParticle {
                 return List.of();
             }
 
-            public Optional<UUID> playerUUID() {
+            public Optional<String> playerID() {
                 try {
-                    return Optional.of(UUID.fromString(this.parameters().get(Parameters.PLAYER).getAsString()));
+                    String player = this.parameters().get(Parameters.PLAYER).getAsString();
+                    if(!player.startsWith("id-")) return Optional.empty();
+                    return Optional.of(player.substring(3));
                 } catch (Exception ignore) {}
                 return Optional.empty();
             }
             public Optional<String> playerUsername() {
                 try {
-                    UUID.fromString(this.parameters().get(Parameters.PLAYER).getAsString());
-                    return Optional.empty();
+                    String player = this.parameters().get(Parameters.PLAYER).getAsString();
+                    if(!player.startsWith("u-")) return Optional.empty();
+                    return Optional.of(player.substring(2));
                 } catch (Exception ignore) {}
                 return Optional.of(this.parameters().get(Parameters.PLAYER).getAsString());
             }
 
             /**
              * @return The player identifier. This can either be a UUID, or the player's username.
-             *         Use either {@link #playerUsername()} or {@link #playerUUID()} to get the specific value.
+             *         Use either {@link #playerUsername()} or {@link #playerID()} to get the specific value.
              */
             public String player() {
                 return this.parameters().get(Parameters.PLAYER).getAsString();
@@ -328,6 +322,53 @@ public abstract class MagicLinkCore implements ModuleParticle {
 
             public SendPlayer(Packet packet) {
                 super(packet);
+            }
+            
+            public static Packet.Local sendUsername(
+                @NotNull String username,
+                @NotNull String target,
+                @NotNull Set<Flag> flags
+            
+            ) {
+                
+                return Packet.New()
+                    .identification(Type.from("RC", "PS"))
+                    .parameter("p", "u-"+username)
+                    .parameter("t", target)
+                    .parameter("f",
+                        flags.stream().map(f -> switch (f) {
+                            case FAMILY -> "f";
+                            case SERVER -> "s";
+                            case MINIMAL -> "i";
+                            case MODERATE -> "o";
+                            case AGGRESSIVE -> "a";
+                        }).collect(Collectors.joining())
+                    )
+                    .addressTo(SourceIdentifier.allAvailableProxies())
+                    .send();
+            }
+            
+            public static Packet.Local sendID(
+                @NotNull String id,
+                @NotNull String target,
+                @NotNull Set<Flag> flags
+            
+            ) {
+                return Packet.New()
+                    .identification(Type.from("RC", "PS"))
+                    .parameter("p", "id-"+id)
+                    .parameter("t", target)
+                    .parameter("f",
+                        flags.stream().map(f -> switch (f) {
+                            case FAMILY -> "f";
+                            case SERVER -> "s";
+                            case MINIMAL -> "i";
+                            case MODERATE -> "o";
+                            case AGGRESSIVE -> "a";
+                        }).collect(Collectors.joining())
+                    )
+                    .addressTo(SourceIdentifier.allAvailableProxies())
+                    .send();
             }
 
             public interface Parameters {
@@ -337,10 +378,29 @@ public abstract class MagicLinkCore implements ModuleParticle {
             }
 
             public enum Flag {
+                /**
+                 * Declares that the provided target is a family id.
+                 */
                 FAMILY,
+                
+                /**
+                 * Declares that the provided target is a server id.
+                 */
                 SERVER,
+                
+                /**
+                 * Declares that the connection should use a "minimal" {@link group.aelysium.rustyconnector.proxy.player.Player.Connection.Power Power}.
+                 */
                 MINIMAL,
+                
+                /**
+                 * Declares that the connection should use a "moderate" {@link group.aelysium.rustyconnector.proxy.player.Player.Connection.Power Power}.
+                 */
                 MODERATE,
+                
+                /**
+                 * Declares that the connection should use an "aggressive" {@link group.aelysium.rustyconnector.proxy.player.Player.Connection.Power Power}.
+                 */
                 AGGRESSIVE
             }
         }

@@ -8,6 +8,7 @@ import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.common.util.IPV6Broadcaster;
 import group.aelysium.rustyconnector.common.magic_link.PacketCache;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
+import group.aelysium.rustyconnector.common.util.Parameter;
 import group.aelysium.rustyconnector.common.util.URL;
 import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 import group.aelysium.rustyconnector.server.ServerKernel;
@@ -53,14 +54,14 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
     private final AtomicBoolean registered = new AtomicBoolean(false);
     private final AtomicReference<WebSocketClient> client = new AtomicReference<>(null);
     private final URL address;
-
-    protected WebSocketMagicLink(
+    
+    public WebSocketMagicLink(
             @NotNull URL address,
             @NotNull Packet.SourceIdentifier self,
             @NotNull AES aes,
             @NotNull PacketCache cache,
             @Nullable IPV6Broadcaster broadcaster
-    ) throws Exception {
+    ) {
         super(self, aes, cache, broadcaster);
         this.address = address.appendPath(MagicLinkCore.endpoint);
         
@@ -189,14 +190,14 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
             ServerKernel kernel = RC.S.Kernel();
             
             JsonObject metadata = new JsonObject();
-            kernel.parameterizedMetadata().forEach((k, v) -> metadata.add(k, v.toJSON()));
+            kernel.metadata().forEach((k, v) -> metadata.add(k, v.toJSON()));
             
             packetBuilder = Packet.New()
                 .identification(Packet.Type.from("RC", "P"))
                 .parameter(MagicLinkCore.Packets.Ping.Parameters.TARGET_FAMILY, kernel.targetFamily())
                 .parameter(MagicLinkCore.Packets.Ping.Parameters.ADDRESS, kernel.address().getHostName() + ":" + kernel.address().getPort())
-                .parameter(MagicLinkCore.Packets.Ping.Parameters.METADATA, new Packet.Parameter(metadata))
-                .parameter(MagicLinkCore.Packets.Ping.Parameters.PLAYER_COUNT, new Packet.Parameter(kernel.playerCount())
+                .parameter(MagicLinkCore.Packets.Ping.Parameters.METADATA, new Parameter(metadata))
+                .parameter(MagicLinkCore.Packets.Ping.Parameters.PLAYER_COUNT, new Parameter(kernel.playerCount())
                 );
         } catch (WebsocketNotConnectedException ignore) {
             return; // Theoretically the websocket disconnect should be getting handled elsewhere
@@ -305,38 +306,5 @@ public class WebSocketMagicLink extends MagicLinkCore.Server {
                         text(String.join(", ", this.listeners.entrySet().stream().map(e -> e.getKey() + " ("+e.getValue().size()+")").toList()))
                 )
         );
-    }
-
-    public static class Tinder extends MagicLinkCore.Tinder<WebSocketMagicLink> {
-        private final URL httpAddress;
-        private final Packet.SourceIdentifier self;
-        private final AES aes;
-        private final PacketCache cache;
-        private final IPV6Broadcaster broadcaster;
-        public Tinder(
-                @NotNull URL httpAddress,
-                @NotNull Packet.SourceIdentifier self,
-                @NotNull AES aes,
-                @NotNull PacketCache cache,
-                @Nullable IPV6Broadcaster broadcaster
-                ) {
-            super();
-            this.httpAddress = httpAddress;
-            this.aes = aes;
-            this.self = self;
-            this.cache = cache;
-            this.broadcaster = broadcaster;
-        }
-
-        @Override
-        public @NotNull WebSocketMagicLink ignite() throws Exception {
-            return new WebSocketMagicLink(
-                    this.httpAddress,
-                    this.self,
-                    this.aes,
-                    this.cache,
-                    this.broadcaster
-            );
-        }
     }
 }

@@ -1,6 +1,5 @@
 package group.aelysium.rustyconnector.proxy.family.load_balancing;
 
-import group.aelysium.ara.Particle;
 import group.aelysium.rustyconnector.common.algorithm.QuickSort;
 import group.aelysium.rustyconnector.common.algorithm.WeightedQuickSort;
 import group.aelysium.rustyconnector.proxy.family.Server;
@@ -8,12 +7,19 @@ import group.aelysium.rustyconnector.proxy.util.LiquidTimestamp;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.Map;
 
 public class MostConnection extends LeastConnection {
     public static final String algorithm = "MOST_CONNECTION";
 
-    public MostConnection(boolean weighted, boolean persistence, int attempts, @NotNull LiquidTimestamp rebalance) {
-        super(weighted, persistence, attempts, rebalance);
+    public MostConnection(
+        boolean weighted,
+        boolean persistence,
+        int attempts,
+        @NotNull LiquidTimestamp rebalance,
+        @NotNull Map<String, Object> metadata
+    ) {
+        super(weighted, persistence, attempts, rebalance, metadata);
     }
 
     @Override
@@ -40,26 +46,5 @@ public class MostConnection extends LeastConnection {
     @Override
     public String toString() {
         return "LoadBalancer (MostConnection): "+this.servers.size()+" items";
-    }
-
-    public static class Tinder extends LoadBalancer.Tinder<MostConnection> {
-        public Tinder(
-                boolean weighted,
-                boolean persistence,
-                int attempts,
-                @NotNull LiquidTimestamp rebalance
-        ) {
-            super(weighted, persistence, attempts, rebalance);
-        }
-
-        @Override
-        public @NotNull MostConnection ignite() throws Exception {
-            return new MostConnection(
-                    this.weighted,
-                    this.persistence,
-                    this.attempts,
-                    this.rebalance
-            );
-        }
     }
 }

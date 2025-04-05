@@ -8,14 +8,10 @@ import group.aelysium.rustyconnector.proxy.player.Player;
  * This event fires after {@link FamilyLeaveEvent}.
  */
 public class NetworkLeaveEvent extends Event {
-    protected final Player player;
+    public final Player player;
 
     public NetworkLeaveEvent(Player player) {
         super();
         this.player = player;
-    }
-
-    public Player player() {
-        return player;
     }
 }

@@ -1,24 +1,16 @@
 package group.aelysium.rustyconnector.server;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.common.magic_link.packet.PacketListener;
 import group.aelysium.rustyconnector.common.RCKernel;
-import group.aelysium.rustyconnector.common.errors.ErrorRegistry;
-import group.aelysium.rustyconnector.common.events.EventManager;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
-import group.aelysium.rustyconnector.common.modules.ModuleTinder;
-import group.aelysium.rustyconnector.proxy.ProxyKernel;
+import group.aelysium.rustyconnector.common.util.Parameter;
 import group.aelysium.rustyconnector.proxy.util.AddressUtil;
-import group.aelysium.rustyconnector.proxy.util.Version;
-import group.aelysium.rustyconnector.common.lang.LangLibrary;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.util.*;
@@ -33,80 +25,27 @@ import static net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY;
 public class ServerKernel extends RCKernel<ServerAdapter> {
     private final String targetFamily;
     private final InetSocketAddress address;
-    private final Map<String, Packet.Parameter> metadata = new ConcurrentHashMap<>(Map.of(
-            "softCap", new Packet.Parameter(30),
-            "hardCap", new Packet.Parameter(40)
-    ));
 
-    protected ServerKernel(
+    public ServerKernel(
             @NotNull String id,
-            @NotNull Version version,
             @NotNull ServerAdapter adapter,
             @NotNull Path directory,
             @NotNull Path modulesDirectory,
-            @NotNull List<? extends ModuleTinder<?>> modules,
             @NotNull InetSocketAddress address,
-            @NotNull String targetFamily,
-            @NotNull Map<String, Packet.Parameter> metadata
-    ) {
-        super(id, version, adapter, directory,modulesDirectory, modules);
+            @NotNull String targetFamily
+    ) throws Exception {
+        super(id, adapter, directory, modulesDirectory);
         this.address = address;
         this.targetFamily = targetFamily;
-        this.metadata.putAll(metadata);
+        this.storeMetadata("serverGenerator", Parameter.fromUnknown("default"));
     }
-
-    /**
-     * Stores metadata in the Server.
-     * @param propertyName The name of the metadata to store.
-     * @param property The metadata to store.
-     * @return `true` if the metadata could be stored. `false` if the name of the metadata is already in use.
-     */
-    public boolean metadata(String propertyName, Packet.Parameter property) {
-        if(this.metadata.containsKey(propertyName)) return false;
-        this.metadata.put(propertyName, property);
-        return true;
-    }
-
-    /**
-     * Fetches metadata from the server.
-     * @param propertyName The name of the metadata to fetch.
-     * @return An optional containing the metadata, or an empty metadata if no metadata could be found.
-     * @param <T> The type of the metadata that's being fetched.
-     */
-    public <T> Optional<T> metadata(String propertyName) {
-        return Optional.ofNullable((T) this.metadata.get(propertyName));
-    }
-
-    /**
-     * Removes metadata from the server.
-     * @param propertyName The name of the metadata to remove.
-     */
-    public void dropMetadata(String propertyName) {
-        this.metadata.remove(propertyName);
-    }
-
-    /**
-     * @return A map containing all of this server's metadata.
-     */
-    public Map<String, Object> metadata() {
-        Map<String, Object> reduced = new HashMap<>();
-        this.metadata.forEach((k, v)->reduced.put(k, v.getOriginalValue()));
-        return Collections.unmodifiableMap(reduced);
-    }
-
-    /**
-     * @return A map containing all of this server's metadata.
-     */
-    public Map<String, Packet.Parameter> parameterizedMetadata() {
-        return Collections.unmodifiableMap(this.metadata);
-    }
-
+    
     /**
      * The display name of this Server.
      */
     public @Nullable String displayName() {
         try {
-            return this.metadata.get("displayName").getAsString();
+            return this.fetchMetadata("displayName").orElseThrow().toString();
         } catch(Exception ignore) {}
         return null;
     }
@@ -166,130 +105,65 @@ public class ServerKernel extends RCKernel<ServerAdapter> {
                 });
         return response;
     }
-
+    
     /**
      * Sends a player to a family or server if it exists.
-     * If both a family AND server have an id equal to `target`, you'll have to clarify which to send to use.
-     * @param player The uuid or username of the player to send. RustyConnector will automatically determine if this is a UUID or username.
+     * If both a family AND server have an id equal to `target`, you'll have to clarify which to use via "flags".
+     * @param playerID The id of the player to send.
      * @param target The id of the family or server to send the player to.
+     * @param flags A set of flags to use.
      * @return A future that completes to the response received from the proxy.
      */
-    public CompletableFuture<MagicLinkCore.Packets.Response> send(String player, String target, String flags) {
+    public CompletableFuture<MagicLinkCore.Packets.Response> sendID(String playerID, String target, Set<MagicLinkCore.Packets.SendPlayer.Flag> flags) {
         CompletableFuture<MagicLinkCore.Packets.Response> response = new CompletableFuture<>();
-        Packet.New()
-                .identification(Packet.Type.from("RC","PS"))
-                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.PLAYER, player)
-                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.GENERIC_TARGET, target)
-                .parameter(MagicLinkCore.Packets.SendPlayer.Parameters.FLAGS, flags)
-                .addressTo(Packet.SourceIdentifier.allAvailableProxies())
-                .send()
-                .onReply(MagicLinkCore.Packets.Response.class, packet -> {
-                    response.complete(packet);
-                    return PacketListener.Response.success("Successfully indicated the status of the server's send request.");
-                });
+        MagicLinkCore.Packets.SendPlayer
+            .sendID(playerID, target, flags)
+            .onReply(MagicLinkCore.Packets.Response.class, packet -> {
+                response.complete(packet);
+                return PacketListener.Response.success("Successfully indicated the status of the server's send request.");
+            });
+        return response;
+    }
+    
+    /**
+     * Sends a player to a family or server if it exists.
+     * If both a family AND server have an id equal to `target`, you'll have to clarify which to use via "flags".
+     * @param playerUsername The username of the player to send.
+     * @param target The id of the family or server to send the player to.
+     * @param flags A set of flags to use.
+     * @return A future that completes to the response received from the proxy.
+     */
+    public CompletableFuture<MagicLinkCore.Packets.Response> sendUsername(String playerUsername, String target, Set<MagicLinkCore.Packets.SendPlayer.Flag> flags) {
+        CompletableFuture<MagicLinkCore.Packets.Response> response = new CompletableFuture<>();
+        MagicLinkCore.Packets.SendPlayer
+            .sendUsername(playerUsername, target, flags)
+            .onReply(MagicLinkCore.Packets.Response.class, packet -> {
+                response.complete(packet);
+                return PacketListener.Response.success("Successfully indicated the status of the server's send request.");
+            });
         return response;
     }
 
     @Override
     public @Nullable Component details() {
         return join(
-                newlines(),
-                RC.Lang("rustyconnector-keyValue").generate("ID", this.id()),
-                RC.Lang("rustyconnector-keyValue").generate("Modules Installed", this.modules.size()),
-                RC.Lang("rustyconnector-keyValue").generate("Address", AddressUtil.addressToString(this.address())),
-                RC.Lang("rustyconnector-keyValue").generate("Family", this.targetFamily()),
-                RC.Lang("rustyconnector-keyValue").generate("Online Players", this.playerCount()),
-                empty(),
-                text("Extra Properties:", DARK_GRAY),
-                (
-                        this.metadata().isEmpty() ?
-                                text("There is no metadata to show.", DARK_GRAY)
-                                :
-                                join(
-                                        newlines(),
-                                        this.metadata().entrySet().stream().map(e -> RC.Lang("rustyconnector-keyValue").generate(e.getKey(), e.getValue())).toList()
-                                )
-                )
+            newlines(),
+            RC.Lang("rustyconnector-keyValue").generate("ID", this.id()),
+            RC.Lang("rustyconnector-keyValue").generate("Modules Installed", this.modules.size()),
+            RC.Lang("rustyconnector-keyValue").generate("Address", AddressUtil.addressToString(this.address())),
+            RC.Lang("rustyconnector-keyValue").generate("Family", this.targetFamily()),
+            RC.Lang("rustyconnector-keyValue").generate("Online Players", this.playerCount()),
+            empty(),
+            text("Extra Properties:", DARK_GRAY),
+            (
+                this.metadata().isEmpty() ?
+                    text("There is no metadata to show.", DARK_GRAY)
+                    :
+                    join(
+                        newlines(),
+                        this.metadata().entrySet().stream().map(e -> RC.Lang("rustyconnector-keyValue").generate(e.getKey(), e.getValue())).toList()
+                    )
+            )
         );
-    }
-
-    /**
-     * Provides a declarative method by which you can establish a new Server instance on RC.
-     * Parameters listed in the constructor are required, any other parameters are
-     * technically optional because they also have default implementations.
-     */
-    public static class Tinder extends RCKernel.Tinder<ServerAdapter, ServerKernel> {
-        private final String targetFamily;
-        private final InetSocketAddress address;
-        private ModuleTinder<? extends MagicLinkCore.Server> magicLink;
-        private final Map<String, Packet.Parameter> metadata = new HashMap<>();
-
-        public Tinder(
-                @NotNull String id,
-                @NotNull ServerAdapter adapter,
-                @NotNull Path directory,
-                @NotNull Path modulesDirectory,
-                @NotNull InetSocketAddress address,
-                @NotNull ModuleTinder<? extends MagicLinkCore.Server> magicLink,
-                @NotNull String targetFamily
-                ) {
-            super(id, adapter, directory, modulesDirectory);
-            this.address = address;
-            this.magicLink = magicLink;
-            this.targetFamily = targetFamily;
-        }
-
-        public Tinder lang(@NotNull ModuleTinder<? extends LangLibrary> lang) {
-            this.lang = lang;
-            return this;
-        }
-
-        public Tinder magicLink(@NotNull ModuleTinder<? extends MagicLinkCore.Server> magicLink) {
-            this.magicLink = magicLink;
-            return this;
-        }
-
-        public Tinder eventManager(@NotNull ModuleTinder<? extends EventManager> eventManager) {
-            this.eventManager = eventManager;
-            return this;
-        }
-
-        public Tinder errorHandler(@NotNull ModuleTinder<? extends ErrorRegistry> errorHandler) {
-            this.errors = errorHandler;
-            return this;
-        }
-
-        public Tinder metadata(@NotNull String key, @NotNull Packet.Parameter value) {
-            this.metadata.put(key, value);
-            return this;
-        }
-
-        @Override
-        public @NotNull ServerKernel ignite() throws Exception {
-            Version version;
-            try (InputStream input = ProxyKernel.class.getClassLoader().getResourceAsStream("rustyconnector-metadata.json")) {
-                if (input == null) throw new NullPointerException("Unable to initialize version number from jar.");
-                Gson gson = new Gson();
-                JsonObject object = gson.fromJson(new String(input.readAllBytes()), JsonObject.class);
-                version = new Version(object.get("version").getAsString());
-            }
-
-            return new ServerKernel(
-                    this.id,
-                    version,
-                    adapter,
-                    this.directory,
-                    this.modulesDirectory,
-                    List.of(
-                        lang,
-                        magicLink,
-                        eventManager,
-                        errors
-                    ),
-                    address,
-                    targetFamily,
-                    this.metadata
-            );
-        }
     }
 }

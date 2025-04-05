@@ -1,23 +1,21 @@
 package group.aelysium.rustyconnector.proxy;
 
-import group.aelysium.ara.Particle;
+import group.aelysium.ara.Flux;
 import group.aelysium.rustyconnector.common.RCAdapter;
 import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.proxy.events.*;
 import group.aelysium.rustyconnector.RC;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
-import group.aelysium.rustyconnector.proxy.family.scalar_family.ScalarFamily;
 import group.aelysium.rustyconnector.proxy.player.Player;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static net.kyori.adventure.text.Component.text;
@@ -27,6 +25,11 @@ import static net.kyori.adventure.text.Component.text;
  * can properly execute them regardless of disparate data types between the wrapper and RustyConnector.
  */
 public abstract class ProxyAdapter extends RCAdapter {
+    /**
+     * @return A set containing all players that are currently online.
+     */
+    public abstract @NotNull Set<Player> onlinePlayers();
+    
     /**
      * Converts the RustyConnector player object to the Proxy's version.
      * @param player The RustyConnector player.
@@ -52,7 +55,7 @@ public abstract class ProxyAdapter extends RCAdapter {
      * Registers the Server to the Proxy.
      * RustyConnector will already handle the important registration code.
      * This method only exists to ensure the server is registered to the actual proxy software being used.
-     * If you're reading this, you probably want to use {@link ProxyKernel#registerServer(Particle.Flux, Server.Configuration)}.
+     * If you're reading this, you probably want to use {@link ProxyKernel#registerServer(Flux, Server.Configuration)}.
      * This method only exists for people that know exactly what they're doing.
      * @param server The server to register.
      * @return `true` if the server successfully registered. `false` otherwise.
@@ -118,7 +121,7 @@ public abstract class ProxyAdapter extends RCAdapter {
         @Nullable Server oldServer,
         @NotNull Server newServer
     ) throws RuntimeException {
-        Particle.Flux<? extends Family> newFamily = newServer.family().orElseThrow();
+        Family newFamily = newServer.family().orElseThrow();
 
         // Check if the player just joined the proxy.
         if(oldServer == null) {
@@ -128,7 +131,7 @@ public abstract class ProxyAdapter extends RCAdapter {
             return;
         }
 
-        Particle.Flux<? extends Family> oldFamily = oldServer.family().orElseThrow();
+        Family oldFamily = oldServer.family().orElseThrow();
         boolean isTheSameFamily = newFamily.equals(oldFamily);
 
         if(isTheSameFamily) {
@@ -152,12 +155,12 @@ public abstract class ProxyAdapter extends RCAdapter {
      */
     public final @NotNull Player.Connection.Request onInitialConnect(@NotNull Player player, @NotNull Function<Server, Player.Connection.Request> finalizeConnection) throws RuntimeException {
         try {
-            RC.P.Players().add(player);
+            RC.P.Players().signedIn(player);
         } catch (Exception ignore) {}
-
+        
         try {
             NetworkPreJoinEvent event = new NetworkPreJoinEvent(player);
-            boolean canceled = RC.P.EventManager().fireEvent(event).get(1, TimeUnit.MINUTES);
+            boolean canceled = RC.P.EventManager().fireEvent(event).get(10, TimeUnit.SECONDS);
             if (canceled) return Player.Connection.Request.failedRequest(player, event.canceledMessage());
         } catch (Exception ignore) {}
 
@@ -166,9 +169,21 @@ public abstract class ProxyAdapter extends RCAdapter {
             if(family == null)
                 return Player.Connection.Request.failedRequest(player, "There are no available servers for you to connect to right now.");
             
+            try {
+                FamilyPreJoinEvent event = new FamilyPreJoinEvent(family, player, Player.Connection.Power.MINIMAL);
+                boolean canceled = RC.P.EventManager().fireEvent(event).get(10, TimeUnit.SECONDS);
+                if (canceled) return Player.Connection.Request.failedRequest(player, event.canceledMessage());
+            } catch (Exception ignore) {}
+            
             Server server = family.availableServer().orElse(null);
             if(server == null)
                 return Player.Connection.Request.failedRequest(player, "There are no available servers for you to connect to right now.");
+            
+            try {
+                ServerPreJoinEvent event = new ServerPreJoinEvent(server, player, Player.Connection.Power.MINIMAL);
+                boolean canceled = RC.P.EventManager().fireEvent(event).get(10, TimeUnit.SECONDS);
+                if (canceled) return Player.Connection.Request.failedRequest(player, event.canceledMessage());
+            } catch (Exception ignore) {}
             
             return finalizeConnection.apply(server);
         } catch (Exception e) {
@@ -178,15 +193,15 @@ public abstract class ProxyAdapter extends RCAdapter {
     }
 
     public final void onDisconnect(@NotNull Player player) {
-        RC.P.EventManager().fireEvent(new NetworkLeaveEvent(player));
-
         try {
-            RC.P.Players().remove(player);
+            RC.P.Players().signedOut(player);
         } catch (Exception ignore) {}
+        
+        RC.P.EventManager().fireEvent(new NetworkLeaveEvent(player));
 
         Server server = player.server().orElse(null);
         if(server == null) return;
-        Particle.Flux<? extends Family> family = server.family().orElse(null);
+        Family family = server.family().orElse(null);
         if(family == null) return;
 
         RC.P.EventManager().fireEvent(new FamilyLeaveEvent(family, server, player, true));
@@ -205,7 +220,7 @@ public abstract class ProxyAdapter extends RCAdapter {
 
         try {
             Server oldServer = player.server().orElseThrow();
-            Particle.Flux<? extends Family> family = oldServer.family().orElseThrow();
+            Family family = oldServer.family().orElseThrow();
 
             RC.P.EventManager().fireEvent(new FamilyLeaveEvent(family, oldServer, player, true));
             RC.P.EventManager().fireEvent(new ServerLeaveEvent(oldServer, player, true));
@@ -217,7 +232,7 @@ public abstract class ProxyAdapter extends RCAdapter {
         try {
             if(isFromRootFamily) return new PlayerKickedResponse(true, Objects.requireNonNullElse(reason, text("Kicked by server.")), null);
 
-            Family family = RC.P.Families().find(RC.P.Families().rootFamily()).orElseThrow().observe(10, TimeUnit.SECONDS);
+            Family family = RC.P.Families().find(RC.P.Families().rootFamily()).get(10, TimeUnit.SECONDS);
 
             Server server = family.availableServer().orElseThrow();
 
