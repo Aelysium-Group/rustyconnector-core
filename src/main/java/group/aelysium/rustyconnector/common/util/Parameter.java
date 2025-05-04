@@ -59,26 +59,28 @@ public class Parameter {
         if(object.isJsonObject()) return new Parameter(object.getAsJsonObject());
         throw new IllegalStateException("Unexpected value: " + object.getClass().getName());
     }
+    
     public static Parameter fromUnknown(@NotNull Object object) {
-        if(object.getClass().isPrimitive()) {
-            if(Number.class.isAssignableFrom(object.getClass()))
-                return new Parameter((Number) object);
-            if(int.class.isAssignableFrom(object.getClass()))
-                return new Parameter((int) object);
-            if(long.class.isAssignableFrom(object.getClass()))
-                return new Parameter((long) object);
-            if(double.class.isAssignableFrom(object.getClass()))
-                return new Parameter((double) object);
-            if(float.class.isAssignableFrom(object.getClass()))
-                return new Parameter((float) object);
-            if(short.class.isAssignableFrom(object.getClass()))
-                return new Parameter((short) object);
-            if(Boolean.class.isAssignableFrom(object.getClass()) || boolean.class.isAssignableFrom(object.getClass()))
-                return new Parameter((boolean) object);
-            if(String.class.isAssignableFrom(object.getClass()))
-                return new Parameter(String.valueOf(object));
-        }
-        if(JsonElement.class.isAssignableFrom(object.getClass())) return fromJSON((JsonElement) object);
+        Class<?> clazz = object.getClass();
+        
+        if(Number.class.isAssignableFrom(clazz))
+            return new Parameter((Number) object);
+        if(Integer.class.isAssignableFrom(clazz) || int.class.isAssignableFrom(clazz))
+            return new Parameter((int) object);
+        if(Long.class.isAssignableFrom(clazz) || long.class.isAssignableFrom(clazz))
+            return new Parameter((long) object);
+        if(Double.class.isAssignableFrom(clazz) || double.class.isAssignableFrom(clazz))
+            return new Parameter((double) object);
+        if(Float.class.isAssignableFrom(clazz) || float.class.isAssignableFrom(clazz))
+            return new Parameter((float) object);
+        if(Short.class.isAssignableFrom(clazz) || short.class.isAssignableFrom(clazz))
+            return new Parameter((short) object);
+        if(Boolean.class.isAssignableFrom(clazz) || boolean.class.isAssignableFrom(clazz))
+            return new Parameter((boolean) object);
+        if(String.class.isAssignableFrom(clazz))
+            return new Parameter(String.valueOf(object));
+        if(JsonElement.class.isAssignableFrom(clazz))
+            return fromJSON((JsonElement) object);
         throw new IllegalStateException("Unexpected value: " + object.getClass().getName());
     }
     
