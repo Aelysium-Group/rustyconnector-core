@@ -54,18 +54,4 @@ public class Environment {
             return Optional.empty();
         }
     }
-
-    /**
-     * Fetches the server registration from the associated environment variable.<br/>
-     * The environment variable that this method references is "RC_SERVER_REGISTRATION".
-     * @return An optional containing the value of the environment variable if it exists, otherwise `null`.
-     */
-    public static Optional<String> serverRegistration() {
-        try {
-            return Optional.ofNullable(System.getenv("RC_SERVER_REGISTRATION"));
-        } catch (Exception e) {
-            RC.Error(Error.from(e));
-            return Optional.empty();
-        }
-    }
 }
