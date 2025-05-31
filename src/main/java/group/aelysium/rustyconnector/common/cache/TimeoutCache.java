@@ -73,7 +73,9 @@ public class TimeoutCache<K, V> implements Closure, Map<K, V> {
 
     @Override
     public boolean containsKey(Object key) {
-        return this.map.containsKey(key);
+        TimedValue<V> value = this.map.get(key);
+        if(value == null) return false;
+        return !value.expired();
     }
 
     @Override
@@ -143,11 +145,16 @@ public class TimeoutCache<K, V> implements Closure, Map<K, V> {
         }
 
         public V value() {
+            if(this.expired()) return null;
             return value;
         }
 
         public long expiration() {
             return expiration;
+        }
+        
+        public boolean expired() {
+            return this.expiration < Instant.now().getEpochSecond();
         }
 
         @Override

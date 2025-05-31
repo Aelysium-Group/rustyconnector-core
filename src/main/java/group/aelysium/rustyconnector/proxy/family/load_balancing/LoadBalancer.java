@@ -10,6 +10,7 @@ import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.print.Book;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -25,13 +26,13 @@ public abstract class LoadBalancer implements Server.Container, MetadataHolder<O
     protected boolean persistence;
     protected int attempts;
     protected int index = 0;
-    protected Vector<Server> unlockedServers = new Vector<>();
-    protected Vector<Server> lockedServers = new Vector<>();
     protected Map<String, Server> servers = new ConcurrentHashMap<>();
+    protected Set<String> lockedServers = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    protected Vector<Server> unlockedServers = new Vector<>();
     protected Runnable sorter = () -> {
         try {
             Server p = this.unlockedServers.getFirst();
-            if(p == null) p = this.lockedServers.getFirst();
+            if(p == null) throw new RuntimeException();
             RC.P.EventManager().fireEvent(new FamilyRebalanceEvent(p.family().orElseThrow()));
         } catch (Exception ignore) {}
 
@@ -196,8 +197,8 @@ public abstract class LoadBalancer implements Server.Container, MetadataHolder<O
     @Override
     public void removeServer(@NotNull Server server) {
         if(!this.servers.containsKey(server.id())) return;
-        if(!this.unlockedServers.remove(server))
-            this.lockedServers.remove(server);
+        if(!this.lockedServers.remove(server.id())) // Locked servers is going to have a O(1) complexity on it's remove evaluation so check it first before doing more expensive O(n) operation on unlockedServers
+            this.unlockedServers.remove(server);
         this.servers.remove(server.id());
     }
 
@@ -218,7 +219,7 @@ public abstract class LoadBalancer implements Server.Container, MetadataHolder<O
 
     @Override
     public List<Server> lockedServers() {
-        return Collections.unmodifiableList(this.lockedServers);
+        return this.lockedServers.stream().map(k -> this.servers.get(k)).toList();
     }
 
     @Override
@@ -234,7 +235,7 @@ public abstract class LoadBalancer implements Server.Container, MetadataHolder<O
         } catch (Exception ignore) {}
 
         if(!this.unlockedServers.remove(server)) return;
-        this.lockedServers.add(server);
+        this.lockedServers.add(server.id());
     }
 
     @Override
@@ -243,13 +244,13 @@ public abstract class LoadBalancer implements Server.Container, MetadataHolder<O
             boolean canceled = RC.P.EventManager().fireEvent(new ServerUnlockedEvent(server.family().orElseThrow(), server)).get(1, TimeUnit.MINUTES);
             if(canceled) return;
         } catch (Exception ignore) {}
-        if(!this.lockedServers.remove(server)) return;
+        if(!this.lockedServers.remove(server.id())) return;
         this.unlockedServers.add(server);
     }
 
     @Override
     public boolean isLocked(@NotNull Server server) {
-        return this.lockedServers.contains(server);
+        return this.lockedServers.contains(server.id());
     }
 
     @Override
