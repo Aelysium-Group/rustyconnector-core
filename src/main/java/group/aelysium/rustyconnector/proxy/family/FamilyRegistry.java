@@ -58,8 +58,7 @@ public class FamilyRegistry implements ModuleHolder<Family>, Module {
      * @return The root family id or an empty string.
      */
     public @NotNull String rootFamily() {
-        if(this.rootFamily == null) return "";
-        return this.rootFamily;
+        return Objects.requireNonNullElse(this.rootFamily, "");
     }
 
     /**

@@ -29,7 +29,9 @@ public class LeastConnection extends LoadBalancer {
             Server theNextItem = this.unlockedServers.get(this.index + 1);
 
             if(thisItem.players() >= theNextItem.players()) this.index++;
-        } catch (IndexOutOfBoundsException ignore) {}
+        } catch (IndexOutOfBoundsException ignore) {
+            this.index = 0;
+        }
     }
 
     @Override

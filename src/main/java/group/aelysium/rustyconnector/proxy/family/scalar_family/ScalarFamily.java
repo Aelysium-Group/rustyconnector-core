@@ -2,6 +2,7 @@ package group.aelysium.rustyconnector.proxy.family.scalar_family;
 
 import group.aelysium.ara.Flux;
 import group.aelysium.rustyconnector.RC;
+import group.aelysium.rustyconnector.common.errors.Error;
 import group.aelysium.rustyconnector.common.modules.Module;
 import group.aelysium.rustyconnector.proxy.events.FamilyPreJoinEvent;
 import group.aelysium.rustyconnector.proxy.family.Family;
@@ -130,8 +131,18 @@ public class ScalarFamily extends Family {
         } catch (Exception ignore) {}
 
         try {
-            return this.loadBalancer().get(20, TimeUnit.SECONDS).current().orElseThrow().connect(player, power);
-        } catch (Exception ignore) {
+            LoadBalancer loadBalancer = this.loadBalancer().get(10, TimeUnit.SECONDS);
+            
+            Player.Connection.Request request = loadBalancer.current().orElseThrow().connect(player, power);
+            loadBalancer.iterate();
+            
+            return request;
+        } catch (Exception e) {
+            try {
+                LoadBalancer loadBalancer = this.loadBalancer().get(2, TimeUnit.SECONDS);
+                loadBalancer.forceIterate();
+            } catch(Exception ignore2) {}
+            RC.Error(Error.from(e).whileAttempting("To connect a player to a server."));
             return Player.Connection.Request.failedRequest(player, "Unable to connect you to your server. Please try again later.");
         }
     }

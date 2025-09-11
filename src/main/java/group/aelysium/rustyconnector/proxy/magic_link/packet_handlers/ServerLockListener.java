@@ -9,7 +9,7 @@ import group.aelysium.rustyconnector.proxy.family.Server;
 import java.util.NoSuchElementException;
 
 public class ServerLockListener {
-    @PacketListener(Server.Packets.Lock.class)
+    @PacketListener(value = Server.Packets.Lock.class, responsesAsPacketReplies = true)
     public PacketListener.Response handle(Server.Packets.Lock packet) {
         try {
             Server server = RC.P.Server(packet.local().id())

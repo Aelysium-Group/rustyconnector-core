@@ -12,6 +12,7 @@ import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -218,6 +219,7 @@ public abstract class ProxyAdapter extends RCAdapter {
     public final @NotNull PlayerKickedResponse onKicked(@NotNull Player player, @Nullable Component reason) {
         boolean isFromRootFamily = false;
 
+        String rootFamilyID = RC.P.Families().rootFamily();
         try {
             Server oldServer = player.server().orElseThrow();
             Family family = oldServer.family().orElseThrow();
@@ -225,21 +227,36 @@ public abstract class ProxyAdapter extends RCAdapter {
             RC.P.EventManager().fireEvent(new FamilyLeaveEvent(family, oldServer, player, true));
             RC.P.EventManager().fireEvent(new ServerLeaveEvent(oldServer, player, true));
 
-            isFromRootFamily = RC.P.Families().rootFamily().equals(oldServer.family());
-        } catch (Exception ignore) {}
+            isFromRootFamily = rootFamilyID.equals(oldServer.family().orElseThrow().id());
+        } catch (Exception e) {
+            RC.Error(Error.from(e).whileAttempting("To determine what family "+player.username()+" is from."));
+        }
 
         // Handle root family catching
         try {
             if(isFromRootFamily) return new PlayerKickedResponse(true, Objects.requireNonNullElse(reason, text("Kicked by server.")), null);
+            
+            Family targetFamily = null;
+            try {
+                targetFamily = player
+                    .server().orElseThrow()
+                    .family().orElseThrow()
+                    .parent().orElseThrow()
+                    .get(1, TimeUnit.SECONDS);
+            } catch (NoSuchElementException ignore) {}
+            try {
+                targetFamily = Objects.requireNonNullElse(targetFamily, RC.P.Family(rootFamilyID).orElse(null));
+            } catch (NoSuchElementException ignore) {}
+            
+            if(targetFamily == null) return new PlayerKickedResponse(false, Objects.requireNonNullElse(reason, text("Kicked by server.")), null);
+            
+            Player.Connection.Request request = targetFamily.connect(player);
+            Player.Connection.Result result = request.result().get(5, TimeUnit.SECONDS);
 
-            Family family = RC.P.Families().find(RC.P.Families().rootFamily()).get(10, TimeUnit.SECONDS);
-
-            Server server = family.availableServer().orElseThrow();
-
-            return new PlayerKickedResponse(false, reason, server);
+            return new PlayerKickedResponse(false, reason, result.server());
         } catch (Exception e) {
             RC.Error(Error.from(e).whileAttempting("To catch a player into the root family."));
-            return new PlayerKickedResponse(false, Objects.requireNonNullElse(reason, text("Kicked by server.")), null);
+            return new PlayerKickedResponse(true, Objects.requireNonNullElse(reason, text("Kicked by server.")), null);
         }
     }
 

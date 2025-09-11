@@ -2,12 +2,10 @@ package group.aelysium.rustyconnector.common;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.common.modules.ModuleCollection;
 import group.aelysium.rustyconnector.common.modules.Module;
 import group.aelysium.rustyconnector.common.util.MetadataHolder;
 import group.aelysium.rustyconnector.common.util.Parameter;
-import group.aelysium.rustyconnector.proxy.util.Version;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStream;
@@ -19,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class RCKernel<A extends RCAdapter> extends ModuleCollection<Module> implements Module, MetadataHolder<Parameter> {
     protected final String id;
-    protected final Version version;
+    protected final String version;
     protected final A adapter;
     protected final Path directory;
     protected final Path moduleDirectory;
@@ -37,7 +35,7 @@ public abstract class RCKernel<A extends RCAdapter> extends ModuleCollection<Mod
             if (input == null) throw new NullPointerException("Unable to initialize version number from jar.");
             Gson gson = new Gson();
             JsonObject object = gson.fromJson(new String(input.readAllBytes()), JsonObject.class);
-            this.version = new Version(object.get("version").getAsString());
+            this.version = object.get("version").getAsString();
         }
         
         this.id = id;
@@ -100,7 +98,7 @@ public abstract class RCKernel<A extends RCAdapter> extends ModuleCollection<Mod
     /**
      * @return The current version of RustyConnector
      */
-    public Version version() {
+    public @NotNull String version() {
         return this.version;
     }
 

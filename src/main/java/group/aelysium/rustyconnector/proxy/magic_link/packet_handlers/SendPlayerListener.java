@@ -23,7 +23,7 @@ public class SendPlayerListener {
         Player player = null;
         try {
             if(packet.playerUsername().isPresent()) player = RC.P.PlayerFromUsername(packet.playerUsername().orElseThrow()).orElseThrow();
-            if(packet.playerID().isPresent()) player = RC.P.PlayerFromUsername(packet.playerID().orElseThrow()).orElseThrow();
+            if(packet.playerID().isPresent()) player = RC.P.PlayerFromID(packet.playerID().orElseThrow()).orElseThrow();
         } catch (NoSuchElementException ignore) {}
         if(player == null || !player.online()) throw new NoSuchElementException("No player '"+packet.player()+"' is online.");
 
