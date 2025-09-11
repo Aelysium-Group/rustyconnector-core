@@ -185,7 +185,9 @@ public abstract class LoadBalancer implements Server.Container, MetadataHolder<O
 
     @Override
     public Optional<Server> availableServer() {
-        return this.current();
+        Optional<Server> current = this.current();
+        this.iterate();
+        return current;
     }
 
     @Override
