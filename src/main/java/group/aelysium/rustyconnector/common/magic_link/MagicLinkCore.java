@@ -253,28 +253,11 @@ public abstract class MagicLinkCore implements Module {
 
         @PacketType("RC-PS")
         class SendPlayer extends Packet.Remote {
-            public Optional<String> targetServer() {
-                try {
-                    if(!this.flags().contains(Flag.SERVER)) return Optional.empty();
-                    return genericTarget();
-                } catch (NullPointerException ignore) {}
-                return Optional.empty();
-            }
-            public Optional<String> targetFamily() {
-                try {
-                    if(!this.flags().contains(Flag.FAMILY)) return Optional.empty();
-                    return genericTarget();
-                } catch (NullPointerException ignore) {}
-                return Optional.empty();
-            }
-            public Optional<String> genericTarget() {
-                try {
-                    return Optional.ofNullable(this.parameters().get(Parameters.GENERIC_TARGET).getAsString());
-                } catch (NullPointerException ignore) {}
-                    return Optional.empty();
+            public String target() {
+                return this.parameters().get(Parameters.TARGET).getAsString();
             }
 
-            public List<Flag> flags() {
+            public Set<Flag> flags() {
                 try {
                     String flagString = this.parameters().get(Parameters.FLAGS).getAsString();
                     String[] flagArray = flagString.split("");
@@ -290,9 +273,9 @@ public abstract class MagicLinkCore implements Module {
                         }
                     }
 
-                    return Collections.unmodifiableList(flags);
+                    return Set.copyOf(flags);
                 } catch (Exception ignore) {}
-                return List.of();
+                return Set.of();
             }
 
             public Optional<String> playerID() {
@@ -372,7 +355,7 @@ public abstract class MagicLinkCore implements Module {
             }
 
             public interface Parameters {
-                String GENERIC_TARGET = "t";
+                String TARGET = "t";
                 String PLAYER = "p";
                 String FLAGS = "f";
             }

@@ -10,12 +10,13 @@ import group.aelysium.rustyconnector.proxy.player.Player;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class SendPlayerListener {
     @PacketListener(MagicLinkCore.Packets.SendPlayer.class)
     public PacketListener.Response handle(MagicLinkCore.Packets.SendPlayer packet) throws Exception {
-        if(packet.targetFamily().isEmpty() && packet.targetServer().isEmpty() && packet.genericTarget().isEmpty())
+        if(packet.target().isEmpty())
             throw new IllegalStateException("You must define either a target family or server.");
         if(packet.playerID().isEmpty() && packet.playerUsername().isEmpty())
             throw new IllegalStateException("You must define a user to send.");
@@ -27,10 +28,11 @@ public class SendPlayerListener {
         } catch (NoSuchElementException ignore) {}
         if(player == null || !player.online()) throw new NoSuchElementException("No player '"+packet.player()+"' is online.");
 
-        boolean sendFamily = packet.targetFamily().isPresent();
-        boolean sendServer = packet.targetServer().isPresent();
-        if(packet.genericTarget().isPresent()) {
-            String target = packet.genericTarget().orElseThrow();
+        Set<MagicLinkCore.Packets.SendPlayer.Flag> flags = packet.flags();
+        boolean sendFamily = flags.contains(MagicLinkCore.Packets.SendPlayer.Flag.FAMILY);
+        boolean sendServer = flags.contains(MagicLinkCore.Packets.SendPlayer.Flag.SERVER);
+        String target = packet.target();
+        if(!sendFamily && !sendServer) { // Neither of the flags was defined. It's a generic search.
             Optional<? extends Family> familyOptional = RC.P.Family(target);
             Optional<Server> serverOptional = RC.P.Server(target);
 
@@ -42,23 +44,19 @@ public class SendPlayerListener {
         }
 
         Player.Connection.Power power = Player.Connection.Power.MINIMAL;
-        List<MagicLinkCore.Packets.SendPlayer.Flag> flags = packet.flags();
         if(flags.contains(MagicLinkCore.Packets.SendPlayer.Flag.MODERATE)) power = Player.Connection.Power.MODERATE;
         if(flags.contains(MagicLinkCore.Packets.SendPlayer.Flag.AGGRESSIVE)) power = Player.Connection.Power.AGGRESSIVE;
 
         if(sendFamily) {
-            String familyID = packet.targetFamily().orElseThrow();
-            Family family = RC.P.Family(familyID)
-                    .orElseThrow(()->new NoSuchElementException("No family with the id '"+familyID+"' exists."));
+            Family family = RC.P.Family(target)
+                    .orElseThrow(()->new NoSuchElementException("No family with the id '"+target+"' exists."));
 
             Player.Connection.Result result = family.connect(player, power).result().get(10, TimeUnit.SECONDS);
 
             if(!result.connected()) throw new RuntimeException("Unable to connect the player to that server.");
-        }
-        if(sendServer) {
-            String serverID = packet.targetFamily().orElseThrow();
-            Server server = RC.P.Server(serverID)
-                    .orElseThrow(()->new NoSuchElementException("No family with the id '"+serverID+"' exists."));
+        } else if(sendServer) {
+            Server server = RC.P.Server(target)
+                    .orElseThrow(()->new NoSuchElementException("No server with the id '"+target+"' exists."));
 
             Player.Connection.Result result = server.connect(player, power).result().get(10, TimeUnit.SECONDS);
 
