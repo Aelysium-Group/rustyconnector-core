@@ -217,56 +217,48 @@ public abstract class ProxyAdapter extends RCAdapter {
      * @return A {@link PlayerKickedResponse}. The caller should properly handle the response so that the desired operations are performed.
      */
     public final @NotNull PlayerKickedResponse onKicked(@NotNull Player player, @Nullable Component reason) {
-        boolean isFromRootFamily = false;
-
         String rootFamilyID = RC.P.Families().rootFamily();
+
+        Server server = null;
+        Family family = null;
+
         try {
-            Server oldServer = player.server().orElseThrow();
-            Family family = oldServer.family().orElseThrow();
+            server = player.server().orElseThrow();
+            family = server.family().orElseThrow();
 
-            RC.P.EventManager().fireEvent(new FamilyLeaveEvent(family, oldServer, player, true));
-            RC.P.EventManager().fireEvent(new ServerLeaveEvent(oldServer, player, true));
+            RC.P.EventManager().fireEvent(new FamilyLeaveEvent(family, server, player, true));
+            RC.P.EventManager().fireEvent(new ServerLeaveEvent(server, player, true));
 
-            isFromRootFamily = rootFamilyID.equals(oldServer.family().orElseThrow().id());
+            if(rootFamilyID.equals(family.id()))
+                return new PlayerKickedResponse(Objects.requireNonNullElse(reason, text("Kicked by server.")), null);
         } catch (Exception e) {
             RC.Error(Error.from(e).whileAttempting("To determine what family "+player.username()+" is from."));
         }
 
-        // Handle root family catching
         try {
-            if(isFromRootFamily) return new PlayerKickedResponse(true, Objects.requireNonNullElse(reason, text("Kicked by server.")), null);
-            
             Family targetFamily = null;
-            try {
-                targetFamily = player
-                    .server().orElseThrow()
-                    .family().orElseThrow()
-                    .parent().orElseThrow()
-                    .get(1, TimeUnit.SECONDS);
-            } catch (NoSuchElementException ignore) {}
-            try {
-                targetFamily = Objects.requireNonNullElse(targetFamily, RC.P.Family(rootFamilyID).orElse(null));
-            } catch (NoSuchElementException ignore) {}
+
+            Flux<Family> parent = family.parent().orElse(null);
+
+            if(parent != null) targetFamily = parent.get(1, TimeUnit.MINUTES);
+            else targetFamily = RC.P.Family(rootFamilyID).orElse(null);
             
-            if(targetFamily == null) return new PlayerKickedResponse(false, Objects.requireNonNullElse(reason, text("Kicked by server.")), null);
+            if(targetFamily == null) return new PlayerKickedResponse(Objects.requireNonNullElse(reason, text("Kicked by server.")), null);
             
             Player.Connection.Request request = targetFamily.connect(player);
             Player.Connection.Result result = request.result().get(5, TimeUnit.SECONDS);
 
-            return new PlayerKickedResponse(false, reason, result.server());
+            return new PlayerKickedResponse(reason, result.server());
         } catch (Exception e) {
             RC.Error(Error.from(e).whileAttempting("To catch a player into the root family."));
-            return new PlayerKickedResponse(true, Objects.requireNonNullElse(reason, text("Kicked by server.")), null);
+            return new PlayerKickedResponse(Objects.requireNonNullElse(reason, text("Kicked by server.")), null);
         }
     }
 
     /**
      * The response which is given when {@link #onKicked(Player, Component)} is called.
-     * @param shouldDisconnect If `true`, the player should ultimately be disconnected from the network.
-     *                         `reason` will not be null if this is true.
-     *                         `server` will always be null if this is true.
-     * @param reason The reason for the player being kicked. Reason will not be null if: `shouldDisconnect` is true, or in some cases when redirect is not null.
-     * @param redirect The Server that the player should be redirected to.
+     * @param reason The reason for the player being kicked originally.
+     * @param redirect The Server that the player was be redirected to. If the server is null, this indicates the player is not eligible for redirection and should be disconnected.
      */
-    public record PlayerKickedResponse(boolean shouldDisconnect, @Nullable Component reason, @Nullable Server redirect) {}
+    public record PlayerKickedResponse(@NotNull Component reason, @Nullable Server redirect) {}
 }
