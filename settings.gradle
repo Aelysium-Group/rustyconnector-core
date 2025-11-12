@@ -10,4 +10,3 @@ pluginManagement {
 }
 
 rootProject.name = 'rustyconnector-core'
-include ':core'
