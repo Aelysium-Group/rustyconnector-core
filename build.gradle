@@ -9,6 +9,7 @@ buildscript {
 
 apply plugin: 'java'
 apply plugin: 'java-library'
+apply plugin: 'maven-publish'
 apply plugin: 'com.gradleup.shadow'
 
 group = project.maven_group
@@ -111,3 +112,11 @@ tasks.withType(Jar) {
 }
 
 jar.finalizedBy(shadowJar)
+
+publishing {
+    publications {
+        shadow(MavenPublication) {
+            from components.shadow
+        }
+    }
+}
