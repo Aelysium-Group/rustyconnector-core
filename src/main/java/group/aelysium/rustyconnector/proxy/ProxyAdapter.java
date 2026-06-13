@@ -218,7 +218,6 @@ public abstract class ProxyAdapter extends RCAdapter {
      */
     public final @NotNull PlayerKickedResponse onKicked(@NotNull Player player, @Nullable Component reason) {
         String rootFamilyID = RC.P.Families().rootFamily();
-
         Server server = null;
         Family family = null;
 
@@ -229,28 +228,37 @@ public abstract class ProxyAdapter extends RCAdapter {
             RC.P.EventManager().fireEvent(new FamilyLeaveEvent(family, server, player, true));
             RC.P.EventManager().fireEvent(new ServerLeaveEvent(server, player, true));
 
-            if(rootFamilyID.equals(family.id()))
+            if(rootFamilyID.equals(family.id())) {
                 return new PlayerKickedResponse(Objects.requireNonNullElse(reason, text("Kicked by server.")), null);
+            }
         } catch (Exception e) {
-            RC.Error(Error.from(e).whileAttempting("To determine what family "+player.username()+" is from."));
+            RC.Error(Error.from(e).whileAttempting("To determine what family " + player.username() + " is from."));
         }
 
         try {
             Family targetFamily = null;
+            if (family != null) {
+                Flux<Family> parent = family.parent().orElse(null);
+                if(parent != null) targetFamily = parent.get(1, TimeUnit.MINUTES);
+            }
 
-            Flux<Family> parent = family.parent().orElse(null);
+            if (targetFamily == null) {
+                targetFamily = RC.P.Family(rootFamilyID).orElse(null);
+            }
 
-            if(parent != null) targetFamily = parent.get(1, TimeUnit.MINUTES);
-            else targetFamily = RC.P.Family(rootFamilyID).orElse(null);
-            
-            if(targetFamily == null) return new PlayerKickedResponse(Objects.requireNonNullElse(reason, text("Kicked by server.")), null);
-            
-            Player.Connection.Request request = targetFamily.connect(player);
-            Player.Connection.Result result = request.result().get(5, TimeUnit.SECONDS);
+            if(targetFamily == null) {
+                return new PlayerKickedResponse(Objects.requireNonNullElse(reason, text("Kicked by server.")), null);
+            }
 
-            return new PlayerKickedResponse(reason, result.server());
+            Server fallbackServer = targetFamily.availableServer().orElse(null);
+
+            if (fallbackServer != null) {
+                return new PlayerKickedResponse(Objects.requireNonNullElse(reason, text("No fallback servers available.")), fallbackServer);
+            } else {
+                return new PlayerKickedResponse(Objects.requireNonNullElse(reason, text("No fallback servers available.")), null);
+            }
         } catch (Exception e) {
-            RC.Error(Error.from(e).whileAttempting("To catch a player into the root family."));
+            RC.Error(Error.from(e).whileAttempting("To catch a player into a fallback family."));
             return new PlayerKickedResponse(Objects.requireNonNullElse(reason, text("Kicked by server.")), null);
         }
     }
