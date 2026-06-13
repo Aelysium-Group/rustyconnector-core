@@ -47,6 +47,15 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
      * @throws NoSuchElementException If the provided family flux doesn't resolve within a few seconds.
      */
     public @NotNull Server registerServer(@NotNull Flux<Family> familyFlux, @NotNull Server.Configuration configuration) throws CancellationException, NoSuchElementException, IllegalStateException {
+
+        try {
+            RC.P.Server(configuration.id()).ifPresent(ghostServer -> {
+                RC.P.Adapter().log(text("Ghost server detected for ID [" + configuration.id() + "]. Forcefully unregistering stale state..."));
+                this.unregisterServer(ghostServer);
+            });
+        } catch (Exception ignored) {
+        }
+
         FamilyRegistry familyRegistry = RC.P.Families();
         Server server;
         try {
