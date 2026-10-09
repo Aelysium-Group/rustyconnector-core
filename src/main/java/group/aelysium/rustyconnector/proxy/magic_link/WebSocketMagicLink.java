@@ -12,7 +12,6 @@ import group.aelysium.rustyconnector.common.crypt.Token;
 import group.aelysium.rustyconnector.common.magic_link.MagicLinkCore;
 import group.aelysium.rustyconnector.common.magic_link.packet.Packet;
 import group.aelysium.rustyconnector.proxy.events.ServerTimeoutEvent;
-import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.magic_link.packet_handlers.*;
 import group.aelysium.rustyconnector.proxy.util.AddressUtil;
 import io.javalin.Javalin;
@@ -42,14 +41,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
     protected final String endpoint;
     protected final Map<Packet.SourceIdentifier, WsContext> clients = new ConcurrentHashMap<>();
     protected final InetSocketAddress address;
-    private final Javalin server = Javalin.create(c -> {
-        c.showJavalinBanner = false;
-
-        //c.jetty.modifyWebSocketServletFactory(ws -> ws.setIdleTimeout(Duration.ofMinutes(15)));
-
-        c.http.defaultContentType = ContentType.JSON;
-        c.http.strictContentTypes = true;
-    });
+    private final Javalin server;
 
     public WebSocketMagicLink(
             @NotNull InetSocketAddress address,
@@ -62,98 +54,105 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
 
         this.endpoint = tokenGenerator.nextString();
         this.address = address;
-
-        // Register some dummy endpoints that don't do anything
-        for (int i = 0; i < (new Random()).nextInt((32 - 7) + 1) + 32; i++) server.get("/"+tokenGenerator.nextString(), dummyHandler);
-
         Gson gson = new Gson();
 
-        server.get("/"+MagicLinkCore.endpoint, (request) -> {
-            String authorization = request.header("Authorization");
-            if(authorization == null) throw new UnauthorizedResponse();
-            authorization = authorization.replaceAll("Bearer ", "");
+        this.server = Javalin.create(c -> {
+            c.startup.showJavalinBanner = false;
 
-            try {
-                long unix = Long.parseLong(aes.decrypt(authorization));
-                Instant time = Instant.ofEpochSecond(unix);
-                Instant now = Instant.now();
+            c.http.defaultContentType = ContentType.JSON;
+            c.http.strictContentTypes = true;
 
-                if(time.plus(30, ChronoUnit.SECONDS).isBefore(now))
+            // Register some dummy endpoints that don't do anything
+            for (int i = 0; i < (new Random()).nextInt((32 - 7) + 1) + 32; i++) {
+                c.routes.get("/"+tokenGenerator.nextString(), dummyHandler);
+            }
+
+            c.routes.get("/"+MagicLinkCore.endpoint, (request) -> {
+                String authorization = request.header("Authorization");
+                if(authorization == null) throw new UnauthorizedResponse();
+                authorization = authorization.replace("Bearer ", "");
+
+                try {
+                    long unix = Long.parseLong(aes.decrypt(authorization));
+                    Instant time = Instant.ofEpochSecond(unix);
+                    Instant now = Instant.now();
+
+                    if(time.plus(30, ChronoUnit.SECONDS).isBefore(now))
+                        throw new UnauthorizedResponse();
+
+                    String randomData = tokenGenerator.nextString();
+                    request.json(Map.of(
+                            "endpoint", aes.encrypt(endpoint),
+                            "token", aes.encrypt(now.getEpochSecond()+"-"+randomData),
+                            "signature", SHA256.hash(now.getEpochSecond()+"-"+randomData)
+                    ));
+                } catch (Exception e) {
+                    RC.Error(Error.from(e));
                     throw new UnauthorizedResponse();
+                }
+            });
 
-                String randomData = tokenGenerator.nextString();
-                request.json(Map.of(
-                    "endpoint", aes.encrypt(endpoint),
-                    "token", aes.encrypt(now.getEpochSecond()+"-"+randomData),
-                    "signature", SHA256.hash(now.getEpochSecond()+"-"+randomData)
-                ));
-            } catch (Exception e) {
-                RC.Error(Error.from(e));
+            c.routes.wsBeforeUpgrade("/"+endpoint, (request)->{
+                try {
+                    String authorization = Objects.requireNonNull(request.header("Authorization"));
+                    JsonObject xServerIdentification = gson.fromJson(Objects.requireNonNull(request.header("X-Server-Identification")), JsonObject.class);
+                    Packet.SourceIdentifier identification = Packet.SourceIdentifier.fromJSON(xServerIdentification);
+
+                    authorization = authorization.replace("Bearer ", "");
+                    authorization = aes.decrypt(authorization);
+
+                    String[] split = authorization.split("\\$");
+                    long timestamp = Long.parseLong(split[0].split("-")[0]);
+                    String token = split[0].split("-")[1];
+                    String signature = split[1];
+
+                    if (!identification.id().equals(split[2])) throw new UnauthorizedResponse("Invalid identification.");
+                    if (!SHA256.hash(timestamp + "-" + token).equals(signature)) throw new UnauthorizedResponse("Invalid token.");
+
+                    Instant time = Instant.ofEpochSecond(timestamp);
+                    if (time.plus(30, ChronoUnit.SECONDS).isBefore(Instant.now()))
+                        throw new UnauthorizedResponse("Expired request.");
+
+                    return;
+                } catch (Exception e) {
+                    RC.Error(Error.from(e));
+                }
                 throw new UnauthorizedResponse();
-            }
-        });
-        server.wsBeforeUpgrade("/"+endpoint, (request)->{
-            try {
-                String authorization = Objects.requireNonNull(request.header("Authorization"));
-                JsonObject xServerIdentification = gson.fromJson(Objects.requireNonNull(request.header("X-Server-Identification")), JsonObject.class);
-                Packet.SourceIdentifier identification = Packet.SourceIdentifier.fromJSON(xServerIdentification);
-
-                authorization = authorization.replaceAll("Bearer ", "");
-                authorization = aes.decrypt(authorization);
-
-                String[] split = authorization.split("\\$");
-                long timestamp = Long.parseLong(split[0].split("-")[0]);
-                String token = split[0].split("-")[1];
-                String signature = split[1];
-
-                if (!identification.id().equals(split[2])) throw new UnauthorizedResponse("Invalid identification.");
-                if (!SHA256.hash(timestamp + "-" + token).equals(signature)) throw new UnauthorizedResponse("Invalid token.");
-
-                Instant time = Instant.ofEpochSecond(timestamp);
-                if (time.plus(30, ChronoUnit.SECONDS).isBefore(Instant.now()))
-                    throw new UnauthorizedResponse("Expired request.");
-
-                return;
-            } catch (Exception e) {
-                RC.Error(Error.from(e));
-            }
-            throw new UnauthorizedResponse();
-        });
-        server.ws("/"+endpoint, (config) -> {
-            config.onConnect(request -> {
-                try {
-                    Context upgradeRequest = request.getUpgradeCtx$javalin();
-                    Packet.SourceIdentifier target = Packet.SourceIdentifier.fromJSON(gson.fromJson(Optional.ofNullable(upgradeRequest.header("X-Server-Identification")).orElse(""), JsonObject.class));
-
-                    this.clients.putIfAbsent(target, request);
-                } catch (Exception e) {
-                    RC.Error(Error.from(e));
-                    request.closeSession(1011, "Unable to complete Magic Link connection.");
-                }
             });
-            config.onClose(request -> {
-                try {
-                    Context upgradeRequest = request.getUpgradeCtx$javalin();
-                    Packet.SourceIdentifier target = Packet.SourceIdentifier.fromJSON(gson.fromJson(Optional.ofNullable(upgradeRequest.header("X-Server-Identification")).orElse(""), JsonObject.class));
 
-                    this.clients.remove(target);
-                } catch (Exception e) {
-                    RC.Error(Error.from(e));
-                }
-            });
-            config.onMessage(request -> {
-                try {
-                    Context upgradeRequest = request.getUpgradeCtx$javalin();
-                    Packet.SourceIdentifier target = Packet.SourceIdentifier.fromJSON(gson.fromJson(Optional.ofNullable(upgradeRequest.header("X-Server-Identification")).orElse(""), JsonObject.class));
+            c.routes.ws("/"+endpoint, (config) -> {
+                config.onConnect(request -> {
+                    try {
+                        Packet.SourceIdentifier target = Packet.SourceIdentifier.fromJSON(gson.fromJson(Optional.ofNullable(request.header("X-Server-Identification")).orElse(""), JsonObject.class));
 
-                    if(!this.clients.containsKey(target)) {
-                        request.closeSession(1008, "Unauthorized");
-                        return;
+                        this.clients.putIfAbsent(target, request);
+                    } catch (Exception e) {
+                        RC.Error(Error.from(e));
+                        request.closeSession(1011, "Unable to complete Magic Link connection.");
                     }
-                    this.handleMessage(request.message());
-                } catch (Exception e) {
-                    RC.Error(Error.from(e));
-                }
+                });
+                config.onClose(request -> {
+                    try {
+                        Packet.SourceIdentifier target = Packet.SourceIdentifier.fromJSON(gson.fromJson(Optional.ofNullable(request.header("X-Server-Identification")).orElse(""), JsonObject.class));
+
+                        this.clients.remove(target);
+                    } catch (Exception e) {
+                        RC.Error(Error.from(e));
+                    }
+                });
+                config.onMessage(request -> {
+                    try {
+                        Packet.SourceIdentifier target = Packet.SourceIdentifier.fromJSON(gson.fromJson(Optional.ofNullable(request.header("X-Server-Identification")).orElse(""), JsonObject.class));
+
+                        if(!this.clients.containsKey(target)) {
+                            request.closeSession(1008, "Unauthorized");
+                            return;
+                        }
+                        this.handleMessage(request.message());
+                    } catch (Exception e) {
+                        RC.Error(Error.from(e));
+                    }
+                });
             });
         });
 
@@ -189,7 +188,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
                             if (newValue > 0) return;
 
                             try {
-                                RC.EventManager().fireEvent(new ServerTimeoutEvent(server, ((Family) f)));
+                                RC.EventManager().fireEvent(new ServerTimeoutEvent(server, f));
                             } catch (Exception ignore) {}
                             try {
                                 WsContext connection = this.clients.get(Packet.SourceIdentifier.server(server.id()));
