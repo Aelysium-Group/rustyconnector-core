@@ -1,5 +1,5 @@
 # User-specific stuff
-.idea/
+*.xml
 .gradle/
 
 *.iml
