@@ -37,6 +37,14 @@ public class Player {
     }
 
     /**
+     * Send a message to the player.
+     * @param component The component to send.
+     */
+    public void sendMessage(Component component) {
+        RC.P.Adapter().messagePlayer(this.id(), component);
+    }
+
+    /**
      * Sends a message to the player.
      * If there's an issue messaging the player, nothing will happen.
      * @param message The message to send.
