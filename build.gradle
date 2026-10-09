@@ -29,7 +29,7 @@ repositories {
     maven { url = "https://hub.spigotmc.org/nexus/content/groups/public/" }
     maven { url = "https://oss.sonatype.org/content/groups/public/" }
     maven { url = "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
-    maven { url = "https://maven.mrnavastar.me/releases/" }
+    maven { url = "https://java.funa.dev/releases/" }
     maven { url = "https://repo.eclipse.org/content/groups/releases/" }
     maven { url = "https://repo.alessiodp.com/releases/" }
 }
@@ -42,13 +42,13 @@ dependencies {
     compileOnly "org.incendo:cloud-annotations:2.0.0"
 
     shadow "group.aelysium:ara:2.0.5"
-    shadow "group.aelysium:haze:0.0.20"
+    shadow "group.aelysium:haze:0.0.21"
     shadow "group.aelysium:declarative-yaml:0.2.0"
 
     shadow 'com.aventrix.jnanoid:jnanoid:2.0.0'
     shadow 'com.google.code.gson:gson:2.11.0'
 
-    shadow "io.javalin:javalin:6.5.0"
+    shadow "io.javalin:javalin:7.2.3"
     shadow "com.fasterxml.jackson.core:jackson-databind:2.17.0"
     shadow "org.java-websocket:Java-WebSocket:1.5.7"
 }
