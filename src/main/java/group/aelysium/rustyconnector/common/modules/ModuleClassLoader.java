@@ -24,7 +24,7 @@ public class ModuleClassLoader extends URLClassLoader {
     private final ClassLoader parentClassLoader;
 
     public ModuleClassLoader(List<URL> urls, ClassLoader parentClassLoader, List<String> sharedPackages) {
-        super(urls.toArray(new URL[0]), null);
+        super(urls.toArray(new URL[0]), ClassLoader.getPlatformClassLoader());
         this.parentClassLoader = parentClassLoader;
         this.sharedPackages.addAll(sharedPackages);
     }
