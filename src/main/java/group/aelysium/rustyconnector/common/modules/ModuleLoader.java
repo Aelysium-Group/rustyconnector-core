@@ -21,6 +21,19 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ModuleLoader implements AutoCloseable {
+
+    Class<?> findClassInModules(String name, ModuleClassLoader requester) {
+        for (ModuleClassLoader loader : this.classLoaders) {
+            if (loader == requester) continue;
+            if (loader.exportsPackage(name)) {
+                try {
+                    return loader.loadExportedClass(name);
+                } catch (ClassNotFoundException e) {
+                }
+            }
+        }
+        return null;
+    }
     protected Gson gson = new Gson();
     protected final List<ModuleClassLoader> classLoaders = new ArrayList<>();
     private final Map<String, ModuleRegistrar> registrars = new HashMap<>();
@@ -43,7 +56,8 @@ public class ModuleLoader implements AutoCloseable {
                         ModuleClassLoader resourceGrabber = new ModuleClassLoader(
                             List.of(file.toURI().toURL()),
                             getClass().getClassLoader(),
-                            List.of()
+                            List.of(),
+                            null
                         );
                         InputStream stream = resourceGrabber.getResourceAsStream("rc-module.json");
                         if(stream == null) throw new NullPointerException("No rc-module.json exists for "+file.getName());
@@ -57,8 +71,10 @@ public class ModuleLoader implements AutoCloseable {
                     ModuleClassLoader classLoader = new ModuleClassLoader(
                         List.of(file.toURI().toURL()),
                         getClass().getClassLoader(),
-                        config.sharedPackages == null ? List.of() : config.sharedPackages
+                        config.sharedPackages == null ? List.of() : config.sharedPackages,
+                        this
                     );
+                    classLoaders.add(classLoader);
                     Thread.currentThread().setContextClassLoader(classLoader);
                     Class<?> entrypoint = classLoader.loadClass(config.main());
                     if(!ExternalModuleBuilder.class.isAssignableFrom(entrypoint))
