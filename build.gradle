@@ -32,6 +32,7 @@ repositories {
     maven { url = "https://java.funa.dev/releases/" }
     maven { url = "https://repo.eclipse.org/content/groups/releases/" }
     maven { url = "https://repo.alessiodp.com/releases/" }
+    maven { url = "https://repo.faststats.dev/releases/"}
 }
 
 dependencies {
@@ -39,18 +40,20 @@ dependencies {
     compileOnly 'net.kyori:adventure-api:4.17.0'
     compileOnly 'org.jetbrains:annotations:24.1.0'
     compileOnly 'org.incendo:cloud-core:2.0.0'
-    compileOnly "org.incendo:cloud-annotations:2.0.0"
+    compileOnly 'org.incendo:cloud-annotations:2.0.0'
 
-    shadow "group.aelysium:ara:2.0.5"
-    shadow "group.aelysium:haze:0.0.21"
-    shadow "group.aelysium:declarative-yaml:0.2.0"
+    implementation "group.aelysium:ara:2.0.5"
+    implementation "group.aelysium:haze:0.0.21"
+    implementation "group.aelysium:declarative-yaml:0.2.0"
 
-    shadow 'com.aventrix.jnanoid:jnanoid:2.0.0'
-    shadow 'com.google.code.gson:gson:2.11.0'
+    implementation 'com.aventrix.jnanoid:jnanoid:2.0.0'
+    implementation 'com.google.code.gson:gson:2.11.0'
 
-    shadow "io.javalin:javalin:7.2.3"
-    shadow "com.fasterxml.jackson.core:jackson-databind:2.17.0"
-    shadow "org.java-websocket:Java-WebSocket:1.5.7"
+    implementation "io.javalin:javalin:7.2.3"
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.22.3"
+    implementation "dev.faststats.metrics:config:0.30.2"
+    implementation "dev.faststats.metrics:core:0.30.2"
+    implementation "org.java-websocket:Java-WebSocket:1.5.7"
 }
 
 processResources {
@@ -84,11 +87,11 @@ shadowJar {
     relocate 'com.aventrix.jnanoid', 'group.aelysium.rustyconnector.shaded.com.aventrix.jnanoid.jnanoid'
     relocate 'com.google.gson', 'group.aelysium.rustyconnector.shaded.com.google.code.gson.gson'
 
+    relocate "dev.faststats", 'group.aelysium.rustyconnector.shaded.dev.faststats'
     relocate "io.javalin", 'group.aelysium.rustyconnector.shaded.io.javalin'
     relocate "com.fasterxml.jackson.core", 'group.aelysium.rustyconnector.shaded.com.fasterxml.jackson.core.jackson_databind'
     relocate "org.java_websocket", 'group.aelysium.rustyconnector.shaded.org.java_websocket.Java_WebSocket'
 
-    configurations = [project.configurations.shadow]
 }
 
 tasks.named('jar').configure {
