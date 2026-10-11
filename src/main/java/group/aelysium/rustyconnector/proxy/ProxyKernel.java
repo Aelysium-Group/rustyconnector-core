@@ -70,17 +70,17 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
                     configuration.timeout()
             );
         }
-        
+
         Family family = null;
         try {
             family = familyFlux.get(10, TimeUnit.SECONDS);
-            
+
             try {
                 ServerRegisterEvent event = new ServerRegisterEvent(familyFlux.orElseThrow(), configuration);
                 boolean canceled = RC.P.EventManager().fireEvent(event).get(1, TimeUnit.MINUTES);
                 if (canceled) throw new CancellationException(event.canceledMessage());
             } catch (Exception ignore) {}
-            
+
             family.addServer(server);
 
             if(!RC.P.Adapter().registerServer(server))
@@ -88,13 +88,18 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
 
         } catch (CancellationException | TimeoutException e) {
             if(family != null) family.removeServer(server);
-            RC.P.Adapter().unregisterServer(server);
+            try {
+                RC.P.Adapter().unregisterServer(server);
+            } catch (Exception ignore) {}
 
             throw new CancellationException(e.getMessage());
         } catch (Exception e) {
             if(family != null) family.removeServer(server);
-            RC.P.Adapter().unregisterServer(server);
+            try {
+                RC.P.Adapter().unregisterServer(server);
+            } catch (Exception ignore) {}
 
+            if (e instanceof RuntimeException re) throw re;
             throw new IllegalStateException(e);
         }
 
@@ -111,12 +116,14 @@ public class ProxyKernel extends RCKernel<ProxyAdapter> {
      * @param server The server to unregister.
      */
     public void unregisterServer(@NotNull Server server) {
-        RC.P.Adapter().unregisterServer(server);
+        try {
+            RC.P.Adapter().unregisterServer(server);
+        } catch (Exception ignore) {}
 
         Family family = server.family().orElse(null);
-        
+
         if(family != null) family.removeServer(server);
-        
+
         RC.P.EventManager().fireEvent(new ServerUnregisterEvent(server, family));
     }
 
