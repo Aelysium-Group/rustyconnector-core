@@ -332,6 +332,7 @@ public abstract class Packet implements JSONParseable {
         }
 
         public static SourceIdentifier fromJSON(JsonObject object) {
+            if (object == null) throw new IllegalArgumentException("object is null");
             SourceIdentifier source = new SourceIdentifier(
                     object.get("u") == null ? null : object.get("u").getAsString(),
                     Origin.fromInteger(object.get("n").getAsInt())

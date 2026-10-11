@@ -113,6 +113,7 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
                     if (time.plus(30, ChronoUnit.SECONDS).isBefore(Instant.now()))
                         throw new UnauthorizedResponse("Expired request.");
 
+                    request.attribute("target", identification);
                     return;
                 } catch (Exception e) {
                     RC.Error(Error.from(e));
@@ -123,8 +124,15 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
             c.routes.ws("/"+endpoint, (config) -> {
                 config.onConnect(request -> {
                     try {
-                        Packet.SourceIdentifier target = Packet.SourceIdentifier.fromJSON(gson.fromJson(Optional.ofNullable(request.header("X-Server-Identification")).orElse(""), JsonObject.class));
-
+                        Packet.SourceIdentifier target = request.attribute("target");
+                        if (target == null) {
+                            String header = request.header("X-Server-Identification");
+                            if (header != null && !header.isBlank()) {
+                                target = Packet.SourceIdentifier.fromJSON(gson.fromJson(header, JsonObject.class));
+                                request.attribute("target", target);
+                            }
+                        }
+                        if (target == null) throw new IllegalArgumentException("Target identification missing from wsBeforeUpgrade");
                         this.clients.putIfAbsent(target, request);
                     } catch (Exception e) {
                         RC.Error(Error.from(e));
@@ -133,18 +141,18 @@ public class WebSocketMagicLink extends MagicLinkCore.Proxy {
                 });
                 config.onClose(request -> {
                     try {
-                        Packet.SourceIdentifier target = Packet.SourceIdentifier.fromJSON(gson.fromJson(Optional.ofNullable(request.header("X-Server-Identification")).orElse(""), JsonObject.class));
-
-                        this.clients.remove(target);
+                        Packet.SourceIdentifier target = request.attribute("target");
+                        if (target != null) {
+                            this.clients.remove(target);
+                        }
                     } catch (Exception e) {
                         RC.Error(Error.from(e));
                     }
                 });
                 config.onMessage(request -> {
                     try {
-                        Packet.SourceIdentifier target = Packet.SourceIdentifier.fromJSON(gson.fromJson(Optional.ofNullable(request.header("X-Server-Identification")).orElse(""), JsonObject.class));
-
-                        if(!this.clients.containsKey(target)) {
+                        Packet.SourceIdentifier target = request.attribute("target");
+                        if(target == null || !this.clients.containsKey(target)) {
                             request.closeSession(1008, "Unauthorized");
                             return;
                         }

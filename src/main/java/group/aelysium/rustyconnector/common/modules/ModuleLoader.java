@@ -129,7 +129,7 @@ public class ModuleLoader implements AutoCloseable {
                                             k.moduleDirectory(),
                                             k.directory()
                                         ));
-                                    } catch (Exception e) {
+                                    } catch (Throwable e) {
                                         RC.Error(Error.from(e).whileAttempting("To register "+config.name()).urgent(true));
                                     }
                                     return null;
@@ -139,11 +139,11 @@ public class ModuleLoader implements AutoCloseable {
                             try {
                                 if (k instanceof ServerKernel s) plugin.bind(s, m);
                                 if (k instanceof ProxyKernel p) plugin.bind(p, m);
-                            } catch (Exception e) {
+                            } catch (Throwable e) {
                                 RC.Error(Error.from(e).whileAttempting("To bind "+config.name()+" to the kernel.").urgent(true));
                                 k.unregisterModule(config.name());
                             }
-                        } catch (Exception e) {
+                        } catch (Throwable e) {
                             RC.Error(Error.from(e).whileAttempting("To register the module: "+lowerConfigName));
                         }
                     };
@@ -154,13 +154,13 @@ public class ModuleLoader implements AutoCloseable {
                         deps,
                         softDeps
                     ));
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     RC.Error(Error.from(e).whileAttempting("To register the module: "+file.getName()));
                 } finally {
                     Thread.currentThread().setContextClassLoader(originalClassLoader);
                 }
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             RC.Error(Error.from(e).whileAttempting("To register external modules via `"+modules.getAbsolutePath()+"`"));
         } finally {
             System.out.println("Done loading modules.");
@@ -183,7 +183,7 @@ public class ModuleLoader implements AutoCloseable {
             try {
                 ModuleRegistrar registrar = this.registrars.get(o.toLowerCase());
                 registrar.register().accept(kernel);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 RC.Error(Error.from(e).whileAttempting("To register the module `"+o+"`"));
             }
         });
@@ -196,7 +196,7 @@ public class ModuleLoader implements AutoCloseable {
         classLoaders.forEach(c -> {
             try {
                 c.close();
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
         });
