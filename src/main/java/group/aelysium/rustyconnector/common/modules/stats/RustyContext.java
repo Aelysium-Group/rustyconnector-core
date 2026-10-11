@@ -84,6 +84,11 @@ public final class RustyContext extends SimpleContext {
             this.token = token;
         }
 
+        public Factory(@Token final String token) {
+            this.module = null;
+            this.token = token;
+        }
+
         @Override
         public RustyContext create() {
             final var loggerFactory = new PlatformLoggerFactory((level, throwable, message) -> {

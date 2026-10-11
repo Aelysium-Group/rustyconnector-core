@@ -24,7 +24,7 @@ final class RustyMetricsImpl extends SimpleMetrics implements RustyMetrics {
 
         metrics.addProperty("online_mode", checkOnlineMode());
         metrics.addProperty("plugin_version", "1.0"); // Modules don't currently expose a version
-        metrics.addProperty("module_name", module.details() != null ? module.details().toString() : "unknown");
+        metrics.addProperty("module_name", module != null && module.details() != null ? module.details().toString() : "unknown");
         metrics.addProperty("server_type", loaderType);
         //metrics.addProperty("game_version", kernel.);
         metrics.addProperty("platform_version", kernel.version());
